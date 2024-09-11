@@ -1,7 +1,9 @@
 package it.attocchi.views.myview;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Input;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -43,22 +45,24 @@ public class MyViewView extends Composite<VerticalLayout> {
 //        layoutRow.add(layoutColumn3);
 //        getContent().add(layoutRow3);
 
-        TextField firstName = new TextField("First name");
-        TextField lastName = new TextField("Last name");
-        TextField username = new TextField("Username");
+        TextField allievoNome = new TextField("Nome (Allievo)");
+        TextField allievoCognome = new TextField("Cognome (Allievo)");
+        DatePicker allievoDataNascita = new DatePicker("Data di nascita (Allievo)");
+
         PasswordField password = new PasswordField("Password");
         PasswordField confirmPassword = new PasswordField("Confirm password");
 
         FormLayout formLayout = new FormLayout();
-        formLayout.add(firstName, lastName, username, password,
-                confirmPassword);
+        formLayout.add(allievoNome, allievoCognome, allievoDataNascita);
+
         formLayout.setResponsiveSteps(
                 // Use one column by default
                 new FormLayout.ResponsiveStep("0", 1),
                 // Use two columns, if layout's width exceeds 500px
                 new FormLayout.ResponsiveStep("500px", 2));
-// Stretch the username field over 2 columns
-        formLayout.setColspan(username, 2);
+
+        // Stretch the username field over 2 columns
+//        formLayout.setColspan(username, 2);
 
         getContent().add(formLayout);
     }
