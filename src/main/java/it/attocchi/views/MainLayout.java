@@ -50,7 +50,7 @@ public class MainLayout extends AppLayout {
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
 
-        nav.addItem(new SideNavItem("My View", MyViewView.class, LineAwesomeIcon.PENCIL_RULER_SOLID.create()));
+        nav.addItem(new SideNavItem("Pre Iscrizione", MyViewView.class, LineAwesomeIcon.PENCIL_RULER_SOLID.create()));
 
         return nav;
     }
