@@ -16,7 +16,7 @@ import it.attocchi.views.MainLayout;
 
 @PageTitle("Pre Iscrizione")
 @Route(value = "", layout = MainLayout.class)
-@RouteAlias(value = "", layout = MainLayout.class)
+//@RouteAlias(value = "", layout = MainLayout.class)
 public class MyViewView extends Composite<VerticalLayout> {
 
     public MyViewView() {

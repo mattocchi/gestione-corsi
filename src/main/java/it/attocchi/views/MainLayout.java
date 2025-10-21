@@ -51,6 +51,11 @@ public class MainLayout extends AppLayout {
         SideNav nav = new SideNav();
 
         nav.addItem(new SideNavItem("Pre Iscrizione", MyViewView.class, LineAwesomeIcon.PENCIL_RULER_SOLID.create()));
+        nav.addItem(new SideNavItem("Allievi", "allievi", LineAwesomeIcon.USER_GRADUATE_SOLID.create()));
+        nav.addItem(new SideNavItem("Docenti", "docenti", LineAwesomeIcon.CHALKBOARD_TEACHER_SOLID.create()));
+        nav.addItem(new SideNavItem("Corsi", "corsi", LineAwesomeIcon.BOOK_SOLID.create()));
+        nav.addItem(new SideNavItem("Genitori", "genitori", LineAwesomeIcon.USERS_SOLID.create()));
+        nav.addItem(new SideNavItem("Presenze", "presenze", LineAwesomeIcon.CALENDAR_CHECK_SOLID.create()));
 
         return nav;
     }

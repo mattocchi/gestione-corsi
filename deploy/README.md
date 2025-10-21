@@ -13,3 +13,8 @@ https://medium.com/@sharathholmes143/efficiently-manage-your-applications-with-p
     pm2 start start.sh --name “gestione-corsi”
     pm2 startup
     pm2 list
+
+## DB
+
+    CREATE DATABASE gestione_corsi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    
