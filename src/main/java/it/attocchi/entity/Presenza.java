@@ -2,10 +2,11 @@ package it.attocchi.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
 
 @Entity
-@Table(name = "presenze")
+@Table(name = "presenze", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"lezione_id", "studente_id"})
+})
 public class Presenza {
 
     @Id
@@ -13,37 +14,32 @@ public class Presenza {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "corso_id", nullable = false)
-    private Corso corso;
+    @JoinColumn(name = "lezione_id")
+    @NotNull
+    private Lezione lezione;
 
     @ManyToOne
-    @JoinColumn(name = "allievo_id", nullable = false)
-    private Allievo allievo;
+    @JoinColumn(name = "studente_id")
+    @NotNull
+    private Studente studente;
 
-    @NotNull(message = "La data della lezione è obbligatoria")
-    @Column(name = "data_lezione", nullable = false)
-    private LocalDate dataLezione;
-
-    @NotNull(message = "Lo stato di presenza è obbligatorio")
     @Enumerated(EnumType.STRING)
-    @Column(name = "stato", nullable = false)
-    private StatoPresenza stato = StatoPresenza.PRESENTE;
+    @NotNull
+    private StatoPresenza stato;
 
-    @Column(name = "note")
     private String note;
 
-    // Constructors
+    // Costruttori
     public Presenza() {
     }
 
-    public Presenza(Corso corso, Allievo allievo, LocalDate dataLezione, StatoPresenza stato) {
-        this.corso = corso;
-        this.allievo = allievo;
-        this.dataLezione = dataLezione;
+    public Presenza(Lezione lezione, Studente studente, StatoPresenza stato) {
+        this.lezione = lezione;
+        this.studente = studente;
         this.stato = stato;
     }
 
-    // Getters and Setters
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -52,28 +48,20 @@ public class Presenza {
         this.id = id;
     }
 
-    public Corso getCorso() {
-        return corso;
+    public Lezione getLezione() {
+        return lezione;
     }
 
-    public void setCorso(Corso corso) {
-        this.corso = corso;
+    public void setLezione(Lezione lezione) {
+        this.lezione = lezione;
     }
 
-    public Allievo getAllievo() {
-        return allievo;
+    public Studente getStudente() {
+        return studente;
     }
 
-    public void setAllievo(Allievo allievo) {
-        this.allievo = allievo;
-    }
-
-    public LocalDate getDataLezione() {
-        return dataLezione;
-    }
-
-    public void setDataLezione(LocalDate dataLezione) {
-        this.dataLezione = dataLezione;
+    public void setStudente(Studente studente) {
+        this.studente = studente;
     }
 
     public StatoPresenza getStato() {
@@ -94,8 +82,8 @@ public class Presenza {
 
     public enum StatoPresenza {
         PRESENTE("Presente"),
-        ASSENTE_GIUSTIFICATO("Assente Giustificato"),
-        ASSENTE_INGIUSTIFICATO("Assente Ingiustificato");
+        ASSENTE_GIUSTIFICATA("Assente giustificata"),
+        ASSENTE_INGIUSTIFICATA("Assente ingiustificata");
 
         private final String descrizione;
 
@@ -104,11 +92,6 @@ public class Presenza {
         }
 
         public String getDescrizione() {
-            return descrizione;
-        }
-
-        @Override
-        public String toString() {
             return descrizione;
         }
     }

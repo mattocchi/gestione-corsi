@@ -3,6 +3,7 @@ package it.attocchi.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,17 +18,31 @@ public class Corso {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Il nome del corso è obbligatorio")
-    @Column(nullable = false)
+    @NotBlank
     private String nome;
 
-    @NotNull(message = "La data di inizio è obbligatoria")
-    @Column(name = "data_inizio", nullable = false)
+    private String descrizione;
+
+    @NotNull
     private LocalDate dataInizio;
 
-    @NotNull(message = "La data di fine è obbligatoria")
-    @Column(name = "data_fine", nullable = false)
-    private LocalDate dataFine;
+    @NotNull
+    private Integer numeroLezioni;
+
+    @NotNull
+    private Integer durataLezioneMinuti;
+
+    @ElementCollection
+    @CollectionTable(name = "corso_giorni_settimana", joinColumns = @JoinColumn(name = "corso_id"))
+    @Column(name = "giorno_settimana")
+    @Enumerated(EnumType.STRING)
+    private Set<DayOfWeek> giorniSettimana = new HashSet<>();
+
+    private LocalTime orarioInizio;
+
+    private BigDecimal costoTotale;
+
+    private BigDecimal costoPerLezione;
 
     @ManyToOne
     @JoinColumn(name = "docente_id")
@@ -35,29 +50,23 @@ public class Corso {
 
     @ManyToMany
     @JoinTable(
-        name = "corso_allievo",
+        name = "corso_studenti",
         joinColumns = @JoinColumn(name = "corso_id"),
-        inverseJoinColumns = @JoinColumn(name = "allievo_id")
+        inverseJoinColumns = @JoinColumn(name = "studente_id")
     )
-    private Set<Allievo> allievi = new HashSet<>();
+    private Set<Studente> studenti = new HashSet<>();
 
     @OneToMany(mappedBy = "corso", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<LezioneOrario> orariLezioni = new HashSet<>();
+    private Set<Lezione> lezioni = new HashSet<>();
 
-    @OneToMany(mappedBy = "corso", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Presenza> presenze = new HashSet<>();
+    @Column(name = "attivo")
+    private boolean attivo = true;
 
-    // Constructors
+    // Costruttori
     public Corso() {
     }
 
-    public Corso(String nome, LocalDate dataInizio, LocalDate dataFine) {
-        this.nome = nome;
-        this.dataInizio = dataInizio;
-        this.dataFine = dataFine;
-    }
-
-    // Getters and Setters
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -74,6 +83,14 @@ public class Corso {
         this.nome = nome;
     }
 
+    public String getDescrizione() {
+        return descrizione;
+    }
+
+    public void setDescrizione(String descrizione) {
+        this.descrizione = descrizione;
+    }
+
     public LocalDate getDataInizio() {
         return dataInizio;
     }
@@ -82,12 +99,52 @@ public class Corso {
         this.dataInizio = dataInizio;
     }
 
-    public LocalDate getDataFine() {
-        return dataFine;
+    public Integer getNumeroLezioni() {
+        return numeroLezioni;
     }
 
-    public void setDataFine(LocalDate dataFine) {
-        this.dataFine = dataFine;
+    public void setNumeroLezioni(Integer numeroLezioni) {
+        this.numeroLezioni = numeroLezioni;
+    }
+
+    public Integer getDurataLezioneMinuti() {
+        return durataLezioneMinuti;
+    }
+
+    public void setDurataLezioneMinuti(Integer durataLezioneMinuti) {
+        this.durataLezioneMinuti = durataLezioneMinuti;
+    }
+
+    public Set<DayOfWeek> getGiorniSettimana() {
+        return giorniSettimana;
+    }
+
+    public void setGiorniSettimana(Set<DayOfWeek> giorniSettimana) {
+        this.giorniSettimana = giorniSettimana;
+    }
+
+    public LocalTime getOrarioInizio() {
+        return orarioInizio;
+    }
+
+    public void setOrarioInizio(LocalTime orarioInizio) {
+        this.orarioInizio = orarioInizio;
+    }
+
+    public BigDecimal getCostoTotale() {
+        return costoTotale;
+    }
+
+    public void setCostoTotale(BigDecimal costoTotale) {
+        this.costoTotale = costoTotale;
+    }
+
+    public BigDecimal getCostoPerLezione() {
+        return costoPerLezione;
+    }
+
+    public void setCostoPerLezione(BigDecimal costoPerLezione) {
+        this.costoPerLezione = costoPerLezione;
     }
 
     public Docente getDocente() {
@@ -98,32 +155,27 @@ public class Corso {
         this.docente = docente;
     }
 
-    public Set<Allievo> getAllievi() {
-        return allievi;
+    public Set<Studente> getStudenti() {
+        return studenti;
     }
 
-    public void setAllievi(Set<Allievo> allievi) {
-        this.allievi = allievi;
+    public void setStudenti(Set<Studente> studenti) {
+        this.studenti = studenti;
     }
 
-    public Set<LezioneOrario> getOrariLezioni() {
-        return orariLezioni;
+    public Set<Lezione> getLezioni() {
+        return lezioni;
     }
 
-    public void setOrariLezioni(Set<LezioneOrario> orariLezioni) {
-        this.orariLezioni = orariLezioni;
+    public void setLezioni(Set<Lezione> lezioni) {
+        this.lezioni = lezioni;
     }
 
-    public Set<Presenza> getPresenze() {
-        return presenze;
+    public boolean isAttivo() {
+        return attivo;
     }
 
-    public void setPresenze(Set<Presenza> presenze) {
-        this.presenze = presenze;
-    }
-
-    @Override
-    public String toString() {
-        return nome;
+    public void setAttivo(boolean attivo) {
+        this.attivo = attivo;
     }
 }

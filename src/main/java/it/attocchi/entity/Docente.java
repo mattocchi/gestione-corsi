@@ -1,7 +1,6 @@
 package it.attocchi.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,27 +12,22 @@ public class Docente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Il nome è obbligatorio")
-    @Column(nullable = false)
-    private String nome;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @NotBlank(message = "Il cognome è obbligatorio")
-    @Column(nullable = false)
-    private String cognome;
+    private String specializzazione;
 
-    @OneToMany(mappedBy = "docente", cascade = CascadeType.ALL)
+    private String biografia;
+
+    @OneToMany(mappedBy = "docente")
     private Set<Corso> corsi = new HashSet<>();
 
-    // Constructors
+    // Costruttori
     public Docente() {
     }
 
-    public Docente(String nome, String cognome) {
-        this.nome = nome;
-        this.cognome = cognome;
-    }
-
-    // Getters and Setters
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -42,20 +36,28 @@ public class Docente {
         this.id = id;
     }
 
-    public String getNome() {
-        return nome;
+    public User getUser() {
+        return user;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public String getCognome() {
-        return cognome;
+    public String getSpecializzazione() {
+        return specializzazione;
     }
 
-    public void setCognome(String cognome) {
-        this.cognome = cognome;
+    public void setSpecializzazione(String specializzazione) {
+        this.specializzazione = specializzazione;
+    }
+
+    public String getBiografia() {
+        return biografia;
+    }
+
+    public void setBiografia(String biografia) {
+        this.biografia = biografia;
     }
 
     public Set<Corso> getCorsi() {
@@ -67,11 +69,6 @@ public class Docente {
     }
 
     public String getNomeCompleto() {
-        return nome + " " + cognome;
-    }
-
-    @Override
-    public String toString() {
-        return getNomeCompleto();
+        return user != null ? user.getNomeCompleto() : "";
     }
 }

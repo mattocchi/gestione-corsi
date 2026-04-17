@@ -1,12 +1,15 @@
 package it.attocchi.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "genitori")
-public class Genitore {
+@Table(name = "studenti")
+public class Studente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,7 +19,13 @@ public class Genitore {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @NotBlank
     private String codiceFiscale;
+
+    @NotNull
+    private LocalDate dataNascita;
+
+    private String luogoNascita;
 
     private String indirizzo;
 
@@ -24,11 +33,15 @@ public class Genitore {
 
     private String cap;
 
-    @OneToMany(mappedBy = "genitore")
-    private Set<Studente> figli = new HashSet<>();
+    @ManyToMany(mappedBy = "studenti")
+    private Set<Corso> corsi = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "genitore_id")
+    private Genitore genitore;
 
     // Costruttori
-    public Genitore() {
+    public Studente() {
     }
 
     // Getters e Setters
@@ -56,6 +69,22 @@ public class Genitore {
         this.codiceFiscale = codiceFiscale;
     }
 
+    public LocalDate getDataNascita() {
+        return dataNascita;
+    }
+
+    public void setDataNascita(LocalDate dataNascita) {
+        this.dataNascita = dataNascita;
+    }
+
+    public String getLuogoNascita() {
+        return luogoNascita;
+    }
+
+    public void setLuogoNascita(String luogoNascita) {
+        this.luogoNascita = luogoNascita;
+    }
+
     public String getIndirizzo() {
         return indirizzo;
     }
@@ -80,12 +109,20 @@ public class Genitore {
         this.cap = cap;
     }
 
-    public Set<Studente> getFigli() {
-        return figli;
+    public Set<Corso> getCorsi() {
+        return corsi;
     }
 
-    public void setFigli(Set<Studente> figli) {
-        this.figli = figli;
+    public void setCorsi(Set<Corso> corsi) {
+        this.corsi = corsi;
+    }
+
+    public Genitore getGenitore() {
+        return genitore;
+    }
+
+    public void setGenitore(Genitore genitore) {
+        this.genitore = genitore;
     }
 
     public String getNomeCompleto() {

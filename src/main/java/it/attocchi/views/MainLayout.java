@@ -2,78 +2,67 @@ package it.attocchi.views;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.html.Footer;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Header;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.Scroller;
-import com.vaadin.flow.component.sidenav.SideNav;
-import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import it.attocchi.views.myview.MyViewView;
-import org.vaadin.lineawesome.LineAwesomeIcon;
+import it.attocchi.security.SecurityService;
+import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.StudentiView;
+import it.attocchi.views.admin.UtentiView;
+import it.attocchi.views.docente.LezioniDocenteView;
+import it.attocchi.views.genitore.FigliView;
+import it.attocchi.views.studente.MieiCorsiView;
 
-/**
- * The main view is a top-level placeholder for other views.
- */
 public class MainLayout extends AppLayout {
 
-    private H1 viewTitle;
+    private final SecurityService securityService;
 
-    public MainLayout() {
-        setPrimarySection(Section.DRAWER);
-        addDrawerContent();
-        addHeaderContent();
+    public MainLayout(SecurityService securityService) {
+        this.securityService = securityService;
+        createHeader();
+        createDrawer();
     }
 
-    private void addHeaderContent() {
-        DrawerToggle toggle = new DrawerToggle();
-        toggle.setAriaLabel("Menu toggle");
+    private void createHeader() {
+        H1 logo = new H1("Gestione Corsi Musica");
+        logo.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.MEDIUM);
 
-        viewTitle = new H1();
-        viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
+        Button logout = new Button("Logout", e -> securityService.logout());
 
-        addToNavbar(true, toggle, viewTitle);
+        HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), logo, logout);
+        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        header.expand(logo);
+        header.setWidthFull();
+        header.addClassNames(LumoUtility.Padding.Vertical.NONE, LumoUtility.Padding.Horizontal.MEDIUM);
+
+        addToNavbar(header);
     }
 
-    private void addDrawerContent() {
-        Span appName = new Span("Gestione Corsi");
-        appName.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE);
-        Header header = new Header(appName);
+    private void createDrawer() {
+        VerticalLayout menuLayout = new VerticalLayout();
 
-        Scroller scroller = new Scroller(createNavigation());
+        if (securityService.hasRole("ADMIN")) {
+            menuLayout.add(new RouterLink("Gestione Corsi", CorsiView.class));
+            menuLayout.add(new RouterLink("Gestione Studenti", StudentiView.class));
+            menuLayout.add(new RouterLink("Gestione Utenti", UtentiView.class));
+        }
 
-        addToDrawer(header, scroller, createFooter());
-    }
+        if (securityService.hasRole("DOCENTE")) {
+            menuLayout.add(new RouterLink("Le Mie Lezioni", LezioniDocenteView.class));
+        }
 
-    private SideNav createNavigation() {
-        SideNav nav = new SideNav();
+        if (securityService.hasRole("STUDENTE")) {
+            menuLayout.add(new RouterLink("I Miei Corsi", MieiCorsiView.class));
+        }
 
-        nav.addItem(new SideNavItem("Pre Iscrizione", MyViewView.class, LineAwesomeIcon.PENCIL_RULER_SOLID.create()));
-        nav.addItem(new SideNavItem("Allievi", "allievi", LineAwesomeIcon.USER_GRADUATE_SOLID.create()));
-        nav.addItem(new SideNavItem("Docenti", "docenti", LineAwesomeIcon.CHALKBOARD_TEACHER_SOLID.create()));
-        nav.addItem(new SideNavItem("Corsi", "corsi", LineAwesomeIcon.BOOK_SOLID.create()));
-        nav.addItem(new SideNavItem("Genitori", "genitori", LineAwesomeIcon.USERS_SOLID.create()));
-        nav.addItem(new SideNavItem("Presenze", "presenze", LineAwesomeIcon.CALENDAR_CHECK_SOLID.create()));
+        if (securityService.hasRole("GENITORE")) {
+            menuLayout.add(new RouterLink("I Miei Figli", FigliView.class));
+        }
 
-        return nav;
-    }
-
-    private Footer createFooter() {
-        Footer layout = new Footer();
-
-        return layout;
-    }
-
-    @Override
-    protected void afterNavigation() {
-        super.afterNavigation();
-        viewTitle.setText(getCurrentPageTitle());
-    }
-
-    private String getCurrentPageTitle() {
-        PageTitle title = getContent().getClass().getAnnotation(PageTitle.class);
-        return title == null ? "" : title.value();
+        addToDrawer(menuLayout);
     }
 }
