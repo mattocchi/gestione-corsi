@@ -23,7 +23,7 @@ Tutte le nuove costanti esistono in `VaadinIcon` di Vaadin 25.3 (verificato con 
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Modifica → `PENCIL` | `CorsiView`, `StudentiView`, `UtentiView` | `./mvnw test` | [ ] |
+| 1 | Modifica → `PENCIL` | `CorsiView`, `StudentiView`, `UtentiView` | `./mvnw test` | [x] |
 | 2 | Genera Lezioni → `REFRESH` | `CorsiView` | `./mvnw -q compile` | [ ] |
 | 3 | Presenze → `CLIPBOARD_CHECK` | `LezioniDocenteView`, `MieiCorsiView`, `FigliView` | `./mvnw test` | [ ] |
 | 4 | Dettagli figlio → `BOOK` | `FigliView` | `./mvnw test` | [ ] |

@@ -66,7 +66,7 @@ public class CorsiView extends VerticalLayout {
         var numeroStudenti = grid.addColumn(corso -> corso.getStudenti().size()).setHeader("N. Studenti");
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(corso -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.EDIT, "Modifica", e -> openDialog(corso));
+            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
             Button generateButton = ViewSupport.iconButton(VaadinIcon.CALENDAR_CLOCK, "Genera Lezioni", e -> generaLezioni(corso));
             Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
             deleteButton.addThemeVariants(ButtonVariant.ERROR);

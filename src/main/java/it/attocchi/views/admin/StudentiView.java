@@ -64,7 +64,7 @@ public class StudentiView extends VerticalLayout {
         grid.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(studente -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.EDIT, "Modifica", e -> openDialog(studente));
+            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(studente));
             Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteStudente(studente));
             deleteButton.addThemeVariants(ButtonVariant.ERROR);
             return ViewSupport.actions(editButton, deleteButton);

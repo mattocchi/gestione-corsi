@@ -53,7 +53,7 @@ public class UtentiView extends VerticalLayout {
         grid.addColumn(user -> String.join(", ", user.getRoles())).setHeader("Ruoli");
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(user -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.EDIT, "Modifica", e -> openDialog(user));
+            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(user));
             Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteUser(user));
             deleteButton.addThemeVariants(ButtonVariant.ERROR);
             return ViewSupport.actions(editButton, deleteButton);
