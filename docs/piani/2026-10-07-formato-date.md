@@ -30,7 +30,7 @@ Scelte:
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Classe `Formati.data(LocalDate)` + test unitario (anno corrente / anno diverso / null) | `views/Formati.java`, `FormatiTest.java` | `./mvnw test` | [ ] |
+| 1 | Classe `Formati.data(LocalDate)` + test unitario (anno corrente / anno diverso / null) | `views/Formati.java`, `FormatiTest.java` | `./mvnw test` | [x] |
 | 2 | Viste admin: Data Inizio corsi, Data Nascita studenti | `CorsiView`, `StudentiView` | `./mvnw test` | [ ] |
 | 3 | Vista docente: colonna Data (ordinamento per data) e titolo del dialog presenze | `LezioniDocenteView` | `./mvnw test` | [ ] |
 | 4 | Viste genitore/studente: Data Nascita figli, Data Inizio corsi, Data nel dialog presenze | `FigliView`, `MieiCorsiView`, `PresenzeStudenteDialog` | `./mvnw test` | [ ] |
