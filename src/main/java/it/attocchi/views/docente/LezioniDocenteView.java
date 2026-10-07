@@ -4,12 +4,14 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -22,10 +24,12 @@ import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.StatoPresenzaToggle;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 @Route(value = "lezioni-docente", layout = MainLayout.class)
@@ -34,10 +38,32 @@ import java.util.function.Consumer;
 @RolesAllowed("DOCENTE")
 public class LezioniDocenteView extends VerticalLayout {
 
+    /** Filtro della griglia per stato della lezione. */
+    public enum FiltroLezioni {
+        DA_FARE("Da fare", lezione -> !lezione.isCompletata()),
+        COMPLETATE("Completate", Lezione::isCompletata),
+        TUTTE("Tutte", lezione -> true);
+
+        private final String etichetta;
+        private final SerializablePredicate<Lezione> condizione;
+
+        FiltroLezioni(String etichetta, SerializablePredicate<Lezione> condizione) {
+            this.etichetta = etichetta;
+            this.condizione = condizione;
+        }
+
+        public String getEtichetta() {
+            return etichetta;
+        }
+    }
+
     private final LezioneService lezioneService;
     private final PresenzaService presenzaService;
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
+    private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
+        List.of(FiltroLezioni.values()), FiltroLezioni::getEtichetta, f -> "Mostra lezioni: " + f.getEtichetta(), null);
+    private GridListDataView<Lezione> lezioni;
     private Docente docenteCorrente;
 
     public LezioniDocenteView(LezioneService lezioneService, PresenzaService presenzaService,
@@ -49,7 +75,12 @@ public class LezioniDocenteView extends VerticalLayout {
         docenteCorrente = securityService.getUsername().flatMap(docenteService::findByUsername).orElse(null);
         configureGrid();
 
-        add(gridLezioni);
+        // Di default solo le lezioni ancora da fare
+        filtro.setValue(FiltroLezioni.DA_FARE);
+        filtro.getStyle().set("max-width", "24rem");
+        filtro.addValueChangeListener(e -> applicaFiltro());
+
+        add(filtro, gridLezioni);
         expand(gridLezioni);
         updateGrid();
     }
@@ -125,7 +156,14 @@ public class LezioniDocenteView extends VerticalLayout {
 
     private void updateGrid() {
         if (docenteCorrente != null) {
-            gridLezioni.setItems(lezioneService.findByDocente(docenteCorrente.getId()));
+            lezioni = gridLezioni.setItems(lezioneService.findByDocente(docenteCorrente.getId()));
+            applicaFiltro();
+        }
+    }
+
+    private void applicaFiltro() {
+        if (lezioni != null) {
+            lezioni.setFilter(filtro.getValue().condizione);
         }
     }
 }
