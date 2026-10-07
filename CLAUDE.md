@@ -65,3 +65,16 @@ it.attocchi/
 - Mobile layout: use `views/ViewSupport` — `hideOnMobile(grid, columns...)` (breakpoint 640px via `Page.windowSizeSignal()`), icon-only `iconButton` + `configureActionsColumn` for grid actions, `dialog(title, width)` with buttons in `dialog.getFooter()`. Every new grid/dialog must stay usable at 390px width.
 - Browserless tests use `browserless-test-spring` and `find(...)` (`$(...)` is deprecated).
 - Architecture fix plan and remaining work: `docs/PIANO-CORREZIONI.md`.
+
+## Working on a plan: one commit per step
+
+When executing a plan in `docs/` (e.g. `docs/PIANO-CORREZIONI.md`), commit after **every single step** (each numbered row such as `1.3`, `7.2`), not at the end of a phase or of the whole plan. The user has authorized these commits in advance; push is still only on explicit request.
+
+For each step:
+1. Implement only that step.
+2. Verify it: at least `./mvnw -q compile`; run `./mvnw test` when the step touches services, repositories, views or tests. Do not commit a step that doesn't compile or breaks tests — fix it first.
+3. In the same commit, mark the step `[x]` in the plan (or `[~]` with a short note if partial/deferred).
+4. Stage only the files of that step (`git add <files>`, never `git add -A` with unrelated changes) and commit on the current branch (`develop`), not on `main`.
+5. Commit message: `<step id> <short description in Italian>` as subject, e.g. `1.5 CorsiView: Binder locale al dialog`, with a body explaining what changed and why if not obvious.
+
+If a step turns out to be already done or unnecessary, mark it in the plan with a note and commit just the plan update. Pre-existing uncommitted changes of the user go in a separate commit, never mixed into a step.
