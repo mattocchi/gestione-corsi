@@ -23,7 +23,7 @@ Dettagli:
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Componente `StatoPresenzaToggle` + test unitario (valore, evento, aria-checked) | `views/StatoPresenzaToggle.java`, `StatoPresenzaToggleTest.java` | `./mvnw test` | [x] |
-| 2 | Stili del toggle e della riga presenza (pulsanti uguali, a capo su mobile) | `styles.css` | `./mvnw -q compile` | [ ] |
+| 2 | Stili del toggle e della riga presenza (pulsanti uguali, a capo su mobile) | `styles.css` | `./mvnw -q compile` | [x] |
 | 3 | Dialog presenze del docente: toggle al posto della ComboBox, riga flessibile, notifica solo su errore | `LezioniDocenteView` | `./mvnw test` | [ ] |
 | 4 | Test browserless: il docente segna "Assente giustificato" con un tocco e il valore viene salvato | `ViewAccessTest` | `./mvnw test` | [ ] |
 | 5 | `CLAUDE.md`: stato presenza sempre con `StatoPresenzaToggle` | `CLAUDE.md` | — | [ ] |

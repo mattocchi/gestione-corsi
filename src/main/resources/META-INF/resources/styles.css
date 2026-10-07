@@ -22,3 +22,39 @@
     text-align: center;
     margin: 0;
 }
+
+/* Stato presenza: tre pulsanti della stessa larghezza, scelta con un tocco */
+.stato-presenza-toggle {
+    display: flex;
+    gap: 0.25rem;
+    width: 100%;
+}
+
+.stato-presenza-toggle vaadin-button {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+}
+
+/* Riga presenza: nome, stato e note su una riga se c'è spazio, altrimenti vanno a capo */
+.presenza-riga {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    width: 100%;
+    padding-block: 0.25rem;
+}
+
+.presenza-riga .presenza-nome {
+    flex: 1 1 9rem;
+    font-weight: var(--aura-font-weight-semibold, 600);
+}
+
+.presenza-riga .stato-presenza-toggle {
+    flex: 2 1 16rem;
+}
+
+.presenza-riga .presenza-note {
+    flex: 1 1 10rem;
+}
