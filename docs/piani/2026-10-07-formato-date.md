@@ -34,7 +34,7 @@ Scelte:
 | 2 | Viste admin: Data Inizio corsi, Data Nascita studenti | `CorsiView`, `StudentiView` | `./mvnw test` | [x] |
 | 3 | Vista docente: colonna Data (ordinamento per data) e titolo del dialog presenze | `LezioniDocenteView` | `./mvnw test` | [x] |
 | 4 | Viste genitore/studente: Data Nascita figli, Data Inizio corsi, Data nel dialog presenze | `FigliView`, `MieiCorsiView`, `PresenzeStudenteDialog` | `./mvnw test` | [x] |
-| 5 | Riepilogo scaricabile: data inizio e date delle presenze | `FigliView` | `./mvnw -q compile` | [ ] |
+| 5 | Riepilogo scaricabile: data inizio e date delle presenze | `FigliView` | `./mvnw -q compile` | [x] |
 | 6 | Regola nel `CLAUDE.md`: le date in UI passano da `Formati.data` | `CLAUDE.md` | — | [ ] |
 | 7 | Verifica finale: build con test, controllo nel browser a 390px delle viste con date, registro | piano | build + browser | [ ] |
 

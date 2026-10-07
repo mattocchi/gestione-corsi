@@ -117,7 +117,7 @@ public class FigliView extends VerticalLayout {
             sb.append("Studente: ").append(studente.getNomeCompleto()).append("\n");
             sb.append("Corso: ").append(corso.getNome()).append("\n");
             sb.append("Docente: ").append(corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "N/D").append("\n");
-            sb.append("Data inizio: ").append(corso.getDataInizio()).append("\n");
+            sb.append("Data inizio: ").append(Formati.data(corso.getDataInizio())).append("\n");
             sb.append("Numero lezioni: ").append(corso.getNumeroLezioni()).append("\n");
             sb.append("Durata lezione: ").append(corso.getDurataLezioneMinuti()).append(" minuti\n\n");
 
@@ -130,7 +130,7 @@ public class FigliView extends VerticalLayout {
             List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
             for (Presenza presenza : presenze) {
                 sb.append("Lezione ").append(presenza.getLezione().getNumeroLezione())
-                  .append(" - ").append(presenza.getLezione().getData())
+                  .append(" - ").append(Formati.data(presenza.getLezione().getData()))
                   .append(" - ").append(presenza.getStato().getDescrizione());
                 if (presenza.getNote() != null && !presenza.getNote().isEmpty()) {
                     sb.append(" (").append(presenza.getNote()).append(")");
