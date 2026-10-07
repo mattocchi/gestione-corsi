@@ -65,6 +65,7 @@ it.attocchi/
 - Downloads use `DownloadHandler` (`StreamResource` is deprecated).
 - Mobile layout: use `views/ViewSupport` — `hideOnMobile(grid, columns...)` (breakpoint 640px via `Page.windowSizeSignal()`), icon-only `iconButton` + `configureActionsColumn` for grid actions, `dialog(title, width)` with buttons in `dialog.getFooter()`. Every new grid/dialog must stay usable at 390px width.
 - Icons: only **Vaadin Icons** (`VaadinIcon` / `"vaadin:..."`), the default Vaadin collection. Grid action icons: Modifica `PENCIL`, Elimina `TRASH` (+ `ButtonVariant.ERROR`), Genera Lezioni `REFRESH`, Presenze `CLIPBOARD_CHECK`, Dettagli/corsi `BOOK`, Scarica `DOWNLOAD`. Reuse these for the same action in new views.
+- Attendance status (`Presenza.StatoPresenza`) is edited with `views/StatoPresenzaToggle` (three one-tap buttons, selected one filled: green/orange/red), never with a ComboBox/Select. Changes are saved immediately; show a notification only on error.
 - Browserless tests use `browserless-test-spring` and `find(...)` (`$(...)` is deprecated).
 - Architecture fix plan and remaining work: `docs/PIANO-CORREZIONI.md`.
 
