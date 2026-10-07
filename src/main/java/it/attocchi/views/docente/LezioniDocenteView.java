@@ -19,6 +19,7 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.DocenteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
+import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -51,7 +52,8 @@ public class LezioniDocenteView extends VerticalLayout {
 
     private void configureGrid() {
         gridLezioni.addColumn(lezione -> lezione.getCorso().getNome()).setHeader("Corso").setSortable(true);
-        gridLezioni.addColumn(Lezione::getData).setHeader("Data").setSortable(true).setAutoWidth(true).setFlexGrow(0);
+        gridLezioni.addColumn(lezione -> Formati.data(lezione.getData())).setHeader("Data")
+            .setComparator(Lezione::getData).setSortable(true).setAutoWidth(true).setFlexGrow(0);
         var numero = gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
         var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
         var completata = gridLezioni.addColumn(lezione -> lezione.isCompletata() ? "Sì" : "No").setHeader("Completata");
@@ -64,7 +66,7 @@ public class LezioniDocenteView extends VerticalLayout {
 
     private void openPresenzeDialog(Lezione lezione) {
         Dialog dialog = ViewSupport.dialog(
-            lezione.getCorso().getNome() + " – Lezione " + lezione.getNumeroLezione() + " (" + lezione.getData() + ")", "800px");
+            lezione.getCorso().getNome() + " – Lezione " + lezione.getNumeroLezione() + " (" + Formati.data(lezione.getData()) + ")", "800px");
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         gridPresenze.addColumn(presenza -> presenza.getStudente().getNomeCompleto()).setHeader("Studente");
