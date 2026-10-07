@@ -67,7 +67,7 @@ public class FigliView extends VerticalLayout {
         gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente ->
-            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.EYE, "Visualizza Dettagli", e -> openDettagliDialog(studente)))));
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(studente)))));
 
         ViewSupport.hideOnMobile(gridFigli, dataNascita);
     }
