@@ -61,6 +61,7 @@ it.attocchi/
 - Theme is **Aura**: use unprefixed variants (`ButtonVariant.PRIMARY`), not `LUMO_*` or `LumoUtility`.
 - Passwords are only set via `UserService.save(user, rawPassword)` (encoded there; null/blank keeps the existing one).
 - Lessons (`Lezione`) are generated on demand with `CorsoService.generaLezioni` ("Genera Lezioni" button), not on save.
+- Dates shown in the UI (grids, titles, downloads) always go through `Formati.data(LocalDate)` → "mer 7 ottobre" (year appended only if not the current one). Sortable date columns keep a comparator on the `LocalDate`. `DatePicker` inputs keep the locale numeric format.
 - Downloads use `DownloadHandler` (`StreamResource` is deprecated).
 - Mobile layout: use `views/ViewSupport` — `hideOnMobile(grid, columns...)` (breakpoint 640px via `Page.windowSizeSignal()`), icon-only `iconButton` + `configureActionsColumn` for grid actions, `dialog(title, width)` with buttons in `dialog.getFooter()`. Every new grid/dialog must stay usable at 390px width.
 - Browserless tests use `browserless-test-spring` and `find(...)` (`$(...)` is deprecated).
