@@ -22,6 +22,7 @@ import it.attocchi.entity.User;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.service.UserService;
+import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -56,7 +57,8 @@ public class StudentiView extends VerticalLayout {
     private void configureGrid() {
         grid.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
         var codiceFiscale = grid.addColumn(Studente::getCodiceFiscale).setHeader("Codice Fiscale");
-        var dataNascita = grid.addColumn(Studente::getDataNascita).setHeader("Data Nascita");
+        var dataNascita = grid.addColumn(studente -> Formati.data(studente.getDataNascita())).setHeader("Data Nascita")
+            .setComparator(Studente::getDataNascita);
         var genitore = grid.addColumn(studente -> studente.getGenitore() != null ? studente.getGenitore().getNomeCompleto() : "")
             .setHeader("Genitore");
         grid.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);

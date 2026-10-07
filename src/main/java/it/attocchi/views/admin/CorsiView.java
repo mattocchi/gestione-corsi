@@ -23,6 +23,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Docente;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.DocenteService;
+import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -58,7 +59,8 @@ public class CorsiView extends VerticalLayout {
     private void configureGrid() {
         grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
         var docente = grid.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
-        var dataInizio = grid.addColumn(Corso::getDataInizio).setHeader("Data Inizio");
+        var dataInizio = grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
+            .setComparator(Corso::getDataInizio);
         var numeroLezioni = grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         var durata = grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         var numeroStudenti = grid.addColumn(corso -> corso.getStudenti().size()).setHeader("N. Studenti");
