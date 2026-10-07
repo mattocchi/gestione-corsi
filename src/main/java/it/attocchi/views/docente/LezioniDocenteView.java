@@ -1,5 +1,7 @@
 package it.attocchi.views.docente;
 
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -15,6 +17,7 @@ import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.Docente;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
@@ -64,6 +67,7 @@ public class LezioniDocenteView extends VerticalLayout {
     private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
         List.of(FiltroLezioni.values()), FiltroLezioni::getEtichetta, f -> "Mostra lezioni: " + f.getEtichetta(), null);
     private GridListDataView<Lezione> lezioni;
+    private final Signal<Boolean> mobile = ViewSupport.isMobile();
     private Docente docenteCorrente;
 
     public LezioniDocenteView(LezioneService lezioneService, PresenzaService presenzaService,
@@ -91,12 +95,25 @@ public class LezioniDocenteView extends VerticalLayout {
             .setComparator(Lezione::getData).setSortable(true).setAutoWidth(true).setFlexGrow(0);
         var numero = gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
         var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
-        var completata = gridLezioni.addColumn(lezione -> lezione.isCompletata() ? "Sì" : "No").setHeader("Completata");
+        // Stato come badge: testo su desktop, solo icona su mobile (resta visibile anche sul telefono)
+        gridLezioni.addComponentColumn(this::createStatoBadge).setHeader("Stato")
+            .setComparator(Lezione::isCompletata).setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridLezioni.addComponentColumn(lezione ->
             ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Gestisci Presenze", e -> openPresenzeDialog(lezione)))));
 
-        ViewSupport.hideOnMobile(gridLezioni, numero, orario, completata);
+        ViewSupport.hideOnMobile(gridLezioni, numero, orario);
+    }
+
+    private Badge createStatoBadge(Lezione lezione) {
+        Badge badge = lezione.isCompletata()
+            ? new Badge("Completata", VaadinIcon.CHECK.create())
+            : new Badge("Da fare", VaadinIcon.CLOCK.create());
+        if (lezione.isCompletata()) {
+            badge.addThemeVariants(BadgeVariant.SUCCESS);
+        }
+        badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
+        return badge;
     }
 
     private void openPresenzeDialog(Lezione lezione) {
