@@ -28,7 +28,8 @@ Tutte le nuove costanti esistono in `VaadinIcon` di Vaadin 25.3 (verificato con 
 | 3 | Presenze → `CLIPBOARD_CHECK` | `LezioniDocenteView`, `MieiCorsiView`, `FigliView` | `./mvnw test` | [x] |
 | 4 | Dettagli figlio → `BOOK` | `FigliView` | `./mvnw test` | [x] |
 | 5 | Convenzione icone delle azioni nel `CLAUDE.md` | `CLAUDE.md` | — | [x] |
-| 6 | Verifica finale: build con test, controllo visivo nel browser, registro | piano | build + browser | [ ] |
+| 6 | *(emerso nella verifica)* Colonne data con larghezza automatica: il nuovo formato "mer 2 ottobre 2024" viene troncato | `CorsiView`, `StudentiView`, `FigliView`, `MieiCorsiView` | `./mvnw test` + browser | [ ] |
+| 7 | Verifica finale: build con test, controllo visivo nel browser, registro | piano | build + browser | [ ] |
 
 ## Fuori ambito
 
