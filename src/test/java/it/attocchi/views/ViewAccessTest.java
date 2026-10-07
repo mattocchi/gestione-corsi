@@ -6,6 +6,9 @@ import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.RouteNotFoundError;
+import it.attocchi.entity.Presenza;
+import it.attocchi.entity.Presenza.StatoPresenza;
+import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.StudentiView;
 import it.attocchi.views.admin.UtentiView;
@@ -13,6 +16,7 @@ import it.attocchi.views.docente.LezioniDocenteView;
 import it.attocchi.views.genitore.FigliView;
 import it.attocchi.views.studente.MieiCorsiView;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -31,6 +35,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest
 class ViewAccessTest extends SpringBrowserlessTest {
+
+    @Autowired
+    private PresenzaService presenzaService;
 
     @Test
     @WithAnonymousUser
@@ -98,6 +105,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test(find(Grid.class).single());
         assertEquals(30, grid.size());
         assertEquals("Corso di Canto", grid.getCellText(0, 0));
+    }
+
+    @Test
+    @WithUserDetails("docente1")
+    void docente_segnaAssenzaGiustificataConUnTocco() {
+        navigate(LezioniDocenteView.class);
+        var lezioni = test(find(Grid.class).single());
+        Button gestisciPresenze = (Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow();
+        test(gestisciPresenze).click();
+
+        @SuppressWarnings("unchecked")
+        Grid<Presenza> gridPresenze = find(Grid.class).all().getLast();
+        var presenze = test(gridPresenze);
+        Presenza presenza = presenze.getRow(0);
+        StatoPresenzaToggle toggle = (StatoPresenzaToggle) presenze.getCellComponent(0, 0).getChildren()
+            .filter(StatoPresenzaToggle.class::isInstance).findFirst().orElseThrow();
+        assertEquals(StatoPresenza.PRESENTE, toggle.getValue());
+
+        test(toggle.getPulsante(StatoPresenza.ASSENTE_GIUSTIFICATA)).click();
+
+        assertEquals(StatoPresenza.ASSENTE_GIUSTIFICATA, presenzaService.findById(presenza.getId()).getStato());
+
+        // ripristina il dato di test per gli altri test
+        test(toggle.getPulsante(StatoPresenza.PRESENTE)).click();
+        assertEquals(StatoPresenza.PRESENTE, presenzaService.findById(presenza.getId()).getStato());
     }
 
     @Test
