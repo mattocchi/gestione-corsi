@@ -58,7 +58,7 @@ public class StudentiView extends VerticalLayout {
         grid.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
         var codiceFiscale = grid.addColumn(Studente::getCodiceFiscale).setHeader("Codice Fiscale");
         var dataNascita = grid.addColumn(studente -> Formati.data(studente.getDataNascita())).setHeader("Data Nascita")
-            .setComparator(Studente::getDataNascita);
+            .setComparator(Studente::getDataNascita).setAutoWidth(true).setFlexGrow(0);
         var genitore = grid.addColumn(studente -> studente.getGenitore() != null ? studente.getGenitore().getNomeCompleto() : "")
             .setHeader("Genitore");
         grid.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);

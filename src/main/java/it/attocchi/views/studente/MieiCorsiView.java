@@ -51,7 +51,7 @@ public class MieiCorsiView extends VerticalLayout {
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
         var docente = gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
         var dataInizio = gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
-            .setComparator(Corso::getDataInizio);
+            .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         var durata = gridCorsi.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
 

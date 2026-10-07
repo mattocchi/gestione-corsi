@@ -63,7 +63,7 @@ public class FigliView extends VerticalLayout {
     private void configureGrid() {
         gridFigli.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
         var dataNascita = gridFigli.addColumn(studente -> Formati.data(studente.getDataNascita())).setHeader("Data Nascita")
-            .setComparator(Studente::getDataNascita);
+            .setComparator(Studente::getDataNascita).setAutoWidth(true).setFlexGrow(0);
         gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente ->
