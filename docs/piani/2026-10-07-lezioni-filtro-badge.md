@@ -26,7 +26,8 @@ Migliorare la vista "Le Mie Lezioni" del docente (e di altri profili che la usan
 | 3 | Colonna "Stato" con `Badge` (testo su desktop, solo icona su mobile) al posto di Sì/No | `LezioniDocenteView` | `./mvnw test` | [x] |
 | 4 | Test browserless: default solo da fare; completando una lezione sparisce da "Da fare" e compare in "Completate"; "Tutte" mostra entrambe | `ViewAccessTest` | `./mvnw test` | [x] |
 | 5 | `CLAUDE.md`: `SegmentedControl` per scelte singole brevi e `Badge` per gli stati | `CLAUDE.md` | — | [x] |
-| 6 | Verifica finale: build, browser a 390px e 1280px, registro | piano | build + browser | [ ] |
+| 6 | *(emerso nella verifica)* A 390px la griglia sborda (400px su 356px): la colonna Stato con l'ordinamento occupa 68px. Colonna Stato senza ordinamento (il filtro già separa gli stati) e più compatta | `LezioniDocenteView` | `./mvnw test` + browser | [ ] |
+| 7 | Verifica finale: build, browser a 390px e 1280px, registro | piano | build + browser | [ ] |
 
 ## Fuori ambito
 
