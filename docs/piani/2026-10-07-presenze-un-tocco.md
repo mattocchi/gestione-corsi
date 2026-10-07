@@ -27,7 +27,7 @@ Dettagli:
 | 3 | Dialog presenze del docente: toggle al posto della ComboBox, riga flessibile, notifica solo su errore | `LezioniDocenteView` | `./mvnw test` | [x] |
 | 4 | Test browserless: il docente segna "Assente giustificato" con un tocco e il valore viene salvato | `ViewAccessTest` | `./mvnw test` | [x] |
 | 5 | `CLAUDE.md`: stato presenza sempre con `StatoPresenzaToggle` | `CLAUDE.md` | — | [x] |
-| 6 | Verifica finale: build, browser a 390px e 1280px (tocco, colori, salvataggio), registro | piano | build + browser | [ ] |
+| 6 | Verifica finale: build, browser a 390px e 1280px (tocco, colori, salvataggio), registro | piano | build + browser | [x] |
 
 ## Fuori ambito
 
@@ -36,4 +36,9 @@ Dettagli:
 
 ## Registro
 
-_(compilato durante l'esecuzione)_
+- Passo 1: il test unitario ha trovato un difetto (dopo il click l'evidenziazione non si aggiornava, perché `setModelValue` non ridisegna la presentazione); corretto prima del commit.
+- Build `./mvnw clean package`: BUILD SUCCESS, 18/18 test verdi (4 nuovi: 3 sul componente, 1 browserless sul flusso del docente).
+- Browser a 390px: tre pulsanti uguali da 105×34px sotto il nome, note sotto; nessuna griglia sborda (340px su 340px). Tocco reale su "Giustif." e "Ingiust.": il pulsante si colora subito (giallo/rosso), nessuna notifica.
+- Ricaricando la pagina gli stati risultano salvati.
+- Browser a 1280px: nome, stato e note sulla stessa riga per ogni studente.
+- Il colore di "Giustif." nel tema Aura è giallo (variante WARNING), non arancione come indicato nell'analisi.
