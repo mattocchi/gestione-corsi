@@ -36,7 +36,7 @@ Scelte:
 | 4 | Viste genitore/studente: Data Nascita figli, Data Inizio corsi, Data nel dialog presenze | `FigliView`, `MieiCorsiView`, `PresenzeStudenteDialog` | `./mvnw test` | [x] |
 | 5 | Riepilogo scaricabile: data inizio e date delle presenze | `FigliView` | `./mvnw -q compile` | [x] |
 | 6 | Regola nel `CLAUDE.md`: le date in UI passano da `Formati.data` | `CLAUDE.md` | — | [x] |
-| 7 | Verifica finale: build con test, controllo nel browser a 390px delle viste con date, registro | piano | build + browser | [ ] |
+| 7 | Verifica finale: build con test, controllo nel browser a 390px delle viste con date, registro | piano | build + browser | [x] |
 
 ## Fuori ambito
 
@@ -45,4 +45,8 @@ Scelte:
 
 ## Registro
 
-_(compilato durante l'esecuzione)_
+- Passi 1–6 completati, un commit per passo; `FormatiTest` conferma "mer 7 ottobre" (anno corrente) e "gio 3 ottobre 2024" (altro anno).
+- Build finale `./mvnw clean package`: BUILD SUCCESS, 14/14 test verdi (3 nuovi).
+- Browser a 390px: Le Mie Lezioni (356px su 356px, "gio 3 ottobre 2024"), titolo del dialog presenze "Corso di Canto – Lezione 1 (gio 3 ottobre 2024)", dialog presenze del genitore (340px su 340px); a 1280px I Miei Figli mostra "lun 15 marzo 2010".
+- Ordinamento della colonna Data verificato cronologico: crescente da "gio 3 ottobre 2024", decrescente da "gio 24 aprile 2025".
+- I dati di test sono del 2024–2025, quindi oggi (2026) mostrano tutti l'anno; le date dell'anno corrente compaiono senza anno.
