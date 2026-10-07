@@ -5,144 +5,120 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import it.attocchi.entity.Corso;
 import it.attocchi.entity.Docente;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
-import it.attocchi.entity.User;
-import it.attocchi.repository.DocenteRepository;
-import it.attocchi.repository.UserRepository;
 import it.attocchi.security.SecurityService;
-import it.attocchi.service.CorsoService;
+import it.attocchi.service.DocenteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
-
-import java.util.List;
 
 @Route(value = "lezioni-docente", layout = MainLayout.class)
 @PageTitle("Le Mie Lezioni")
+@Menu(title = "Le Mie Lezioni", order = 20, icon = "vaadin:calendar")
 @RolesAllowed("DOCENTE")
 public class LezioniDocenteView extends VerticalLayout {
 
     private final LezioneService lezioneService;
     private final PresenzaService presenzaService;
-    private final SecurityService securityService;
-    private final DocenteRepository docenteRepository;
-    private final UserRepository userRepository;
-    private final CorsoService corsoService;
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
     private Docente docenteCorrente;
 
     public LezioniDocenteView(LezioneService lezioneService, PresenzaService presenzaService,
-                             SecurityService securityService, DocenteRepository docenteRepository,
-                             UserRepository userRepository, CorsoService corsoService) {
+                              SecurityService securityService, DocenteService docenteService) {
         this.lezioneService = lezioneService;
         this.presenzaService = presenzaService;
-        this.securityService = securityService;
-        this.docenteRepository = docenteRepository;
-        this.userRepository = userRepository;
-        this.corsoService = corsoService;
 
         setSizeFull();
-        loadDocenteCorrente();
+        docenteCorrente = securityService.getUsername().flatMap(docenteService::findByUsername).orElse(null);
         configureGrid();
 
         add(gridLezioni);
+        expand(gridLezioni);
         updateGrid();
-    }
-
-    private void loadDocenteCorrente() {
-        String username = securityService.getAuthenticatedUser().getUsername();
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user != null) {
-            docenteCorrente = docenteRepository.findByUserId(user.getId()).orElse(null);
-        }
     }
 
     private void configureGrid() {
         gridLezioni.addColumn(lezione -> lezione.getCorso().getNome()).setHeader("Corso").setSortable(true);
-        gridLezioni.addColumn(Lezione::getData).setHeader("Data").setSortable(true);
-        gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
-        gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
-        gridLezioni.addColumn(lezione -> lezione.isCompletata() ? "Sì" : "No").setHeader("Completata");
+        gridLezioni.addColumn(Lezione::getData).setHeader("Data").setSortable(true).setAutoWidth(true).setFlexGrow(0);
+        var numero = gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
+        var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
+        var completata = gridLezioni.addColumn(lezione -> lezione.isCompletata() ? "Sì" : "No").setHeader("Completata");
 
-        gridLezioni.addComponentColumn(lezione -> {
-            Button presenzeButton = new Button("Gestisci Presenze", e -> openPresenzeDialog(lezione));
-            presenzeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            return presenzeButton;
-        }).setHeader("Azioni");
+        ViewSupport.configureActionsColumn(gridLezioni.addComponentColumn(lezione ->
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CHECK_SQUARE_O, "Gestisci Presenze", e -> openPresenzeDialog(lezione)))));
+
+        ViewSupport.hideOnMobile(gridLezioni, numero, orario, completata);
     }
 
     private void openPresenzeDialog(Lezione lezione) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("800px");
-
-        VerticalLayout layout = new VerticalLayout();
-        layout.add(new com.vaadin.flow.component.html.H3("Presenze - " + lezione.getCorso().getNome() + " - Lezione " + lezione.getNumeroLezione()));
+        Dialog dialog = ViewSupport.dialog(
+            lezione.getCorso().getNome() + " – Lezione " + lezione.getNumeroLezione() + " (" + lezione.getData() + ")", "800px");
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         gridPresenze.addColumn(presenza -> presenza.getStudente().getNomeCompleto()).setHeader("Studente");
-        gridPresenze.addColumn(Presenza::getStato).setHeader("Stato");
-        gridPresenze.addColumn(Presenza::getNote).setHeader("Note");
+        // Stato e note impilati in un'unica colonna: restano utilizzabili anche su schermi stretti
+        gridPresenze.addComponentColumn(this::createPresenzaEditor).setHeader("Presenza").setFlexGrow(2);
+        gridPresenze.setItems(presenzaService.findByLezione(lezione.getId()));
 
-        gridPresenze.addComponentColumn(presenza -> {
-            ComboBox<Presenza.StatoPresenza> statoCombo = new ComboBox<>();
-            statoCombo.setItems(Presenza.StatoPresenza.values());
-            statoCombo.setItemLabelGenerator(Presenza.StatoPresenza::getDescrizione);
-            statoCombo.setValue(presenza.getStato());
-            statoCombo.addValueChangeListener(e -> {
-                presenza.setStato(e.getValue());
-                presenzaService.save(presenza);
-                Notification.show("Presenza aggiornata");
-            });
-
-            TextArea note = new TextArea();
-            note.setWidth("200px");
-            note.setValue(presenza.getNote() != null ? presenza.getNote() : "");
-            note.addValueChangeListener(e -> {
-                presenza.setNote(e.getValue());
-                presenzaService.save(presenza);
-            });
-
-            return new HorizontalLayout(statoCombo, note);
-        }).setHeader("Modifica");
-
-        List<Presenza> presenze = presenzaService.findByLezione(lezione.getId());
-        gridPresenze.setItems(presenze);
-
-        Button completaButton = new Button("Segna Lezione Completata", e -> {
+        Button completaButton = new Button("Segna Completata", e -> {
             lezione.setCompletata(true);
             lezioneService.save(lezione);
             dialog.close();
             updateGrid();
             Notification.show("Lezione completata");
         });
-        completaButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        completaButton.addThemeVariants(ButtonVariant.SUCCESS);
         completaButton.setEnabled(!lezione.isCompletata());
 
-        Button closeButton = new Button("Chiudi", e -> dialog.close());
-
-        layout.add(gridPresenze, new HorizontalLayout(completaButton, closeButton));
-        dialog.add(layout);
+        dialog.add(gridPresenze);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"), completaButton);
         dialog.open();
+    }
+
+    private VerticalLayout createPresenzaEditor(Presenza presenza) {
+        ComboBox<Presenza.StatoPresenza> stato = new ComboBox<>();
+        stato.setAriaLabel("Stato presenza");
+        stato.setItems(Presenza.StatoPresenza.values());
+        stato.setItemLabelGenerator(Presenza.StatoPresenza::getDescrizione);
+        stato.setValue(presenza.getStato());
+        stato.setWidthFull();
+        stato.addValueChangeListener(e -> {
+            presenza.setStato(e.getValue());
+            presenzaService.save(presenza);
+            Notification.show("Presenza aggiornata");
+        });
+
+        TextField note = new TextField();
+        note.setAriaLabel("Note");
+        note.setPlaceholder("Note");
+        note.setValue(presenza.getNote() != null ? presenza.getNote() : "");
+        note.setWidthFull();
+        note.addValueChangeListener(e -> {
+            presenza.setNote(e.getValue());
+            presenzaService.save(presenza);
+        });
+
+        VerticalLayout editor = new VerticalLayout(stato, note);
+        editor.setPadding(false);
+        editor.setSpacing(false);
+        return editor;
     }
 
     private void updateGrid() {
         if (docenteCorrente != null) {
-            List<Corso> corsi = corsoService.findByDocente(docenteCorrente.getId());
-            List<Lezione> lezioni = corsi.stream()
-                .flatMap(corso -> lezioneService.findByCorso(corso.getId()).stream())
-                .toList();
-            gridLezioni.setItems(lezioni);
+            gridLezioni.setItems(lezioneService.findByDocente(docenteCorrente.getId()));
         }
     }
 }

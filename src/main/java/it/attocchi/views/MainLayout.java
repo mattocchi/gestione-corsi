@@ -3,66 +3,63 @@ package it.attocchi.views;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.sidenav.SideNav;
+import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.server.menu.MenuConfiguration;
+import com.vaadin.flow.server.menu.MenuEntry;
 import it.attocchi.security.SecurityService;
-import it.attocchi.views.admin.CorsiView;
-import it.attocchi.views.admin.StudentiView;
-import it.attocchi.views.admin.UtentiView;
-import it.attocchi.views.docente.LezioniDocenteView;
-import it.attocchi.views.genitore.FigliView;
-import it.attocchi.views.studente.MieiCorsiView;
+import jakarta.annotation.security.PermitAll;
 
+/**
+ * Layout principale. Il menu è costruito dalle view annotate con {@code @Menu};
+ * {@link MenuConfiguration} restituisce solo le voci accessibili all'utente corrente.
+ */
+@PermitAll
 public class MainLayout extends AppLayout {
 
     private final SecurityService securityService;
 
     public MainLayout(SecurityService securityService) {
         this.securityService = securityService;
+        setPrimarySection(Section.DRAWER);
         createHeader();
-        createDrawer();
+        addToDrawer(new Scroller(createSideNav()));
     }
 
     private void createHeader() {
-        H1 logo = new H1("Gestione Corsi Musica");
-        logo.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.MEDIUM);
+        H1 title = new H1("Gestione Corsi Musica");
+        title.addClassName("app-title");
 
         Button logout = new Button("Logout", e -> securityService.logout());
+        logout.addThemeVariants(ButtonVariant.TERTIARY);
 
-        HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), logo, logout);
+        HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), title, logout);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        header.expand(logo);
+        header.expand(title);
         header.setWidthFull();
-        header.addClassNames(LumoUtility.Padding.Vertical.NONE, LumoUtility.Padding.Horizontal.MEDIUM);
+        header.addClassName("app-header");
 
         addToNavbar(header);
     }
 
-    private void createDrawer() {
-        VerticalLayout menuLayout = new VerticalLayout();
+    private SideNav createSideNav() {
+        SideNav nav = new SideNav();
+        MenuConfiguration.getMenuEntries().forEach(entry -> nav.addItem(createSideNavItem(entry)));
+        return nav;
+    }
 
-        if (securityService.hasRole("ADMIN")) {
-            menuLayout.add(new RouterLink("Gestione Corsi", CorsiView.class));
-            menuLayout.add(new RouterLink("Gestione Studenti", StudentiView.class));
-            menuLayout.add(new RouterLink("Gestione Utenti", UtentiView.class));
+    private SideNavItem createSideNavItem(MenuEntry entry) {
+        SideNavItem item = new SideNavItem(entry.title(), entry.path());
+        item.setMatchNested(true);
+        if (entry.icon() != null) {
+            item.setPrefixComponent(new Icon(entry.icon()));
         }
-
-        if (securityService.hasRole("DOCENTE")) {
-            menuLayout.add(new RouterLink("Le Mie Lezioni", LezioniDocenteView.class));
-        }
-
-        if (securityService.hasRole("STUDENTE")) {
-            menuLayout.add(new RouterLink("I Miei Corsi", MieiCorsiView.class));
-        }
-
-        if (securityService.hasRole("GENITORE")) {
-            menuLayout.add(new RouterLink("I Miei Figli", FigliView.class));
-        }
-
-        addToDrawer(menuLayout);
+        return item;
     }
 }

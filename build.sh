@@ -1,7 +1,7 @@
 #mvn verify -Pit,production
 #mvn clean package -Pproduction -DskipTests
 
-mvn clean package -Pproduction -DskipTests
-cp target/gestione-corsi-1.0-SNAPSHOT.jar release/
+./mvnw clean package -DskipTests
+cp target/gestione-corsi-1.1.0.jar release/
 
-mvn clean
+./mvnw clean

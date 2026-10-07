@@ -4,7 +4,10 @@ import it.attocchi.entity.*;
 import it.attocchi.service.UserService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -14,8 +17,14 @@ import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Popola il database con dati di test. Attivo solo nel profilo {@code dev}.
+ */
 @Component
+@Profile("dev")
 public class DataInitializer implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserService userService;
     private final DocenteRepository docenteRepository;
@@ -41,24 +50,22 @@ public class DataInitializer implements CommandLineRunner {
             // Crea utente admin
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword("admin");
             admin.setNome("Admin");
             admin.setCognome("Sistema");
             admin.setEmail("admin@example.com");
             admin.setRoles(new HashSet<>());
             admin.getRoles().add("ADMIN");
-            userService.save(admin);
+            userService.save(admin, "admin");
 
             // Crea docente1 per corso di canto
             User userDocente1 = new User();
             userDocente1.setUsername("docente1");
-            userDocente1.setPassword("docente1");
             userDocente1.setNome("Maria");
             userDocente1.setCognome("Verdi");
             userDocente1.setEmail("docente1@example.com");
             userDocente1.setRoles(new HashSet<>());
             userDocente1.getRoles().add("DOCENTE");
-            userDocente1 = userService.save(userDocente1);
+            userDocente1 = userService.save(userDocente1, "docente1");
 
             Docente docente1 = new Docente();
             docente1.setUser(userDocente1);
@@ -68,13 +75,12 @@ public class DataInitializer implements CommandLineRunner {
             // Crea docente2 per corso di chitarra
             User userDocente2 = new User();
             userDocente2.setUsername("docente2");
-            userDocente2.setPassword("docente2");
             userDocente2.setNome("Marco");
             userDocente2.setCognome("Rossi");
             userDocente2.setEmail("docente2@example.com");
             userDocente2.setRoles(new HashSet<>());
             userDocente2.getRoles().add("DOCENTE");
-            userDocente2 = userService.save(userDocente2);
+            userDocente2 = userService.save(userDocente2, "docente2");
 
             Docente docente2 = new Docente();
             docente2.setUser(userDocente2);
@@ -86,13 +92,12 @@ public class DataInitializer implements CommandLineRunner {
             for (int i = 0; i < 9; i++) {
                 User userGenitore = new User();
                 userGenitore.setUsername("genitore" + (i + 1));
-                userGenitore.setPassword("genitore" + (i + 1));
                 userGenitore.setNome("Genitore" + (i + 1));
                 userGenitore.setCognome("Cognome" + (i + 1));
                 userGenitore.setEmail("genitore" + (i + 1) + "@example.com");
                 userGenitore.setRoles(new HashSet<>());
                 userGenitore.getRoles().add("GENITORE");
-                userGenitore = userService.save(userGenitore);
+                userGenitore = userService.save(userGenitore, "genitore" + (i + 1));
 
                 Genitore genitore = new Genitore();
                 genitore.setUser(userGenitore);
@@ -105,13 +110,12 @@ public class DataInitializer implements CommandLineRunner {
             for (int i = 0; i < 7; i++) {
                 User userStudente = new User();
                 userStudente.setUsername("studente_canto" + (i + 1));
-                userStudente.setPassword("studente" + (i + 1));
                 userStudente.setNome("Studente");
                 userStudente.setCognome("Canto" + (i + 1));
                 userStudente.setEmail("studente_canto" + (i + 1) + "@example.com");
                 userStudente.setRoles(new HashSet<>());
                 userStudente.getRoles().add("STUDENTE");
-                userStudente = userService.save(userStudente);
+                userStudente = userService.save(userStudente, "studente" + (i + 1));
 
                 Studente studente = new Studente();
                 studente.setUser(userStudente);
@@ -126,13 +130,12 @@ public class DataInitializer implements CommandLineRunner {
             for (int i = 0; i < 6; i++) {
                 User userStudente = new User();
                 userStudente.setUsername("studente_chitarra" + (i + 1));
-                userStudente.setPassword("studente" + (i + 8));
                 userStudente.setNome("Studente");
                 userStudente.setCognome("Chitarra" + (i + 1));
                 userStudente.setEmail("studente_chitarra" + (i + 1) + "@example.com");
                 userStudente.setRoles(new HashSet<>());
                 userStudente.getRoles().add("STUDENTE");
-                userStudente = userService.save(userStudente);
+                userStudente = userService.save(userStudente, "studente" + (i + 8));
 
                 Studente studente = new Studente();
                 studente.setUser(userStudente);
@@ -188,36 +191,19 @@ public class DataInitializer implements CommandLineRunner {
             corsoChitarra = corsoRepository.save(corsoChitarra);
 
             // Genera lezioni per entrambi i corsi
-            System.out.println("Generazione lezioni per corso di Canto...");
+            log.info("Generazione lezioni per corso di Canto...");
             corsoService.generaLezioni(corsoCanto);
 
-            System.out.println("Generazione lezioni per corso di Chitarra...");
+            log.info("Generazione lezioni per corso di Chitarra...");
             corsoService.generaLezioni(corsoChitarra);
 
-            System.out.println("\n===========================================");
-            System.out.println("Dati di test inizializzati con successo!");
-            System.out.println("===========================================");
-            System.out.println("ADMIN:");
-            System.out.println("  - admin/admin");
-            System.out.println("\nDOCENTI:");
-            System.out.println("  - docente1/docente1 (Canto)");
-            System.out.println("  - docente2/docente2 (Chitarra)");
-            System.out.println("\nGENITORI:");
-            for (int i = 0; i < 9; i++) {
-                System.out.println("  - genitore" + (i + 1) + "/genitore" + (i + 1));
-            }
-            System.out.println("\nSTUDENTI CANTO (7):");
-            for (int i = 0; i < 7; i++) {
-                System.out.println("  - studente_canto" + (i + 1) + "/studente" + (i + 1));
-            }
-            System.out.println("\nSTUDENTI CHITARRA (6):");
-            for (int i = 0; i < 6; i++) {
-                System.out.println("  - studente_chitarra" + (i + 1) + "/studente" + (i + 8));
-            }
-            System.out.println("\nCORSI:");
-            System.out.println("  - Corso di Canto: 7 studenti, Giovedì, 30 lezioni da 40 min");
-            System.out.println("  - Corso di Chitarra: 6 studenti, Martedì e Sabato, 30 lezioni da 40 min");
-            System.out.println("===========================================\n");
+            log.info("""
+                Dati di test inizializzati:
+                  ADMIN:    admin/admin
+                  DOCENTI:  docente1/docente1 (Canto), docente2/docente2 (Chitarra)
+                  GENITORI: genitore1..9 / genitore1..9
+                  STUDENTI: studente_canto1..7 / studente1..7, studente_chitarra1..6 / studente8..13
+                  CORSI:    Canto (giovedì), Chitarra (martedì e sabato), 30 lezioni da 40 min""");
         }
     }
 }

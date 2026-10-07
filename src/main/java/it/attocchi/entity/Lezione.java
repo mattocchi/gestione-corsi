@@ -119,4 +119,24 @@ public class Lezione {
     public void setCompletata(boolean completata) {
         this.completata = completata;
     }
+
+    /**
+     * Uguaglianza basata sull'id (entity non ancora salvate sono uguali solo a se stesse).
+     * hashCode costante per classe: resta stabile quando l'id viene assegnato al salvataggio.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Lezione other)) {
+            return false;
+        }
+        return getId() != null && getId().equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Lezione.class.hashCode();
+    }
 }

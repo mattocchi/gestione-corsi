@@ -71,4 +71,24 @@ public class Docente {
     public String getNomeCompleto() {
         return user != null ? user.getNomeCompleto() : "";
     }
+
+    /**
+     * Uguaglianza basata sull'id (entity non ancora salvate sono uguali solo a se stesse).
+     * hashCode costante per classe: resta stabile quando l'id viene assegnato al salvataggio.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Docente other)) {
+            return false;
+        }
+        return getId() != null && getId().equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Docente.class.hashCode();
+    }
 }

@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class LezioneService {
 
     private final LezioneRepository lezioneRepository;
@@ -27,6 +28,10 @@ public class LezioneService {
 
     public List<Lezione> findByCorso(Long corsoId) {
         return lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId);
+    }
+
+    public List<Lezione> findByDocente(Long docenteId) {
+        return lezioneRepository.findByCorsoDocenteIdOrderByDataAsc(docenteId);
     }
 
     public List<Lezione> findByCorsoAndPeriodo(Long corsoId, LocalDate dataInizio, LocalDate dataFine) {

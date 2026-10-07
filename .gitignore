@@ -21,3 +21,6 @@ error-screenshots/
 webpack.generated.js
 
 /release/
+
+# Bundle frontend generati da Vaadin (ricreati automaticamente dalla build)
+src/main/bundles/

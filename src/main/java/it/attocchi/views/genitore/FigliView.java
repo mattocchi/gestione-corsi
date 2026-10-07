@@ -1,202 +1,157 @@
 package it.attocchi.views.genitore;
 
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.streams.DownloadHandler;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
-import it.attocchi.entity.User;
-import it.attocchi.repository.GenitoreRepository;
-import it.attocchi.repository.UserRepository;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
+import it.attocchi.service.GenitoreService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.PresenzeStudenteDialog;
+import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
-import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Route(value = "figli", layout = MainLayout.class)
 @PageTitle("I Miei Figli")
+@Menu(title = "I Miei Figli", order = 40, icon = "vaadin:family")
 @RolesAllowed("GENITORE")
 public class FigliView extends VerticalLayout {
 
     private final StudenteService studenteService;
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
-    private final SecurityService securityService;
-    private final GenitoreRepository genitoreRepository;
-    private final UserRepository userRepository;
 
     private final Grid<Studente> gridFigli = new Grid<>(Studente.class, false);
     private Genitore genitoreCorrente;
 
     public FigliView(StudenteService studenteService, CorsoService corsoService,
-                    PresenzaService presenzaService, SecurityService securityService,
-                    GenitoreRepository genitoreRepository, UserRepository userRepository) {
+                     PresenzaService presenzaService, SecurityService securityService,
+                     GenitoreService genitoreService) {
         this.studenteService = studenteService;
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
-        this.securityService = securityService;
-        this.genitoreRepository = genitoreRepository;
-        this.userRepository = userRepository;
 
         setSizeFull();
-        loadGenitoreCorrente();
+        genitoreCorrente = securityService.getUsername().flatMap(genitoreService::findByUsername).orElse(null);
         configureGrid();
 
         add(gridFigli);
+        expand(gridFigli);
         updateGrid();
-    }
-
-    private void loadGenitoreCorrente() {
-        String username = securityService.getAuthenticatedUser().getUsername();
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user != null) {
-            genitoreCorrente = genitoreRepository.findByUserId(user.getId()).orElse(null);
-        }
     }
 
     private void configureGrid() {
         gridFigli.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
-        gridFigli.addColumn(Studente::getDataNascita).setHeader("Data Nascita");
-        gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi");
+        var dataNascita = gridFigli.addColumn(Studente::getDataNascita).setHeader("Data Nascita");
+        gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
-        gridFigli.addComponentColumn(studente -> {
-            Button viewButton = new Button("Visualizza Dettagli", e -> openDettagliDialog(studente));
-            viewButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            return viewButton;
-        }).setHeader("Azioni");
+        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente ->
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.EYE, "Visualizza Dettagli", e -> openDettagliDialog(studente)))));
+
+        ViewSupport.hideOnMobile(gridFigli, dataNascita);
     }
 
     private void openDettagliDialog(Studente studente) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("1000px");
+        Dialog dialog = ViewSupport.dialog("Corsi di " + studente.getNomeCompleto(), "1000px");
 
-        VerticalLayout layout = new VerticalLayout();
-        layout.add(new H3("Profilo di " + studente.getNomeCompleto()));
-
-        // Grid dei corsi
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
-        gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
-        gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
-        gridCorsi.addColumn(Corso::getCostoTotale).setHeader("Costo Totale");
+        var docente = gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
+        var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        gridCorsi.addColumn(Corso::getCostoTotale).setHeader("Costo Totale").setAutoWidth(true).setFlexGrow(0);
 
-        gridCorsi.addComponentColumn(corso -> {
-            Button presenzeButton = new Button("Presenze", e -> openPresenzeDialog(studente, corso));
-            Button downloadButton = new Button("Scarica Riepilogo");
+        ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso -> {
+            Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CHECK_SQUARE_O, "Presenze", e -> openPresenzeDialog(studente, corso));
 
             Anchor download = new Anchor(generateRiepilogo(studente, corso), "");
             download.getElement().setAttribute("download", true);
-            download.add(downloadButton);
+            download.add(ViewSupport.iconButton(VaadinIcon.DOWNLOAD, "Scarica Riepilogo"));
 
-            return new HorizontalLayout(presenzeButton, download);
-        }).setHeader("Azioni");
+            HorizontalLayout actions = ViewSupport.actions(presenzeButton);
+            actions.add(download);
+            return actions;
+        }));
+        ViewSupport.hideOnMobile(gridCorsi, docente, numeroLezioni);
 
-        List<Corso> corsi = corsoService.findByStudente(studente.getId());
-        gridCorsi.setItems(corsi);
+        gridCorsi.setItems(corsoService.findByStudente(studente.getId()));
+        gridCorsi.setAllRowsVisible(true);
 
-        Button closeButton = new Button("Chiudi", e -> dialog.close());
-
-        layout.add(gridCorsi, closeButton);
-        dialog.add(layout);
+        dialog.add(gridCorsi);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
         dialog.open();
     }
 
     private void openPresenzeDialog(Studente studente, Corso corso) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("800px");
-
-        VerticalLayout layout = new VerticalLayout();
-        layout.add(new H3("Presenze - " + corso.getNome() + " - " + studente.getNomeCompleto()));
-
-        Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
-        gridPresenze.addColumn(presenza -> presenza.getLezione().getData()).setHeader("Data");
-        gridPresenze.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione");
-        gridPresenze.addColumn(presenza -> presenza.getStato().getDescrizione()).setHeader("Stato");
-        gridPresenze.addColumn(Presenza::getNote).setHeader("Note");
-
         List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
-        gridPresenze.setItems(presenze);
-
-        // Calcola statistiche
-        long totaleLezioni = presenze.size();
-        long presenti = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.PRESENTE).count();
-        long assenzeGiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_GIUSTIFICATA).count();
-        long assenzeIngiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_INGIUSTIFICATA).count();
-
-        VerticalLayout stats = new VerticalLayout();
-        stats.add(new com.vaadin.flow.component.html.Span("Totale lezioni: " + totaleLezioni));
-        stats.add(new com.vaadin.flow.component.html.Span("Presenze: " + presenti));
-        stats.add(new com.vaadin.flow.component.html.Span("Assenze giustificate: " + assenzeGiustificate));
-        stats.add(new com.vaadin.flow.component.html.Span("Assenze ingiustificate: " + assenzeIngiustificate));
-
-        Button closeButton = new Button("Chiudi", e -> dialog.close());
-
-        layout.add(stats, gridPresenze, closeButton);
-        dialog.add(layout);
-        dialog.open();
+        new PresenzeStudenteDialog(corso.getNome() + " – " + studente.getNomeCompleto(), presenze).open();
     }
 
-    private StreamResource generateRiepilogo(Studente studente, Corso corso) {
-        return new StreamResource("riepilogo-" + corso.getNome() + "-" + studente.getNomeCompleto() + ".txt",
-            () -> {
-                StringBuilder sb = new StringBuilder();
-                sb.append("RIEPILOGO CORSO\n");
-                sb.append("===================\n\n");
-                sb.append("Studente: ").append(studente.getNomeCompleto()).append("\n");
-                sb.append("Corso: ").append(corso.getNome()).append("\n");
-                sb.append("Docente: ").append(corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "N/D").append("\n");
-                sb.append("Data inizio: ").append(corso.getDataInizio()).append("\n");
-                sb.append("Numero lezioni: ").append(corso.getNumeroLezioni()).append("\n");
-                sb.append("Durata lezione: ").append(corso.getDurataLezioneMinuti()).append(" minuti\n\n");
+    private DownloadHandler generateRiepilogo(Studente studente, Corso corso) {
+        return event -> {
+            event.setFileName("riepilogo-" + corso.getNome() + "-" + studente.getNomeCompleto() + ".txt");
+            event.setContentType("text/plain; charset=UTF-8");
+            StringBuilder sb = new StringBuilder();
+            sb.append("RIEPILOGO CORSO\n");
+            sb.append("===================\n\n");
+            sb.append("Studente: ").append(studente.getNomeCompleto()).append("\n");
+            sb.append("Corso: ").append(corso.getNome()).append("\n");
+            sb.append("Docente: ").append(corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "N/D").append("\n");
+            sb.append("Data inizio: ").append(corso.getDataInizio()).append("\n");
+            sb.append("Numero lezioni: ").append(corso.getNumeroLezioni()).append("\n");
+            sb.append("Durata lezione: ").append(corso.getDurataLezioneMinuti()).append(" minuti\n\n");
 
-                BigDecimal costoTotale = corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
-                sb.append("COSTO TOTALE DA PAGARE: € ").append(costoTotale).append("\n\n");
+            BigDecimal costoTotale = corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
+            sb.append("COSTO TOTALE DA PAGARE: € ").append(costoTotale).append("\n\n");
 
-                sb.append("PRESENZE\n");
-                sb.append("===================\n");
+            sb.append("PRESENZE\n");
+            sb.append("===================\n");
 
-                List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
-                for (Presenza presenza : presenze) {
-                    sb.append("Lezione ").append(presenza.getLezione().getNumeroLezione())
-                      .append(" - ").append(presenza.getLezione().getData())
-                      .append(" - ").append(presenza.getStato().getDescrizione());
-                    if (presenza.getNote() != null && !presenza.getNote().isEmpty()) {
-                        sb.append(" (").append(presenza.getNote()).append(")");
-                    }
-                    sb.append("\n");
+            List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
+            for (Presenza presenza : presenze) {
+                sb.append("Lezione ").append(presenza.getLezione().getNumeroLezione())
+                  .append(" - ").append(presenza.getLezione().getData())
+                  .append(" - ").append(presenza.getStato().getDescrizione());
+                if (presenza.getNote() != null && !presenza.getNote().isEmpty()) {
+                    sb.append(" (").append(presenza.getNote()).append(")");
                 }
+                sb.append("\n");
+            }
 
-                long totaleLezioni = presenze.size();
-                long presenti = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.PRESENTE).count();
-                long assenzeGiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_GIUSTIFICATA).count();
-                long assenzeIngiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_INGIUSTIFICATA).count();
+            long totaleLezioni = presenze.size();
+            long presenti = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.PRESENTE).count();
+            long assenzeGiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_GIUSTIFICATA).count();
+            long assenzeIngiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_INGIUSTIFICATA).count();
 
-                sb.append("\nSTATISTICHE\n");
-                sb.append("===================\n");
-                sb.append("Totale lezioni: ").append(totaleLezioni).append("\n");
-                sb.append("Presenze: ").append(presenti).append("\n");
-                sb.append("Assenze giustificate: ").append(assenzeGiustificate).append("\n");
-                sb.append("Assenze ingiustificate: ").append(assenzeIngiustificate).append("\n");
+            sb.append("\nSTATISTICHE\n");
+            sb.append("===================\n");
+            sb.append("Totale lezioni: ").append(totaleLezioni).append("\n");
+            sb.append("Presenze: ").append(presenti).append("\n");
+            sb.append("Assenze giustificate: ").append(assenzeGiustificate).append("\n");
+            sb.append("Assenze ingiustificate: ").append(assenzeIngiustificate).append("\n");
 
-                return new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
-            });
+            try (OutputStream out = event.getOutputStream()) {
+                out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        };
     }
 
     private void updateGrid() {

@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class CorsoService {
 
     private final CorsoRepository corsoRepository;
@@ -59,7 +60,10 @@ public class CorsoService {
     }
 
     @Transactional
-    public void generaLezioni(Corso corso) {
+    public void generaLezioni(Corso corsoDaUi) {
+        Corso corso = corsoRepository.findById(corsoDaUi.getId())
+            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoDaUi.getId()));
+
         // Elimina lezioni esistenti non completate
         List<Lezione> lezioniEsistenti = lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId());
         lezioniEsistenti.stream()

@@ -1,0 +1,24 @@
+/* Stili dell'applicazione. Il tema Aura è caricato in Application con @StyleSheet(Aura.STYLESHEET). */
+
+/* Header: il titolo si accorcia con i puntini invece di spingere fuori il pulsante Logout */
+.app-header {
+    padding-inline: 1rem;
+    min-width: 0;
+}
+
+.app-title {
+    font-size: var(--aura-font-size-l, 1rem);
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Titoli di pagina (Home, Login): dimensione fluida tra smartphone e desktop */
+.page-title {
+    font-size: clamp(1.5rem, 1rem + 2.5vw, 2.25rem);
+    line-height: 1.2;
+    text-align: center;
+    margin: 0;
+}

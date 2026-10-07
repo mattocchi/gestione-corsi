@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class StudenteService {
 
     private final StudenteRepository studenteRepository;
@@ -28,8 +30,12 @@ public class StudenteService {
         return studenteRepository.findByUserId(userId).orElse(null);
     }
 
+    public Optional<Studente> findByUsername(String username) {
+        return studenteRepository.findByUserUsername(username);
+    }
+
     public List<Studente> findByGenitore(Long genitoreId) {
-        return studenteRepository.findByGenitoreId(genitoreId);
+        return studenteRepository.findByGenitoreIdWithCorsi(genitoreId);
     }
 
     @Transactional

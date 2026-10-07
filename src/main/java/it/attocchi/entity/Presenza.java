@@ -80,6 +80,26 @@ public class Presenza {
         this.note = note;
     }
 
+    /**
+     * Uguaglianza basata sull'id (entity non ancora salvate sono uguali solo a se stesse).
+     * hashCode costante per classe: resta stabile quando l'id viene assegnato al salvataggio.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Presenza other)) {
+            return false;
+        }
+        return getId() != null && getId().equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Presenza.class.hashCode();
+    }
+
     public enum StatoPresenza {
         PRESENTE("Presente"),
         ASSENTE_GIUSTIFICATA("Assente giustificata"),

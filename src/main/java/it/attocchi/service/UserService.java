@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -31,11 +32,16 @@ public class UserService {
         return userRepository.findByUsername(username).orElse(null);
     }
 
+    /**
+     * Salva l'utente. Se {@code rawPassword} non è vuota viene cifrata e impostata;
+     * altrimenti la password esistente resta invariata (obbligatoria per i nuovi utenti).
+     */
     @Transactional
-    public User save(User user) {
-        // Cripta la password solo se è stata modificata
-        if (user.getId() == null || !user.getPassword().startsWith("$2a$")) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+    public User save(User user, String rawPassword) {
+        if (rawPassword != null && !rawPassword.isBlank()) {
+            user.setPassword(passwordEncoder.encode(rawPassword));
+        } else if (user.getId() == null) {
+            throw new IllegalArgumentException("La password è obbligatoria per un nuovo utente");
         }
         return userRepository.save(user);
     }

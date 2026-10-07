@@ -6,22 +6,26 @@ import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.User;
 import it.attocchi.service.UserService;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.Arrays;
 
 @Route(value = "utenti", layout = MainLayout.class)
 @PageTitle("Gestione Utenti")
+@Menu(title = "Gestione Utenti", order = 12, icon = "vaadin:users")
 @RolesAllowed("ADMIN")
 public class UtentiView extends VerticalLayout {
 
@@ -36,34 +40,36 @@ public class UtentiView extends VerticalLayout {
 
         Button addButton = new Button("Nuovo Utente", e -> openDialog(new User()));
         add(addButton, grid);
+        expand(grid);
 
         updateGrid();
     }
 
     private void configureGrid() {
         grid.addColumn(User::getUsername).setHeader("Username").setSortable(true);
-        grid.addColumn(User::getNome).setHeader("Nome").setSortable(true);
-        grid.addColumn(User::getCognome).setHeader("Cognome").setSortable(true);
-        grid.addColumn(User::getEmail).setHeader("Email");
+        var nome = grid.addColumn(User::getNome).setHeader("Nome").setSortable(true);
+        var cognome = grid.addColumn(User::getCognome).setHeader("Cognome").setSortable(true);
+        var email = grid.addColumn(User::getEmail).setHeader("Email");
         grid.addColumn(user -> String.join(", ", user.getRoles())).setHeader("Ruoli");
 
-        grid.addComponentColumn(user -> {
-            Button editButton = new Button("Modifica", e -> openDialog(user));
-            Button deleteButton = new Button("Elimina", e -> deleteUser(user));
-            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            return new HorizontalLayout(editButton, deleteButton);
-        }).setHeader("Azioni");
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(user -> {
+            Button editButton = ViewSupport.iconButton(VaadinIcon.EDIT, "Modifica", e -> openDialog(user));
+            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteUser(user));
+            deleteButton.addThemeVariants(ButtonVariant.ERROR);
+            return ViewSupport.actions(editButton, deleteButton);
+        }));
+
+        ViewSupport.hideOnMobile(grid, nome, cognome, email);
     }
 
     private void openDialog(User user) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("500px");
+        Dialog dialog = ViewSupport.dialog(user.getId() == null ? "Nuovo Utente" : "Modifica Utente", "600px");
 
         FormLayout formLayout = new FormLayout();
         Binder<User> binder = new Binder<>(User.class);
 
         TextField username = new TextField("Username");
-        TextField password = new TextField("Password");
+        PasswordField password = new PasswordField("Password");
         TextField nome = new TextField("Nome");
         TextField cognome = new TextField("Cognome");
         TextField email = new TextField("Email");
@@ -91,10 +97,7 @@ public class UtentiView extends VerticalLayout {
         Button saveButton = new Button("Salva", e -> {
             try {
                 binder.writeBean(user);
-                if (!password.isEmpty()) {
-                    user.setPassword(password.getValue());
-                }
-                userService.save(user);
+                userService.save(user, password.getValue());
                 updateGrid();
                 dialog.close();
                 Notification.show("Utente salvato con successo");
@@ -102,11 +105,10 @@ public class UtentiView extends VerticalLayout {
                 Notification.show("Errore nel salvataggio: " + ex.getMessage());
             }
         });
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
-        Button cancelButton = new Button("Annulla", e -> dialog.close());
-
-        dialog.add(new VerticalLayout(formLayout, new HorizontalLayout(saveButton, cancelButton)));
+        dialog.add(formLayout);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
         dialog.open();
     }
 

@@ -8,21 +8,23 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Docente;
-import it.attocchi.repository.DocenteRepository;
 import it.attocchi.service.CorsoService;
+import it.attocchi.service.DocenteService;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.time.DayOfWeek;
@@ -30,51 +32,53 @@ import java.util.Arrays;
 
 @Route(value = "corsi", layout = MainLayout.class)
 @PageTitle("Gestione Corsi")
+@Menu(title = "Gestione Corsi", order = 10, icon = "vaadin:music")
 @RolesAllowed("ADMIN")
 public class CorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
-    private final DocenteRepository docenteRepository;
+    private final DocenteService docenteService;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
-    private final Binder<Corso> binder = new Binder<>(Corso.class);
 
-    public CorsiView(CorsoService corsoService, DocenteRepository docenteRepository) {
+    public CorsiView(CorsoService corsoService, DocenteService docenteService) {
         this.corsoService = corsoService;
-        this.docenteRepository = docenteRepository;
+        this.docenteService = docenteService;
 
         setSizeFull();
         configureGrid();
 
         Button addButton = new Button("Nuovo Corso", e -> openDialog(new Corso()));
         add(addButton, grid);
+        expand(grid);
 
         updateGrid();
     }
 
     private void configureGrid() {
         grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
-        grid.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
-        grid.addColumn(Corso::getDataInizio).setHeader("Data Inizio");
-        grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
-        grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
-        grid.addColumn(corso -> corso.getStudenti().size()).setHeader("N. Studenti");
+        var docente = grid.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
+        var dataInizio = grid.addColumn(Corso::getDataInizio).setHeader("Data Inizio");
+        var numeroLezioni = grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        var durata = grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
+        var numeroStudenti = grid.addColumn(corso -> corso.getStudenti().size()).setHeader("N. Studenti");
 
-        grid.addComponentColumn(corso -> {
-            Button editButton = new Button("Modifica", e -> openDialog(corso));
-            Button generateButton = new Button("Genera Lezioni", e -> generaLezioni(corso));
-            generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            Button deleteButton = new Button("Elimina", e -> deleteCorso(corso));
-            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            return new HorizontalLayout(editButton, generateButton, deleteButton);
-        }).setHeader("Azioni");
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(corso -> {
+            Button editButton = ViewSupport.iconButton(VaadinIcon.EDIT, "Modifica", e -> openDialog(corso));
+            Button generateButton = ViewSupport.iconButton(VaadinIcon.CALENDAR_CLOCK, "Genera Lezioni", e -> generaLezioni(corso));
+            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
+            deleteButton.addThemeVariants(ButtonVariant.ERROR);
+            return ViewSupport.actions(editButton, generateButton, deleteButton);
+        }));
+
+        ViewSupport.hideOnMobile(grid, docente, dataInizio, numeroLezioni, durata, numeroStudenti);
     }
 
     private void openDialog(Corso corso) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
+        Dialog dialog = ViewSupport.dialog(corso.getId() == null ? "Nuovo Corso" : "Modifica Corso", "600px");
 
         FormLayout formLayout = new FormLayout();
+        Binder<Corso> binder = new Binder<>(Corso.class);
 
         TextField nome = new TextField("Nome");
         TextArea descrizione = new TextArea("Descrizione");
@@ -100,7 +104,7 @@ public class CorsiView extends VerticalLayout {
         });
 
         ComboBox<Docente> docente = new ComboBox<>("Docente");
-        docente.setItems(docenteRepository.findAll());
+        docente.setItems(docenteService.findAll());
         docente.setItemLabelGenerator(Docente::getNomeCompleto);
 
         binder.forField(nome).bind(Corso::getNome, Corso::setNome);
@@ -127,11 +131,13 @@ public class CorsiView extends VerticalLayout {
                 Notification.show("Errore nel salvataggio: " + ex.getMessage());
             }
         });
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
-        Button cancelButton = new Button("Annulla", e -> dialog.close());
+        formLayout.setColspan(giorniSettimana, 2);
+        formLayout.setColspan(descrizione, 2);
 
-        dialog.add(new VerticalLayout(formLayout, new HorizontalLayout(saveButton, cancelButton)));
+        dialog.add(formLayout);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
         dialog.open();
     }
 

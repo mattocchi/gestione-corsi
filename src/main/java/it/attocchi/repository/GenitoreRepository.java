@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface GenitoreRepository extends JpaRepository<Genitore, Long> {
     Optional<Genitore> findByUserId(Long userId);
+    Optional<Genitore> findByUserUsername(String username);
 }

@@ -1,101 +1,70 @@
 package it.attocchi.views.studente;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
-import it.attocchi.entity.User;
-import it.attocchi.repository.StudenteRepository;
-import it.attocchi.repository.UserRepository;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PresenzaService;
+import it.attocchi.service.StudenteService;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.PresenzeStudenteDialog;
+import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.List;
 
 @Route(value = "miei-corsi", layout = MainLayout.class)
 @PageTitle("I Miei Corsi")
+@Menu(title = "I Miei Corsi", order = 30, icon = "vaadin:book")
 @RolesAllowed("STUDENTE")
 public class MieiCorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
-    private final SecurityService securityService;
-    private final StudenteRepository studenteRepository;
-    private final UserRepository userRepository;
 
     private final Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
     private Studente studenteCorrente;
 
     public MieiCorsiView(CorsoService corsoService, PresenzaService presenzaService,
-                        SecurityService securityService, StudenteRepository studenteRepository,
-                        UserRepository userRepository) {
+                         SecurityService securityService, StudenteService studenteService) {
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
-        this.securityService = securityService;
-        this.studenteRepository = studenteRepository;
-        this.userRepository = userRepository;
 
         setSizeFull();
-        loadStudenteCorrente();
+        studenteCorrente = securityService.getUsername().flatMap(studenteService::findByUsername).orElse(null);
         configureGrid();
 
         add(gridCorsi);
+        expand(gridCorsi);
         updateGrid();
-    }
-
-    private void loadStudenteCorrente() {
-        String username = securityService.getAuthenticatedUser().getUsername();
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user != null) {
-            studenteCorrente = studenteRepository.findByUserId(user.getId()).orElse(null);
-        }
     }
 
     private void configureGrid() {
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
-        gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
-        gridCorsi.addColumn(Corso::getDataInizio).setHeader("Data Inizio");
-        gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
-        gridCorsi.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
+        var docente = gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
+        var dataInizio = gridCorsi.addColumn(Corso::getDataInizio).setHeader("Data Inizio");
+        var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        var durata = gridCorsi.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
 
-        gridCorsi.addComponentColumn(corso -> {
-            Button viewButton = new Button("Visualizza Presenze", e -> openPresenzeDialog(corso));
-            return viewButton;
-        }).setHeader("Azioni");
+        ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso ->
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CHECK_SQUARE_O, "Visualizza Presenze", e -> openPresenzeDialog(corso)))));
+
+        ViewSupport.hideOnMobile(gridCorsi, docente, dataInizio, numeroLezioni, durata);
     }
 
     private void openPresenzeDialog(Corso corso) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("800px");
-
-        VerticalLayout layout = new VerticalLayout();
-        layout.add(new H3("Presenze - " + corso.getNome()));
-
-        Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
-        gridPresenze.addColumn(presenza -> presenza.getLezione().getData()).setHeader("Data");
-        gridPresenze.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione");
-        gridPresenze.addColumn(presenza -> presenza.getStato().getDescrizione()).setHeader("Stato");
-        gridPresenze.addColumn(Presenza::getNote).setHeader("Note");
-
-        if (studenteCorrente != null) {
-            List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studenteCorrente.getId());
-            gridPresenze.setItems(presenze);
+        if (studenteCorrente == null) {
+            return;
         }
-
-        Button closeButton = new Button("Chiudi", e -> dialog.close());
-
-        layout.add(gridPresenze, closeButton);
-        dialog.add(layout);
-        dialog.open();
+        List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studenteCorrente.getId());
+        new PresenzeStudenteDialog("Presenze – " + corso.getNome(), presenze).open();
     }
 
     private void updateGrid() {
