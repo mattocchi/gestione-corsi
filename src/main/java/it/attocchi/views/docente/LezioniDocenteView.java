@@ -2,9 +2,10 @@ package it.attocchi.views.docente;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -21,8 +22,11 @@ import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.StatoPresenzaToggle;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
+
+import java.util.function.Consumer;
 
 @Route(value = "lezioni-docente", layout = MainLayout.class)
 @PageTitle("Le Mie Lezioni")
@@ -69,9 +73,8 @@ public class LezioniDocenteView extends VerticalLayout {
             lezione.getCorso().getNome() + " – Lezione " + lezione.getNumeroLezione() + " (" + Formati.data(lezione.getData()) + ")", "800px");
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
-        gridPresenze.addColumn(presenza -> presenza.getStudente().getNomeCompleto()).setHeader("Studente");
-        // Stato e note impilati in un'unica colonna: restano utilizzabili anche su schermi stretti
-        gridPresenze.addComponentColumn(this::createPresenzaEditor).setHeader("Presenza").setFlexGrow(2);
+        // Una sola colonna con nome, stato e note: su schermi stretti gli elementi vanno a capo
+        gridPresenze.addComponentColumn(this::createPresenzaRiga).setHeader("Studenti");
         gridPresenze.setItems(presenzaService.findByLezione(lezione.getId()));
 
         Button completaButton = new Button("Segna Completata", e -> {
@@ -89,33 +92,35 @@ public class LezioniDocenteView extends VerticalLayout {
         dialog.open();
     }
 
-    private VerticalLayout createPresenzaEditor(Presenza presenza) {
-        ComboBox<Presenza.StatoPresenza> stato = new ComboBox<>();
-        stato.setAriaLabel("Stato presenza");
-        stato.setItems(Presenza.StatoPresenza.values());
-        stato.setItemLabelGenerator(Presenza.StatoPresenza::getDescrizione);
+    private Div createPresenzaRiga(Presenza presenza) {
+        Span nome = new Span(presenza.getStudente().getNomeCompleto());
+        nome.addClassName("presenza-nome");
+
+        StatoPresenzaToggle stato = new StatoPresenzaToggle();
         stato.setValue(presenza.getStato());
-        stato.setWidthFull();
-        stato.addValueChangeListener(e -> {
-            presenza.setStato(e.getValue());
-            presenzaService.save(presenza);
-            Notification.show("Presenza aggiornata");
-        });
+        stato.addValueChangeListener(e -> salva(presenza, p -> p.setStato(e.getValue())));
 
         TextField note = new TextField();
-        note.setAriaLabel("Note");
+        note.addClassName("presenza-note");
+        note.setAriaLabel("Note per " + presenza.getStudente().getNomeCompleto());
         note.setPlaceholder("Note");
         note.setValue(presenza.getNote() != null ? presenza.getNote() : "");
-        note.setWidthFull();
-        note.addValueChangeListener(e -> {
-            presenza.setNote(e.getValue());
-            presenzaService.save(presenza);
-        });
+        note.addValueChangeListener(e -> salva(presenza, p -> p.setNote(e.getValue())));
 
-        VerticalLayout editor = new VerticalLayout(stato, note);
-        editor.setPadding(false);
-        editor.setSpacing(false);
-        return editor;
+        Div riga = new Div(nome, stato, note);
+        riga.addClassName("presenza-riga");
+        return riga;
+    }
+
+    /** Salva subito la modifica; il riscontro è lo stato visibile nella riga, la notifica solo in caso di errore. */
+    private void salva(Presenza presenza, Consumer<Presenza> modifica) {
+        modifica.accept(presenza);
+        try {
+            presenzaService.save(presenza);
+        } catch (RuntimeException ex) {
+            Notification.show("Errore nel salvataggio della presenza di "
+                + presenza.getStudente().getNomeCompleto() + ": " + ex.getMessage());
+        }
     }
 
     private void updateGrid() {
