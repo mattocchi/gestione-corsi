@@ -21,7 +21,7 @@ Migliorare la vista "Le Mie Lezioni" del docente (e di altri profili che la usan
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Generalizzare il toggle in `SegmentedControl<T>`; `StatoPresenzaToggle` lo estende senza cambi di comportamento | `views/SegmentedControl.java`, `StatoPresenzaToggle.java`, `styles.css` | `./mvnw test` (test del toggle invariati) | [ ] |
+| 1 | Generalizzare il toggle in `SegmentedControl<T>`; `StatoPresenzaToggle` lo estende senza cambi di comportamento | `views/SegmentedControl.java`, `StatoPresenzaToggle.java`, `styles.css` | `./mvnw test` (test del toggle invariati) | [x] |
 | 2 | Filtro Da fare / Completate / Tutte sopra la griglia, default Da fare, mantenuto dopo il ricaricamento | `LezioniDocenteView` | `./mvnw test` | [ ] |
 | 3 | Colonna "Stato" con `Badge` (testo su desktop, solo icona su mobile) al posto di Sì/No | `LezioniDocenteView` | `./mvnw test` | [ ] |
 | 4 | Test browserless: default solo da fare; completando una lezione sparisce da "Da fare" e compare in "Completate"; "Tutte" mostra entrambe | `ViewAccessTest` | `./mvnw test` | [ ] |

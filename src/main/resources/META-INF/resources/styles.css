@@ -23,14 +23,14 @@
     margin: 0;
 }
 
-/* Stato presenza: tre pulsanti della stessa larghezza, scelta con un tocco */
-.stato-presenza-toggle {
+/* Pulsanti segmentati (SegmentedControl): stessa larghezza, scelta con un tocco */
+.segmented-control {
     display: flex;
     gap: 0.25rem;
     width: 100%;
 }
 
-.stato-presenza-toggle vaadin-button {
+.segmented-control vaadin-button {
     flex: 1 1 0;
     min-width: 0;
     margin: 0;
