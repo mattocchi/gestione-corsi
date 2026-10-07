@@ -25,7 +25,7 @@ Tutte le nuove costanti esistono in `VaadinIcon` di Vaadin 25.3 (verificato con 
 |---|---|---|---|---|
 | 1 | Modifica → `PENCIL` | `CorsiView`, `StudentiView`, `UtentiView` | `./mvnw test` | [x] |
 | 2 | Genera Lezioni → `REFRESH` | `CorsiView` | `./mvnw -q compile` | [x] |
-| 3 | Presenze → `CLIPBOARD_CHECK` | `LezioniDocenteView`, `MieiCorsiView`, `FigliView` | `./mvnw test` | [ ] |
+| 3 | Presenze → `CLIPBOARD_CHECK` | `LezioniDocenteView`, `MieiCorsiView`, `FigliView` | `./mvnw test` | [x] |
 | 4 | Dettagli figlio → `BOOK` | `FigliView` | `./mvnw test` | [ ] |
 | 5 | Convenzione icone delle azioni nel `CLAUDE.md` | `CLAUDE.md` | — | [ ] |
 | 6 | Verifica finale: build con test, controllo visivo nel browser, registro | piano | build + browser | [ ] |

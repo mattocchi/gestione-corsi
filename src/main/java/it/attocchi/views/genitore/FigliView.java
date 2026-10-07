@@ -82,7 +82,7 @@ public class FigliView extends VerticalLayout {
         gridCorsi.addColumn(Corso::getCostoTotale).setHeader("Costo Totale").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso -> {
-            Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CHECK_SQUARE_O, "Presenze", e -> openPresenzeDialog(studente, corso));
+            Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Presenze", e -> openPresenzeDialog(studente, corso));
 
             Anchor download = new Anchor(generateRiepilogo(studente, corso), "");
             download.getElement().setAttribute("download", true);

@@ -56,7 +56,7 @@ public class MieiCorsiView extends VerticalLayout {
         var durata = gridCorsi.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
 
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso ->
-            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CHECK_SQUARE_O, "Visualizza Presenze", e -> openPresenzeDialog(corso)))));
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Visualizza Presenze", e -> openPresenzeDialog(corso)))));
 
         ViewSupport.hideOnMobile(gridCorsi, docente, dataInizio, numeroLezioni, durata);
     }

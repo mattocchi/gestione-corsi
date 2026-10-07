@@ -59,7 +59,7 @@ public class LezioniDocenteView extends VerticalLayout {
         var completata = gridLezioni.addColumn(lezione -> lezione.isCompletata() ? "Sì" : "No").setHeader("Completata");
 
         ViewSupport.configureActionsColumn(gridLezioni.addComponentColumn(lezione ->
-            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CHECK_SQUARE_O, "Gestisci Presenze", e -> openPresenzeDialog(lezione)))));
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Gestisci Presenze", e -> openPresenzeDialog(lezione)))));
 
         ViewSupport.hideOnMobile(gridLezioni, numero, orario, completata);
     }
