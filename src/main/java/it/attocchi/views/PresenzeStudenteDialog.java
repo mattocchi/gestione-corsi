@@ -24,7 +24,8 @@ public class PresenzeStudenteDialog extends Dialog {
         setMaxWidth("100%");
 
         Grid<Presenza> grid = new Grid<>(Presenza.class, false);
-        grid.addColumn(presenza -> presenza.getLezione().getData()).setHeader("Data").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(presenza -> Formati.data(presenza.getLezione().getData())).setHeader("Data")
+            .setAutoWidth(true).setFlexGrow(0);
         var numero = grid.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione")
             .setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(presenza -> presenza.getStato().getDescrizione()).setHeader("Stato")

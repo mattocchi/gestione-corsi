@@ -20,6 +20,7 @@ import it.attocchi.service.CorsoService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.StudenteService;
+import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PresenzeStudenteDialog;
 import it.attocchi.views.ViewSupport;
@@ -61,7 +62,8 @@ public class FigliView extends VerticalLayout {
 
     private void configureGrid() {
         gridFigli.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
-        var dataNascita = gridFigli.addColumn(Studente::getDataNascita).setHeader("Data Nascita");
+        var dataNascita = gridFigli.addColumn(studente -> Formati.data(studente.getDataNascita())).setHeader("Data Nascita")
+            .setComparator(Studente::getDataNascita);
         gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente ->
