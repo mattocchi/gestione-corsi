@@ -58,3 +58,18 @@
 .presenza-riga .presenza-note {
     flex: 1 1 10rem;
 }
+
+/* Le Mie Lezioni su mobile: corso e data nella stessa cella, su due righe */
+.lezione-riepilogo {
+    line-height: 1.3;
+    padding-block: 0.25rem;
+}
+
+.lezione-riepilogo-corso {
+    font-weight: var(--aura-font-weight-medium, 500);
+}
+
+.lezione-riepilogo-data {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s, 0.8125rem);
+}

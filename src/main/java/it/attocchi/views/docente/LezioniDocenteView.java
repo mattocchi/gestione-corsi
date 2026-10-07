@@ -13,6 +13,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
@@ -90,19 +91,38 @@ public class LezioniDocenteView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        gridLezioni.addColumn(lezione -> lezione.getCorso().getNome()).setHeader("Corso").setSortable(true);
-        gridLezioni.addColumn(lezione -> Formati.data(lezione.getData())).setHeader("Data")
-            .setComparator(Lezione::getData).setSortable(true).setAutoWidth(true).setFlexGrow(0);
+        // Solo su mobile: corso e data in un'unica colonna su due righe, per non troncare nulla
+        var lezione = gridLezioni.addColumn(LitRenderer.<Lezione>of(
+                "<div class=\"lezione-riepilogo\"><div class=\"lezione-riepilogo-corso\">${item.corso}</div>"
+                    + "<div class=\"lezione-riepilogo-data\">${item.data}</div></div>")
+                .withProperty("corso", l -> l.getCorso().getNome())
+                .withProperty("data", l -> Formati.data(l.getData())))
+            .setHeader("Lezione").setComparator(Lezione::getData).setSortable(true);
+        var corso = gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
+        var data = gridLezioni.addColumn(l -> Formati.data(l.getData())).setHeader("Data")
+            .setComparator(Lezione::getData).setSortable(true).setWidth("10rem").setFlexGrow(0);
         var numero = gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
         var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
-        // Stato come badge: testo su desktop, solo icona su mobile (resta visibile anche sul telefono)
-        gridLezioni.addComponentColumn(this::createStatoBadge).setHeader("Stato")
-            .setComparator(Lezione::isCompletata).setAutoWidth(true).setFlexGrow(0);
+        // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
+        // verrebbe calcolata sulle sole righe visibili all'apertura ("Da fare") e troncherebbe "Completata".
+        var stato = gridLezioni.addComponentColumn(this::createStatoBadge).setFlexGrow(0);
+        var azioni = gridLezioni.addComponentColumn(l ->
+            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Gestisci Presenze", e -> openPresenzeDialog(l))));
+        ViewSupport.configureActionsColumn(azioni);
+        azioni.setAutoWidth(false);
 
-        ViewSupport.configureActionsColumn(gridLezioni.addComponentColumn(lezione ->
-            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Gestisci Presenze", e -> openPresenzeDialog(lezione)))));
-
-        ViewSupport.hideOnMobile(gridLezioni, numero, orario);
+        // Mobile: Lezione | stato (solo icona) | azioni, senza intestazioni testuali che verrebbero troncate.
+        // Desktop: tutte le colonne singole.
+        Signal.effect(gridLezioni, () -> {
+            boolean m = mobile.get();
+            lezione.setVisible(m);
+            corso.setVisible(!m);
+            data.setVisible(!m);
+            numero.setVisible(!m);
+            orario.setVisible(!m);
+            stato.setHeader(m ? "" : "Stato").setWidth(m ? "3rem" : "8.5rem");
+            azioni.setHeader(m ? "" : "Azioni").setWidth(m ? "3.5rem" : "5.5rem");
+        });
     }
 
     private Badge createStatoBadge(Lezione lezione) {
