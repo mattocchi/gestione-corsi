@@ -1,18 +1,25 @@
 package it.attocchi.views;
 
 import com.vaadin.browserless.SpringBrowserlessTest;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.RouteNotFoundError;
+import it.attocchi.entity.Docente;
+import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Presenza.StatoPresenza;
+import it.attocchi.service.DocenteService;
+import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.StudentiView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.docente.LezioniDocenteView;
+import it.attocchi.views.docente.LezioniDocenteView.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
 import it.attocchi.views.studente.MieiCorsiView;
 import org.junit.jupiter.api.Test;
@@ -38,6 +45,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private PresenzaService presenzaService;
+
+    @Autowired
+    private LezioneService lezioneService;
+
+    @Autowired
+    private DocenteService docenteService;
 
     @Test
     @WithAnonymousUser
@@ -130,6 +143,41 @@ class ViewAccessTest extends SpringBrowserlessTest {
         // ripristina il dato di test per gli altri test
         test(toggle.getPulsante(StatoPresenza.PRESENTE)).click();
         assertEquals(StatoPresenza.PRESENTE, presenzaService.findById(presenza.getId()).getStato());
+    }
+
+    @Test
+    @WithUserDetails("docente1")
+    @SuppressWarnings("unchecked")
+    void docente_filtraLezioniPerStato() {
+        Docente docente = docenteService.findByUsername("docente1").orElseThrow();
+        Lezione completata = lezioneService.findByDocente(docente.getId()).getFirst();
+        completata.setCompletata(true);
+        lezioneService.save(completata);
+        try {
+            navigate(LezioniDocenteView.class);
+            var grid = test(find(Grid.class).single());
+            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+
+            // default: solo le lezioni da fare
+            assertEquals(FiltroLezioni.DA_FARE, filtro.getValue());
+            assertEquals(29, grid.size());
+
+            test(filtro.getPulsante(FiltroLezioni.COMPLETATE)).click();
+            assertEquals(1, grid.size());
+            Badge badge = (Badge) grid.getCellComponent(0, 4);
+            assertEquals("Completata", badge.getText());
+            assertTrue(badge.getThemeNames().contains(BadgeVariant.SUCCESS.getVariantName()));
+
+            test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
+            assertEquals(30, grid.size());
+
+            test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
+            assertEquals(29, grid.size());
+            assertEquals("Da fare", ((Badge) grid.getCellComponent(0, 4)).getText());
+        } finally {
+            completata.setCompletata(false);
+            lezioneService.save(completata);
+        }
     }
 
     @Test
