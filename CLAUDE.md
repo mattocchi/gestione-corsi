@@ -66,9 +66,28 @@ it.attocchi/
 - Browserless tests use `browserless-test-spring` and `find(...)` (`$(...)` is deprecated).
 - Architecture fix plan and remaining work: `docs/PIANO-CORREZIONI.md`.
 
-## Working on a plan: one commit per step
+## Workflow: plan first, then execute with one commit per step
 
-When executing a plan in `docs/` (e.g. `docs/PIANO-CORREZIONI.md`), commit after **every single step** (each numbered row such as `1.3`, `7.2`), not at the end of a phase or of the whole plan. The user has authorized these commits in advance; push is still only on explicit request.
+Every user request that changes the repository (code, configuration, build, docs) follows this workflow — no exceptions for "small" changes. Pure questions, explanations or reviews without changes don't need a plan.
+
+### 1. Plan first
+
+Before touching any code, write the plan to a new file `docs/piani/AAAA-MM-GG-<argomento>.md` (Italian, e.g. `docs/piani/2026-10-07-responsive-mobile.md`). Analysis and read-only checks (reading code, Vaadin MCP docs, running the app) can happen before writing it, to make the plan accurate.
+
+The plan contains:
+- **Richiesta**: the user's request, in one or two sentences.
+- **Analisi**: what was found (problems, constraints, references to docs/APIs checked).
+- **Passi**: a table of numbered steps (`1`, `2`, … or `1.1`, `1.2` if grouped in phases) with columns *Passo · Cosa · File · Verifica · Stato* (`[ ]`, `[x]`, `[~]`). Each step must be small enough to be one coherent commit.
+- **Fuori ambito**: what is deliberately not done, and open decisions.
+- **Registro**: filled in during execution (outcome, test results, problems found).
+
+Commit the plan alone as the first commit: `Piano: <argomento>`. Then show the user a short summary of the steps and **proceed with the execution without waiting for approval**, unless the plan contains a decision that is genuinely the user's (e.g. version numbers, deleting data, changing production behaviour): in that case ask first.
+
+Existing plan `docs/PIANO-CORREZIONI.md` stays as the reference for the architecture review; new requests get their own file in `docs/piani/`.
+
+### 2. Execute: one commit per step
+
+Commit after **every single step** of the plan, not at the end of a phase or of the whole plan. The user has authorized these commits in advance; push is still only on explicit request.
 
 For each step:
 1. Implement only that step.
@@ -77,4 +96,8 @@ For each step:
 4. Stage only the files of that step (`git add <files>`, never `git add -A` with unrelated changes) and commit on the current branch (`develop`), not on `main`.
 5. Commit message: `<step id> <short description in Italian>` as subject, e.g. `1.5 CorsiView: Binder locale al dialog`, with a body explaining what changed and why if not obvious.
 
-If a step turns out to be already done or unnecessary, mark it in the plan with a note and commit just the plan update. Pre-existing uncommitted changes of the user go in a separate commit, never mixed into a step.
+If a step turns out to be already done or unnecessary, mark it in the plan with a note and commit just the plan update. If new work emerges during execution, add it to the plan as new steps (committing the plan change) rather than doing it silently. Pre-existing uncommitted changes of the user go in a separate commit, never mixed into a step.
+
+### 3. Close
+
+Last commit: fill in the **Registro** of the plan with the final verification (build, tests, browser checks) and anything left open. Then report to the user with the list of commits.
