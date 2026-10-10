@@ -6,6 +6,7 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
@@ -18,6 +19,7 @@ import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.service.InsegnanteService;
+import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
@@ -60,6 +62,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private InsegnanteService insegnanteService;
+
+    @Autowired
+    private CorsoService corsoService;
 
     @Test
     @WithAnonymousUser
@@ -120,6 +125,42 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(List.of("17:00 Studente Canto5", "17:40 Studente Canto4", "18:20 Studente Canto3",
             "19:00 Studente Canto2", "19:40 Studente Canto1",
             "da assegnare Studente Canto6", "da assegnare Studente Canto7"), ordine);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_aggiungeERimuovePartecipanti() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int chitarra = riga(corsi, "Corso di Chitarra");
+        Corso corso = corsi.getRow(chitarra);
+        test(pulsante(corsi.getCellComponent(chitarra, 6), "Partecipanti")).click();
+
+        PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+        var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+        assertEquals(6, partecipanti.size());
+
+        // Aggiunta: compare nell'elenco e ha le presenze in tutte le lezioni (nessuna completata)
+        ComboBox<?> nuovo = find(ComboBox.class).from(dialog).single();
+        test(nuovo).selectItem("Studente Canto1");
+        test(find(Button.class).from(dialog).withText("Aggiungi").single()).click();
+        assertEquals(7, partecipanti.size());
+        Long studenteId = corsoService.findPartecipanti(corso.getId()).stream()
+            .filter(i -> i.getStudente().getNomeCompleto().equals("Studente Canto1"))
+            .findFirst().orElseThrow().getStudente().getId();
+        assertEquals(30, presenzaService.findByCorsoAndStudente(corso.getId(), studenteId).size());
+
+        // Rimozione: sparisce dall'elenco con le presenze delle lezioni da fare
+        int riga = -1;
+        for (int row = 0; row < partecipanti.size(); row++) {
+            if (partecipanti.getCellText(row, 1).equals("Studente Canto1")) {
+                riga = row;
+            }
+        }
+        test((Button) partecipanti.getCellComponent(riga, 2).getChildren().findFirst().orElseThrow()).click();
+        assertEquals(6, partecipanti.size());
+        assertTrue(presenzaService.findByCorsoAndStudente(corso.getId(), studenteId).isEmpty());
     }
 
     private static int riga(GridTester<Grid<Corso>, Corso> grid, String nome) {

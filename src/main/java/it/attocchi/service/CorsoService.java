@@ -2,6 +2,7 @@ package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
@@ -9,6 +10,7 @@ import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PresenzaRepository;
+import it.attocchi.repository.StudenteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +26,16 @@ public class CorsoService {
     private final LezioneRepository lezioneRepository;
     private final PresenzaRepository presenzaRepository;
     private final IscrizioneRepository iscrizioneRepository;
+    private final StudenteRepository studenteRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
-                       PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository) {
+                       PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
+                       StudenteRepository studenteRepository) {
         this.corsoRepository = corsoRepository;
         this.lezioneRepository = lezioneRepository;
         this.presenzaRepository = presenzaRepository;
         this.iscrizioneRepository = iscrizioneRepository;
+        this.studenteRepository = studenteRepository;
     }
 
     public List<Corso> findAll() {
@@ -58,6 +63,38 @@ public class CorsoService {
         return iscrizioneRepository.findByCorsoIdWithStudente(corsoId).stream()
             .sorted(Iscrizione.PER_ORARIO)
             .toList();
+    }
+
+    /**
+     * Iscrive lo studente al corso e gli crea le presenze nelle lezioni non ancora completate,
+     * così compare subito nel registro dell'insegnante. Nessun effetto se è già iscritto.
+     */
+    @Transactional
+    public void iscrivi(Long corsoId, Long studenteId) {
+        if (iscrizioneRepository.existsById(new IscrizioneId(corsoId, studenteId))) {
+            return;
+        }
+        Corso corso = corsoRepository.findById(corsoId)
+            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoId));
+        Studente studente = studenteRepository.findById(studenteId)
+            .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studenteId));
+        iscrizioneRepository.save(new Iscrizione(corso, studente));
+
+        lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId).stream()
+            .filter(lezione -> !lezione.isCompletata())
+            .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, studente, Presenza.StatoPresenza.PRESENTE)));
+    }
+
+    /**
+     * Rimuove lo studente dal corso eliminando le sue presenze nelle lezioni non completate;
+     * quelle delle lezioni già svolte restano come storico.
+     */
+    @Transactional
+    public void rimuoviIscrizione(Long corsoId, Long studenteId) {
+        presenzaRepository.findByCorsoIdAndStudenteId(corsoId, studenteId).stream()
+            .filter(presenza -> !presenza.getLezione().isCompletata())
+            .forEach(presenzaRepository::delete);
+        iscrizioneRepository.deleteById(new IscrizioneId(corsoId, studenteId));
     }
 
     @Transactional

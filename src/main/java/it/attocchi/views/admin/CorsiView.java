@@ -25,6 +25,7 @@ import it.attocchi.entity.Insegnante;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
+import it.attocchi.service.StudenteService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
@@ -41,14 +42,17 @@ public class CorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final InsegnanteService insegnanteService;
+    private final StudenteService studenteService;
     /** L'eliminazione dei corsi è riservata all'admin; la segreteria li gestisce senza eliminarli. */
     private final boolean puoEliminare;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
 
-    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, SecurityService securityService) {
+    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, StudenteService studenteService,
+                     SecurityService securityService) {
         this.corsoService = corsoService;
         this.insegnanteService = insegnanteService;
+        this.studenteService = studenteService;
         this.puoEliminare = securityService.hasRole("ADMIN");
 
         setSizeFull();
@@ -73,7 +77,7 @@ public class CorsiView extends VerticalLayout {
         ViewSupport.configureActionsColumn(grid.addComponentColumn(corso -> {
             Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
             Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
-                e -> new PartecipantiDialog(corsoService, corso).open());
+                e -> openPartecipanti(corso));
             Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
             HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
             if (puoEliminare) {
@@ -151,6 +155,17 @@ public class CorsiView extends VerticalLayout {
 
         dialog.add(formLayout);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
+        dialog.open();
+    }
+
+    private void openPartecipanti(Corso corso) {
+        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, studenteService, corso);
+        // Alla chiusura ricarica la griglia: numero di studenti e iscrizioni dei corsi aggiornati
+        dialog.addOpenedChangeListener(e -> {
+            if (!e.isOpened()) {
+                updateGrid();
+            }
+        });
         dialog.open();
     }
 

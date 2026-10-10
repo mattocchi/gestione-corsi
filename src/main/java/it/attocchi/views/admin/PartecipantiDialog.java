@@ -1,36 +1,79 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.Studente;
 import it.attocchi.service.CorsoService;
+import it.attocchi.service.StudenteService;
 import it.attocchi.views.ViewSupport;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
- * Partecipanti di un corso in ordine di orario di inizio lezione; chi non ha ancora
- * un orario assegnato è in fondo.
+ * Partecipanti di un corso in ordine di orario di inizio lezione (chi non ha ancora un orario
+ * è in fondo), con aggiunta e rimozione. Le modifiche sono salvate subito; la notifica
+ * compare solo in caso di errore.
  */
 public class PartecipantiDialog extends Dialog {
 
     private final CorsoService corsoService;
+    private final StudenteService studenteService;
     private final Corso corso;
     private final Grid<Iscrizione> grid = new Grid<>(Iscrizione.class, false);
+    private final ComboBox<Studente> nuovoPartecipante = new ComboBox<>();
 
-    public PartecipantiDialog(CorsoService corsoService, Corso corso) {
+    public PartecipantiDialog(CorsoService corsoService, StudenteService studenteService, Corso corso) {
         this.corsoService = corsoService;
+        this.studenteService = studenteService;
         this.corso = corso;
 
         setHeaderTitle("Partecipanti – " + corso.getNome());
         setWidth("600px");
         setMaxWidth("100%");
 
+        nuovoPartecipante.setPlaceholder("Aggiungi uno studente");
+        nuovoPartecipante.setAriaLabel("Studente da aggiungere");
+        nuovoPartecipante.setItemLabelGenerator(Studente::getNomeCompleto);
+        nuovoPartecipante.setClearButtonVisible(true);
+        Button aggiungi = new Button("Aggiungi", VaadinIcon.PLUS.create(), e -> aggiungi());
+        aggiungi.addThemeVariants(ButtonVariant.PRIMARY);
+        aggiungi.setEnabled(false);
+        nuovoPartecipante.addValueChangeListener(e -> aggiungi.setEnabled(e.getValue() != null));
+
+        HorizontalLayout aggiunta = new HorizontalLayout(nuovoPartecipante, aggiungi);
+        aggiunta.setWidthFull();
+        aggiunta.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.BASELINE);
+        aggiunta.expand(nuovoPartecipante);
+
         grid.addColumn(PartecipantiDialog::orario).setHeader("Orario").setWidth("7rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
+        var azioni = grid.addComponentColumn(iscrizione -> {
+            Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
+                e -> rimuovi(iscrizione));
+            rimuovi.addThemeVariants(ButtonVariant.ERROR);
+            return ViewSupport.actions(rimuovi);
+        });
+        ViewSupport.configureActionsColumn(azioni);
+        azioni.setHeader("").setAutoWidth(false).setWidth("3.5rem");
         grid.setAllRowsVisible(true);
         aggiorna();
 
-        add(grid);
+        VerticalLayout content = new VerticalLayout(aggiunta, grid);
+        content.setPadding(false);
+        add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
 
@@ -38,7 +81,34 @@ public class PartecipantiDialog extends Dialog {
         return iscrizione.getOrarioLezione() != null ? iscrizione.getOrarioLezione().toString() : "da assegnare";
     }
 
+    private void aggiungi() {
+        Studente studente = nuovoPartecipante.getValue();
+        try {
+            corsoService.iscrivi(corso.getId(), studente.getId());
+            nuovoPartecipante.clear();
+            aggiorna();
+        } catch (RuntimeException ex) {
+            Notification.show("Errore nell'aggiunta di " + studente.getNomeCompleto() + ": " + ex.getMessage());
+        }
+    }
+
+    private void rimuovi(Iscrizione iscrizione) {
+        try {
+            corsoService.rimuoviIscrizione(corso.getId(), iscrizione.getStudente().getId());
+            aggiorna();
+        } catch (RuntimeException ex) {
+            Notification.show("Errore nella rimozione di " + iscrizione.getStudente().getNomeCompleto() + ": " + ex.getMessage());
+        }
+    }
+
+    /** Ricarica i partecipanti e propone come nuovi solo gli studenti non ancora iscritti. */
     private void aggiorna() {
-        grid.setItems(corsoService.findPartecipanti(corso.getId()));
+        List<Iscrizione> partecipanti = corsoService.findPartecipanti(corso.getId());
+        grid.setItems(partecipanti);
+        Set<Long> iscritti = partecipanti.stream().map(i -> i.getStudente().getId()).collect(Collectors.toSet());
+        nuovoPartecipante.setItems(studenteService.findAll().stream()
+            .filter(studente -> !iscritti.contains(studente.getId()))
+            .sorted(Comparator.comparing(Studente::getNomeCompleto))
+            .toList());
     }
 }
