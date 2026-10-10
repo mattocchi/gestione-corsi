@@ -54,6 +54,11 @@ public class DashboardService {
             lezioneRepository.countByCorsoInsegnanteUserUsernameAndCompletata(usernameInsegnante, false));
     }
 
+    /** Numero di corsi a cui è iscritto l'allievo. */
+    public long corsiAllievo(String usernameStudente) {
+        return iscrizioneRepository.countByStudenteUserUsername(usernameStudente);
+    }
+
     /** Numero di corsi distinti a cui sono iscritti i figli del genitore. */
     public long corsiDeiFigli(String usernameGenitore) {
         return iscrizioneRepository.countCorsiFigliByGenitoreUsername(usernameGenitore);

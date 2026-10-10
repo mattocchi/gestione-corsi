@@ -17,4 +17,6 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
 
     @Query("SELECT COUNT(DISTINCT i.corso.id) FROM Iscrizione i WHERE i.studente.genitore.user.username = :username")
     long countCorsiFigliByGenitoreUsername(@Param("username") String username);
+
+    long countByStudenteUserUsername(String username);
 }

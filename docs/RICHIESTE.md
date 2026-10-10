@@ -37,4 +37,4 @@
 * [x] il ruolo Admin in dashboard vede il numero totale di corsi, il numero totale di allievi, il numero totale di genitori, il numero totale di insegnanti _(completata 2026-10-10)_
 * [x] il ruolo Genitore in dashboard vede il numero totale dei corsi a cui sono iscritti i suoi figli _(completata 2026-10-10)_
 * [x] il ruolo Insegnate in dashboard vede il numero totale dei corsi a lui assegnato, il numero totale di lezioni fatte e il numero totale di lezioni da fare di tutti i suoi corsi _(completata 2026-10-10)_
-* [ ] il ruolo Allievo in dashboard vede il numero totale dei suoi corsi
+* [x] il ruolo Allievo in dashboard vede il numero totale dei suoi corsi _(completata 2026-10-10)_

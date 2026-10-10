@@ -149,6 +149,14 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
     }
 
+    @Test
+    @WithUserDetails("studente_canto1")
+    void allievo_dashboardConIPropriCorsi() {
+        navigate(HomeView.class);
+
+        assertEquals(List.of("Corsi a cui sono iscritto: 1"), indicatori());
+    }
+
     /** Riquadri della dashboard come "etichetta: valore", nell'ordine di visualizzazione. */
     private List<String> indicatori() {
         return find(Card.class).all().stream().map(Card::getAriaLabel).map(o -> o.orElse("")).toList();
