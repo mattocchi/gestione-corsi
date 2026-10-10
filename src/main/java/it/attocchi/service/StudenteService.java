@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Studente;
 import it.attocchi.entity.User;
 import it.attocchi.repository.PagamentoRepository;
@@ -61,6 +62,25 @@ public class StudenteService {
         }
         studente.setUser(userService.save(user, rawPassword));
         return studenteRepository.save(studente);
+    }
+
+    /**
+     * Il genitore aggiorna contatti e dati anagrafici di un proprio figlio; username, genitore e corsi restano
+     * invariati. Rifiuta gli studenti che non sono figli dell'utente indicato.
+     */
+    @Transactional
+    public Studente aggiornaDaGenitore(String usernameGenitore, Long studenteId, Studente dati, User datiUtente) {
+        Studente studente = studenteRepository.findById(studenteId)
+            .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studenteId));
+        if (studente.getGenitore() == null || !studente.getGenitore().getUser().getUsername().equals(usernameGenitore)) {
+            throw new IllegalArgumentException("Lo studente non è un figlio dell'utente " + usernameGenitore);
+        }
+        if (dati.getCodiceFiscale() == null || dati.getDataNascita() == null) {
+            throw new IllegalArgumentException("Codice fiscale e data di nascita sono obbligatori");
+        }
+        userService.aggiornaContatti(studente.getUser().getUsername(), datiUtente);
+        Anagrafica.copia(dati, studente);
+        return studente;
     }
 
     @Transactional

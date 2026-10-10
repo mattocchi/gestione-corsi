@@ -61,6 +61,11 @@ public class UtenteFields {
         return password.getValue();
     }
 
+    /** Tutti i campi in sola lettura (profilo dell'allievo). */
+    public void setReadOnly(boolean readOnly) {
+        binder.setReadOnly(readOnly);
+    }
+
     public Component[] getComponents() {
         return new Component[] {username, password, nome, cognome, email, telefono};
     }

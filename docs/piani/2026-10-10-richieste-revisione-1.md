@@ -57,7 +57,7 @@ Implementare le 7 voci della sezione "RICHIESTE del 10-10-2026 Revisione 1" di `
 | 11 | "Il mio profilo" per l'insegnante: dati modificabili, cambio password, username e tariffa in sola lettura | REV1.3, REV1.4 | `views/ProfiloView`, `UserService`, `InsegnanteService` | `./mvnw test` | [x] Il service copia solo i campi consentiti (`aggiornaProfilo`, `aggiornaContatti`): tariffa, username e ruoli non sono modificabili dal profilo |
 | 12 | Vista Genitori modificabile: creazione e modifica di genitore (utente + anagrafica) per admin e segreteria | (REV1.5) | `GenitoriView`, `GenitoreService` | `./mvnw test` | [x] |
 | 13 | Gestione Studenti: anagrafica completa (provincia, controllo codice fiscale) e indirizzo del genitore "(del genitore)" se manca quello dell'allievo | (REV1.5) | `StudentiView`, `Studente`, `StudenteService`, `Formati` | `./mvnw test` | [x] Colonna Indirizzo (desktop) e, nel dialog, l'indirizzo del genitore mostrato come riferimento; in produzione uno studente con codice fiscale non valido va corretto alla prima modifica |
-| 14 | Profilo del genitore (propri dati + modifica dei figli) e dell'allievo (sola lettura, con indirizzo del genitore) | REV1.5 | `ProfiloView`, `FigliView` | `./mvnw test` | [ ] |
+| 14 | Profilo del genitore (propri dati + modifica dei figli) e dell'allievo (sola lettura, con indirizzo del genitore) | REV1.5 | `ProfiloView`, `FigliView`, `GenitoreService`, `StudenteService` | `./mvnw test` | [x] Il genitore modifica i figli da I Miei Figli (pulsante Modifica); il service rifiuta gli studenti di altri genitori. Profilo dell'allievo senza cambio password (sola lettura) |
 | 15 | Dashboard admin/segreteria: riepilogo pagamenti dei corsi attivi (riquadri + griglia per corso) | REV1.6 | `DashboardService`, `HomeView`, `styles.css` | `./mvnw test` + browser | [ ] |
 | 16 | Ricevuta stampabile (genitore per i propri figli, admin e segreteria) al posto del riepilogo `.txt`, disponibile anche per i corsi non attivi | REV1.7 | `views/RicevutaView`, `FigliView`, `QuotaPagamentiDialog`, `styles.css` | `./mvnw test` + browser | [ ] |
 | 17 | Verifica finale (build, browser 390px/1280px), `CLAUDE.md`, registro | — | piano, `CLAUDE.md` | build + browser | [ ] |
@@ -68,6 +68,7 @@ Implementare le 7 voci della sezione "RICHIESTE del 10-10-2026 Revisione 1" di `
 - Calcolo del compenso dell'insegnante (ore × tariffa): la tariffa è solo un dato (decisione REV1.3).
 - Ricevuta in PDF generato dal server: si usa la stampa/salvataggio PDF del browser.
 - Profili self-service per l'admin e la segreteria.
+- Cambio password dell'allievo dal proprio profilo (profilo in sola lettura per decisione REV1.5): da valutare.
 
 ## Registro
 

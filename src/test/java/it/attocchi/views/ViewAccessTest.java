@@ -1008,6 +1008,60 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("genitore3")
+    void genitore_aggiornaIlProprioProfilo() {
+        navigate(ProfiloView.class);
+        assertTrue(find(TextField.class).withLabel("Username").single().isReadOnly());
+        test(find(TextField.class).withLabel("Luogo di nascita").single()).setValue("Firenze");
+        test(find(Button.class).withText("Salva").single()).click();
+
+        Genitore genitore = genitoreService.findByUsername("genitore3").orElseThrow();
+        assertEquals("Firenze", genitore.getLuogoNascita());
+        assertTrue(genitore.getUser().getRoles().contains("GENITORE"));
+        assertTrue(find(Button.class).withText("Cambia password").exists());
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    @SuppressWarnings("unchecked")
+    void genitore_modificaIDatiDiUnFiglio() {
+        navigate(FigliView.class);
+        var figli = test((Grid<Studente>) find(Grid.class).single());
+        int riga = IntStream.range(0, figli.size())
+            .filter(r -> figli.getCellText(r, 0).equals("Studente Canto3")).findFirst().orElseThrow();
+        test(pulsante(figli.getCellComponent(riga, 3), "Modifica")).click();
+
+        Dialog dialog = find(Dialog.class).single();
+        assertTrue(find(TextField.class).from(dialog).withLabel("Username").single().isReadOnly());
+        test(find(TextField.class).from(dialog).withLabel("Telefono").single()).setValue("320 7654321");
+        test(find(TextField.class).from(dialog).withLabel("Luogo di nascita").single()).setValue("Torino");
+        test(find(Button.class).from(dialog).withText("Salva").single()).click();
+        assertFalse(dialog.isOpened());
+
+        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
+        assertEquals("Torino", studente.getLuogoNascita());
+        assertEquals("320 7654321", studente.getUser().getTelefono());
+        assertEquals("genitore3", studente.getGenitore().getUser().getUsername());
+
+        // Un genitore non può modificare i figli di un altro
+        Studente altro = studenteService.findByUsername("studente_canto1").orElseThrow();
+        assertThrows(IllegalArgumentException.class,
+            () -> studenteService.aggiornaDaGenitore("genitore3", altro.getId(), altro, altro.getUser()));
+    }
+
+    @Test
+    @WithUserDetails("studente_canto1")
+    void studente_vedeIlProprioProfiloInSolaLettura() {
+        navigate(ProfiloView.class);
+        assertTrue(find(TextField.class).withLabel("Nome").single().isReadOnly());
+        assertTrue(find(TextField.class).withLabel("Codice fiscale").single().isReadOnly());
+        assertEquals("Genitore1 Cognome1", find(TextField.class).withLabel("Genitore").single().getValue());
+        assertTrue(find(Span.class).withText("Indirizzo: Via Roma 1, 00184 Roma (RM) (del genitore)").exists());
+        assertFalse(find(Button.class).withText("Salva").exists());
+        assertFalse(find(Button.class).withText("Cambia password").exists());
+    }
+
+    @Test
     @WithUserDetails("studente_canto1")
     void studente_vedeIPropriCorsi() {
         assertInstanceOf(MieiCorsiView.class, navigate(MieiCorsiView.class));

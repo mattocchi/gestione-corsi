@@ -1,6 +1,11 @@
 package it.attocchi.views.genitore;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -15,6 +20,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
+import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.GenitoreService;
@@ -22,11 +28,14 @@ import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.StudenteService;
+import it.attocchi.service.UserService;
+import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PagamentiStudenteDialog;
 import it.attocchi.views.PresenzeStudenteDialog;
 import it.attocchi.views.StatoPagamentoUI;
+import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -46,17 +55,19 @@ public class FigliView extends VerticalLayout {
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
     private final PagamentoService pagamentoService;
+    private final UserService userService;
 
     private final Grid<Studente> gridFigli = new Grid<>(Studente.class, false);
     private Genitore genitoreCorrente;
 
     public FigliView(StudenteService studenteService, CorsoService corsoService,
                      PresenzaService presenzaService, PagamentoService pagamentoService,
-                     SecurityService securityService, GenitoreService genitoreService) {
+                     SecurityService securityService, GenitoreService genitoreService, UserService userService) {
         this.studenteService = studenteService;
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
         this.pagamentoService = pagamentoService;
+        this.userService = userService;
 
         setSizeFull();
         genitoreCorrente = securityService.getUsername().flatMap(genitoreService::findByUsername).orElse(null);
@@ -73,10 +84,50 @@ public class FigliView extends VerticalLayout {
             .setComparator(Studente::getDataNascita).setAutoWidth(true).setFlexGrow(0);
         gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
-        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente ->
-            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(studente)))));
+        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente -> ViewSupport.actions(
+            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openModificaDialog(studente)),
+            ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(studente)))));
 
         ViewSupport.hideOnMobile(gridFigli, dataNascita);
+    }
+
+    /** Contatti e dati anagrafici del figlio; username, genitore e corsi li gestisce la segreteria. */
+    private void openModificaDialog(Studente studente) {
+        Dialog dialog = ViewSupport.dialog("Dati di " + studente.getNomeCompleto(), "700px");
+        User user = studente.getUser();
+        UtenteFields utente = new UtenteFields(user, userService);
+        Binder<Studente> binder = new Binder<>(Studente.class);
+        AnagraficaFields<Studente> anagrafica = new AnagraficaFields<>(binder, true);
+        binder.readBean(studente);
+
+        Span indirizzo = new Span("Se l'indirizzo è vuoto si usa il tuo: " + genitoreCorrente.getIndirizzo().getFormattato());
+        indirizzo.addClassName("avviso-sola-lettura");
+        indirizzo.setVisible(!genitoreCorrente.getIndirizzo().isVuoto());
+
+        VerticalLayout content = new VerticalLayout(
+            ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
+            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzo);
+        content.setPadding(false);
+
+        Button salva = new Button("Salva", e -> {
+            boolean valido = binder.validate().isOk() & utente.validate();
+            if (!valido || !binder.writeBeanIfValid(studente) || !utente.writeBeanIfValid(user)) {
+                return;
+            }
+            try {
+                studenteService.aggiornaDaGenitore(genitoreCorrente.getUser().getUsername(), studente.getId(), studente, user);
+                updateGrid();
+                dialog.close();
+                Notification.show("Dati salvati");
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio: " + ex.getMessage());
+            }
+        });
+        salva.addThemeVariants(ButtonVariant.PRIMARY);
+
+        dialog.add(content);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
+        dialog.open();
     }
 
     private void openDettagliDialog(Studente studente) {

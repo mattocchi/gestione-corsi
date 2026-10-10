@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.User;
 import it.attocchi.repository.GenitoreRepository;
@@ -50,5 +51,15 @@ public class GenitoreService {
         }
         genitore.setUser(userService.save(user, rawPassword));
         return genitoreRepository.save(genitore);
+    }
+
+    /** Profilo personale del genitore: aggiorna contatti e dati anagrafici (username e ruoli restano invariati). */
+    @Transactional
+    public Genitore aggiornaProfilo(String username, Genitore dati, User datiUtente) {
+        Genitore genitore = genitoreRepository.findByUserUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("Nessun genitore per l'utente " + username));
+        userService.aggiornaContatti(username, datiUtente);
+        Anagrafica.copia(dati, genitore);
+        return genitore;
     }
 }
