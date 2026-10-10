@@ -31,10 +31,11 @@ Use the Vaadin MCP server (`.mcp.json`) to check Vaadin 25.3 APIs before writing
 
 ### Roles and access
 
-Four roles: `ADMIN` (full management), `INSEGNANTE` (teacher lessons), `STUDENTE` (own courses), `GENITORE` (children's courses).
+Five roles: `ADMIN` (full management), `SEGRETERIA` (courses, participants and lesson times, students; read-only lists of teachers and parents; no deletions, no user management), `INSEGNANTE` (teacher lessons), `STUDENTE` (own courses), `GENITORE` (children's courses). Views shared by admin and segreteria use `@RolesAllowed({"ADMIN", "SEGRETERIA"})` and hide admin-only actions (e.g. Elimina) with `securityService.hasRole("ADMIN")`.
 - Views are protected with `@RolesAllowed` / `@PermitAll`; `MainLayout` itself is `@PermitAll` (layouts are access-checked too).
 - The side menu is built from `@Menu` annotations via `MenuConfiguration.getMenuEntries()`, which already filters by access — don't add manual role checks to the menu.
 - `SecurityService` wraps Vaadin's `AuthenticationContext` (`getUsername()`, `hasRole()`, `logout()`).
+- `HomeView` is the role-based dashboard (`DashboardService` counts, one section of Vaadin `Card`s per role of the user). Browserless tests start on the Home route: navigate away and back to rebuild it after changing data.
 
 ### Package layout
 
@@ -52,7 +53,7 @@ it.attocchi/
 ### Profiles and database
 
 - `application.properties`: shared config; `spring.profiles.default=dev`.
-- **dev** (`application-dev.properties`): H2 in-memory, `create-drop`, H2 console at `/h2-console`, `DataInitializer` seeds users (admin/admin, insegnante1/insegnante1, …).
+- **dev** (`application-dev.properties`): H2 in-memory, `create-drop`, H2 console at `/h2-console`, `DataInitializer` seeds users (admin/admin, segreteria/segreteria, insegnante1/insegnante1, …).
 - **prod** (`application-prod.properties`): MySQL, credentials from env vars `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`; `ddl-auto=update` (Flyway still to do). Started with `--spring.profiles.active=prod`. Schema changes that `update` can't apply (renamed tables/columns, changed stored values such as role names) need a manual SQL script in `docs/migrazioni/AAAA-MM-GG-<argomento>.sql`, to be run on MySQL before deploying.
 
 ### Key design patterns
@@ -61,13 +62,16 @@ it.attocchi/
 - Theme is **Aura**: use unprefixed variants (`ButtonVariant.PRIMARY`), not `LUMO_*` or `LumoUtility`.
 - Passwords are only set via `UserService.save(user, rawPassword)` (encoded there; null/blank keeps the existing one).
 - Lessons (`Lezione`) are generated on demand with `CorsoService.generaLezioni` ("Genera Lezioni" button), not on save.
+- Course participants are `Iscrizione` entities (table `corso_studenti`, key corso/studente, `orarioLezione` = the participant's lesson start time); `Corso.getStudenti()` / `Studente.getCorsi()` are derived. Change them only through `CorsoService.iscrivi` / `rimuoviIscrizione` / `impostaOrario` (they keep the attendances of not-yet-completed lessons in sync); `Corso.iscrizioni` cascades only REMOVE, so saving a course never touches participants. Participants are shown ordered by `Iscrizione.PER_ORARIO` (`PartecipantiDialog`).
 - Dates shown in the UI (grids, titles, downloads) always go through `Formati.data(LocalDate)` → "mer 7 ottobre" (year appended only if not the current one). Sortable date columns keep a comparator on the `LocalDate`. `DatePicker` inputs keep the locale numeric format.
 - Downloads use `DownloadHandler` (`StreamResource` is deprecated).
 - Mobile layout: use `views/ViewSupport` — `hideOnMobile(grid, columns...)` (breakpoint 640px via `Page.windowSizeSignal()`), icon-only `iconButton` + `configureActionsColumn` for grid actions, `dialog(title, width)` with buttons in `dialog.getFooter()`. Every new grid/dialog must stay usable at 390px width. Don't rely on `setAutoWidth(true)` for columns of grids that hide columns on mobile: the width is not recalculated after hiding (columns stay at 100px) and is computed only from the rows visible at first render — use explicit widths. When more than ~3 columns are needed on mobile, add a mobile-only summary column (`LitRenderer`, two lines) and hide the single columns, as in `LezioniInsegnanteView`.
-- Icons: only **Vaadin Icons** (`VaadinIcon` / `"vaadin:..."`), the default Vaadin collection. Grid action icons: Modifica `PENCIL`, Elimina `TRASH` (+ `ButtonVariant.ERROR`), Genera Lezioni `REFRESH`, Presenze `CLIPBOARD_CHECK`, Dettagli/corsi `BOOK`, Scarica `DOWNLOAD`. Reuse these for the same action in new views.
+- Icons: only **Vaadin Icons** (`VaadinIcon` / `"vaadin:..."`), the default Vaadin collection. Grid action icons: Modifica `PENCIL`, Elimina `TRASH` (+ `ButtonVariant.ERROR`), Genera Lezioni `REFRESH`, Presenze `CLIPBOARD_CHECK`, Dettagli/corsi `BOOK`, Scarica `DOWNLOAD`, Partecipanti `USERS`. Reuse these for the same action in new views.
 - Short single-choice inputs/filters (2–4 options) use `views/SegmentedControl<T>` (one-tap buttons, radiogroup semantics) instead of ComboBox/Select; statuses in grids use the Vaadin `Badge` (stable in 25.3) with a Vaadin icon, `bindThemeVariant(BadgeVariant.ICON_ONLY, ViewSupport.isMobile())` on mobile.
 - Attendance status (`Presenza.StatoPresenza`) is edited with `views/StatoPresenzaToggle` (a `SegmentedControl`: three one-tap buttons, selected one filled: green/orange/red), never with a ComboBox/Select. Changes are saved immediately; show a notification only on error.
-- Browserless tests use `browserless-test-spring` and `find(...)` (`$(...)` is deprecated).
+- Edit dialogs validate with `asRequired` + `writeBeanIfValid` (errors shown on the fields) before calling services; never let a missing value fail on the DB.
+- Logo: `images/logo-mosson.png` (`MainLayout.LOGO`), on the login page and at the bottom of the drawer.
+- Browserless tests use `browserless-test-spring` and `find(...)` (`$(...)` is deprecated). The first test run after using a new Vaadin component rebuilds the frontend dev bundle and can take several minutes; stop a running dev server meanwhile.
 - Architecture fix plan and remaining work: `docs/PIANO-CORREZIONI.md`.
 
 ## Requests source: `docs/RICHIESTE.md`

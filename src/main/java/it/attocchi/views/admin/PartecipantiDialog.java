@@ -61,7 +61,7 @@ public class PartecipantiDialog extends Dialog {
         aggiunta.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.BASELINE);
         aggiunta.expand(nuovoPartecipante);
 
-        grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("8rem").setFlexGrow(0);
+        grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
         var azioni = grid.addComponentColumn(iscrizione -> {
             Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
