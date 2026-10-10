@@ -14,9 +14,9 @@ public interface StudenteRepository extends JpaRepository<Studente, Long> {
     Optional<Studente> findByUserId(Long userId);
     Optional<Studente> findByUserUsername(String username);
 
-    @Query("SELECT DISTINCT s FROM Studente s LEFT JOIN FETCH s.corsi WHERE s.genitore.id = :genitoreId")
+    @Query("SELECT DISTINCT s FROM Studente s LEFT JOIN FETCH s.iscrizioni i LEFT JOIN FETCH i.corso WHERE s.genitore.id = :genitoreId")
     List<Studente> findByGenitoreIdWithCorsi(@Param("genitoreId") Long genitoreId);
 
-    @Query("SELECT DISTINCT s FROM Studente s LEFT JOIN FETCH s.corsi LEFT JOIN FETCH s.genitore")
+    @Query("SELECT DISTINCT s FROM Studente s LEFT JOIN FETCH s.iscrizioni i LEFT JOIN FETCH i.corso LEFT JOIN FETCH s.genitore")
     List<Studente> findAllWithCorsi();
 }

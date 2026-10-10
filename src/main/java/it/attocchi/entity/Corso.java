@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "corsi")
@@ -48,13 +49,10 @@ public class Corso {
     @JoinColumn(name = "insegnante_id")
     private Insegnante insegnante;
 
-    @ManyToMany
-    @JoinTable(
-        name = "corso_studenti",
-        joinColumns = @JoinColumn(name = "corso_id"),
-        inverseJoinColumns = @JoinColumn(name = "studente_id")
-    )
-    private Set<Studente> studenti = new HashSet<>();
+    // Solo REMOVE: salvare un corso dal dialog non deve sovrascrivere le iscrizioni,
+    // che si gestiscono con i metodi dedicati di CorsoService
+    @OneToMany(mappedBy = "corso", cascade = CascadeType.REMOVE)
+    private Set<Iscrizione> iscrizioni = new HashSet<>();
 
     @OneToMany(mappedBy = "corso", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Lezione> lezioni = new HashSet<>();
@@ -155,12 +153,13 @@ public class Corso {
         this.insegnante = insegnante;
     }
 
-    public Set<Studente> getStudenti() {
-        return studenti;
+    public Set<Iscrizione> getIscrizioni() {
+        return iscrizioni;
     }
 
-    public void setStudenti(Set<Studente> studenti) {
-        this.studenti = studenti;
+    /** Studenti iscritti al corso, ricavati dalle iscrizioni. */
+    public Set<Studente> getStudenti() {
+        return iscrizioni.stream().map(Iscrizione::getStudente).collect(Collectors.toSet());
     }
 
     public Set<Lezione> getLezioni() {

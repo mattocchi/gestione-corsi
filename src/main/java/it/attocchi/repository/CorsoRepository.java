@@ -13,9 +13,9 @@ public interface CorsoRepository extends JpaRepository<Corso, Long> {
     List<Corso> findByAttivoTrue();
     List<Corso> findByInsegnanteId(Long insegnanteId);
 
-    @Query("SELECT c FROM Corso c JOIN c.studenti s WHERE s.id = :studenteId")
+    @Query("SELECT c FROM Corso c JOIN c.iscrizioni i WHERE i.studente.id = :studenteId")
     List<Corso> findByStudenteId(@Param("studenteId") Long studenteId);
 
-    @Query("SELECT DISTINCT c FROM Corso c LEFT JOIN FETCH c.studenti LEFT JOIN FETCH c.insegnante LEFT JOIN FETCH c.giorniSettimana")
+    @Query("SELECT DISTINCT c FROM Corso c LEFT JOIN FETCH c.iscrizioni i LEFT JOIN FETCH i.studente LEFT JOIN FETCH c.insegnante LEFT JOIN FETCH c.giorniSettimana")
     List<Corso> findAllWithStudenti();
 }

@@ -32,16 +32,19 @@ public class DataInitializer implements CommandLineRunner {
     private final GenitoreRepository genitoreRepository;
     private final CorsoService corsoService;
     private final CorsoRepository corsoRepository;
+    private final IscrizioneRepository iscrizioneRepository;
 
     public DataInitializer(UserService userService, InsegnanteRepository insegnanteRepository,
                           StudenteRepository studenteRepository, GenitoreRepository genitoreRepository,
-                          CorsoService corsoService, CorsoRepository corsoRepository) {
+                          CorsoService corsoService, CorsoRepository corsoRepository,
+                          IscrizioneRepository iscrizioneRepository) {
         this.userService = userService;
         this.insegnanteRepository = insegnanteRepository;
         this.studenteRepository = studenteRepository;
         this.genitoreRepository = genitoreRepository;
         this.corsoService = corsoService;
         this.corsoRepository = corsoRepository;
+        this.iscrizioneRepository = iscrizioneRepository;
     }
 
     @Override
@@ -159,13 +162,10 @@ public class DataInitializer implements CommandLineRunner {
             corsoCanto.setInsegnante(insegnante1);
             corsoCanto.setCostoTotale(new BigDecimal("600.00"));
             corsoCanto.setCostoPerLezione(new BigDecimal("20.00"));
-
-            Set<Studente> studentiSetCanto = new HashSet<>();
-            for (Studente s : studentiCanto) {
-                studentiSetCanto.add(s);
-            }
-            corsoCanto.setStudenti(studentiSetCanto);
             corsoCanto = corsoRepository.save(corsoCanto);
+            for (Studente s : studentiCanto) {
+                iscrizioneRepository.save(new Iscrizione(corsoCanto, s));
+            }
 
             // Crea corso di Chitarra - Martedì e Sabato
             Corso corsoChitarra = new Corso();
@@ -182,13 +182,10 @@ public class DataInitializer implements CommandLineRunner {
             corsoChitarra.setInsegnante(insegnante2);
             corsoChitarra.setCostoTotale(new BigDecimal("600.00"));
             corsoChitarra.setCostoPerLezione(new BigDecimal("20.00"));
-
-            Set<Studente> studentiSetChitarra = new HashSet<>();
-            for (Studente s : studentiChitarra) {
-                studentiSetChitarra.add(s);
-            }
-            corsoChitarra.setStudenti(studentiSetChitarra);
             corsoChitarra = corsoRepository.save(corsoChitarra);
+            for (Studente s : studentiChitarra) {
+                iscrizioneRepository.save(new Iscrizione(corsoChitarra, s));
+            }
 
             // Genera lezioni per entrambi i corsi
             log.info("Generazione lezioni per corso di Canto...");

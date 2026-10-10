@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "studenti")
@@ -33,8 +34,8 @@ public class Studente {
 
     private String cap;
 
-    @ManyToMany(mappedBy = "studenti")
-    private Set<Corso> corsi = new HashSet<>();
+    @OneToMany(mappedBy = "studente")
+    private Set<Iscrizione> iscrizioni = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "genitore_id")
@@ -109,12 +110,13 @@ public class Studente {
         this.cap = cap;
     }
 
-    public Set<Corso> getCorsi() {
-        return corsi;
+    public Set<Iscrizione> getIscrizioni() {
+        return iscrizioni;
     }
 
-    public void setCorsi(Set<Corso> corsi) {
-        this.corsi = corsi;
+    /** Corsi a cui lo studente è iscritto, ricavati dalle iscrizioni. */
+    public Set<Corso> getCorsi() {
+        return iscrizioni.stream().map(Iscrizione::getCorso).collect(Collectors.toSet());
     }
 
     public Genitore getGenitore() {
