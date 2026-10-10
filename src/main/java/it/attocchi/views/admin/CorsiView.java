@@ -10,6 +10,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -21,6 +22,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.views.Formati;
@@ -34,17 +36,20 @@ import java.util.Arrays;
 @Route(value = "corsi", layout = MainLayout.class)
 @PageTitle("Gestione Corsi")
 @Menu(title = "Gestione Corsi", order = 10, icon = "vaadin:music")
-@RolesAllowed("ADMIN")
+@RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class CorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final InsegnanteService insegnanteService;
+    /** L'eliminazione dei corsi è riservata all'admin; la segreteria li gestisce senza eliminarli. */
+    private final boolean puoEliminare;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
 
-    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService) {
+    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, SecurityService securityService) {
         this.corsoService = corsoService;
         this.insegnanteService = insegnanteService;
+        this.puoEliminare = securityService.hasRole("ADMIN");
 
         setSizeFull();
         configureGrid();
@@ -70,9 +75,13 @@ public class CorsiView extends VerticalLayout {
             Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
                 e -> new PartecipantiDialog(corsoService, corso).open());
             Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
-            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
-            deleteButton.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(editButton, partecipantiButton, generateButton, deleteButton);
+            HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
+            if (puoEliminare) {
+                Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
+                deleteButton.addThemeVariants(ButtonVariant.ERROR);
+                actions.add(deleteButton);
+            }
+            return actions;
         }));
 
         ViewSupport.hideOnMobile(grid, insegnante, dataInizio, numeroLezioni, durata, numeroStudenti);

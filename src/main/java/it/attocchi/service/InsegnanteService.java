@@ -22,6 +22,11 @@ public class InsegnanteService {
         return insegnanteRepository.findAll();
     }
 
+    /** Insegnanti con i corsi assegnati già caricati (per l'elenco Insegnanti). */
+    public List<Insegnante> findAllWithCorsi() {
+        return insegnanteRepository.findAllWithCorsi();
+    }
+
     public Optional<Insegnante> findByUsername(String username) {
         return insegnanteRepository.findByUserUsername(username);
     }

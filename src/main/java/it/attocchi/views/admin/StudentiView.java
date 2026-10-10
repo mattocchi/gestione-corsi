@@ -9,6 +9,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -19,6 +20,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Studente;
 import it.attocchi.entity.User;
+import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.service.UserService;
@@ -30,19 +32,23 @@ import jakarta.annotation.security.RolesAllowed;
 @Route(value = "studenti", layout = MainLayout.class)
 @PageTitle("Gestione Studenti")
 @Menu(title = "Gestione Studenti", order = 11, icon = "vaadin:academy-cap")
-@RolesAllowed("ADMIN")
+@RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class StudentiView extends VerticalLayout {
 
     private final StudenteService studenteService;
     private final UserService userService;
     private final GenitoreService genitoreService;
+    /** L'eliminazione degli studenti è riservata all'admin. */
+    private final boolean puoEliminare;
 
     private final Grid<Studente> grid = new Grid<>(Studente.class, false);
 
-    public StudentiView(StudenteService studenteService, UserService userService, GenitoreService genitoreService) {
+    public StudentiView(StudenteService studenteService, UserService userService, GenitoreService genitoreService,
+                        SecurityService securityService) {
         this.studenteService = studenteService;
         this.userService = userService;
         this.genitoreService = genitoreService;
+        this.puoEliminare = securityService.hasRole("ADMIN");
 
         setSizeFull();
         configureGrid();
@@ -65,9 +71,13 @@ public class StudentiView extends VerticalLayout {
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(studente -> {
             Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(studente));
-            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteStudente(studente));
-            deleteButton.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(editButton, deleteButton);
+            HorizontalLayout actions = ViewSupport.actions(editButton);
+            if (puoEliminare) {
+                Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteStudente(studente));
+                deleteButton.addThemeVariants(ButtonVariant.ERROR);
+                actions.add(deleteButton);
+            }
+            return actions;
         }));
 
         ViewSupport.hideOnMobile(grid, codiceFiscale, dataNascita, genitore);

@@ -20,6 +20,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.PartecipantiDialog;
 import it.attocchi.views.admin.StudentiView;
 import it.attocchi.views.admin.UtentiView;
@@ -70,7 +71,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
-        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Studenti", "Gestione Utenti")), voci.toString());
+        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Studenti", "Gestione Utenti", "Insegnanti")), voci.toString());
         assertFalse(voci.contains("Le Mie Lezioni"), voci.toString());
     }
 
@@ -86,6 +87,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 grid.getCellText(row, col);
             }
         }
+
+        assertAzioni(grid.getCellComponent(0, 6), "Modifica", "Partecipanti", "Genera Lezioni", "Elimina");
 
         // Apre il dialog di modifica: i giorni della settimana devono essere già caricati
         Button modifica = (Button) grid.getCellComponent(0, 6).getChildren().findFirst().orElseThrow();
@@ -164,6 +167,38 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(voci.contains("Home"), voci.toString());
         assertFalse(voci.contains("Gestione Utenti"), voci.toString());
         navigate("utenti", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_vedeCorsiEStudentiSenzaElimina() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        assertEquals(2, corsi.size());
+        assertAzioni(corsi.getCellComponent(0, 6), "Modifica", "Partecipanti", "Genera Lezioni");
+
+        navigate(StudentiView.class);
+        var studenti = test(find(Grid.class).single());
+        assertEquals(13, studenti.size());
+        assertAzioni(studenti.getCellComponent(0, 5), "Modifica");
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_vedeGliInsegnanti() {
+        navigate(InsegnantiView.class);
+
+        var grid = test(find(Grid.class).single());
+        assertEquals(2, grid.size());
+        for (int row = 0; row < grid.size(); row++) {
+            assertEquals("1", grid.getCellText(row, 3));
+        }
+    }
+
+    private static void assertAzioni(Component azioni, String... etichette) {
+        assertEquals(List.of(etichette), azioni.getChildren()
+            .map(c -> c.getElement().getAttribute("aria-label")).toList());
     }
 
     @Test
