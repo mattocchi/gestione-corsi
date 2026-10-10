@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.User;
 import it.attocchi.repository.InsegnanteRepository;
@@ -53,5 +54,20 @@ public class InsegnanteService {
         }
         insegnante.setUser(userService.save(user, rawPassword));
         return insegnanteRepository.save(insegnante);
+    }
+
+    /**
+     * Profilo personale dell'insegnante: aggiorna contatti, specializzazione, biografia e anagrafica;
+     * username e tariffa oraria restano quelli impostati da admin e segreteria.
+     */
+    @Transactional
+    public Insegnante aggiornaProfilo(String username, Insegnante dati, User datiUtente) {
+        Insegnante insegnante = insegnanteRepository.findByUserUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("Nessun insegnante per l'utente " + username));
+        userService.aggiornaContatti(username, datiUtente);
+        insegnante.setSpecializzazione(dati.getSpecializzazione());
+        insegnante.setBiografia(dati.getBiografia());
+        Anagrafica.copia(dati, insegnante);
+        return insegnante;
     }
 }

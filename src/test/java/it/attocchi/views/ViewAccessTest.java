@@ -55,6 +55,7 @@ import it.attocchi.views.studente.MieiCorsiView;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 
@@ -106,6 +107,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private InsegnanteRepository insegnanteRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     @WithAnonymousUser
@@ -879,6 +883,44 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("insegnante1")
     void insegnante_nonAccedeAViewAdmin() {
         navigate("corsi", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_aggiornaIlProprioProfiloSenzaTariffa() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(i -> i.getLabel().equals("Il mio profilo")));
+        navigate(ProfiloView.class);
+
+        assertTrue(find(TextField.class).withLabel("Username").single().isReadOnly());
+        BigDecimalField tariffa = find(BigDecimalField.class).withLabel("Tariffa oraria").single();
+        assertTrue(tariffa.isReadOnly());
+        assertEquals(0, new BigDecimal("25").compareTo(tariffa.getValue()));
+
+        test(find(TextField.class).withLabel("Telefono").single()).setValue("333 1234567");
+        test(find(TextField.class).withLabel("Comune").single()).setValue("Roma");
+        test(find(Button.class).withText("Salva").single()).click();
+
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        assertEquals("333 1234567", insegnante.getUser().getTelefono());
+        assertEquals("Roma", insegnante.getIndirizzo().getComune());
+        assertEquals(0, new BigDecimal("25").compareTo(insegnante.getTariffaOraria()));
+        assertTrue(insegnante.getUser().getRoles().contains("INSEGNANTE"));
+
+        // Cambio password: la conferma deve coincidere
+        PasswordField nuova = find(PasswordField.class).withLabel("Nuova password").single();
+        PasswordField conferma = find(PasswordField.class).withLabel("Conferma password").single();
+        test(nuova).setValue("nuova-segreta");
+        test(conferma).setValue("diversa");
+        test(find(Button.class).withText("Cambia password").single()).click();
+        assertTrue(conferma.isInvalid());
+        try {
+            test(conferma).setValue("nuova-segreta");
+            test(find(Button.class).withText("Cambia password").single()).click();
+            assertTrue(passwordEncoder.matches("nuova-segreta", userService.findByUsername("insegnante1").getPassword()));
+        } finally {
+            userService.cambiaPassword("insegnante1", "insegnante1");
+        }
     }
 
     @Test

@@ -46,6 +46,25 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /** Cambia la password dell'utente indicato (profilo personale). */
+    @Transactional
+    public void cambiaPassword(String username, String nuovaPassword) {
+        if (nuovaPassword == null || nuovaPassword.isBlank()) {
+            throw new IllegalArgumentException("La nuova password è obbligatoria");
+        }
+        utente(username).setPassword(passwordEncoder.encode(nuovaPassword));
+    }
+
+    /** Copia nell'utente indicato solo i dati che ognuno può modificare nel proprio profilo. */
+    @Transactional
+    public void aggiornaContatti(String username, User dati) {
+        User user = utente(username);
+        user.setNome(dati.getNome());
+        user.setCognome(dati.getCognome());
+        user.setEmail(dati.getEmail());
+        user.setTelefono(dati.getTelefono());
+    }
+
     @Transactional
     public void delete(User user) {
         userRepository.delete(user);
@@ -53,5 +72,10 @@ public class UserService {
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    private User utente(String username) {
+        return userRepository.findByUsername(username)
+            .orElseThrow(() -> new IllegalArgumentException("Utente non trovato: " + username));
     }
 }

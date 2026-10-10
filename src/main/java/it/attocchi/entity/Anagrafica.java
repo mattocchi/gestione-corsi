@@ -19,4 +19,16 @@ public interface Anagrafica {
 
     /** Mai {@code null}. */
     Indirizzo getIndirizzo();
+
+    /** Copia i dati anagrafici (indirizzo compreso) da una persona a un'altra. */
+    static void copia(Anagrafica da, Anagrafica a) {
+        a.setCodiceFiscale(da.getCodiceFiscale());
+        a.setDataNascita(da.getDataNascita());
+        a.setLuogoNascita(da.getLuogoNascita());
+        Indirizzo indirizzo = da.getIndirizzo();
+        a.getIndirizzo().setVia(indirizzo.getVia());
+        a.getIndirizzo().setCap(indirizzo.getCap());
+        a.getIndirizzo().setComune(indirizzo.getComune());
+        a.getIndirizzo().setProvincia(indirizzo.getProvincia());
+    }
 }
