@@ -10,7 +10,7 @@
 
 ### Docenti diventano Insegnantei
 
-*[] Rinominiamo Docenti in Insegnanti: adegua sia UI che Codice che dati di Esempio
+* [ ] Rinominiamo Docenti in Insegnanti: adegua sia UI che Codice che dati di Esempio
 
 ### CORSI
 
