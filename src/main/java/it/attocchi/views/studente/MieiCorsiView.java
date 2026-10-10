@@ -71,7 +71,7 @@ public class MieiCorsiView extends VerticalLayout {
 
     private void updateGrid() {
         if (studenteCorrente != null) {
-            List<Corso> corsi = corsoService.findByStudente(studenteCorrente.getId());
+            List<Corso> corsi = corsoService.findAttiviByStudente(studenteCorrente.getId());
             gridCorsi.setItems(corsi);
         }
     }

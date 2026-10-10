@@ -151,3 +151,9 @@
     font-weight: var(--aura-font-weight-semibold, 600);
     line-height: 1.1;
 }
+
+/* Messaggio sopra un contenuto in sola lettura (es. corso non attivo) */
+.avviso-sola-lettura {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s, 0.8125rem);
+}

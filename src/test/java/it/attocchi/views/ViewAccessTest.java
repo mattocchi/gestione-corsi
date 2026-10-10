@@ -63,6 +63,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -446,6 +447,93 @@ class ViewAccessTest extends SpringBrowserlessTest {
             chitarra.setAttivo(true);
             corsoService.save(chitarra);
         }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_corsoNonAttivoPartecipantiInSolaLettura() {
+        Corso chitarra = disattiva("Corso di Chitarra");
+        try {
+            navigate(CorsiView.class);
+            var corsi = test((Grid<Corso>) find(Grid.class).single());
+            test(((SegmentedControl<CorsiView.FiltroStato>) find(SegmentedControl.class).single())
+                .getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            assertFalse(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Genera Lezioni").isEnabled());
+
+            test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
+            PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+            assertFalse(find(ComboBox.class).from(dialog).exists());
+            assertTrue(find(TimePicker.class).from(dialog).all().stream().allMatch(TimePicker::isReadOnly));
+
+            Long studente = studenteService.findByUsername("studente_canto1").orElseThrow().getId();
+            assertThrows(IllegalStateException.class, () -> corsoService.iscrivi(chitarra.getId(), studente));
+            assertThrows(IllegalStateException.class, () -> corsoService.generaLezioni(chitarra));
+        } finally {
+            riattiva(chitarra);
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante2")
+    void insegnante_nonVedeICorsiNonAttivi() {
+        Corso chitarra = disattiva("Corso di Chitarra");
+        try {
+            navigate(LezioniInsegnanteView.class);
+            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+            test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
+            assertEquals(0, test(find(Grid.class).single()).size());
+
+            navigate(HomeView.class);
+            assertEquals(List.of("Corsi assegnati: 0", "Lezioni fatte: 0", "Lezioni da fare: 0"), indicatori());
+
+            Presenza presenza = presenzaService.findByCorsoAndStudente(chitarra.getId(),
+                studenteService.findByUsername("studente_chitarra1").orElseThrow().getId()).getFirst();
+            presenza.setStato(StatoPresenza.ASSENTE_GIUSTIFICATA);
+            assertThrows(IllegalStateException.class, () -> presenzaService.save(presenza));
+        } finally {
+            riattiva(chitarra);
+        }
+    }
+
+    @Test
+    @WithUserDetails("studente_chitarra1")
+    void allievo_nonVedeICorsiNonAttivi() {
+        Corso chitarra = disattiva("Corso di Chitarra");
+        try {
+            navigate(MieiCorsiView.class);
+            assertEquals(0, test(find(Grid.class).single()).size());
+            navigate(HomeView.class);
+            assertEquals(List.of("Corsi a cui sono iscritto: 0"), indicatori());
+        } finally {
+            riattiva(chitarra);
+        }
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_vedeAncheICorsiNonAttivi() {
+        Corso chitarra = disattiva("Corso di Chitarra");
+        try {
+            navigate(FigliView.class);
+            var figli = test(find(Grid.class).single());
+            assertEquals("1", figli.getCellText(0, 2));
+            assertEquals("1", figli.getCellText(1, 2));
+        } finally {
+            riattiva(chitarra);
+        }
+    }
+
+    private Corso disattiva(String nome) {
+        Corso corso = corsoService.findAll().stream().filter(c -> c.getNome().equals(nome)).findFirst().orElseThrow();
+        corso.setAttivo(false);
+        return corsoService.save(corso);
+    }
+
+    private void riattiva(Corso corso) {
+        Corso c = corsoService.findById(corso.getId());
+        c.setAttivo(true);
+        corsoService.save(c);
     }
 
     private static List<String> ordinePartecipanti(GridTester<Grid<Iscrizione>, Iscrizione> righe) {

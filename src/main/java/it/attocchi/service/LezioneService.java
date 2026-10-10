@@ -30,8 +30,9 @@ public class LezioneService {
         return lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId);
     }
 
+    /** Lezioni dei corsi attivi dell'insegnante: i corsi non attivi non sono visibili all'insegnante. */
     public List<Lezione> findByInsegnante(Long insegnanteId) {
-        return lezioneRepository.findByCorsoInsegnanteIdOrderByDataAsc(insegnanteId);
+        return lezioneRepository.findByCorsoInsegnanteIdAndCorsoAttivoTrueOrderByDataAsc(insegnanteId);
     }
 
     public List<Lezione> findByCorsoAndPeriodo(Long corsoId, LocalDate dataInizio, LocalDate dataFine) {
@@ -42,8 +43,12 @@ public class LezioneService {
         return lezioneRepository.findByDataBetweenOrderByDataAsc(dataInizio, dataFine);
     }
 
+    /** Le lezioni di un corso non attivo non si possono modificare né completare. */
     @Transactional
     public Lezione save(Lezione lezione) {
+        if (lezione.getId() != null) {
+            lezioneRepository.findById(lezione.getId()).ifPresent(l -> CorsoService.verificaAttivo(l.getCorso()));
+        }
         return lezioneRepository.save(lezione);
     }
 

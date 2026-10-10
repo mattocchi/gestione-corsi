@@ -47,16 +47,16 @@ public class DashboardService {
             genitoreRepository.count(), insegnanteRepository.count());
     }
 
-    /** Corsi assegnati all'insegnante e lezioni completate / da fare di tutti i suoi corsi. */
+    /** Corsi attivi assegnati all'insegnante e lezioni completate / da fare di quei corsi. */
     public RiepilogoInsegnante riepilogoInsegnante(String usernameInsegnante) {
-        return new RiepilogoInsegnante(corsoRepository.countByInsegnanteUserUsername(usernameInsegnante),
-            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCompletata(usernameInsegnante, true),
-            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCompletata(usernameInsegnante, false));
+        return new RiepilogoInsegnante(corsoRepository.countByInsegnanteUserUsernameAndAttivoTrue(usernameInsegnante),
+            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletata(usernameInsegnante, true),
+            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletata(usernameInsegnante, false));
     }
 
-    /** Numero di corsi a cui è iscritto l'allievo. */
+    /** Numero di corsi attivi a cui è iscritto l'allievo. */
     public long corsiAllievo(String usernameStudente) {
-        return iscrizioneRepository.countByStudenteUserUsername(usernameStudente);
+        return iscrizioneRepository.countByStudenteUserUsernameAndCorsoAttivoTrue(usernameStudente);
     }
 
     /** Numero di corsi distinti a cui sono iscritti i figli del genitore. */

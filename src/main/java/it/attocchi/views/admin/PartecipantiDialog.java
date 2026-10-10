@@ -5,6 +5,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -28,7 +29,8 @@ import java.util.stream.Collectors;
 /**
  * Partecipanti di un corso in ordine di orario di inizio lezione (chi non ha ancora un orario
  * è in fondo), con aggiunta, rimozione e orario modificabile. Le modifiche sono salvate subito
- * e l'elenco si riordina; la notifica compare solo in caso di errore.
+ * e l'elenco si riordina; la notifica compare solo in caso di errore. Per un corso non attivo
+ * partecipanti e orari sono in sola lettura.
  */
 public class PartecipantiDialog extends Dialog {
 
@@ -63,6 +65,7 @@ public class PartecipantiDialog extends Dialog {
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
+        boolean modificabile = corso.isAttivo();
         var azioni = grid.addComponentColumn(iscrizione -> {
             Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
                 e -> rimuovi(iscrizione));
@@ -71,10 +74,17 @@ public class PartecipantiDialog extends Dialog {
         });
         ViewSupport.configureActionsColumn(azioni);
         azioni.setHeader("").setAutoWidth(false).setWidth("3.5rem");
+        azioni.setVisible(modificabile);
         grid.setAllRowsVisible(true);
         aggiorna();
 
         VerticalLayout content = new VerticalLayout(aggiunta, grid);
+        if (!modificabile) {
+            aggiunta.setVisible(false);
+            Span avviso = new Span("Corso non attivo: partecipanti e orari non sono modificabili.");
+            avviso.addClassName("avviso-sola-lettura");
+            content.addComponentAsFirst(avviso);
+        }
         content.setPadding(false);
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
@@ -89,6 +99,7 @@ public class PartecipantiDialog extends Dialog {
         orario.setWidthFull();
         orario.setAriaLabel("Orario lezione di " + iscrizione.getStudente().getNomeCompleto());
         orario.setValue(iscrizione.getOrarioLezione());
+        orario.setReadOnly(!corso.isAttivo());
         orario.addValueChangeListener(e -> {
             try {
                 corsoService.impostaOrario(corso.getId(), iscrizione.getStudente().getId(), e.getValue());

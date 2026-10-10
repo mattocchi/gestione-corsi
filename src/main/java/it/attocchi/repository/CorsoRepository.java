@@ -12,7 +12,7 @@ import java.util.List;
 public interface CorsoRepository extends JpaRepository<Corso, Long> {
     List<Corso> findByAttivoTrue();
     List<Corso> findByInsegnanteId(Long insegnanteId);
-    long countByInsegnanteUserUsername(String username);
+    long countByInsegnanteUserUsernameAndAttivoTrue(String username);
 
     @Query("SELECT c FROM Corso c JOIN c.iscrizioni i WHERE i.studente.id = :studenteId")
     List<Corso> findByStudenteId(@Param("studenteId") Long studenteId);

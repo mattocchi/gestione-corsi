@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Presenza;
+import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PresenzaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,9 +13,11 @@ import java.util.List;
 public class PresenzaService {
 
     private final PresenzaRepository presenzaRepository;
+    private final LezioneRepository lezioneRepository;
 
-    public PresenzaService(PresenzaRepository presenzaRepository) {
+    public PresenzaService(PresenzaRepository presenzaRepository, LezioneRepository lezioneRepository) {
         this.presenzaRepository = presenzaRepository;
+        this.lezioneRepository = lezioneRepository;
     }
 
     public List<Presenza> findAll() {
@@ -41,8 +44,11 @@ public class PresenzaService {
         return presenzaRepository.findByCorsoIdAndStudenteId(corsoId, studenteId);
     }
 
+    /** Le presenze di un corso non attivo non sono modificabili. */
     @Transactional
     public Presenza save(Presenza presenza) {
+        lezioneRepository.findById(presenza.getLezione().getId())
+            .ifPresent(lezione -> CorsoService.verificaAttivo(lezione.getCorso()));
         return presenzaRepository.save(presenza);
     }
 

@@ -55,8 +55,31 @@ public class CorsoService {
         return corsoRepository.findByInsegnanteId(insegnanteId);
     }
 
+    /** Tutti i corsi dello studente, anche non attivi (consultazione del genitore). */
     public List<Corso> findByStudente(Long studenteId) {
         return corsoRepository.findByStudenteId(studenteId);
+    }
+
+    /** Solo i corsi attivi dello studente: l'allievo non vede i corsi non attivi. */
+    public List<Corso> findAttiviByStudente(Long studenteId) {
+        return corsoRepository.findByStudenteId(studenteId).stream().filter(Corso::isAttivo).toList();
+    }
+
+    /**
+     * In un corso non attivo partecipanti, orari, lezioni e presenze non sono modificabili
+     * (quote e pagamenti sì).
+     */
+    static void verificaAttivo(Corso corso) {
+        if (!corso.isAttivo()) {
+            throw new IllegalStateException("Il corso \"" + corso.getNome() + "\" non è attivo");
+        }
+    }
+
+    private Corso corsoAttivo(Long corsoId) {
+        Corso corso = corsoRepository.findById(corsoId)
+            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoId));
+        verificaAttivo(corso);
+        return corso;
     }
 
     /** Partecipanti del corso in ordine di orario di lezione (senza orario in fondo), vedi {@link Iscrizione#PER_ORARIO}. */
@@ -72,11 +95,10 @@ public class CorsoService {
      */
     @Transactional
     public void iscrivi(Long corsoId, Long studenteId) {
+        Corso corso = corsoAttivo(corsoId);
         if (iscrizioneRepository.existsById(new IscrizioneId(corsoId, studenteId))) {
             return;
         }
-        Corso corso = corsoRepository.findById(corsoId)
-            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoId));
         Studente studente = studenteRepository.findById(studenteId)
             .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studenteId));
         iscrizioneRepository.save(new Iscrizione(corso, studente));
@@ -92,6 +114,7 @@ public class CorsoService {
      */
     @Transactional
     public void rimuoviIscrizione(Long corsoId, Long studenteId) {
+        corsoAttivo(corsoId);
         presenzaRepository.findByCorsoIdAndStudenteId(corsoId, studenteId).stream()
             .filter(presenza -> !presenza.getLezione().isCompletata())
             .forEach(presenzaRepository::delete);
@@ -101,6 +124,7 @@ public class CorsoService {
     /** Imposta (o con {@code null} toglie) l'orario di inizio lezione di un partecipante. */
     @Transactional
     public void impostaOrario(Long corsoId, Long studenteId, LocalTime orario) {
+        corsoAttivo(corsoId);
         Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, studenteId))
             .orElseThrow(() -> new IllegalArgumentException("Lo studente " + studenteId + " non è iscritto al corso " + corsoId));
         iscrizione.setOrarioLezione(orario);
@@ -118,8 +142,7 @@ public class CorsoService {
 
     @Transactional
     public void generaLezioni(Corso corsoDaUi) {
-        Corso corso = corsoRepository.findById(corsoDaUi.getId())
-            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoDaUi.getId()));
+        Corso corso = corsoAttivo(corsoDaUi.getId());
 
         // Elimina lezioni esistenti non completate
         List<Lezione> lezioniEsistenti = lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId());

@@ -135,6 +135,7 @@ public class CorsiView extends VerticalLayout {
             Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
                 e -> openPartecipanti(corso));
             Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
+            generateButton.setEnabled(corso.isAttivo());
             HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
             if (puoEliminare) {
                 Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
