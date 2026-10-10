@@ -414,6 +414,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_filtraCorsiPerStatoEAnno() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        chitarra.setAttivo(false);
+        corsoService.save(chitarra);
+        try {
+            navigate(CorsiView.class);
+            var corsi = test((Grid<Corso>) find(Grid.class).single());
+            SegmentedControl<CorsiView.FiltroStato> stato = find(SegmentedControl.class).single();
+
+            // default: solo i corsi attivi
+            assertEquals(CorsiView.FiltroStato.ATTIVI, stato.getValue());
+            assertEquals(1, corsi.size());
+            assertEquals("Corso di Canto", corsi.getRow(0).getNome());
+
+            test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            assertEquals(1, corsi.size());
+            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 7)).getText());
+
+            test(stato.getPulsante(CorsiView.FiltroStato.TUTTI)).click();
+            assertEquals(2, corsi.size());
+
+            ComboBox<String> anno = find(ComboBox.class).withPlaceholder("Tutti gli anni").single();
+            test(anno).selectItem("2024/2025");
+            assertEquals(2, corsi.size());
+        } finally {
+            chitarra = corsoService.findById(chitarra.getId());
+            chitarra.setAttivo(true);
+            corsoService.save(chitarra);
+        }
+    }
+
     private static List<String> ordinePartecipanti(GridTester<Grid<Iscrizione>, Iscrizione> righe) {
         List<String> ordine = new ArrayList<>();
         for (int row = 0; row < righe.size(); row++) {

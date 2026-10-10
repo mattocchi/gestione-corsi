@@ -11,6 +11,7 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -22,6 +23,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -35,6 +37,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -42,6 +45,7 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 @Route(value = "corsi", layout = MainLayout.class)
@@ -49,6 +53,25 @@ import java.util.Locale;
 @Menu(title = "Gestione Corsi", order = 10, icon = "vaadin:music")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class CorsiView extends VerticalLayout {
+
+    /** Filtro della griglia per stato del corso. */
+    public enum FiltroStato {
+        ATTIVI("Attivi", Corso::isAttivo),
+        NON_ATTIVI("Non attivi", corso -> !corso.isAttivo()),
+        TUTTI("Tutti", corso -> true);
+
+        private final String etichetta;
+        private final SerializablePredicate<Corso> condizione;
+
+        FiltroStato(String etichetta, SerializablePredicate<Corso> condizione) {
+            this.etichetta = etichetta;
+            this.condizione = condizione;
+        }
+
+        public String getEtichetta() {
+            return etichetta;
+        }
+    }
 
     private final CorsoService corsoService;
     private final InsegnanteService insegnanteService;
@@ -58,6 +81,10 @@ public class CorsiView extends VerticalLayout {
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
     private final Signal<Boolean> mobile = ViewSupport.isMobile();
+    private final SegmentedControl<FiltroStato> filtroStato = new SegmentedControl<>("Filtra i corsi per stato",
+        List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Mostra corsi: " + f.getEtichetta(), null);
+    private final ComboBox<String> filtroAnno = new ComboBox<>();
+    private GridListDataView<Corso> corsi;
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, StudenteService studenteService,
                      SecurityService securityService) {
@@ -70,7 +97,22 @@ public class CorsiView extends VerticalLayout {
         configureGrid();
 
         Button addButton = new Button("Nuovo Corso", e -> openDialog(new Corso()));
-        add(addButton, grid);
+
+        // Di default solo i corsi attivi, di tutti gli anni
+        filtroStato.setValue(FiltroStato.ATTIVI);
+        filtroStato.getStyle().set("max-width", "22rem");
+        filtroStato.addValueChangeListener(e -> applicaFiltri());
+        filtroAnno.setPlaceholder("Tutti gli anni");
+        filtroAnno.setAriaLabel("Filtra per anno scolastico");
+        filtroAnno.setClearButtonVisible(true);
+        filtroAnno.setWidth("11rem");
+        filtroAnno.addValueChangeListener(e -> applicaFiltri());
+
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroAnno);
+        toolbar.setWrap(true);
+        toolbar.setWidthFull();
+        toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        add(toolbar, grid);
         expand(grid);
 
         updateGrid();
@@ -234,6 +276,19 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        grid.setItems(corsoService.findAll());
+        List<Corso> tutti = corsoService.findAll();
+        String annoScelto = filtroAnno.getValue();
+        filtroAnno.setItems(tutti.stream().map(Corso::getAnnoScolastico).filter(a -> a != null).distinct().sorted().toList());
+        filtroAnno.setValue(annoScelto);
+        corsi = grid.setItems(tutti);
+        applicaFiltri();
+    }
+
+    private void applicaFiltri() {
+        if (corsi != null) {
+            String anno = filtroAnno.getValue();
+            corsi.setFilter(corso -> filtroStato.getValue().condizione.test(corso)
+                && (anno == null || anno.equals(corso.getAnnoScolastico())));
+        }
     }
 }

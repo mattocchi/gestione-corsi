@@ -45,7 +45,7 @@ Implementare le 7 voci della sezione "RICHIESTE del 10-10-2026 Revisione 1" di `
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Anno scolastico e stato attivo nel dialog del corso (elenco anni proposto dalla data di inizio, checkbox Attivo), colonne Anno e Stato (badge) in Gestione Corsi; dati di esempio; script SQL per i corsi esistenti | (REV1.7) | `Corso`, `AnnoScolastico`, `CorsiView`, `DataInitializer`, `docs/migrazioni/…sql` | `./mvnw test` | [x] |
-| 2 | Gestione Corsi: filtri per stato (Attivi/Non attivi/Tutti, default Attivi) e per anno scolastico | (REV1.7) | `CorsiView` | `./mvnw test` | [ ] |
+| 2 | Gestione Corsi: filtri per stato (Attivi/Non attivi/Tutti, default Attivi) e per anno scolastico | (REV1.7) | `CorsiView` | `./mvnw test` | [x] |
 | 3 | Corsi non attivi: blocchi nei service (iscrizioni, orari, Genera Lezioni, presenze, completamento) e UI in sola lettura nel dialog Partecipanti; insegnante e allievo non vedono i corsi non attivi (lezioni, corsi, dashboard) | (REV1.7) | `CorsoService`, `PresenzaService`, `LezioneService`, repository, `PartecipantiDialog`, `CorsiView`, `LezioniInsegnanteView`, `MieiCorsiView`, `DashboardService` | `./mvnw test` | [ ] |
 | 4 | Modello pagamenti: quota personalizzata e nota su `Iscrizione`, entity `Pagamento` con `MetodoPagamento`, `PagamentoService` con riepilogo quota/pagato/residuo | — | `entity/`, `repository/`, `service/` | `./mvnw test` | [ ] |
 | 5 | Dialog "Quota e pagamenti" dal dialog Partecipanti: quota personalizzata con nota | REV1.2 | `QuotaPagamentiDialog`, `PartecipantiDialog` | `./mvnw test` | [ ] |
