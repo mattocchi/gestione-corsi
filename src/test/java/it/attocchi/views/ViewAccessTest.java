@@ -152,7 +152,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void admin_utenti_griglia() {
         navigate(UtentiView.class);
 
-        assertEquals(25, test(find(Grid.class).single()).size());
+        assertEquals(26, test(find(Grid.class).single()).size());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_accedeEdNonVedeGestioneUtenti() {
+        navigate(HomeView.class);
+
+        List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
+        assertTrue(voci.contains("Home"), voci.toString());
+        assertFalse(voci.contains("Gestione Utenti"), voci.toString());
+        navigate("utenti", RouteNotFoundError.class);
     }
 
     @Test

@@ -77,7 +77,7 @@ public class UtentiView extends VerticalLayout {
 
         CheckboxGroup<String> roles = new CheckboxGroup<>();
         roles.setLabel("Ruoli");
-        roles.setItems(Arrays.asList("ADMIN", "INSEGNANTE", "STUDENTE", "GENITORE"));
+        roles.setItems(Arrays.asList("ADMIN", "SEGRETERIA", "INSEGNANTE", "STUDENTE", "GENITORE"));
 
         if (user.getId() != null) {
             password.setPlaceholder("Lascia vuoto per non modificare");

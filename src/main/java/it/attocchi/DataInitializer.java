@@ -60,6 +60,16 @@ public class DataInitializer implements CommandLineRunner {
             admin.getRoles().add("ADMIN");
             userService.save(admin, "admin");
 
+            // Crea utente della segreteria
+            User segreteria = new User();
+            segreteria.setUsername("segreteria");
+            segreteria.setNome("Paola");
+            segreteria.setCognome("Bianchi");
+            segreteria.setEmail("segreteria@example.com");
+            segreteria.setRoles(new HashSet<>());
+            segreteria.getRoles().add("SEGRETERIA");
+            userService.save(segreteria, "segreteria");
+
             // Crea insegnante1 per corso di canto
             User userInsegnante1 = new User();
             userInsegnante1.setUsername("insegnante1");
@@ -203,6 +213,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info("""
                 Dati di test inizializzati:
                   ADMIN:    admin/admin
+                  SEGRETERIA: segreteria/segreteria
                   INSEGNANTI:  insegnante1/insegnante1 (Canto), insegnante2/insegnante2 (Chitarra)
                   GENITORI: genitore1..9 / genitore1..9
                   STUDENTI: studente_canto1..7 / studente1..7, studente_chitarra1..6 / studente8..13

@@ -21,7 +21,7 @@
 
 ### SEGRETERIA
 
-* [ ] aggiungere il ruolo SEGRETERIA oltre a quelli esistenti
+* [x] aggiungere il ruolo SEGRETERIA oltre a quelli esistenti _(completata 2026-10-10)_
 * [ ] Il ruolo segreteria deve poter Assegnare Partecipati ai Corsi
 * [ ] Il ruolo segreteria deve poter deve poter assegnare l'orario di inizio della lezione ad ogni Partecipante del Corso
 * [ ] Il ruolo Segreteria deve poter vedere tutti i Corsi, Studenti e Insegnanti, 
