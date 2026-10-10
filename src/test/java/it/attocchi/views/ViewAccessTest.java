@@ -7,9 +7,12 @@ import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
 import it.attocchi.entity.Corso;
@@ -39,9 +42,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -145,6 +151,51 @@ class ViewAccessTest extends SpringBrowserlessTest {
         // Tolto l'orario torna in fondo (ripristina i dati di test)
         test((TimePicker) righe.getCellComponent(0, 0)).clear();
         assertEquals("- Studente Canto6", ordinePartecipanti(righe).get(5));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_creaCorsoAssegnatoAUnInsegnante() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        test(find(Button.class).withText("Nuovo Corso").single()).click();
+
+        // Senza insegnante il corso non viene salvato
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Corso di Batteria");
+        test(find(DatePicker.class).withLabel("Data Inizio").single()).setValue(LocalDate.of(2026, 11, 2));
+        test(find(IntegerField.class).withLabel("Numero Lezioni").single()).setValue(10);
+        test(find(IntegerField.class).withLabel("Durata Lezione (minuti)").single()).setValue(30);
+        ((CheckboxGroup<DayOfWeek>) find(CheckboxGroup.class).single()).setValue(Set.of(DayOfWeek.MONDAY));
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(find(ComboBox.class).withLabel("Insegnante").single().isInvalid());
+        assertEquals(2, corsi.size());
+
+        test(find(ComboBox.class).withLabel("Insegnante").single()).selectItem("Marco Rossi");
+        test(find(Button.class).withText("Salva").single()).click();
+        Corso nuovo = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Batteria")).findFirst().orElseThrow();
+        try {
+            assertEquals(3, corsi.size());
+            assertEquals("Marco Rossi", nuovo.getInsegnante().getNomeCompleto());
+            assertEquals(LocalDate.of(2026, 11, 2), nuovo.getDataInizio());
+        } finally {
+            corsoService.delete(nuovo);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_modificaCorsoSenzaPerdereIPartecipanti() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+
+        test(pulsante(corsi.getCellComponent(canto, 6), "Modifica")).click();
+        test(find(Button.class).withText("Salva").single()).click();
+
+        assertEquals(7, corsoService.findPartecipanti(corsoId).size());
     }
 
     private static List<String> ordinePartecipanti(GridTester<Grid<Iscrizione>, Iscrizione> righe) {

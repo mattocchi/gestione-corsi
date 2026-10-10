@@ -124,22 +124,27 @@ public class CorsiView extends VerticalLayout {
         insegnante.setItems(insegnanteService.findAll());
         insegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
 
-        binder.forField(nome).bind(Corso::getNome, Corso::setNome);
+        binder.forField(nome).asRequired("Inserisci il nome del corso").bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
         binder.forField(dataInizio).bind(Corso::getDataInizio, Corso::setDataInizio);
-        binder.forField(numeroLezioni).bind(Corso::getNumeroLezioni, Corso::setNumeroLezioni);
-        binder.forField(durataLezioni).bind(Corso::getDurataLezioneMinuti, Corso::setDurataLezioneMinuti);
+        binder.forField(numeroLezioni).asRequired("Inserisci il numero di lezioni")
+            .bind(Corso::getNumeroLezioni, Corso::setNumeroLezioni);
+        binder.forField(durataLezioni).asRequired("Inserisci la durata della lezione")
+            .bind(Corso::getDurataLezioneMinuti, Corso::setDurataLezioneMinuti);
         binder.forField(orarioInizio).bind(Corso::getOrarioInizio, Corso::setOrarioInizio);
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
-        binder.forField(insegnante).bind(Corso::getInsegnante, Corso::setInsegnante);
+        binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
 
         binder.readBean(corso);
 
         formLayout.add(nome, insegnante, dataInizio, numeroLezioni, durataLezioni, orarioInizio, giorniSettimana, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
+            // Campi obbligatori mancanti: gli errori sono mostrati sui campi
+            if (!binder.writeBeanIfValid(corso)) {
+                return;
+            }
             try {
-                binder.writeBean(corso);
                 corsoService.save(corso);
                 updateGrid();
                 dialog.close();
