@@ -3,6 +3,7 @@ package it.attocchi.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalTime;
+import java.util.Comparator;
 
 /**
  * Iscrizione di uno studente (partecipante) a un corso, con l'orario di inizio della sua lezione.
@@ -14,6 +15,11 @@ import java.time.LocalTime;
 @Entity
 @Table(name = "corso_studenti")
 public class Iscrizione {
+
+    /** Ordine dei partecipanti: per orario di lezione, quelli senza orario in fondo; a parità per nome. */
+    public static final Comparator<Iscrizione> PER_ORARIO = Comparator
+        .comparing(Iscrizione::getOrarioLezione, Comparator.nullsLast(Comparator.naturalOrder()))
+        .thenComparing(i -> i.getStudente().getNomeCompleto());
 
     @EmbeddedId
     private IscrizioneId id = new IscrizioneId();

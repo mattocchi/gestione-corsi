@@ -163,8 +163,14 @@ public class DataInitializer implements CommandLineRunner {
             corsoCanto.setCostoTotale(new BigDecimal("600.00"));
             corsoCanto.setCostoPerLezione(new BigDecimal("20.00"));
             corsoCanto = corsoRepository.save(corsoCanto);
-            for (Studente s : studentiCanto) {
-                iscrizioneRepository.save(new Iscrizione(corsoCanto, s));
+            // Orari di lezione individuali: i primi 5 in ordine inverso (Canto5 alle 17:00, Canto1 alle 19:40),
+            // Canto6 e Canto7 ancora senza orario
+            for (int i = 0; i < studentiCanto.length; i++) {
+                Iscrizione iscrizione = new Iscrizione(corsoCanto, studentiCanto[i]);
+                if (i < 5) {
+                    iscrizione.setOrarioLezione(LocalTime.of(17, 0).plusMinutes(40L * (4 - i)));
+                }
+                iscrizioneRepository.save(iscrizione);
             }
 
             // Crea corso di Chitarra - Martedì e Sabato

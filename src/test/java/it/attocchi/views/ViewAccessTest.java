@@ -1,14 +1,18 @@
 package it.attocchi.views;
 
 import com.vaadin.browserless.SpringBrowserlessTest;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.RouteNotFoundError;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Presenza.StatoPresenza;
@@ -16,6 +20,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.PartecipantiDialog;
 import it.attocchi.views.admin.StudentiView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
@@ -28,6 +33,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -87,6 +93,45 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(modifica).click();
         CheckboxGroup<?> giorni = find(CheckboxGroup.class).single();
         assertFalse(giorni.getValue().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_corsi_partecipantiInOrdineDiOrario() {
+        navigate(CorsiView.class);
+        var grid = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(grid, "Corso di Canto");
+
+        Button partecipanti = pulsante(grid.getCellComponent(canto, 6), "Partecipanti");
+        test(partecipanti).click();
+
+        PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+        var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+        List<String> ordine = new ArrayList<>();
+        for (int row = 0; row < righe.size(); row++) {
+            ordine.add(righe.getCellText(row, 0) + " " + righe.getCellText(row, 1));
+        }
+        assertEquals(List.of("17:00 Studente Canto5", "17:40 Studente Canto4", "18:20 Studente Canto3",
+            "19:00 Studente Canto2", "19:40 Studente Canto1",
+            "da assegnare Studente Canto6", "da assegnare Studente Canto7"), ordine);
+    }
+
+    private static int riga(GridTester<Grid<Corso>, Corso> grid, String nome) {
+        for (int row = 0; row < grid.size(); row++) {
+            if (grid.getRow(row).getNome().equals(nome)) {
+                return row;
+            }
+        }
+        throw new AssertionError("Corso non trovato: " + nome);
+    }
+
+    private static Button pulsante(Component azioni, String etichetta) {
+        return azioni.getChildren()
+            .filter(c -> c instanceof Button b && etichetta.equals(b.getElement().getAttribute("aria-label")))
+            .map(Button.class::cast)
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Pulsante non trovato: " + etichetta));
     }
 
     @Test

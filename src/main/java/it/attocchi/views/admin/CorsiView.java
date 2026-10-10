@@ -67,10 +67,12 @@ public class CorsiView extends VerticalLayout {
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(corso -> {
             Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
+            Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
+                e -> new PartecipantiDialog(corsoService, corso).open());
             Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
             Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
             deleteButton.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(editButton, generateButton, deleteButton);
+            return ViewSupport.actions(editButton, partecipantiButton, generateButton, deleteButton);
         }));
 
         ViewSupport.hideOnMobile(grid, insegnante, dataInizio, numeroLezioni, durata, numeroStudenti);

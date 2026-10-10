@@ -1,10 +1,12 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
 import it.attocchi.repository.CorsoRepository;
+import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PresenzaRepository;
 import org.springframework.stereotype.Service;
@@ -21,12 +23,14 @@ public class CorsoService {
     private final CorsoRepository corsoRepository;
     private final LezioneRepository lezioneRepository;
     private final PresenzaRepository presenzaRepository;
+    private final IscrizioneRepository iscrizioneRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
-                       PresenzaRepository presenzaRepository) {
+                       PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository) {
         this.corsoRepository = corsoRepository;
         this.lezioneRepository = lezioneRepository;
         this.presenzaRepository = presenzaRepository;
+        this.iscrizioneRepository = iscrizioneRepository;
     }
 
     public List<Corso> findAll() {
@@ -47,6 +51,13 @@ public class CorsoService {
 
     public List<Corso> findByStudente(Long studenteId) {
         return corsoRepository.findByStudenteId(studenteId);
+    }
+
+    /** Partecipanti del corso in ordine di orario di lezione (senza orario in fondo), vedi {@link Iscrizione#PER_ORARIO}. */
+    public List<Iscrizione> findPartecipanti(Long corsoId) {
+        return iscrizioneRepository.findByCorsoIdWithStudente(corsoId).stream()
+            .sorted(Iscrizione.PER_ORARIO)
+            .toList();
     }
 
     @Transactional
