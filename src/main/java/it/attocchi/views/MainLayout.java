@@ -4,7 +4,9 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -33,7 +35,7 @@ public class MainLayout extends AppLayout {
         this.securityService = securityService;
         setPrimarySection(Section.DRAWER);
         createHeader();
-        addToDrawer(new Scroller(createSideNav()));
+        addToDrawer(createDrawer());
     }
 
     private void createHeader() {
@@ -50,6 +52,19 @@ public class MainLayout extends AppLayout {
         header.addClassName("app-header");
 
         addToNavbar(header);
+    }
+
+    /** Menu scorrevole in alto e logo fisso in fondo al drawer (desktop e mobile). */
+    private Div createDrawer() {
+        Scroller menu = new Scroller(createSideNav());
+        menu.addClassName("drawer-menu");
+
+        Image logo = new Image(LOGO, LOGO_ALT);
+        logo.addClassNames("app-logo", "drawer-logo");
+
+        Div drawer = new Div(menu, logo);
+        drawer.addClassName("drawer-content");
+        return drawer;
     }
 
     private SideNav createSideNav() {

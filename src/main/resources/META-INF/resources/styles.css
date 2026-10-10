@@ -93,4 +93,25 @@
 
 .login-logo {
     width: min(22rem, 85vw);
+    margin-bottom: 0.75rem;
+}
+
+/* Drawer: menu che scorre in alto, logo sempre visibile in fondo */
+.drawer-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.drawer-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.drawer-logo {
+    flex: none;
+    width: calc(100% - 2rem);
+    max-width: 14rem;
+    margin: 1rem;
 }

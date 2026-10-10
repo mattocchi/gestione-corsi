@@ -5,7 +5,7 @@
 ### LOGO
 
 * [x] alla schermata di Login, deve essere visualizzato un logo, responsive, al centro sopra i dati di login _(completata 2026-10-10)_
-* [ ] il Logo deve essere visibile anche in basso nella barra di menu sia desktop che mobile (sempre responsive)
+* [x] il Logo deve essere visibile anche in basso nella barra di menu sia desktop che mobile (sempre responsive) _(completata 2026-10-10)_
 * [x] il logo da usare è nel repository nella cartella docs/loghi/MOSSON-Logo-h150.png _(completata 2026-10-10)_
 
 ### Docenti diventano Insegnantei
