@@ -14,8 +14,9 @@
 
 ### CORSI
 
-* [ ] un corso deve poter avere una data di inizio
+* [x] un corso deve poter avere una data di inizio _(già presente, verificata 2026-10-10: campo "Data Inizio" nel dialog del corso e colonna in Gestione Corsi)_
 * [ ] un corso deve poter avere 
+  _(voce incompleta: da specificare, non implementata)_
 * [ ] la visualizzazione dei Corsi deve mostrare l'elenco dei Partecipanti in ordine di Inizio della Lezione quanto è assegnato un orario di Lezione ad un Partecipante
 
 ### SEGRETERIA
