@@ -1,7 +1,5 @@
 package it.attocchi.views.admin;
 
-import com.vaadin.flow.component.badge.Badge;
-import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -26,6 +24,7 @@ import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.Formati;
 import it.attocchi.views.SegmentedControl;
+import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
 
 
@@ -210,22 +209,6 @@ public class QuotaPagamentiDialog extends Dialog {
         riepilogo.add(new Span("Da pagare " + Formati.euro(situazione.quota())),
             new Span("Pagato " + Formati.euro(situazione.pagato())),
             new Span("Residuo " + Formati.euro(situazione.residuo())),
-            statoBadge(situazione));
-    }
-
-    static Badge statoBadge(Situazione situazione) {
-        return switch (situazione.stato()) {
-            case SALDATO -> {
-                Badge badge = new Badge("Saldato", VaadinIcon.CHECK.create());
-                badge.addThemeVariants(BadgeVariant.SUCCESS);
-                yield badge;
-            }
-            case PARZIALE -> {
-                Badge badge = new Badge("Parziale " + situazione.percentualePagata() + "%", VaadinIcon.HOURGLASS.create());
-                badge.addThemeVariants(BadgeVariant.WARNING);
-                yield badge;
-            }
-            case NESSUN_PAGAMENTO -> new Badge("Da pagare", VaadinIcon.CLOCK.create());
-        };
+            StatoPagamentoUI.badge(situazione));
     }
 }

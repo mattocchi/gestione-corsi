@@ -19,7 +19,7 @@ import it.attocchi.service.CorsoService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.StudenteService;
-import it.attocchi.views.Formati;
+import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
@@ -74,22 +74,14 @@ public class PartecipantiDialog extends Dialog {
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
-        var pagamento = grid.addComponentColumn(iscrizione -> QuotaPagamentiDialog.statoBadge(situazione(iscrizione)))
+        var pagamento = grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = corso.isAttivo();
         // Quota e pagamenti sempre disponibili (anche per i corsi non attivi); rimozione solo per i corsi attivi
         var azioni = grid.addComponentColumn(iscrizione -> {
             Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getStudente().getNomeCompleto(),
                 e -> openQuotaPagamenti(iscrizione));
-            // Su mobile la colonna Pagamento è nascosta: lo stato si legge dal colore e dal tooltip del pulsante
-            Situazione situazione = situazione(iscrizione);
-            switch (situazione.stato()) {
-                case SALDATO -> pagamenti.addThemeVariants(ButtonVariant.SUCCESS);
-                case PARZIALE -> pagamenti.addThemeVariants(ButtonVariant.WARNING);
-                case NESSUN_PAGAMENTO -> pagamenti.addThemeVariants(ButtonVariant.ERROR);
-            }
-            pagamenti.setTooltipText("Quota e pagamenti: " + situazione.stato().getDescrizione()
-                + " (residuo " + Formati.euro(situazione.residuo()) + ")");
+            StatoPagamentoUI.coloraPulsante(pagamenti, "Quota e pagamenti", situazione(iscrizione));
             HorizontalLayout actions = ViewSupport.actions(pagamenti);
             if (modificabile) {
                 Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),

@@ -18,11 +18,15 @@ import it.attocchi.entity.Studente;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.GenitoreService;
+import it.attocchi.service.PagamentoService;
+import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.PagamentiStudenteDialog;
 import it.attocchi.views.PresenzeStudenteDialog;
+import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -30,6 +34,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @Route(value = "figli", layout = MainLayout.class)
 @PageTitle("I Miei Figli")
@@ -40,16 +45,18 @@ public class FigliView extends VerticalLayout {
     private final StudenteService studenteService;
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
+    private final PagamentoService pagamentoService;
 
     private final Grid<Studente> gridFigli = new Grid<>(Studente.class, false);
     private Genitore genitoreCorrente;
 
     public FigliView(StudenteService studenteService, CorsoService corsoService,
-                     PresenzaService presenzaService, SecurityService securityService,
-                     GenitoreService genitoreService) {
+                     PresenzaService presenzaService, PagamentoService pagamentoService,
+                     SecurityService securityService, GenitoreService genitoreService) {
         this.studenteService = studenteService;
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
+        this.pagamentoService = pagamentoService;
 
         setSizeFull();
         genitoreCorrente = securityService.getUsername().flatMap(genitoreService::findByUsername).orElse(null);
@@ -79,20 +86,24 @@ public class FigliView extends VerticalLayout {
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
         var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
-        gridCorsi.addColumn(Corso::getCostoTotale).setHeader("Costo Totale").setAutoWidth(true).setFlexGrow(0);
+        Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloStudente(studente.getId());
+        var pagamento = gridCorsi.addComponentColumn(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
+            .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso -> {
             Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Presenze", e -> openPresenzeDialog(studente, corso));
+            Button pagamentiButton = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> openPagamentiDialog(studente, corso));
+            StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
 
             Anchor download = new Anchor(generateRiepilogo(studente, corso), "");
             download.getElement().setAttribute("download", true);
             download.add(ViewSupport.iconButton(VaadinIcon.DOWNLOAD, "Scarica Riepilogo"));
 
-            HorizontalLayout actions = ViewSupport.actions(presenzeButton);
+            HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
             actions.add(download);
             return actions;
         }));
-        ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni);
+        ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni, pagamento);
 
         gridCorsi.setItems(corsoService.findByStudente(studente.getId()));
         gridCorsi.setAllRowsVisible(true);
@@ -105,6 +116,13 @@ public class FigliView extends VerticalLayout {
     private void openPresenzeDialog(Studente studente, Corso corso) {
         List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
         new PresenzeStudenteDialog(corso.getNome() + " – " + studente.getNomeCompleto(), presenze).open();
+    }
+
+    private void openPagamentiDialog(Studente studente, Corso corso) {
+        new PagamentiStudenteDialog("Pagamenti " + corso.getNome() + " – " + studente.getNomeCompleto(),
+            pagamentoService.findIscrizione(corso.getId(), studente.getId()),
+            pagamentoService.situazione(corso.getId(), studente.getId()),
+            pagamentoService.findPagamenti(corso.getId(), studente.getId())).open();
     }
 
     private DownloadHandler generateRiepilogo(Studente studente, Corso corso) {

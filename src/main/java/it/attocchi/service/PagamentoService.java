@@ -100,6 +100,20 @@ public class PagamentoService {
         return situazioni;
     }
 
+    /** Situazione dello studente in ognuno dei suoi corsi, per id del corso. */
+    public Map<Long, Situazione> situazioniDelloStudente(Long studenteId) {
+        Map<Long, BigDecimal> pagato = new HashMap<>();
+        for (Object[] riga : pagamentoRepository.sommaPerCorso(studenteId)) {
+            pagato.put((Long) riga[0], (BigDecimal) riga[1]);
+        }
+        Map<Long, Situazione> situazioni = new HashMap<>();
+        for (Iscrizione iscrizione : iscrizioneRepository.findByStudenteIdWithCorso(studenteId)) {
+            Long corsoId = iscrizione.getCorso().getId();
+            situazioni.put(corsoId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(corsoId, BigDecimal.ZERO)));
+        }
+        return situazioni;
+    }
+
     /** Imposta (o con {@code null} toglie) la quota personalizzata del partecipante, con la nota sul motivo. */
     @Transactional
     public void impostaQuota(Long corsoId, Long studenteId, BigDecimal quota, String nota) {

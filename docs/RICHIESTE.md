@@ -41,7 +41,7 @@
 
 ## RICHIESTE del 10-10-2026 Revisione 1
 
-* [ ] Per ogni Partecipante al corso è necessario poter segnare la quota pagata. Quindi per ogni corso e per ogni partecipante admin, e segreteria devono poter aggiungere la quota pagata. Potenzialmente si può pagare la quota del corso in più rate quindi deve essere possibile inserire la data del pagamento e l'importo pagato, oltre al metodo che può essere bonifico o cassa. Default bonifico.
+* [x] Per ogni Partecipante al corso è necessario poter segnare la quota pagata. Quindi per ogni corso e per ogni partecipante admin, e segreteria devono poter aggiungere la quota pagata. Potenzialmente si può pagare la quota del corso in più rate quindi deve essere possibile inserire la data del pagamento e l'importo pagato, oltre al metodo che può essere bonifico o cassa. Default bonifico. _(completata 2026-10-10)_
   _Chiarimento 2026-10-10: rate gestite da admin e segreteria nel dialog "Quota e pagamenti" del partecipante (dal dialog Partecipanti); aggiungi/modifica/elimina; data (default oggi), importo, metodo Bonifico/Cassa (default Bonifico), nota facoltativa. Il genitore vede quota, pagato, residuo e rate. Partecipante/corso/allievo con pagamenti non eliminabile (avviso)._
 
 * [x] Per ogni allievo del corso deve essere possibile indicare esattamente la quota da pagare del corso perché potrebbe differire dalla quota piena. Questo perché ci sono delle condizioni che permettono di applicare un pezzo personalizzato che ruolo admin o segreteria possono impostare _(completata 2026-10-10)_

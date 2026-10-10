@@ -10,6 +10,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.html.Span;
@@ -844,6 +845,43 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(2, grid.size());
         assertEquals("1", grid.getCellText(0, 2));
         assertEquals("1", grid.getCellText(1, 2));
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    @SuppressWarnings("unchecked")
+    void genitore_vedeQuotaPagatoResiduoERate() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("200"));
+        rata.setMetodo(MetodoPagamento.CASSA);
+        pagamentoService.salva(canto.getId(), studente.getId(), rata);
+        try {
+            navigate(FigliView.class);
+            var figli = test((Grid<Studente>) find(Grid.class).single());
+            int riga = IntStream.range(0, figli.size())
+                .filter(r -> figli.getCellText(r, 0).equals("Studente Canto3")).findFirst().orElseThrow();
+            test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
+
+            var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
+            assertEquals("Corso di Canto", corsi.getCellText(0, 0));
+            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 3)).getText());
+            test(pulsante(corsi.getCellComponent(0, 4), "Pagamenti")).click();
+
+            PagamentiStudenteDialog dialog = find(PagamentiStudenteDialog.class).single();
+            assertTrue(find(Span.class).from(dialog).withText("Da pagare 600,00 €").exists());
+            assertTrue(find(Span.class).from(dialog).withText("Pagato 200,00 €").exists());
+            assertTrue(find(Span.class).from(dialog).withText("Residuo 400,00 €").exists());
+            var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).single());
+            assertEquals(1, rate.size());
+            assertEquals("Cassa", rate.getCellText(0, 2));
+            // Sola lettura: nessun pulsante di modifica
+            assertFalse(find(Button.class).from(dialog).withText("Aggiungi pagamento").exists());
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+        }
     }
 
     @Test
