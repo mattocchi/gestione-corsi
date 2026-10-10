@@ -274,9 +274,13 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void deleteCorso(Corso corso) {
-        corsoService.delete(corso);
-        updateGrid();
-        Notification.show("Corso eliminato");
+        try {
+            corsoService.delete(corso);
+            updateGrid();
+            Notification.show("Corso eliminato");
+        } catch (RuntimeException ex) {
+            Notification.show("Impossibile eliminare il corso: " + ex.getMessage());
+        }
     }
 
     private void updateGrid() {

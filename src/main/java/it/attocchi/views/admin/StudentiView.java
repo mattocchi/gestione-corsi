@@ -168,9 +168,13 @@ public class StudentiView extends VerticalLayout {
     }
 
     private void deleteStudente(Studente studente) {
-        studenteService.delete(studente);
-        updateGrid();
-        Notification.show("Studente eliminato");
+        try {
+            studenteService.delete(studente);
+            updateGrid();
+            Notification.show("Studente eliminato");
+        } catch (RuntimeException ex) {
+            Notification.show("Impossibile eliminare lo studente: " + ex.getMessage());
+        }
     }
 
     private void updateGrid() {

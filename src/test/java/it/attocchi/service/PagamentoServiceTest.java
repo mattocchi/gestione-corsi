@@ -67,4 +67,22 @@ class PagamentoServiceTest {
             pagamentoService.impostaQuota(canto.getId(), studente, null, null);
         }
     }
+
+    @Test
+    void conPagamentiNonSiRimuoveNeSiEliminaNulla() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        var studente = studenteService.findByUsername("studente_canto4").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.of(2026, 10, 1));
+        rata.setImporto(new BigDecimal("100"));
+        pagamentoService.salva(canto.getId(), studente.getId(), rata);
+        try {
+            assertThrows(IllegalStateException.class, () -> corsoService.rimuoviIscrizione(canto.getId(), studente.getId()));
+            assertThrows(IllegalStateException.class, () -> corsoService.delete(canto));
+            assertThrows(IllegalStateException.class, () -> studenteService.delete(studente));
+            assertEquals(7, corsoService.findPartecipanti(canto.getId()).size());
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+        }
+    }
 }

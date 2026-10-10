@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Studente;
+import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.StudenteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +14,11 @@ import java.util.Optional;
 public class StudenteService {
 
     private final StudenteRepository studenteRepository;
+    private final PagamentoRepository pagamentoRepository;
 
-    public StudenteService(StudenteRepository studenteRepository) {
+    public StudenteService(StudenteRepository studenteRepository, PagamentoRepository pagamentoRepository) {
         this.studenteRepository = studenteRepository;
+        this.pagamentoRepository = pagamentoRepository;
     }
 
     public List<Studente> findAll() {
@@ -45,6 +48,9 @@ public class StudenteService {
 
     @Transactional
     public void delete(Studente studente) {
+        if (pagamentoRepository.existsByStudente(studente.getId())) {
+            throw new IllegalStateException("Lo studente ha pagamenti registrati: eliminali prima di eliminarlo");
+        }
         studenteRepository.delete(studente);
     }
 }

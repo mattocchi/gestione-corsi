@@ -9,6 +9,7 @@ import it.attocchi.entity.Studente;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
+import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.StudenteRepository;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,12 @@ public class CorsoService {
     private final PresenzaRepository presenzaRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final StudenteRepository studenteRepository;
+    private final PagamentoRepository pagamentoRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
-                       StudenteRepository studenteRepository) {
+                       StudenteRepository studenteRepository, PagamentoRepository pagamentoRepository) {
+        this.pagamentoRepository = pagamentoRepository;
         this.corsoRepository = corsoRepository;
         this.lezioneRepository = lezioneRepository;
         this.presenzaRepository = presenzaRepository;
@@ -115,6 +118,9 @@ public class CorsoService {
     @Transactional
     public void rimuoviIscrizione(Long corsoId, Long studenteId) {
         corsoAttivo(corsoId);
+        if (pagamentoRepository.existsByIscrizione(corsoId, studenteId)) {
+            throw new IllegalStateException("ha pagamenti registrati: eliminali prima di rimuoverlo dal corso");
+        }
         presenzaRepository.findByCorsoIdAndStudenteId(corsoId, studenteId).stream()
             .filter(presenza -> !presenza.getLezione().isCompletata())
             .forEach(presenzaRepository::delete);
@@ -137,6 +143,9 @@ public class CorsoService {
 
     @Transactional
     public void delete(Corso corso) {
+        if (pagamentoRepository.existsByCorso(corso.getId())) {
+            throw new IllegalStateException("Il corso ha pagamenti registrati: eliminali prima di eliminare il corso");
+        }
         corsoRepository.delete(corso);
     }
 
