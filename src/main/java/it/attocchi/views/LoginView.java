@@ -1,6 +1,7 @@
 package it.attocchi.views;
 
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -24,9 +25,12 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
         login.setAction("login");
 
+        Image logo = new Image(MainLayout.LOGO, MainLayout.LOGO_ALT);
+        logo.addClassNames("app-logo", "login-logo");
+
         H1 title = new H1("Gestione Corsi Musica");
         title.addClassName("page-title");
-        add(title, login);
+        add(logo, title, login);
     }
 
     @Override

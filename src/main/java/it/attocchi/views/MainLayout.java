@@ -23,6 +23,10 @@ import jakarta.annotation.security.PermitAll;
 @PermitAll
 public class MainLayout extends AppLayout {
 
+    /** Logo dell'associazione (risorsa statica, accessibile anche senza login). */
+    public static final String LOGO = "images/logo-mosson.png";
+    public static final String LOGO_ALT = "MOSSON Drum & Bugle Corps";
+
     private final SecurityService securityService;
 
     public MainLayout(SecurityService securityService) {

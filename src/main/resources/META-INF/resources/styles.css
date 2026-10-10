@@ -73,3 +73,24 @@
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s, 0.8125rem);
 }
+
+/* Logo: larghezza fluida, proporzioni mantenute. In tema scuro la scritta nera
+   resta leggibile grazie a uno sfondo chiaro arrotondato. */
+.app-logo {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+    .app-logo {
+        background: #fff;
+        border-radius: var(--vaadin-radius-m, 0.5rem);
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+.login-logo {
+    width: min(22rem, 85vw);
+}
