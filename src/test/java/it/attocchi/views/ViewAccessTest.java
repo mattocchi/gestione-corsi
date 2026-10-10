@@ -11,7 +11,9 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.TextFieldTester;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
@@ -42,6 +44,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -223,6 +226,29 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(Formati.data(LocalDate.of(2027, 1, 11)), corsi.getCellText(riga(corsi, "Corso di Tromba"), 2));
         } finally {
             corsoService.delete(nuovo);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_assegnaCostoTotaleDelCorso() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+
+        test(pulsante(corsi.getCellComponent(canto, 6), "Modifica")).click();
+        BigDecimalField costo = find(BigDecimalField.class).withLabel("Costo Totale").single();
+        assertEquals(0, new BigDecimal("600.00").compareTo(costo.getValue()));
+        new TextFieldTester<>(costo).setValue(new BigDecimal("650.50"));
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            assertEquals(0, new BigDecimal("650.50").compareTo(corsoService.findById(corsoId).getCostoTotale()));
+        } finally {
+            Corso corso = corsoService.findById(corsoId);
+            corso.setCostoTotale(new BigDecimal("600.00"));
+            corsoService.save(corso);
         }
     }
 

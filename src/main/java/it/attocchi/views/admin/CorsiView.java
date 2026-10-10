@@ -12,6 +12,8 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -31,8 +33,10 @@ import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.util.Arrays;
+import java.util.Locale;
 
 @Route(value = "corsi", layout = MainLayout.class)
 @PageTitle("Gestione Corsi")
@@ -103,6 +107,9 @@ public class CorsiView extends VerticalLayout {
         IntegerField numeroLezioni = new IntegerField("Numero Lezioni");
         IntegerField durataLezioni = new IntegerField("Durata Lezione (minuti)");
         TimePicker orarioInizio = new TimePicker("Orario Inizio");
+        BigDecimalField costoTotale = new BigDecimalField("Costo Totale");
+        costoTotale.setLocale(Locale.ITALY);
+        costoTotale.setPrefixComponent(new Span("€"));
 
         CheckboxGroup<DayOfWeek> giorniSettimana = new CheckboxGroup<>();
         giorniSettimana.setLabel("Giorni Settimana");
@@ -132,12 +139,15 @@ public class CorsiView extends VerticalLayout {
         binder.forField(durataLezioni).asRequired("Inserisci la durata della lezione")
             .bind(Corso::getDurataLezioneMinuti, Corso::setDurataLezioneMinuti);
         binder.forField(orarioInizio).bind(Corso::getOrarioInizio, Corso::setOrarioInizio);
+        binder.forField(costoTotale)
+            .withValidator(costo -> costo == null || costo.signum() >= 0, "Il costo non può essere negativo")
+            .bind(Corso::getCostoTotale, Corso::setCostoTotale);
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
 
         binder.readBean(corso);
 
-        formLayout.add(nome, insegnante, dataInizio, numeroLezioni, durataLezioni, orarioInizio, giorniSettimana, descrizione);
+        formLayout.add(nome, insegnante, dataInizio, numeroLezioni, durataLezioni, orarioInizio, costoTotale, giorniSettimana, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi

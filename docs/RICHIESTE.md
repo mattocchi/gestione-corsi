@@ -29,7 +29,7 @@
 * [x] Il ruolo Segreteria deve poter assegnare la data di inizio del Corso _(completata 2026-10-10)_
 * [ ] Il ruolo Segreteria deve poter modificare il nome e cognome di un Studenti e creare uni Studenti che assegna ad uno dei Genitori
 * [x] il ruolo Segreteria deve poter vedere tutti i Genitori _(completata 2026-10-10)_
-* [ ] il ruolo Segreteria deve poter assegnare il costoTotale del corso 
+* [x] il ruolo Segreteria deve poter assegnare il costoTotale del corso _(completata 2026-10-10)_
 
 ### DASHBOARD INIZIALE
 
