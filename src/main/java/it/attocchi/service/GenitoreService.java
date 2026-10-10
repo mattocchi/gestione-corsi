@@ -22,6 +22,11 @@ public class GenitoreService {
         return genitoreRepository.findAll();
     }
 
+    /** Genitori con i figli già caricati (per l'elenco Genitori). */
+    public List<Genitore> findAllWithFigli() {
+        return genitoreRepository.findAllWithFigli();
+    }
+
     public Optional<Genitore> findByUsername(String username) {
         return genitoreRepository.findByUserUsername(username);
     }

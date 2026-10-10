@@ -11,6 +11,7 @@ import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.RouteNotFoundError;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
@@ -20,6 +21,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.PartecipantiDialog;
 import it.attocchi.views.admin.StudentiView;
@@ -71,7 +73,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
-        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Studenti", "Gestione Utenti", "Insegnanti")), voci.toString());
+        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Studenti", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
         assertFalse(voci.contains("Le Mie Lezioni"), voci.toString());
     }
 
@@ -194,6 +196,25 @@ class ViewAccessTest extends SpringBrowserlessTest {
         for (int row = 0; row < grid.size(); row++) {
             assertEquals("1", grid.getCellText(row, 3));
         }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_vedeIGenitori() {
+        navigate(GenitoriView.class);
+
+        var grid = test((Grid<Genitore>) find(Grid.class).single());
+        assertEquals(9, grid.size());
+        int genitore3 = -1;
+        for (int row = 0; row < grid.size(); row++) {
+            grid.getCellText(row, 3);
+            if (grid.getRow(row).getUser().getUsername().equals("genitore3")) {
+                genitore3 = row;
+            }
+        }
+        assertEquals("Studente Canto3, Studente Chitarra1", grid.getCellText(genitore3, 3));
+        assertEquals("2", grid.getCellText(genitore3, 4));
     }
 
     private static void assertAzioni(Component azioni, String... etichette) {
