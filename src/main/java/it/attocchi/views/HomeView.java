@@ -144,6 +144,8 @@ public class HomeView extends VerticalLayout {
         numero.addClassName("dashboard-valore");
         card.add(numero);
         if (dettaglio != null) {
+            // I riquadri con dettaglio mostrano importi in euro, più lunghi dei conteggi
+            numero.addClassName("dashboard-valore-importo");
             Span testo = new Span(dettaglio);
             testo.addClassName("dashboard-dettaglio");
             card.add(testo);

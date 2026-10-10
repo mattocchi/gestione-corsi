@@ -60,7 +60,7 @@ Implementare le 7 voci della sezione "RICHIESTE del 10-10-2026 Revisione 1" di `
 | 14 | Profilo del genitore (propri dati + modifica dei figli) e dell'allievo (sola lettura, con indirizzo del genitore) | REV1.5 | `ProfiloView`, `FigliView`, `GenitoreService`, `StudenteService` | `./mvnw test` | [x] Il genitore modifica i figli da I Miei Figli (pulsante Modifica); il service rifiuta gli studenti di altri genitori. Profilo dell'allievo senza cambio password (sola lettura) |
 | 15 | Dashboard admin/segreteria: riepilogo pagamenti dei corsi attivi (riquadri + griglia per corso) | REV1.6 | `PagamentoService`, `HomeView`, repository, `styles.css` | `./mvnw test` + browser | [x] Calcolo in `PagamentoService.riepilogoCorsiAttivi` (anche corsi attivi senza partecipanti); incassato = somma delle rate, da incassare = somma dei residui; su mobile una colonna di riepilogo su tre righe. Verifica nel browser al passo 17 |
 | 16 | Ricevuta stampabile (genitore per i propri figli, admin e segreteria) al posto del riepilogo `.txt`, disponibile anche per i corsi non attivi | REV1.7 | `views/RicevutaView`, `FigliView`, `QuotaPagamentiDialog`, `PagamentoService`, `styles.css` | `./mvnw test` + browser | [x] Route `ricevuta/:corsoId/:studenteId` aperta in una nuova scheda (icona `PRINT`); ricevuta di uno studente non proprio = pagina non trovata; tabella con `Table` (le `NativeTable*` sono deprecate in 25.3). Verifica nel browser al passo 17 |
-| 17 | Verifica finale (build, browser 390px/1280px), `CLAUDE.md`, registro | — | piano, `CLAUDE.md` | build + browser | [ ] |
+| 17 | Verifica finale (build, browser 390px/1280px), `CLAUDE.md`, registro | — | piano, `CLAUDE.md`, `HomeView`, `styles.css` | build + browser | [x] Emerso nel browser: importi dei riquadri della dashboard a capo (font più piccolo) e `prod.bundle` obsoleto (griglia della Home non caricata) |
 
 ## Fuori ambito
 
@@ -72,4 +72,9 @@ Implementare le 7 voci della sezione "RICHIESTE del 10-10-2026 Revisione 1" di `
 
 ## Registro
 
-- (da compilare durante l'esecuzione)
+- Passi 1–7 eseguiti in una sessione precedente; passi 8–17 in questa (commit `8` … `17`).
+- `./mvnw clean package`: BUILD SUCCESS; `./mvnw test`: 64/64 verdi (47 browserless in `ViewAccessTest`, 4 `CodiceFiscaleTest`).
+- Browser (jar di produzione, profilo dev, Chrome headless via Playwright) a 1280px e 390px: dashboard segreteria (riquadri e griglia pagamenti; su mobile colonna di riepilogo su tre righe), Insegnanti con dialog di modifica, Gestione Studenti, Genitori, I Miei Figli (dettaglio corsi con Presenze/Pagamenti/Ricevuta, dialog pagamenti), profili di genitore e insegnante, ricevuta. Nessuno scroll orizzontale a 390px.
+- Problema trovato: il `prod.bundle` delle 10:04 era riutilizzato dal package e sulla Home `vaadin-grid` non era definito (griglia vuota). Rigenerato cancellando `src/main/bundles/prod.bundle`; annotato in `CLAUDE.md`. **Prima del prossimo deploy** cancellare il file prima di `./build.sh` (proposta: farlo nello script, da decidere).
+- Corretto nel browser: importi in euro dei riquadri ("7.800,00 €") andavano a capo, ora con font ridotto.
+- Produzione: le nuove colonne (insegnanti: anagrafica, indirizzo, tariffa; genitori: nascita, provincia; studenti: provincia; tabella `pagamenti`, quota personalizzata) le aggiunge `ddl-auto=update`; resta da eseguire `docs/migrazioni/2026-10-10-anno-scolastico.sql` prima del deploy. Gli studenti esistenti con codice fiscale non valido andranno corretti alla prima modifica.
