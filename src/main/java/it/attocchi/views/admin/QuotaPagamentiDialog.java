@@ -7,7 +7,6 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -85,17 +84,11 @@ public class QuotaPagamentiDialog extends Dialog {
         configureGrid();
         aggiorna();
 
-        VerticalLayout content = new VerticalLayout(corsoInfo, sezione("Quota"), quotaForm, riepilogo,
-            sezione("Pagamenti"), aggiungi, grid);
+        VerticalLayout content = new VerticalLayout(corsoInfo, ViewSupport.sezione("Quota"), quotaForm, riepilogo,
+            ViewSupport.sezione("Pagamenti"), aggiungi, grid);
         content.setPadding(false);
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
-    }
-
-    private static H3 sezione(String titolo) {
-        H3 h3 = new H3(titolo);
-        h3.addClassName("dialog-section-title");
-        return h3;
     }
 
     private void configureGrid() {

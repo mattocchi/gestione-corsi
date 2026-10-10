@@ -33,6 +33,7 @@ import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
+import it.attocchi.repository.InsegnanteRepository;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
@@ -102,6 +103,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private InsegnanteRepository insegnanteRepository;
 
     @Test
     @WithAnonymousUser
@@ -732,7 +736,48 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test(find(Grid.class).single());
         assertEquals(2, grid.size());
         for (int row = 0; row < grid.size(); row++) {
-            assertEquals("1", grid.getCellText(row, 3));
+            assertEquals("1", grid.getCellText(row, 4));
+        }
+        assertAzioni(grid.getCellComponent(0, 5), "Modifica");
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_creaUnInsegnanteConAnagraficaETariffa() {
+        navigate(InsegnantiView.class);
+        test(find(Button.class).withText("Nuovo Insegnante").single()).click();
+        Dialog dialog = find(Dialog.class).single();
+        test(find(TextField.class).from(dialog).withLabel("Username").single()).setValue("insegnante_test");
+        test(find(PasswordField.class).from(dialog).withLabel("Password").single()).setValue("segreta");
+        test(find(TextField.class).from(dialog).withLabel("Nome").single()).setValue("Anna");
+        test(find(TextField.class).from(dialog).withLabel("Cognome").single()).setValue("Verdi");
+        new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Tariffa oraria").single())
+            .setValue(new BigDecimal("27.50"));
+        test(find(TextField.class).from(dialog).withLabel("Provincia").single()).setValue("rm");
+        TextField codiceFiscale = find(TextField.class).from(dialog).withLabel("Codice fiscale").single();
+        test(codiceFiscale).setValue("RSSMRA85T10A562T");
+        Button salva = find(Button.class).from(dialog).withText("Salva").single();
+        try {
+            // Carattere di controllo sbagliato: il dialog resta aperto con l'errore sul campo
+            test(salva).click();
+            assertTrue(codiceFiscale.isInvalid());
+            assertTrue(dialog.isOpened());
+
+            test(codiceFiscale).setValue("rssmra85t10a562s");
+            test(salva).click();
+            assertFalse(dialog.isOpened());
+
+            Insegnante insegnante = insegnanteService.findByUsername("insegnante_test").orElseThrow();
+            assertEquals("RSSMRA85T10A562S", insegnante.getCodiceFiscale());
+            assertEquals("RM", insegnante.getIndirizzo().getProvincia());
+            assertEquals(0, new BigDecimal("27.50").compareTo(insegnante.getTariffaOraria()));
+            assertTrue(insegnante.getUser().getRoles().contains("INSEGNANTE"));
+            assertEquals(3, test(find(Grid.class).single()).size());
+        } finally {
+            insegnanteService.findByUsername("insegnante_test").ifPresent(i -> {
+                insegnanteRepository.delete(i);
+                userService.delete(i.getUser());
+            });
         }
     }
 

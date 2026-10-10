@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "genitori")
-public class Genitore {
+public class Genitore implements Anagrafica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

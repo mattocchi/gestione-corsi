@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "studenti")
-public class Studente {
+public class Studente implements Anagrafica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -7,6 +7,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.signals.Signal;
@@ -85,6 +86,13 @@ public final class ViewSupport {
         dialog.setWidth(width);
         dialog.setMaxWidth("100%");
         return dialog;
+    }
+
+    /** Titolo di una sezione all'interno di un dialog. */
+    public static H3 sezione(String titolo) {
+        H3 h3 = new H3(titolo);
+        h3.addClassName("dialog-section-title");
+        return h3;
     }
 
     /** Pulsante "Chiudi"/"Annulla" per il footer di un dialog. */
