@@ -126,7 +126,7 @@ public class CorsiView extends VerticalLayout {
 
         binder.forField(nome).asRequired("Inserisci il nome del corso").bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
-        binder.forField(dataInizio).bind(Corso::getDataInizio, Corso::setDataInizio);
+        binder.forField(dataInizio).asRequired("Inserisci la data di inizio del corso").bind(Corso::getDataInizio, Corso::setDataInizio);
         binder.forField(numeroLezioni).asRequired("Inserisci il numero di lezioni")
             .bind(Corso::getNumeroLezioni, Corso::setNumeroLezioni);
         binder.forField(durataLezioni).asRequired("Inserisci la durata della lezione")

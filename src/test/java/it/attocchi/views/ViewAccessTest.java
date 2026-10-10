@@ -198,6 +198,34 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(7, corsoService.findPartecipanti(corsoId).size());
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_assegnaDataInizioDelCorso() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        test(find(Button.class).withText("Nuovo Corso").single()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Corso di Tromba");
+        test(find(ComboBox.class).withLabel("Insegnante").single()).selectItem("Maria Verdi");
+        test(find(IntegerField.class).withLabel("Numero Lezioni").single()).setValue(10);
+        test(find(IntegerField.class).withLabel("Durata Lezione (minuti)").single()).setValue(30);
+
+        // Senza data di inizio il corso non viene salvato
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(find(DatePicker.class).withLabel("Data Inizio").single().isInvalid());
+        assertEquals(2, corsi.size());
+
+        test(find(DatePicker.class).withLabel("Data Inizio").single()).setValue(LocalDate.of(2027, 1, 11));
+        test(find(Button.class).withText("Salva").single()).click();
+        Corso nuovo = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Tromba")).findFirst().orElseThrow();
+        try {
+            assertEquals(LocalDate.of(2027, 1, 11), nuovo.getDataInizio());
+            assertEquals(Formati.data(LocalDate.of(2027, 1, 11)), corsi.getCellText(riga(corsi, "Corso di Tromba"), 2));
+        } finally {
+            corsoService.delete(nuovo);
+        }
+    }
+
     private static List<String> ordinePartecipanti(GridTester<Grid<Iscrizione>, Iscrizione> righe) {
         List<String> ordine = new ArrayList<>();
         for (int row = 0; row < righe.size(); row++) {
