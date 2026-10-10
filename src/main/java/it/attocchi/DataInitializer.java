@@ -83,6 +83,7 @@ public class DataInitializer implements CommandLineRunner {
             Insegnante insegnante1 = new Insegnante();
             insegnante1.setUser(userInsegnante1);
             insegnante1.setSpecializzazione("Canto");
+            insegnante1.setTariffaOraria(new BigDecimal("25.00"));
             insegnante1 = insegnanteRepository.save(insegnante1);
 
             // Crea insegnante2 per corso di chitarra
@@ -98,6 +99,7 @@ public class DataInitializer implements CommandLineRunner {
             Insegnante insegnante2 = new Insegnante();
             insegnante2.setUser(userInsegnante2);
             insegnante2.setSpecializzazione("Chitarra");
+            insegnante2.setTariffaOraria(new BigDecimal("30.00"));
             insegnante2 = insegnanteRepository.save(insegnante2);
 
             // Crea genitori
@@ -114,7 +116,8 @@ public class DataInitializer implements CommandLineRunner {
 
                 Genitore genitore = new Genitore();
                 genitore.setUser(userGenitore);
-                genitore.setCodiceFiscale("GEN" + String.format("%02d", i + 1) + "70A01H501Z");
+                genitore.setCodiceFiscale(codiceFiscale("CGNGNT70A" + String.format("%02d", i + 1) + "H501"));
+                genitore.setIndirizzo(new Indirizzo("Via Roma " + (i + 1), "00184", "Roma", "RM"));
                 genitori[i] = genitoreRepository.save(genitore);
             }
 
@@ -132,7 +135,7 @@ public class DataInitializer implements CommandLineRunner {
 
                 Studente studente = new Studente();
                 studente.setUser(userStudente);
-                studente.setCodiceFiscale("STC" + String.format("%02d", i + 1) + "05A01H501Z");
+                studente.setCodiceFiscale(codiceFiscale("CNTSTD" + String.format("%02d", (8 + i) % 100) + "C15H501"));
                 studente.setDataNascita(LocalDate.of(2008 + i, 3, 15));
                 studente.setGenitore(genitori[i]);
                 studentiCanto[i] = studenteRepository.save(studente);
@@ -152,7 +155,7 @@ public class DataInitializer implements CommandLineRunner {
 
                 Studente studente = new Studente();
                 studente.setUser(userStudente);
-                studente.setCodiceFiscale("STG" + String.format("%02d", i + 1) + "06A01H501Z");
+                studente.setCodiceFiscale(codiceFiscale("CHTSTD" + String.format("%02d", (9 + i) % 100) + "E20H501"));
                 studente.setDataNascita(LocalDate.of(2009 + i, 5, 20));
                 studente.setGenitore(genitori[i + 2]);
                 studentiChitarra[i] = studenteRepository.save(studente);
@@ -221,5 +224,10 @@ public class DataInitializer implements CommandLineRunner {
                   STUDENTI: studente_canto1..7 / studente1..7, studente_chitarra1..6 / studente8..13
                   CORSI:    Canto (giovedì), Chitarra (martedì e sabato), 30 lezioni da 40 min""");
         }
+    }
+
+    /** Codice fiscale di esempio valido: i primi 15 caratteri più il carattere di controllo. */
+    private static String codiceFiscale(String primi15) {
+        return primi15 + CodiceFiscale.carattereDiControllo(primi15);
     }
 }

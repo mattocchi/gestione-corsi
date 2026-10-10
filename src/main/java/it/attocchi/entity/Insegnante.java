@@ -1,6 +1,9 @@
 package it.attocchi.entity;
 
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,6 +22,19 @@ public class Insegnante {
     private String specializzazione;
 
     private String biografia;
+
+    private String codiceFiscale;
+
+    private LocalDate dataNascita;
+
+    private String luogoNascita;
+
+    @Embedded
+    private Indirizzo indirizzo = new Indirizzo();
+
+    /** Tariffa oraria in euro: impostata solo da admin e segreteria, l'insegnante la vede in sola lettura. */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal tariffaOraria;
 
     @OneToMany(mappedBy = "insegnante")
     private Set<Corso> corsi = new HashSet<>();
@@ -58,6 +74,50 @@ public class Insegnante {
 
     public void setBiografia(String biografia) {
         this.biografia = biografia;
+    }
+
+    public String getCodiceFiscale() {
+        return codiceFiscale;
+    }
+
+    public void setCodiceFiscale(String codiceFiscale) {
+        this.codiceFiscale = codiceFiscale;
+    }
+
+    public LocalDate getDataNascita() {
+        return dataNascita;
+    }
+
+    public void setDataNascita(LocalDate dataNascita) {
+        this.dataNascita = dataNascita;
+    }
+
+    public String getLuogoNascita() {
+        return luogoNascita;
+    }
+
+    public void setLuogoNascita(String luogoNascita) {
+        this.luogoNascita = luogoNascita;
+    }
+
+    /** Mai {@code null}: Hibernate lascia l'embedded a {@code null} quando tutte le colonne sono vuote. */
+    public Indirizzo getIndirizzo() {
+        if (indirizzo == null) {
+            indirizzo = new Indirizzo();
+        }
+        return indirizzo;
+    }
+
+    public void setIndirizzo(Indirizzo indirizzo) {
+        this.indirizzo = indirizzo;
+    }
+
+    public BigDecimal getTariffaOraria() {
+        return tariffaOraria;
+    }
+
+    public void setTariffaOraria(BigDecimal tariffaOraria) {
+        this.tariffaOraria = tariffaOraria;
     }
 
     public Set<Corso> getCorsi() {

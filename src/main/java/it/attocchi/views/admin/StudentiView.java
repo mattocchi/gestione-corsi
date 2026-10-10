@@ -127,8 +127,8 @@ public class StudentiView extends VerticalLayout {
         binder.forField(dataNascita).asRequired("Inserisci la data di nascita")
             .bind(Studente::getDataNascita, Studente::setDataNascita);
         binder.forField(luogoNascita).bind(Studente::getLuogoNascita, Studente::setLuogoNascita);
-        binder.forField(indirizzo).bind(Studente::getIndirizzo, Studente::setIndirizzo);
-        binder.forField(citta).bind(Studente::getCitta, Studente::setCitta);
+        binder.forField(indirizzo).bind(s -> s.getIndirizzo().getVia(), (s, v) -> s.getIndirizzo().setVia(v));
+        binder.forField(citta).bind(s -> s.getIndirizzo().getComune(), (s, v) -> s.getIndirizzo().setComune(v));
         binder.forField(genitore).asRequired("Scegli il genitore dello studente")
             .bind(Studente::getGenitore, Studente::setGenitore);
 

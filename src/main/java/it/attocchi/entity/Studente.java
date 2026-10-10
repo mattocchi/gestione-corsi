@@ -28,11 +28,8 @@ public class Studente {
 
     private String luogoNascita;
 
-    private String indirizzo;
-
-    private String citta;
-
-    private String cap;
+    @Embedded
+    private Indirizzo indirizzo = new Indirizzo();
 
     @OneToMany(mappedBy = "studente")
     private Set<Iscrizione> iscrizioni = new HashSet<>();
@@ -86,28 +83,16 @@ public class Studente {
         this.luogoNascita = luogoNascita;
     }
 
-    public String getIndirizzo() {
+    /** Mai {@code null}: Hibernate lascia l'embedded a {@code null} quando tutte le colonne sono vuote. */
+    public Indirizzo getIndirizzo() {
+        if (indirizzo == null) {
+            indirizzo = new Indirizzo();
+        }
         return indirizzo;
     }
 
-    public void setIndirizzo(String indirizzo) {
+    public void setIndirizzo(Indirizzo indirizzo) {
         this.indirizzo = indirizzo;
-    }
-
-    public String getCitta() {
-        return citta;
-    }
-
-    public void setCitta(String citta) {
-        this.citta = citta;
-    }
-
-    public String getCap() {
-        return cap;
-    }
-
-    public void setCap(String cap) {
-        this.cap = cap;
     }
 
     public Set<Iscrizione> getIscrizioni() {
