@@ -79,7 +79,19 @@ it.attocchi/
 `docs/RICHIESTE.md` is the source of the user's requests (Italian). It is organized by date (`## RICHIESTE del GG-MM-AAAA`) and by scope (`### AMBITO`), each request being a checkbox item `* [ ] …`.
 
 - **Reference**: each item is identified as `[AAAA-MM-GG/AMBITO.n]`, where `AMBITO` is a short upper-case key of the section: its title, or its main word for long titles (`### CORSI` → `CORSI`, `### DASHBOARD INIZIALE` → `DASHBOARD`, `### Docenti diventano Insegnanti` → `INSEGNANTI`) and `n` is the 1-based position of the item in that section, e.g. `[2026-10-10/LOGO.2]`. Don't renumber or reorder items written by the user.
-- When asked to "implement the requests", work on the open items (`[ ]`) following the workflow below: one plan in `docs/piani/` for the batch, where each step names the request(s) it completes (column *Richiesta*). Incomplete or ambiguous items are left open with a note (in the plan's *Fuori ambito*) or asked about; decisions that are the user's (data, production behaviour) are asked first.
+- **Implementation session** — whenever the user asks to implement the requests (all open items `[ ]`, a date, or a scope), always follow these phases in order:
+  1. **Read-only analysis**: read the open items, the code they touch and the Vaadin docs (MCP) needed. No file changes yet.
+  2. **Clarification round — mandatory, before writing the plan.** Ask *all* the questions needed to make every open item explicit, with `AskUserQuestion` (up to 4 questions per call, several calls if needed; concrete options with the recommended one first and a short description of the consequences). Don't fill gaps with silent assumptions and don't postpone questions to the execution. Always ask about:
+     - incomplete or contradictory items (e.g. a truncated sentence) and terms that can be read in more than one way;
+     - who: which roles see/do what, including roles the item doesn't mention but are affected (e.g. a new view: who else can access it? may they delete?);
+     - where and how in the UI: which view, dialog or menu entry; new view vs extension of an existing one; behaviour on mobile;
+     - data: new fields and whether they are mandatory, defaults, effect on existing data and on production (schema changes, renames, migrations);
+     - side effects and edge cases (e.g. what happens to related records when something is added/removed);
+     - anything not requested that you would add or change "by the way" (validation, refactoring): propose it, don't just do it.
+     Skip a question only when the answer is unambiguous from the item text or from the code. When the round is over, write a short summary of the decisions.
+  3. **Record the answers**: in the plan (*Analisi*, sub-section **Decisioni**, one line per decision with the item reference) and, in the same plan commit, under the item in `docs/RICHIESTE.md` as an indented line `_Chiarimento AAAA-MM-GG: …_` (never rewrite the user's text). Items the user chooses to leave open get `_(da specificare: …)_` and go in *Fuori ambito*.
+  4. **Plan and execution, without further approval**: follow the workflow below as already defined — plan in `docs/piani/` committed alone (each step names the request(s) it completes, column *Richiesta*), then one step at a time: implement, verify, mark the step in the plan, mark the request in `docs/RICHIESTE.md` when the step completes it, commit; new work goes in the plan as new steps; close with the *Registro*.
+  5. **Questions during execution**: if a new ambiguity appears, ask immediately when the decision is the user's (behaviour, data, production, scope) and record the answer as in phase 3 (commit the plan/RICHIESTE update before continuing); purely technical choices are decided and noted in the plan.
 - **Completion**: the commit that completes an item also marks it in `docs/RICHIESTE.md` as `* [x] … _(completata AAAA-MM-GG)_` and has the reference in the subject: `<step id> [AAAA-MM-GG/AMBITO.n] <short description in Italian>`, e.g. `3 [2026-10-10/LOGO.2] Logo in fondo al menu laterale`. One commit per completed request; if a step completes several closely tied items, list all references (`[2026-10-10/LOGO.1][2026-10-10/LOGO.3]`). Preparatory steps that complete no item use the normal subject. An item found already implemented is marked with a note (`_(già presente, verificata AAAA-MM-GG)_`) in its own commit.
 - Never mark an item completed if it is only partially done: leave `[ ]` and add a short note under it.
 
@@ -88,6 +100,8 @@ it.attocchi/
 Every user request that changes the repository (code, configuration, build, docs) follows this workflow — no exceptions for "small" changes. Pure questions, explanations or reviews without changes don't need a plan.
 
 ### 1. Plan first
+
+For `docs/RICHIESTE.md` implementation sessions the mandatory clarification round (see *Requests source*) comes before this step.
 
 Before touching any code, write the plan to a new file `docs/piani/AAAA-MM-GG-<argomento>.md` (Italian, e.g. `docs/piani/2026-10-07-responsive-mobile.md`). Analysis and read-only checks (reading code, Vaadin MCP docs, running the app) can happen before writing it, to make the plan accurate.
 

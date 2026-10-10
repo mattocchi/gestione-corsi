@@ -14,7 +14,7 @@ Aggiornare le istruzioni per Claude Code: ogni volta che parte una sessione di i
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `CLAUDE.md`: sessione di implementazione delle RICHIESTE in fasi (analisi in sola lettura → giro completo di domande → piano → esecuzione con un commit per passo/richiesta → chiusura); cosa chiedere, come registrare le risposte, domande durante l'esecuzione | `CLAUDE.md` | rilettura | [ ] |
+| 1 | `CLAUDE.md`: sessione di implementazione delle RICHIESTE in fasi (analisi in sola lettura → giro completo di domande → piano → esecuzione con un commit per passo/richiesta → chiusura); cosa chiedere, come registrare le risposte, domande durante l'esecuzione | `CLAUDE.md` | rilettura | [x] |
 
 ## Fuori ambito
 
@@ -23,4 +23,4 @@ Aggiornare le istruzioni per Claude Code: ogni volta che parte una sessione di i
 
 ## Registro
 
-- (da compilare durante l'esecuzione)
+- Passo 1: sezione *Requests source* di `CLAUDE.md` riscritta con le 5 fasi della sessione (analisi, giro di domande obbligatorio, registrazione delle risposte in piano e `RICHIESTE.md`, piano ed esecuzione senza ulteriore approvazione, domande durante l'esecuzione); rimando nella sezione *Workflow*. Nessun codice toccato, nessun test necessario.
