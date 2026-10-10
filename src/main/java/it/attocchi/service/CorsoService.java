@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -95,6 +96,14 @@ public class CorsoService {
             .filter(presenza -> !presenza.getLezione().isCompletata())
             .forEach(presenzaRepository::delete);
         iscrizioneRepository.deleteById(new IscrizioneId(corsoId, studenteId));
+    }
+
+    /** Imposta (o con {@code null} toglie) l'orario di inizio lezione di un partecipante. */
+    @Transactional
+    public void impostaOrario(Long corsoId, Long studenteId, LocalTime orario) {
+        Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, studenteId))
+            .orElseThrow(() -> new IllegalArgumentException("Lo studente " + studenteId + " non è iscritto al corso " + corsoId));
+        iscrizione.setOrarioLezione(orario);
     }
 
     @Transactional

@@ -10,6 +10,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Studente;
@@ -17,15 +18,17 @@ import it.attocchi.service.CorsoService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.views.ViewSupport;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Partecipanti di un corso in ordine di orario di inizio lezione (chi non ha ancora un orario
- * è in fondo), con aggiunta e rimozione. Le modifiche sono salvate subito; la notifica
- * compare solo in caso di errore.
+ * è in fondo), con aggiunta, rimozione e orario modificabile. Le modifiche sono salvate subito
+ * e l'elenco si riordina; la notifica compare solo in caso di errore.
  */
 public class PartecipantiDialog extends Dialog {
 
@@ -58,7 +61,7 @@ public class PartecipantiDialog extends Dialog {
         aggiunta.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.BASELINE);
         aggiunta.expand(nuovoPartecipante);
 
-        grid.addColumn(PartecipantiDialog::orario).setHeader("Orario").setWidth("7rem").setFlexGrow(0);
+        grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("8rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
         var azioni = grid.addComponentColumn(iscrizione -> {
             Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
@@ -77,8 +80,25 @@ public class PartecipantiDialog extends Dialog {
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
 
-    static String orario(Iscrizione iscrizione) {
-        return iscrizione.getOrarioLezione() != null ? iscrizione.getOrarioLezione().toString() : "da assegnare";
+    private TimePicker createOrario(Iscrizione iscrizione) {
+        TimePicker orario = new TimePicker();
+        orario.setLocale(Locale.ITALY);
+        orario.setStep(Duration.ofMinutes(5));
+        orario.setPlaceholder("da assegnare");
+        orario.setClearButtonVisible(true);
+        orario.setWidthFull();
+        orario.setAriaLabel("Orario lezione di " + iscrizione.getStudente().getNomeCompleto());
+        orario.setValue(iscrizione.getOrarioLezione());
+        orario.addValueChangeListener(e -> {
+            try {
+                corsoService.impostaOrario(corso.getId(), iscrizione.getStudente().getId(), e.getValue());
+                aggiorna();
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio dell'orario di "
+                    + iscrizione.getStudente().getNomeCompleto() + ": " + ex.getMessage());
+            }
+        });
+        return orario;
     }
 
     private void aggiungi() {

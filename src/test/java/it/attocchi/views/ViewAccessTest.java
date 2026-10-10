@@ -10,6 +10,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
@@ -38,6 +39,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,13 +120,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
-        List<String> ordine = new ArrayList<>();
-        for (int row = 0; row < righe.size(); row++) {
-            ordine.add(righe.getCellText(row, 0) + " " + righe.getCellText(row, 1));
-        }
         assertEquals(List.of("17:00 Studente Canto5", "17:40 Studente Canto4", "18:20 Studente Canto3",
             "19:00 Studente Canto2", "19:40 Studente Canto1",
-            "da assegnare Studente Canto6", "da assegnare Studente Canto7"), ordine);
+            "- Studente Canto6", "- Studente Canto7"), ordinePartecipanti(righe));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_assegnaOrarioLezioneAiPartecipanti() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        test(pulsante(corsi.getCellComponent(canto, 6), "Partecipanti")).click();
+        PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+        var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+
+        // Canto6 (senza orario, penultimo) alle 16:30: salvato e spostato in cima
+        assertEquals("Studente Canto6", righe.getCellText(5, 1));
+        test((TimePicker) righe.getCellComponent(5, 0)).setValue(LocalTime.of(16, 30));
+        assertEquals("16:30 Studente Canto6", ordinePartecipanti(righe).getFirst());
+        assertEquals(LocalTime.of(16, 30), corsoService.findPartecipanti(corsi.getRow(canto).getId()).getFirst().getOrarioLezione());
+
+        // Tolto l'orario torna in fondo (ripristina i dati di test)
+        test((TimePicker) righe.getCellComponent(0, 0)).clear();
+        assertEquals("- Studente Canto6", ordinePartecipanti(righe).get(5));
+    }
+
+    private static List<String> ordinePartecipanti(GridTester<Grid<Iscrizione>, Iscrizione> righe) {
+        List<String> ordine = new ArrayList<>();
+        for (int row = 0; row < righe.size(); row++) {
+            LocalTime orario = ((TimePicker) righe.getCellComponent(row, 0)).getValue();
+            ordine.add((orario != null ? orario.toString() : "-") + " " + righe.getCellText(row, 1));
+        }
+        return ordine;
     }
 
     @Test

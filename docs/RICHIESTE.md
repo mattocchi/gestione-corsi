@@ -23,7 +23,7 @@
 
 * [x] aggiungere il ruolo SEGRETERIA oltre a quelli esistenti _(completata 2026-10-10)_
 * [x] Il ruolo segreteria deve poter Assegnare Partecipati ai Corsi _(completata 2026-10-10)_
-* [ ] Il ruolo segreteria deve poter deve poter assegnare l'orario di inizio della lezione ad ogni Partecipante del Corso
+* [x] Il ruolo segreteria deve poter deve poter assegnare l'orario di inizio della lezione ad ogni Partecipante del Corso _(completata 2026-10-10)_
 * [x] Il ruolo Segreteria deve poter vedere tutti i Corsi, Studenti e Insegnanti, _(completata 2026-10-10)_
 * [ ] Il ruolo Segreteria deve poter se necessario deve poter creare un nuovo Corso che assegna ad uno degli Insegnanti
 * [ ] Il ruolo Segreteria deve poter assegnare la data di inizio del Corso
