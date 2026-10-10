@@ -6,6 +6,7 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.card.Card;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -71,6 +72,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest
 class ViewAccessTest extends SpringBrowserlessTest {
+
+    /** Colonna delle azioni in Gestione Corsi (desktop). */
+    private static final int AZIONI_CORSO = 8;
 
     @Autowired
     private PresenzaService presenzaService;
@@ -175,10 +179,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             }
         }
 
-        assertAzioni(grid.getCellComponent(0, 6), "Modifica", "Partecipanti", "Genera Lezioni", "Elimina");
+        assertAzioni(grid.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Genera Lezioni", "Elimina");
 
         // Apre il dialog di modifica: i giorni della settimana devono essere già caricati
-        Button modifica = (Button) grid.getCellComponent(0, 6).getChildren().findFirst().orElseThrow();
+        Button modifica = (Button) grid.getCellComponent(0, AZIONI_CORSO).getChildren().findFirst().orElseThrow();
         assertEquals("Modifica", modifica.getElement().getAttribute("aria-label"));
         test(modifica).click();
         CheckboxGroup<?> giorni = find(CheckboxGroup.class).single();
@@ -193,7 +197,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test((Grid<Corso>) find(Grid.class).single());
         int canto = riga(grid, "Corso di Canto");
 
-        Button partecipanti = pulsante(grid.getCellComponent(canto, 6), "Partecipanti");
+        Button partecipanti = pulsante(grid.getCellComponent(canto, AZIONI_CORSO), "Partecipanti");
         test(partecipanti).click();
 
         PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
@@ -210,7 +214,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         int canto = riga(corsi, "Corso di Canto");
-        test(pulsante(corsi.getCellComponent(canto, 6), "Partecipanti")).click();
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Partecipanti")).click();
         PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
 
@@ -264,7 +268,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
 
-        test(pulsante(corsi.getCellComponent(canto, 6), "Modifica")).click();
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
         test(find(Button.class).withText("Salva").single()).click();
 
         assertEquals(7, corsoService.findPartecipanti(corsoId).size());
@@ -292,7 +296,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Corso nuovo = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Tromba")).findFirst().orElseThrow();
         try {
             assertEquals(LocalDate.of(2027, 1, 11), nuovo.getDataInizio());
-            assertEquals(Formati.data(LocalDate.of(2027, 1, 11)), corsi.getCellText(riga(corsi, "Corso di Tromba"), 2));
+            assertEquals("2026/2027", nuovo.getAnnoScolastico());
+            assertTrue(nuovo.isAttivo());
+            assertEquals(Formati.data(LocalDate.of(2027, 1, 11)), corsi.getCellText(riga(corsi, "Corso di Tromba"), 3));
         } finally {
             corsoService.delete(nuovo);
         }
@@ -307,7 +313,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
 
-        test(pulsante(corsi.getCellComponent(canto, 6), "Modifica")).click();
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
         BigDecimalField costo = find(BigDecimalField.class).withLabel("Costo Totale").single();
         assertEquals(0, new BigDecimal("600.00").compareTo(costo.getValue()));
         new TextFieldTester<>(costo).setValue(new BigDecimal("650.50"));
@@ -381,6 +387,33 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_impostaAnnoScolasticoEStatoDelCorso() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+        assertEquals("2024/2025", corsi.getCellText(canto, 1));
+        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 7)).getText());
+
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
+        test(find(ComboBox.class).withLabel("Anno Scolastico").single()).selectItem("2025/2026");
+        test(find(Checkbox.class).withLabel("Attivo").single()).click();
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            Corso salvato = corsoService.findById(corsoId);
+            assertEquals("2025/2026", salvato.getAnnoScolastico());
+            assertFalse(salvato.isAttivo());
+        } finally {
+            Corso corso = corsoService.findById(corsoId);
+            corso.setAnnoScolastico("2024/2025");
+            corso.setAttivo(true);
+            corsoService.save(corso);
+        }
+    }
+
     private static List<String> ordinePartecipanti(GridTester<Grid<Iscrizione>, Iscrizione> righe) {
         List<String> ordine = new ArrayList<>();
         for (int row = 0; row < righe.size(); row++) {
@@ -398,7 +431,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         int chitarra = riga(corsi, "Corso di Chitarra");
         Corso corso = corsi.getRow(chitarra);
-        test(pulsante(corsi.getCellComponent(chitarra, 6), "Partecipanti")).click();
+        test(pulsante(corsi.getCellComponent(chitarra, AZIONI_CORSO), "Partecipanti")).click();
 
         PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
         var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
@@ -482,7 +515,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         assertEquals(2, corsi.size());
-        assertAzioni(corsi.getCellComponent(0, 6), "Modifica", "Partecipanti", "Genera Lezioni");
+        assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Genera Lezioni");
 
         navigate(StudentiView.class);
         var studenti = test(find(Grid.class).single());

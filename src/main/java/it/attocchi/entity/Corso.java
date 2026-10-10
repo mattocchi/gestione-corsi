@@ -60,6 +60,10 @@ public class Corso {
     @Column(name = "attivo")
     private boolean attivo = true;
 
+    /** Anno scolastico nel formato "2026/2027" (vedi {@link AnnoScolastico}). */
+    @Column(name = "anno_scolastico", length = 9)
+    private String annoScolastico;
+
     // Costruttori
     public Corso() {
     }
@@ -168,6 +172,14 @@ public class Corso {
 
     public void setLezioni(Set<Lezione> lezioni) {
         this.lezioni = lezioni;
+    }
+
+    public String getAnnoScolastico() {
+        return annoScolastico;
+    }
+
+    public void setAnnoScolastico(String annoScolastico) {
+        this.annoScolastico = annoScolastico;
     }
 
     public boolean isAttivo() {

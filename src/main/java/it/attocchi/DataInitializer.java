@@ -163,6 +163,7 @@ public class DataInitializer implements CommandLineRunner {
             corsoCanto.setNome("Corso di Canto");
             corsoCanto.setDescrizione("Corso di canto per principianti e intermedi");
             corsoCanto.setDataInizio(LocalDate.of(2024, 10, 2)); // 2 ottobre 2024 (giovedì)
+            corsoCanto.setAnnoScolastico(AnnoScolastico.di(corsoCanto.getDataInizio()));
             corsoCanto.setNumeroLezioni(30);
             corsoCanto.setDurataLezioneMinuti(40);
             corsoCanto.setOrarioInizio(LocalTime.of(17, 0));
@@ -188,6 +189,7 @@ public class DataInitializer implements CommandLineRunner {
             corsoChitarra.setNome("Corso di Chitarra");
             corsoChitarra.setDescrizione("Corso di chitarra classica e moderna");
             corsoChitarra.setDataInizio(LocalDate.of(2024, 9, 30)); // 30 settembre 2024 (lunedì, ma primo martedì è 1 ottobre)
+            corsoChitarra.setAnnoScolastico(AnnoScolastico.di(corsoChitarra.getDataInizio()));
             corsoChitarra.setNumeroLezioni(30);
             corsoChitarra.setDurataLezioneMinuti(40);
             corsoChitarra.setOrarioInizio(LocalTime.of(18, 0));

@@ -1,6 +1,9 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -22,6 +25,8 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.signals.Signal;
+import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.security.SecurityService;
@@ -35,6 +40,7 @@ import jakarta.annotation.security.RolesAllowed;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -51,6 +57,7 @@ public class CorsiView extends VerticalLayout {
     private final boolean puoEliminare;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
+    private final Signal<Boolean> mobile = ViewSupport.isMobile();
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, StudenteService studenteService,
                      SecurityService securityService) {
@@ -71,12 +78,15 @@ public class CorsiView extends VerticalLayout {
 
     private void configureGrid() {
         grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
+        var anno = grid.addColumn(Corso::getAnnoScolastico).setHeader("Anno").setSortable(true).setWidth("7rem").setFlexGrow(0);
         var insegnante = grid.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var dataInizio = grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         var numeroLezioni = grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         var durata = grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         var numeroStudenti = grid.addColumn(corso -> corso.getStudenti().size()).setHeader("N. Studenti");
+        var stato = grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
+        Signal.effect(grid, () -> stato.setHeader(mobile.get() ? "" : "Stato").setWidth(mobile.get() ? "3rem" : "8.5rem"));
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(corso -> {
             Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
@@ -92,7 +102,18 @@ public class CorsiView extends VerticalLayout {
             return actions;
         }));
 
-        ViewSupport.hideOnMobile(grid, insegnante, dataInizio, numeroLezioni, durata, numeroStudenti);
+        ViewSupport.hideOnMobile(grid, anno, insegnante, dataInizio, numeroLezioni, durata, numeroStudenti);
+    }
+
+    private Badge createStatoBadge(Corso corso) {
+        Badge badge = corso.isAttivo()
+            ? new Badge("Attivo", VaadinIcon.CHECK.create())
+            : new Badge("Non attivo", VaadinIcon.BAN.create());
+        if (corso.isAttivo()) {
+            badge.addThemeVariants(BadgeVariant.SUCCESS);
+        }
+        badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
+        return badge;
     }
 
     private void openDialog(Corso corso) {
@@ -127,6 +148,17 @@ public class CorsiView extends VerticalLayout {
             }
         });
 
+        ComboBox<String> annoScolastico = new ComboBox<>("Anno Scolastico");
+        annoScolastico.setItems(AnnoScolastico.elenco(LocalDate.now(), corso.getAnnoScolastico()));
+        // Proposto dalla data di inizio finché non viene scelto
+        dataInizio.addValueChangeListener(e -> {
+            if (e.getValue() != null && annoScolastico.isEmpty()) {
+                annoScolastico.setValue(AnnoScolastico.di(e.getValue()));
+            }
+        });
+        Checkbox attivo = new Checkbox("Attivo");
+        attivo.setTooltipText("I corsi non attivi non accettano nuovi partecipanti né lezioni e presenze");
+
         ComboBox<Insegnante> insegnante = new ComboBox<>("Insegnante");
         insegnante.setItems(insegnanteService.findAll());
         insegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
@@ -144,10 +176,12 @@ public class CorsiView extends VerticalLayout {
             .bind(Corso::getCostoTotale, Corso::setCostoTotale);
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
+        binder.forField(annoScolastico).asRequired("Scegli l'anno scolastico").bind(Corso::getAnnoScolastico, Corso::setAnnoScolastico);
+        binder.forField(attivo).bind(Corso::isAttivo, Corso::setAttivo);
 
         binder.readBean(corso);
 
-        formLayout.add(nome, insegnante, dataInizio, numeroLezioni, durataLezioni, orarioInizio, costoTotale, giorniSettimana, descrizione);
+        formLayout.add(nome, insegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, attivo, giorniSettimana, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi
