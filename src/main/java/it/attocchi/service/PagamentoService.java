@@ -111,6 +111,10 @@ public class PagamentoService {
         }
     }
 
+    /** Dati della ricevuta di un partecipante: iscrizione (con corso, studente e genitore), rate e situazione. */
+    public record Ricevuta(Iscrizione iscrizione, List<Pagamento> pagamenti, Situazione situazione) {
+    }
+
     private final PagamentoRepository pagamentoRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final CorsoRepository corsoRepository;
@@ -135,6 +139,11 @@ public class PagamentoService {
             .map(Pagamento::getImporto)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new Situazione(iscrizione(corsoId, studenteId).getQuotaDovuta(), pagato);
+    }
+
+    /** Ricevuta del partecipante: disponibile anche per i corsi non attivi. */
+    public Ricevuta ricevuta(Long corsoId, Long studenteId) {
+        return new Ricevuta(iscrizione(corsoId, studenteId), findPagamenti(corsoId, studenteId), situazione(corsoId, studenteId));
     }
 
     /** Situazione di ogni partecipante del corso, per id dello studente. */

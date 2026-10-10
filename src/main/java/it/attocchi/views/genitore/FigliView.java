@@ -9,13 +9,11 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.streams.DownloadHandler;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Presenza;
@@ -34,14 +32,12 @@ import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PagamentiStudenteDialog;
 import it.attocchi.views.PresenzeStudenteDialog;
+import it.attocchi.views.RicevutaView;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
-import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -146,12 +142,8 @@ public class FigliView extends VerticalLayout {
             Button pagamentiButton = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> openPagamentiDialog(studente, corso));
             StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
 
-            Anchor download = new Anchor(generateRiepilogo(studente, corso), "");
-            download.getElement().setAttribute("download", true);
-            download.add(ViewSupport.iconButton(VaadinIcon.DOWNLOAD, "Scarica Riepilogo"));
-
             HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
-            actions.add(download);
+            actions.add(RicevutaView.link(corso.getId(), studente.getId(), ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
             return actions;
         }));
         ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni, pagamento);
@@ -174,55 +166,6 @@ public class FigliView extends VerticalLayout {
             pagamentoService.findIscrizione(corso.getId(), studente.getId()),
             pagamentoService.situazione(corso.getId(), studente.getId()),
             pagamentoService.findPagamenti(corso.getId(), studente.getId())).open();
-    }
-
-    private DownloadHandler generateRiepilogo(Studente studente, Corso corso) {
-        return event -> {
-            event.setFileName("riepilogo-" + corso.getNome() + "-" + studente.getNomeCompleto() + ".txt");
-            event.setContentType("text/plain; charset=UTF-8");
-            StringBuilder sb = new StringBuilder();
-            sb.append("RIEPILOGO CORSO\n");
-            sb.append("===================\n\n");
-            sb.append("Studente: ").append(studente.getNomeCompleto()).append("\n");
-            sb.append("Corso: ").append(corso.getNome()).append("\n");
-            sb.append("Insegnante: ").append(corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "N/D").append("\n");
-            sb.append("Data inizio: ").append(Formati.data(corso.getDataInizio())).append("\n");
-            sb.append("Numero lezioni: ").append(corso.getNumeroLezioni()).append("\n");
-            sb.append("Durata lezione: ").append(corso.getDurataLezioneMinuti()).append(" minuti\n\n");
-
-            BigDecimal costoTotale = corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
-            sb.append("COSTO TOTALE DA PAGARE: € ").append(costoTotale).append("\n\n");
-
-            sb.append("PRESENZE\n");
-            sb.append("===================\n");
-
-            List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
-            for (Presenza presenza : presenze) {
-                sb.append("Lezione ").append(presenza.getLezione().getNumeroLezione())
-                  .append(" - ").append(Formati.data(presenza.getLezione().getData()))
-                  .append(" - ").append(presenza.getStato().getDescrizione());
-                if (presenza.getNote() != null && !presenza.getNote().isEmpty()) {
-                    sb.append(" (").append(presenza.getNote()).append(")");
-                }
-                sb.append("\n");
-            }
-
-            long totaleLezioni = presenze.size();
-            long presenti = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.PRESENTE).count();
-            long assenzeGiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_GIUSTIFICATA).count();
-            long assenzeIngiustificate = presenze.stream().filter(p -> p.getStato() == Presenza.StatoPresenza.ASSENTE_INGIUSTIFICATA).count();
-
-            sb.append("\nSTATISTICHE\n");
-            sb.append("===================\n");
-            sb.append("Totale lezioni: ").append(totaleLezioni).append("\n");
-            sb.append("Presenze: ").append(presenti).append("\n");
-            sb.append("Assenze giustificate: ").append(assenzeGiustificate).append("\n");
-            sb.append("Assenze ingiustificate: ").append(assenzeIngiustificate).append("\n");
-
-            try (OutputStream out = event.getOutputStream()) {
-                out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-            }
-        };
     }
 
     private void updateGrid() {

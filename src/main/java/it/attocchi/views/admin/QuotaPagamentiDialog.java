@@ -22,6 +22,7 @@ import it.attocchi.entity.Studente;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.Formati;
+import it.attocchi.views.RicevutaView;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
@@ -88,7 +89,8 @@ public class QuotaPagamentiDialog extends Dialog {
             ViewSupport.sezione("Pagamenti"), aggiungi, grid);
         content.setPadding(false);
         add(content);
-        getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
+        Button ricevuta = new Button("Ricevuta", VaadinIcon.PRINT.create());
+        getFooter().add(RicevutaView.link(corso.getId(), studente.getId(), ricevuta), ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private void configureGrid() {

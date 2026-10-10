@@ -1084,6 +1084,41 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("genitore3")
+    void genitore_stampaLaRicevutaDiUnFiglio() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Studente figlio = studenteService.findByUsername("studente_canto3").orElseThrow();
+        Studente altro = studenteService.findByUsername("studente_canto1").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("200"));
+        pagamentoService.salva(canto.getId(), figlio.getId(), rata);
+        try {
+            navigate("ricevuta/" + canto.getId() + "/" + figlio.getId(), RicevutaView.class);
+            assertTrue(find(Span.class).withText("Studente Canto3").exists());
+            assertTrue(find(Span.class).withText(figlio.getCodiceFiscale()).exists());
+            assertTrue(find(Span.class).withText("Via Roma 3, 00184 Roma (RM) (del genitore)").exists());
+            assertTrue(find(Span.class).withText("2024/2025").exists());
+            assertTrue(find(Span.class).withText("200,00 €").exists());
+            assertTrue(find(Span.class).withText("400,00 €").exists());
+            assertTrue(find(Button.class).withText("Stampa").exists());
+
+            // Ricevuta di uno studente che non è suo figlio: come se non esistesse
+            navigate("ricevuta/" + canto.getId() + "/" + altro.getId(), RouteNotFoundError.class);
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), figlio.getId()).forEach(pagamentoService::elimina);
+        }
+    }
+
+    @Test
+    @WithUserDetails("studente_canto1")
+    void studente_nonAccedeAllaRicevuta() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Studente studente = studenteService.findByUsername("studente_canto1").orElseThrow();
+        navigate("ricevuta/" + canto.getId() + "/" + studente.getId(), RouteNotFoundError.class);
+    }
+
+    @Test
     @WithUserDetails("studente_canto1")
     void studente_vedeIlProprioProfiloInSolaLettura() {
         navigate(ProfiloView.class);
