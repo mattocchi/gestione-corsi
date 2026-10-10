@@ -84,10 +84,14 @@ public class StudentiView extends VerticalLayout {
     }
 
     private void openDialog(Studente studente) {
-        Dialog dialog = ViewSupport.dialog(studente.getId() == null ? "Nuovo Studente" : "Modifica Studente", "600px");
+        boolean nuovo = studente.getUser() == null;
+        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Studente" : "Modifica Studente", "600px");
 
         FormLayout formLayout = new FormLayout();
         Binder<Studente> binder = new Binder<>(Studente.class);
+        // Nome, cognome e credenziali sono dell'utente collegato allo studente
+        User user = nuovo ? new User() : studente.getUser();
+        Binder<User> userBinder = new Binder<>(User.class);
 
         TextField username = new TextField("Username");
         PasswordField password = new PasswordField("Password");
@@ -104,46 +108,50 @@ public class StudentiView extends VerticalLayout {
         genitore.setItems(genitoreService.findAll());
         genitore.setItemLabelGenerator(Genitore::getNomeCompleto);
 
-        if (studente.getUser() != null) {
-            username.setValue(studente.getUser().getUsername());
-            nome.setValue(studente.getUser().getNome());
-            cognome.setValue(studente.getUser().getCognome());
-            email.setValue(studente.getUser().getEmail() != null ? studente.getUser().getEmail() : "");
+        userBinder.forField(username).asRequired("Inserisci lo username")
+            .withValidator(u -> !nuovo || !userService.existsByUsername(u), "Username già in uso")
+            .bind(User::getUsername, User::setUsername);
+        userBinder.forField(nome).asRequired("Inserisci il nome").bind(User::getNome, User::setNome);
+        userBinder.forField(cognome).asRequired("Inserisci il cognome").bind(User::getCognome, User::setCognome);
+        userBinder.forField(email).bind(User::getEmail, User::setEmail);
+        userBinder.readBean(user);
+        if (nuovo) {
+            password.setRequiredIndicatorVisible(true);
+        } else {
+            username.setReadOnly(true);
             password.setVisible(false);
         }
 
-        binder.forField(codiceFiscale).bind(Studente::getCodiceFiscale, Studente::setCodiceFiscale);
-        binder.forField(dataNascita).bind(Studente::getDataNascita, Studente::setDataNascita);
+        binder.forField(codiceFiscale).asRequired("Inserisci il codice fiscale")
+            .bind(Studente::getCodiceFiscale, Studente::setCodiceFiscale);
+        binder.forField(dataNascita).asRequired("Inserisci la data di nascita")
+            .bind(Studente::getDataNascita, Studente::setDataNascita);
         binder.forField(luogoNascita).bind(Studente::getLuogoNascita, Studente::setLuogoNascita);
         binder.forField(indirizzo).bind(Studente::getIndirizzo, Studente::setIndirizzo);
         binder.forField(citta).bind(Studente::getCitta, Studente::setCitta);
-        binder.forField(genitore).bind(Studente::getGenitore, Studente::setGenitore);
+        binder.forField(genitore).asRequired("Scegli il genitore dello studente")
+            .bind(Studente::getGenitore, Studente::setGenitore);
 
         binder.readBean(studente);
 
         formLayout.add(username, password, nome, cognome, email, codiceFiscale, dataNascita, luogoNascita, indirizzo, citta, genitore);
 
         Button saveButton = new Button("Salva", e -> {
+            // Valida tutto prima di salvare: niente utenti creati per uno studente che poi non si salva
+            boolean passwordOk = !nuovo || !password.isEmpty();
+            password.setInvalid(!passwordOk);
+            password.setErrorMessage(passwordOk ? null : "Inserisci la password");
+            boolean valido = binder.validate().isOk() & userBinder.validate().isOk() & passwordOk;
+            if (!valido || !binder.writeBeanIfValid(studente) || !userBinder.writeBeanIfValid(user)) {
+                return;
+            }
             try {
-                binder.writeBean(studente);
-
-                if (studente.getUser() == null) {
-                    User user = new User();
-                    user.setUsername(username.getValue());
-                    user.setNome(nome.getValue());
-                    user.setCognome(cognome.getValue());
-                    user.setEmail(email.getValue());
+                if (nuovo) {
                     user.getRoles().add("STUDENTE");
-                    user = userService.save(user, password.getValue());
-                    studente.setUser(user);
+                    studente.setUser(userService.save(user, password.getValue()));
                 } else {
-                    User user = studente.getUser();
-                    user.setNome(nome.getValue());
-                    user.setCognome(cognome.getValue());
-                    user.setEmail(email.getValue());
                     userService.save(user, null);
                 }
-
                 studenteService.save(studente);
                 updateGrid();
                 dialog.close();

@@ -13,6 +13,7 @@ import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextFieldTester;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
@@ -23,11 +24,15 @@ import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
+import it.attocchi.entity.Studente;
+import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
+import it.attocchi.service.StudenteService;
+import it.attocchi.service.UserService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.InsegnantiView;
@@ -51,6 +56,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -76,6 +82,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private CorsoService corsoService;
+
+    @Autowired
+    private StudenteService studenteService;
+
+    @Autowired
+    private UserService userService;
 
     @Test
     @WithAnonymousUser
@@ -249,6 +261,66 @@ class ViewAccessTest extends SpringBrowserlessTest {
             Corso corso = corsoService.findById(corsoId);
             corso.setCostoTotale(new BigDecimal("600.00"));
             corsoService.save(corso);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_modificaNomeECognomeDiUnoStudente() {
+        navigate(StudentiView.class);
+        var studenti = test((Grid<Studente>) find(Grid.class).single());
+        int riga = -1;
+        for (int row = 0; row < studenti.size(); row++) {
+            if (studenti.getRow(row).getNomeCompleto().equals("Studente Canto2")) {
+                riga = row;
+            }
+        }
+        Long userId = studenti.getRow(riga).getUser().getId();
+
+        test((Button) studenti.getCellComponent(riga, 5).getChildren().findFirst().orElseThrow()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Giulia");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("Neri");
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            assertEquals("Giulia Neri", userService.findById(userId).getNomeCompleto());
+            assertTrue(IntStream.range(0, studenti.size()).anyMatch(row -> studenti.getCellText(row, 0).equals("Giulia Neri")));
+        } finally {
+            User user = userService.findById(userId);
+            user.setNome("Studente");
+            user.setCognome("Canto2");
+            userService.save(user, null);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_creaStudenteAssegnatoAUnGenitore() {
+        navigate(StudentiView.class);
+        var studenti = test(find(Grid.class).single());
+        test(find(Button.class).withText("Nuovo Studente").single()).click();
+        test(find(TextField.class).withLabel("Username").single()).setValue("studente_nuovo");
+        test(find(PasswordField.class).withLabel("Password").single()).setValue("segreta");
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Luca");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("Gialli");
+        test(find(TextField.class).withLabel("Codice Fiscale").single()).setValue("GLLLCU12A01H501Z");
+        test(find(DatePicker.class).withLabel("Data Nascita").single()).setValue(LocalDate.of(2012, 1, 1));
+
+        // Senza genitore lo studente (e il suo utente) non viene creato
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(find(ComboBox.class).withLabel("Genitore").single().isInvalid());
+        assertFalse(userService.existsByUsername("studente_nuovo"));
+
+        test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
+        test(find(Button.class).withText("Salva").single()).click();
+        Studente nuovo = studenteService.findByUsername("studente_nuovo").orElseThrow();
+        try {
+            assertEquals(14, studenti.size());
+            assertEquals("Genitore1 Cognome1", nuovo.getGenitore().getNomeCompleto());
+            assertTrue(nuovo.getUser().getRoles().contains("STUDENTE"));
+        } finally {
+            studenteService.delete(nuovo);
+            userService.delete(nuovo.getUser());
         }
     }
 
