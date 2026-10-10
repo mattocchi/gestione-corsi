@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "docenti")
-public class Docente {
+@Table(name = "insegnanti")
+public class Insegnante {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,11 +20,11 @@ public class Docente {
 
     private String biografia;
 
-    @OneToMany(mappedBy = "docente")
+    @OneToMany(mappedBy = "insegnante")
     private Set<Corso> corsi = new HashSet<>();
 
     // Costruttori
-    public Docente() {
+    public Insegnante() {
     }
 
     // Getters e Setters
@@ -81,7 +81,7 @@ public class Docente {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Docente other)) {
+        if (!(o instanceof Insegnante other)) {
             return false;
         }
         return getId() != null && getId().equals(other.getId());
@@ -89,6 +89,6 @@ public class Docente {
 
     @Override
     public int hashCode() {
-        return Docente.class.hashCode();
+        return Insegnante.class.hashCode();
     }
 }

@@ -77,7 +77,7 @@ public class FigliView extends VerticalLayout {
 
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
-        var docente = gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
+        var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         gridCorsi.addColumn(Corso::getCostoTotale).setHeader("Costo Totale").setAutoWidth(true).setFlexGrow(0);
 
@@ -92,7 +92,7 @@ public class FigliView extends VerticalLayout {
             actions.add(download);
             return actions;
         }));
-        ViewSupport.hideOnMobile(gridCorsi, docente, numeroLezioni);
+        ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni);
 
         gridCorsi.setItems(corsoService.findByStudente(studente.getId()));
         gridCorsi.setAllRowsVisible(true);
@@ -116,7 +116,7 @@ public class FigliView extends VerticalLayout {
             sb.append("===================\n\n");
             sb.append("Studente: ").append(studente.getNomeCompleto()).append("\n");
             sb.append("Corso: ").append(corso.getNome()).append("\n");
-            sb.append("Docente: ").append(corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "N/D").append("\n");
+            sb.append("Insegnante: ").append(corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "N/D").append("\n");
             sb.append("Data inizio: ").append(Formati.data(corso.getDataInizio())).append("\n");
             sb.append("Numero lezioni: ").append(corso.getNumeroLezioni()).append("\n");
             sb.append("Durata lezione: ").append(corso.getDurataLezioneMinuti()).append(" minuti\n\n");

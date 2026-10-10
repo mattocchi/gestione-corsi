@@ -1,4 +1,4 @@
-package it.attocchi.views.docente;
+package it.attocchi.views.insegnante;
 
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
@@ -19,11 +19,11 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.signals.Signal;
-import it.attocchi.entity.Docente;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.security.SecurityService;
-import it.attocchi.service.DocenteService;
+import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.Formati;
@@ -36,11 +36,11 @@ import jakarta.annotation.security.RolesAllowed;
 import java.util.List;
 import java.util.function.Consumer;
 
-@Route(value = "lezioni-docente", layout = MainLayout.class)
+@Route(value = "lezioni-insegnante", layout = MainLayout.class)
 @PageTitle("Le Mie Lezioni")
 @Menu(title = "Le Mie Lezioni", order = 20, icon = "vaadin:calendar")
-@RolesAllowed("DOCENTE")
-public class LezioniDocenteView extends VerticalLayout {
+@RolesAllowed("INSEGNANTE")
+public class LezioniInsegnanteView extends VerticalLayout {
 
     /** Filtro della griglia per stato della lezione. */
     public enum FiltroLezioni {
@@ -69,15 +69,15 @@ public class LezioniDocenteView extends VerticalLayout {
         List.of(FiltroLezioni.values()), FiltroLezioni::getEtichetta, f -> "Mostra lezioni: " + f.getEtichetta(), null);
     private GridListDataView<Lezione> lezioni;
     private final Signal<Boolean> mobile = ViewSupport.isMobile();
-    private Docente docenteCorrente;
+    private Insegnante insegnanteCorrente;
 
-    public LezioniDocenteView(LezioneService lezioneService, PresenzaService presenzaService,
-                              SecurityService securityService, DocenteService docenteService) {
+    public LezioniInsegnanteView(LezioneService lezioneService, PresenzaService presenzaService,
+                              SecurityService securityService, InsegnanteService insegnanteService) {
         this.lezioneService = lezioneService;
         this.presenzaService = presenzaService;
 
         setSizeFull();
-        docenteCorrente = securityService.getUsername().flatMap(docenteService::findByUsername).orElse(null);
+        insegnanteCorrente = securityService.getUsername().flatMap(insegnanteService::findByUsername).orElse(null);
         configureGrid();
 
         // Di default solo le lezioni ancora da fare
@@ -192,8 +192,8 @@ public class LezioniDocenteView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        if (docenteCorrente != null) {
-            lezioni = gridLezioni.setItems(lezioneService.findByDocente(docenteCorrente.getId()));
+        if (insegnanteCorrente != null) {
+            lezioni = gridLezioni.setItems(lezioneService.findByInsegnante(insegnanteCorrente.getId()));
             applicaFiltro();
         }
     }

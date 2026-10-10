@@ -30,8 +30,8 @@ public class LezioneService {
         return lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId);
     }
 
-    public List<Lezione> findByDocente(Long docenteId) {
-        return lezioneRepository.findByCorsoDocenteIdOrderByDataAsc(docenteId);
+    public List<Lezione> findByInsegnante(Long insegnanteId) {
+        return lezioneRepository.findByCorsoInsegnanteIdOrderByDataAsc(insegnanteId);
     }
 
     public List<Lezione> findByCorsoAndPeriodo(Long corsoId, LocalDate dataInizio, LocalDate dataFine) {

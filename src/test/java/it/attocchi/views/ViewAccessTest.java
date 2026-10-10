@@ -8,18 +8,18 @@ import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.RouteNotFoundError;
-import it.attocchi.entity.Docente;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Presenza.StatoPresenza;
-import it.attocchi.service.DocenteService;
+import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.StudentiView;
 import it.attocchi.views.admin.UtentiView;
-import it.attocchi.views.docente.LezioniDocenteView;
-import it.attocchi.views.docente.LezioniDocenteView.FiltroLezioni;
+import it.attocchi.views.insegnante.LezioniInsegnanteView;
+import it.attocchi.views.insegnante.LezioniInsegnanteView.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
 import it.attocchi.views.studente.MieiCorsiView;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private LezioneService lezioneService;
 
     @Autowired
-    private DocenteService docenteService;
+    private InsegnanteService insegnanteService;
 
     @Test
     @WithAnonymousUser
@@ -111,9 +111,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("docente1")
-    void docente_vedeLeProprieLezioni() {
-        navigate(LezioniDocenteView.class);
+    @WithUserDetails("insegnante1")
+    void insegnante_vedeLeProprieLezioni() {
+        navigate(LezioniInsegnanteView.class);
 
         var grid = test(find(Grid.class).single());
         assertEquals(30, grid.size());
@@ -121,9 +121,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("docente1")
-    void docente_segnaAssenzaGiustificataConUnTocco() {
-        navigate(LezioniDocenteView.class);
+    @WithUserDetails("insegnante1")
+    void insegnante_segnaAssenzaGiustificataConUnTocco() {
+        navigate(LezioniInsegnanteView.class);
         var lezioni = test(find(Grid.class).single());
         Button gestisciPresenze = (Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow();
         test(gestisciPresenze).click();
@@ -146,15 +146,15 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("docente1")
+    @WithUserDetails("insegnante1")
     @SuppressWarnings("unchecked")
-    void docente_filtraLezioniPerStato() {
-        Docente docente = docenteService.findByUsername("docente1").orElseThrow();
-        Lezione completata = lezioneService.findByDocente(docente.getId()).getFirst();
+    void insegnante_filtraLezioniPerStato() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Lezione completata = lezioneService.findByInsegnante(insegnante.getId()).getFirst();
         completata.setCompletata(true);
         lezioneService.save(completata);
         try {
-            navigate(LezioniDocenteView.class);
+            navigate(LezioniInsegnanteView.class);
             var grid = test(find(Grid.class).single());
             SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
 
@@ -181,8 +181,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("docente1")
-    void docente_nonAccedeAViewAdmin() {
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAViewAdmin() {
         navigate("corsi", RouteNotFoundError.class);
     }
 

@@ -49,7 +49,7 @@ public class MieiCorsiView extends VerticalLayout {
 
     private void configureGrid() {
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
-        var docente = gridCorsi.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
+        var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var dataInizio = gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
@@ -58,7 +58,7 @@ public class MieiCorsiView extends VerticalLayout {
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso ->
             ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Visualizza Presenze", e -> openPresenzeDialog(corso)))));
 
-        ViewSupport.hideOnMobile(gridCorsi, docente, dataInizio, numeroLezioni, durata);
+        ViewSupport.hideOnMobile(gridCorsi, insegnante, dataInizio, numeroLezioni, durata);
     }
 
     private void openPresenzeDialog(Corso corso) {

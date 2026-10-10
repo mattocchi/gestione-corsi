@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface LezioneRepository extends JpaRepository<Lezione, Long> {
     List<Lezione> findByCorsoIdOrderByDataAsc(Long corsoId);
-    List<Lezione> findByCorsoDocenteIdOrderByDataAsc(Long docenteId);
+    List<Lezione> findByCorsoInsegnanteIdOrderByDataAsc(Long insegnanteId);
     List<Lezione> findByCorsoIdAndDataBetweenOrderByDataAsc(Long corsoId, LocalDate dataInizio, LocalDate dataFine);
     List<Lezione> findByDataBetweenOrderByDataAsc(LocalDate dataInizio, LocalDate dataFine);
 }

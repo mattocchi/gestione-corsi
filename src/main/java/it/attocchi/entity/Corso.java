@@ -45,8 +45,8 @@ public class Corso {
     private BigDecimal costoPerLezione;
 
     @ManyToOne
-    @JoinColumn(name = "docente_id")
-    private Docente docente;
+    @JoinColumn(name = "insegnante_id")
+    private Insegnante insegnante;
 
     @ManyToMany
     @JoinTable(
@@ -147,12 +147,12 @@ public class Corso {
         this.costoPerLezione = costoPerLezione;
     }
 
-    public Docente getDocente() {
-        return docente;
+    public Insegnante getInsegnante() {
+        return insegnante;
     }
 
-    public void setDocente(Docente docente) {
-        this.docente = docente;
+    public void setInsegnante(Insegnante insegnante) {
+        this.insegnante = insegnante;
     }
 
     public Set<Studente> getStudenti() {

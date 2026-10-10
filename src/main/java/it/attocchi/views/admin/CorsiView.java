@@ -20,9 +20,9 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
-import it.attocchi.entity.Docente;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.service.CorsoService;
-import it.attocchi.service.DocenteService;
+import it.attocchi.service.InsegnanteService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
@@ -38,13 +38,13 @@ import java.util.Arrays;
 public class CorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
-    private final DocenteService docenteService;
+    private final InsegnanteService insegnanteService;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
 
-    public CorsiView(CorsoService corsoService, DocenteService docenteService) {
+    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService) {
         this.corsoService = corsoService;
-        this.docenteService = docenteService;
+        this.insegnanteService = insegnanteService;
 
         setSizeFull();
         configureGrid();
@@ -58,7 +58,7 @@ public class CorsiView extends VerticalLayout {
 
     private void configureGrid() {
         grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
-        var docente = grid.addColumn(corso -> corso.getDocente() != null ? corso.getDocente().getNomeCompleto() : "").setHeader("Docente");
+        var insegnante = grid.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var dataInizio = grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         var numeroLezioni = grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
@@ -73,7 +73,7 @@ public class CorsiView extends VerticalLayout {
             return ViewSupport.actions(editButton, generateButton, deleteButton);
         }));
 
-        ViewSupport.hideOnMobile(grid, docente, dataInizio, numeroLezioni, durata, numeroStudenti);
+        ViewSupport.hideOnMobile(grid, insegnante, dataInizio, numeroLezioni, durata, numeroStudenti);
     }
 
     private void openDialog(Corso corso) {
@@ -105,9 +105,9 @@ public class CorsiView extends VerticalLayout {
             }
         });
 
-        ComboBox<Docente> docente = new ComboBox<>("Docente");
-        docente.setItems(docenteService.findAll());
-        docente.setItemLabelGenerator(Docente::getNomeCompleto);
+        ComboBox<Insegnante> insegnante = new ComboBox<>("Insegnante");
+        insegnante.setItems(insegnanteService.findAll());
+        insegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
 
         binder.forField(nome).bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
@@ -116,11 +116,11 @@ public class CorsiView extends VerticalLayout {
         binder.forField(durataLezioni).bind(Corso::getDurataLezioneMinuti, Corso::setDurataLezioneMinuti);
         binder.forField(orarioInizio).bind(Corso::getOrarioInizio, Corso::setOrarioInizio);
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
-        binder.forField(docente).bind(Corso::getDocente, Corso::setDocente);
+        binder.forField(insegnante).bind(Corso::getInsegnante, Corso::setInsegnante);
 
         binder.readBean(corso);
 
-        formLayout.add(nome, docente, dataInizio, numeroLezioni, durataLezioni, orarioInizio, giorniSettimana, descrizione);
+        formLayout.add(nome, insegnante, dataInizio, numeroLezioni, durataLezioni, orarioInizio, giorniSettimana, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             try {

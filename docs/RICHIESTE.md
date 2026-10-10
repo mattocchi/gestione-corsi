@@ -10,7 +10,7 @@
 
 ### Docenti diventano Insegnantei
 
-* [ ] Rinominiamo Docenti in Insegnanti: adegua sia UI che Codice che dati di Esempio
+* [x] Rinominiamo Docenti in Insegnanti: adegua sia UI che Codice che dati di Esempio _(completata 2026-10-10; in produzione eseguire prima docs/migrazioni/2026-10-10-docenti-insegnanti.sql)_
 
 ### CORSI
 

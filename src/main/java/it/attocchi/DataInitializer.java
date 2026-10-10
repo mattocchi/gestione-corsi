@@ -27,17 +27,17 @@ public class DataInitializer implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserService userService;
-    private final DocenteRepository docenteRepository;
+    private final InsegnanteRepository insegnanteRepository;
     private final StudenteRepository studenteRepository;
     private final GenitoreRepository genitoreRepository;
     private final CorsoService corsoService;
     private final CorsoRepository corsoRepository;
 
-    public DataInitializer(UserService userService, DocenteRepository docenteRepository,
+    public DataInitializer(UserService userService, InsegnanteRepository insegnanteRepository,
                           StudenteRepository studenteRepository, GenitoreRepository genitoreRepository,
                           CorsoService corsoService, CorsoRepository corsoRepository) {
         this.userService = userService;
-        this.docenteRepository = docenteRepository;
+        this.insegnanteRepository = insegnanteRepository;
         this.studenteRepository = studenteRepository;
         this.genitoreRepository = genitoreRepository;
         this.corsoService = corsoService;
@@ -57,35 +57,35 @@ public class DataInitializer implements CommandLineRunner {
             admin.getRoles().add("ADMIN");
             userService.save(admin, "admin");
 
-            // Crea docente1 per corso di canto
-            User userDocente1 = new User();
-            userDocente1.setUsername("docente1");
-            userDocente1.setNome("Maria");
-            userDocente1.setCognome("Verdi");
-            userDocente1.setEmail("docente1@example.com");
-            userDocente1.setRoles(new HashSet<>());
-            userDocente1.getRoles().add("DOCENTE");
-            userDocente1 = userService.save(userDocente1, "docente1");
+            // Crea insegnante1 per corso di canto
+            User userInsegnante1 = new User();
+            userInsegnante1.setUsername("insegnante1");
+            userInsegnante1.setNome("Maria");
+            userInsegnante1.setCognome("Verdi");
+            userInsegnante1.setEmail("insegnante1@example.com");
+            userInsegnante1.setRoles(new HashSet<>());
+            userInsegnante1.getRoles().add("INSEGNANTE");
+            userInsegnante1 = userService.save(userInsegnante1, "insegnante1");
 
-            Docente docente1 = new Docente();
-            docente1.setUser(userDocente1);
-            docente1.setSpecializzazione("Canto");
-            docente1 = docenteRepository.save(docente1);
+            Insegnante insegnante1 = new Insegnante();
+            insegnante1.setUser(userInsegnante1);
+            insegnante1.setSpecializzazione("Canto");
+            insegnante1 = insegnanteRepository.save(insegnante1);
 
-            // Crea docente2 per corso di chitarra
-            User userDocente2 = new User();
-            userDocente2.setUsername("docente2");
-            userDocente2.setNome("Marco");
-            userDocente2.setCognome("Rossi");
-            userDocente2.setEmail("docente2@example.com");
-            userDocente2.setRoles(new HashSet<>());
-            userDocente2.getRoles().add("DOCENTE");
-            userDocente2 = userService.save(userDocente2, "docente2");
+            // Crea insegnante2 per corso di chitarra
+            User userInsegnante2 = new User();
+            userInsegnante2.setUsername("insegnante2");
+            userInsegnante2.setNome("Marco");
+            userInsegnante2.setCognome("Rossi");
+            userInsegnante2.setEmail("insegnante2@example.com");
+            userInsegnante2.setRoles(new HashSet<>());
+            userInsegnante2.getRoles().add("INSEGNANTE");
+            userInsegnante2 = userService.save(userInsegnante2, "insegnante2");
 
-            Docente docente2 = new Docente();
-            docente2.setUser(userDocente2);
-            docente2.setSpecializzazione("Chitarra");
-            docente2 = docenteRepository.save(docente2);
+            Insegnante insegnante2 = new Insegnante();
+            insegnante2.setUser(userInsegnante2);
+            insegnante2.setSpecializzazione("Chitarra");
+            insegnante2 = insegnanteRepository.save(insegnante2);
 
             // Crea genitori
             Genitore[] genitori = new Genitore[9];
@@ -156,7 +156,7 @@ public class DataInitializer implements CommandLineRunner {
             Set<DayOfWeek> giorniCanto = new HashSet<>();
             giorniCanto.add(DayOfWeek.THURSDAY);
             corsoCanto.setGiorniSettimana(giorniCanto);
-            corsoCanto.setDocente(docente1);
+            corsoCanto.setInsegnante(insegnante1);
             corsoCanto.setCostoTotale(new BigDecimal("600.00"));
             corsoCanto.setCostoPerLezione(new BigDecimal("20.00"));
 
@@ -179,7 +179,7 @@ public class DataInitializer implements CommandLineRunner {
             giorniChitarra.add(DayOfWeek.TUESDAY);
             giorniChitarra.add(DayOfWeek.SATURDAY);
             corsoChitarra.setGiorniSettimana(giorniChitarra);
-            corsoChitarra.setDocente(docente2);
+            corsoChitarra.setInsegnante(insegnante2);
             corsoChitarra.setCostoTotale(new BigDecimal("600.00"));
             corsoChitarra.setCostoPerLezione(new BigDecimal("20.00"));
 
@@ -200,7 +200,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info("""
                 Dati di test inizializzati:
                   ADMIN:    admin/admin
-                  DOCENTI:  docente1/docente1 (Canto), docente2/docente2 (Chitarra)
+                  INSEGNANTI:  insegnante1/insegnante1 (Canto), insegnante2/insegnante2 (Chitarra)
                   GENITORI: genitore1..9 / genitore1..9
                   STUDENTI: studente_canto1..7 / studente1..7, studente_chitarra1..6 / studente8..13
                   CORSI:    Canto (giovedì), Chitarra (martedì e sabato), 30 lezioni da 40 min""");

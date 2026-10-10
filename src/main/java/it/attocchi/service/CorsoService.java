@@ -41,8 +41,8 @@ public class CorsoService {
         return corsoRepository.findById(id).orElse(null);
     }
 
-    public List<Corso> findByDocente(Long docenteId) {
-        return corsoRepository.findByDocenteId(docenteId);
+    public List<Corso> findByInsegnante(Long insegnanteId) {
+        return corsoRepository.findByInsegnanteId(insegnanteId);
     }
 
     public List<Corso> findByStudente(Long studenteId) {
