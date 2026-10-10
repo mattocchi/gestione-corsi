@@ -122,6 +122,15 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori());
     }
 
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_dashboardConICorsiDeiFigli() {
+        navigate(HomeView.class);
+
+        // genitore3: Studente Canto3 (Canto) e Studente Chitarra1 (Chitarra)
+        assertEquals(List.of("Corsi dei figli: 2"), indicatori());
+    }
+
     /** Riquadri della dashboard come "etichetta: valore", nell'ordine di visualizzazione. */
     private List<String> indicatori() {
         return find(Card.class).all().stream().map(Card::getAriaLabel).map(o -> o.orElse("")).toList();

@@ -45,6 +45,10 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
                 indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
         }
+        if (securityService.hasRole("GENITORE")) {
+            add(sezione("I miei figli",
+                indicatore(VaadinIcon.BOOK, "Corsi dei figli", dashboardService.corsiDeiFigli(username))));
+        }
     }
 
     private static Div sezione(String titolo, Card... indicatori) {

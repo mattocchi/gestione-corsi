@@ -3,6 +3,7 @@ package it.attocchi.service;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.GenitoreRepository;
 import it.attocchi.repository.InsegnanteRepository;
+import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.StudenteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,17 +23,25 @@ public class DashboardService {
     private final StudenteRepository studenteRepository;
     private final GenitoreRepository genitoreRepository;
     private final InsegnanteRepository insegnanteRepository;
+    private final IscrizioneRepository iscrizioneRepository;
 
     public DashboardService(CorsoRepository corsoRepository, StudenteRepository studenteRepository,
-                            GenitoreRepository genitoreRepository, InsegnanteRepository insegnanteRepository) {
+                            GenitoreRepository genitoreRepository, InsegnanteRepository insegnanteRepository,
+                            IscrizioneRepository iscrizioneRepository) {
         this.corsoRepository = corsoRepository;
         this.studenteRepository = studenteRepository;
         this.genitoreRepository = genitoreRepository;
         this.insegnanteRepository = insegnanteRepository;
+        this.iscrizioneRepository = iscrizioneRepository;
     }
 
     public RiepilogoGenerale riepilogoGenerale() {
         return new RiepilogoGenerale(corsoRepository.count(), studenteRepository.count(),
             genitoreRepository.count(), insegnanteRepository.count());
+    }
+
+    /** Numero di corsi distinti a cui sono iscritti i figli del genitore. */
+    public long corsiDeiFigli(String usernameGenitore) {
+        return iscrizioneRepository.countCorsiFigliByGenitoreUsername(usernameGenitore);
     }
 }
