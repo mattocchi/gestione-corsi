@@ -11,6 +11,7 @@ import java.util.List;
 public interface LezioneRepository extends JpaRepository<Lezione, Long> {
     List<Lezione> findByCorsoIdOrderByDataAsc(Long corsoId);
     List<Lezione> findByCorsoInsegnanteIdOrderByDataAsc(Long insegnanteId);
+    long countByCorsoInsegnanteUserUsernameAndCompletata(String username, boolean completata);
     List<Lezione> findByCorsoIdAndDataBetweenOrderByDataAsc(Long corsoId, LocalDate dataInizio, LocalDate dataFine);
     List<Lezione> findByDataBetweenOrderByDataAsc(LocalDate dataInizio, LocalDate dataFine);
 }

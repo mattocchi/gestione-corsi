@@ -83,7 +83,6 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private CorsoService corsoService;
-
     @Autowired
     private StudenteService studenteService;
 
@@ -129,6 +128,25 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         // genitore3: Studente Canto3 (Canto) e Studente Chitarra1 (Chitarra)
         assertEquals(List.of("Corsi dei figli: 2"), indicatori());
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_dashboardConCorsiELezioni() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Lezione completata = lezioneService.findByInsegnante(insegnante.getId()).getFirst();
+        completata.setCompletata(true);
+        lezioneService.save(completata);
+        try {
+            // La Home è già aperta all'avvio del test: si esce e si rientra per ricrearla con i dati aggiornati
+            navigate(LezioniInsegnanteView.class);
+            navigate(HomeView.class);
+
+            assertEquals(List.of("Corsi assegnati: 1", "Lezioni fatte: 1", "Lezioni da fare: 29"), indicatori());
+        } finally {
+            completata.setCompletata(false);
+            lezioneService.save(completata);
+        }
     }
 
     /** Riquadri della dashboard come "etichetta: valore", nell'ordine di visualizzazione. */

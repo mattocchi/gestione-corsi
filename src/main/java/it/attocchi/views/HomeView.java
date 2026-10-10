@@ -15,6 +15,7 @@ import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.DashboardService;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
+import it.attocchi.service.DashboardService.RiepilogoInsegnante;
 import it.attocchi.service.UserService;
 import jakarta.annotation.security.PermitAll;
 
@@ -44,6 +45,13 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi()),
                 indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
                 indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
+        }
+        if (securityService.hasRole("INSEGNANTE")) {
+            RiepilogoInsegnante riepilogo = dashboardService.riepilogoInsegnante(username);
+            add(sezione("I miei corsi",
+                indicatore(VaadinIcon.MUSIC, "Corsi assegnati", riepilogo.corsi()),
+                indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
+                indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare())));
         }
         if (securityService.hasRole("GENITORE")) {
             add(sezione("I miei figli",
