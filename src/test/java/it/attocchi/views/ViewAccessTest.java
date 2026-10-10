@@ -39,6 +39,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PagamentoService;
+import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.service.UserService;
@@ -136,7 +137,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void admin_dashboardConTotali() {
         navigate(HomeView.class);
 
-        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori());
+        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 4));
     }
 
     @Test
@@ -144,7 +145,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_dashboardConTotali() {
         navigate(HomeView.class);
 
-        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori());
+        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 4));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_dashboardConRiepilogoPagamenti() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("200"));
+        pagamentoService.salva(canto.getId(), studente.getId(), rata);
+        try {
+            // La Home è già aperta: si ricostruisce navigando altrove e tornando
+            navigate(CorsiView.class);
+            navigate(HomeView.class);
+            // 13 partecipanti da 600 € nei due corsi attivi, una rata da 200 €
+            assertEquals(List.of("Saldati: 0", "Pagamento parziale: 1", "Senza pagamenti: 12",
+                    "Incassato: 200,00 € (3% del totale)", "Da incassare: 7.600,00 € (97% del totale)"),
+                indicatori().subList(4, 9));
+
+            var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).single());
+            assertEquals(2, grid.size());
+            assertEquals("Corso di Canto", grid.getCellText(0, 0));
+            // Indici delle colonne visibili su desktop (la colonna di riepilogo mobile è nascosta)
+            assertEquals("1", grid.getCellText(0, 2));
+            assertEquals("6", grid.getCellText(0, 3));
+            assertEquals("200,00 € (5%)", grid.getCellText(0, 4));
+            assertEquals("Corso di Chitarra", grid.getCellText(1, 0));
+            assertEquals("3.600,00 € (100%)", grid.getCellText(1, 5));
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+        }
     }
 
     @Test

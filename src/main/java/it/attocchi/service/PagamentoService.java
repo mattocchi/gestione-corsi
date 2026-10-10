@@ -1,8 +1,10 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Pagamento;
+import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import org.springframework.stereotype.Service;
@@ -10,9 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Quote e pagamenti dei partecipanti. Restano modificabili anche nei corsi non attivi
@@ -63,12 +68,58 @@ public class PagamentoService {
         }
     }
 
+    /**
+     * Riepilogo dei pagamenti di un corso attivo (o, con {@code corso} "Totale", di tutti): partecipanti saldati,
+     * con pagamento parziale e senza pagamenti; incassato e residuo da incassare.
+     */
+    public record RiepilogoPagamenti(String corso, int saldati, int parziali, int senzaPagamenti,
+                                     BigDecimal incassato, BigDecimal daIncassare) {
+
+        public int partecipanti() {
+            return saldati + parziali + senzaPagamenti;
+        }
+
+        /** Percentuale incassata su incassato + da incassare (100 se non c'è nulla da incassare). */
+        public int percentualeIncassata() {
+            BigDecimal totale = incassato.add(daIncassare);
+            if (totale.signum() == 0) {
+                return 100;
+            }
+            return incassato.multiply(BigDecimal.valueOf(100)).divide(totale, 0, RoundingMode.HALF_UP).intValue();
+        }
+
+        public int percentualeDaIncassare() {
+            return 100 - percentualeIncassata();
+        }
+
+        static RiepilogoPagamenti di(String corso, List<Situazione> situazioni) {
+            int saldati = 0;
+            int parziali = 0;
+            int senzaPagamenti = 0;
+            BigDecimal incassato = BigDecimal.ZERO;
+            BigDecimal daIncassare = BigDecimal.ZERO;
+            for (Situazione situazione : situazioni) {
+                switch (situazione.stato()) {
+                    case SALDATO -> saldati++;
+                    case PARZIALE -> parziali++;
+                    case NESSUN_PAGAMENTO -> senzaPagamenti++;
+                }
+                incassato = incassato.add(situazione.pagato());
+                daIncassare = daIncassare.add(situazione.residuo());
+            }
+            return new RiepilogoPagamenti(corso, saldati, parziali, senzaPagamenti, incassato, daIncassare);
+        }
+    }
+
     private final PagamentoRepository pagamentoRepository;
     private final IscrizioneRepository iscrizioneRepository;
+    private final CorsoRepository corsoRepository;
 
-    public PagamentoService(PagamentoRepository pagamentoRepository, IscrizioneRepository iscrizioneRepository) {
+    public PagamentoService(PagamentoRepository pagamentoRepository, IscrizioneRepository iscrizioneRepository,
+                            CorsoRepository corsoRepository) {
         this.pagamentoRepository = pagamentoRepository;
         this.iscrizioneRepository = iscrizioneRepository;
+        this.corsoRepository = corsoRepository;
     }
 
     public Iscrizione findIscrizione(Long corsoId, Long studenteId) {
@@ -112,6 +163,28 @@ public class PagamentoService {
             situazioni.put(corsoId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(corsoId, BigDecimal.ZERO)));
         }
         return situazioni;
+    }
+
+    /** Riepilogo per ogni corso attivo (in ordine di nome) e, in fondo, il totale di tutti i corsi attivi. */
+    public List<RiepilogoPagamenti> riepilogoCorsiAttivi() {
+        Map<IscrizioneId, BigDecimal> pagato = new HashMap<>();
+        for (Object[] riga : pagamentoRepository.sommaPerIscrizioneCorsiAttivi()) {
+            pagato.put(new IscrizioneId((Long) riga[0], (Long) riga[1]), (BigDecimal) riga[2]);
+        }
+        Map<Corso, List<Situazione>> perCorso = new TreeMap<>(Comparator.comparing(Corso::getNome).thenComparing(Corso::getId));
+        // Anche i corsi attivi senza partecipanti hanno la loro riga
+        corsoRepository.findByAttivoTrue().forEach(corso -> perCorso.put(corso, new ArrayList<>()));
+        List<Situazione> tutte = new ArrayList<>();
+        for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoAttivo()) {
+            Situazione situazione = new Situazione(iscrizione.getQuotaDovuta(),
+                pagato.getOrDefault(iscrizione.getId(), BigDecimal.ZERO));
+            perCorso.computeIfAbsent(iscrizione.getCorso(), c -> new ArrayList<>()).add(situazione);
+            tutte.add(situazione);
+        }
+        List<RiepilogoPagamenti> riepilogo = new ArrayList<>();
+        perCorso.forEach((corso, situazioni) -> riepilogo.add(RiepilogoPagamenti.di(corso.getNome(), situazioni)));
+        riepilogo.add(RiepilogoPagamenti.di("Totale", tutte));
+        return riepilogo;
     }
 
     /** Imposta (o con {@code null} toglie) la quota personalizzata del partecipante, con la nota sul motivo. */

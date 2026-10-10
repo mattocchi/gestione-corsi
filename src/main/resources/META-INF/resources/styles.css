@@ -59,17 +59,20 @@
     flex: 1 1 10rem;
 }
 
-/* Le Mie Lezioni su mobile: corso e data nella stessa cella, su due righe */
-.lezione-riepilogo {
+/* Riepiloghi su più righe nella stessa cella (colonne solo mobile): Le Mie Lezioni, pagamenti in dashboard */
+.lezione-riepilogo,
+.riepilogo-righe {
     line-height: 1.3;
     padding-block: 0.25rem;
 }
 
-.lezione-riepilogo-corso {
+.lezione-riepilogo-corso,
+.riepilogo-righe-titolo {
     font-weight: var(--aura-font-weight-medium, 500);
 }
 
-.lezione-riepilogo-data {
+.lezione-riepilogo-data,
+.riepilogo-righe-dettaglio {
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s, 0.8125rem);
 }
@@ -150,6 +153,16 @@
     font-size: 2.25rem;
     font-weight: var(--aura-font-weight-semibold, 600);
     line-height: 1.1;
+}
+
+.dashboard-dettaglio {
+    display: block;
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s, 0.8125rem);
+}
+
+.dashboard-pagamenti {
+    margin-top: 1rem;
 }
 
 /* Messaggio sopra un contenuto in sola lettura (es. corso non attivo) */
