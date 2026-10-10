@@ -2,6 +2,7 @@ package it.attocchi.entity;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.Comparator;
 
@@ -37,6 +38,13 @@ public class Iscrizione {
     /** Orario di inizio della lezione del partecipante; {@code null} se non ancora assegnato. */
     private LocalTime orarioLezione;
 
+    /** Quota da pagare se diversa da quella piena del corso; {@code null} = quota piena. */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal quotaPersonalizzata;
+
+    /** Motivo della quota personalizzata (es. "fratelli"). */
+    private String notaQuota;
+
     // Costruttori
     public Iscrizione() {
     }
@@ -67,6 +75,30 @@ public class Iscrizione {
 
     public void setOrarioLezione(LocalTime orarioLezione) {
         this.orarioLezione = orarioLezione;
+    }
+
+    public BigDecimal getQuotaPersonalizzata() {
+        return quotaPersonalizzata;
+    }
+
+    public void setQuotaPersonalizzata(BigDecimal quotaPersonalizzata) {
+        this.quotaPersonalizzata = quotaPersonalizzata;
+    }
+
+    public String getNotaQuota() {
+        return notaQuota;
+    }
+
+    public void setNotaQuota(String notaQuota) {
+        this.notaQuota = notaQuota;
+    }
+
+    /** Quota da pagare: quella personalizzata se impostata, altrimenti il costo totale del corso. */
+    public BigDecimal getQuotaDovuta() {
+        if (quotaPersonalizzata != null) {
+            return quotaPersonalizzata;
+        }
+        return corso != null && corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
     }
 
     /** Uguaglianza sulla chiave (corso, studente). */
