@@ -26,6 +26,8 @@ import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
+import it.attocchi.entity.MetodoPagamento;
+import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Studente;
 import it.attocchi.entity.User;
@@ -543,7 +545,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(find(PartecipantiDialog.class).single()).single());
         int riga = IntStream.range(0, partecipanti.size())
             .filter(r -> partecipanti.getCellText(r, 1).equals("Studente Canto2")).findFirst().orElseThrow();
-        test(pulsante(partecipanti.getCellComponent(riga, 2), "Quota e pagamenti di Studente Canto2")).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 3), "Quota e pagamenti di Studente Canto2")).click();
 
         QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
         try {
@@ -557,6 +559,46 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 450,00 €").exists());
         } finally {
             pagamentoService.impostaQuota(corsoId, studenteId, null, null);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_registraModificaEdEliminaUnaRata() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
+        new QuotaPagamentiDialog(pagamentoService, canto, studente).open();
+        QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+        var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).single());
+        try {
+            // Nuova rata: data di oggi, importo proposto = residuo, metodo di default Bonifico
+            test(find(Button.class).from(dialog).withText("Aggiungi pagamento").single()).click();
+            BigDecimalField importo = find(BigDecimalField.class).withLabel("Importo").single();
+            assertEquals(0, new BigDecimal("600").compareTo(importo.getValue()));
+            SegmentedControl<MetodoPagamento> metodo = find(SegmentedControl.class).single();
+            assertEquals(MetodoPagamento.BONIFICO, metodo.getValue());
+            new TextFieldTester<>(importo).setValue(new BigDecimal("200"));
+            test(metodo.getPulsante(MetodoPagamento.CASSA)).click();
+            test(find(Button.class).withText("Salva").single()).click();
+
+            assertEquals(1, rate.size());
+            assertEquals("200,00 €", rate.getCellText(0, 1));
+            assertEquals("Cassa", rate.getCellText(0, 2));
+            assertTrue(find(Span.class).from(dialog).withText("Residuo 400,00 €").exists());
+
+            // Modifica
+            test(pulsante(rate.getCellComponent(0, 4), "Modifica pagamento")).click();
+            new TextFieldTester<>(find(BigDecimalField.class).withLabel("Importo").single()).setValue(new BigDecimal("250"));
+            test(find(Button.class).withText("Salva").single()).click();
+            assertEquals("250,00 €", rate.getCellText(0, 1));
+
+            // Eliminazione con conferma
+            test(pulsante(rate.getCellComponent(0, 4), "Elimina pagamento")).click();
+            test(find(Button.class).withText("Elimina").single()).click();
+            assertEquals(0, rate.size());
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
         }
     }
 
@@ -612,7 +654,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 riga = row;
             }
         }
-        test(pulsante(partecipanti.getCellComponent(riga, 2), "Rimuovi Studente Canto1")).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 3), "Rimuovi Studente Canto1")).click();
         assertEquals(6, partecipanti.size());
         assertTrue(presenzaService.findByCorsoAndStudente(corso.getId(), studenteId).isEmpty());
     }

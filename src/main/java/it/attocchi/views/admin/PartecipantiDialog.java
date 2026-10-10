@@ -17,13 +17,17 @@ import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Studente;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PagamentoService;
+import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.StudenteService;
+import it.attocchi.views.Formati;
 import it.attocchi.views.ViewSupport;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,6 +45,7 @@ public class PartecipantiDialog extends Dialog {
     private final Corso corso;
     private final Grid<Iscrizione> grid = new Grid<>(Iscrizione.class, false);
     private final ComboBox<Studente> nuovoPartecipante = new ComboBox<>();
+    private Map<Long, Situazione> situazioni = Map.of();
 
     public PartecipantiDialog(CorsoService corsoService, StudenteService studenteService,
                               PagamentoService pagamentoService, Corso corso) {
@@ -69,11 +74,22 @@ public class PartecipantiDialog extends Dialog {
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
+        var pagamento = grid.addComponentColumn(iscrizione -> QuotaPagamentiDialog.statoBadge(situazione(iscrizione)))
+            .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = corso.isAttivo();
         // Quota e pagamenti sempre disponibili (anche per i corsi non attivi); rimozione solo per i corsi attivi
         var azioni = grid.addComponentColumn(iscrizione -> {
             Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getStudente().getNomeCompleto(),
                 e -> openQuotaPagamenti(iscrizione));
+            // Su mobile la colonna Pagamento è nascosta: lo stato si legge dal colore e dal tooltip del pulsante
+            Situazione situazione = situazione(iscrizione);
+            switch (situazione.stato()) {
+                case SALDATO -> pagamenti.addThemeVariants(ButtonVariant.SUCCESS);
+                case PARZIALE -> pagamenti.addThemeVariants(ButtonVariant.WARNING);
+                case NESSUN_PAGAMENTO -> pagamenti.addThemeVariants(ButtonVariant.ERROR);
+            }
+            pagamenti.setTooltipText("Quota e pagamenti: " + situazione.stato().getDescrizione()
+                + " (residuo " + Formati.euro(situazione.residuo()) + ")");
             HorizontalLayout actions = ViewSupport.actions(pagamenti);
             if (modificabile) {
                 Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
@@ -87,6 +103,7 @@ public class PartecipantiDialog extends Dialog {
         azioni.setHeader("").setAutoWidth(false).setWidth(modificabile ? "6rem" : "3.5rem");
         // Su schermi stretti il nome va a capo invece di essere troncato
         grid.addClassName("partecipanti-grid");
+        ViewSupport.hideOnMobile(grid, pagamento);
         grid.setAllRowsVisible(true);
         aggiorna();
 
@@ -155,7 +172,13 @@ public class PartecipantiDialog extends Dialog {
     }
 
     /** Ricarica i partecipanti e propone come nuovi solo gli studenti non ancora iscritti. */
+    private Situazione situazione(Iscrizione iscrizione) {
+        return situazioni.getOrDefault(iscrizione.getStudente().getId(),
+            new Situazione(iscrizione.getQuotaDovuta(), BigDecimal.ZERO));
+    }
+
     private void aggiorna() {
+        situazioni = pagamentoService.situazioniDelCorso(corso.getId());
         List<Iscrizione> partecipanti = corsoService.findPartecipanti(corso.getId());
         grid.setItems(partecipanti);
         Set<Long> iscritti = partecipanti.stream().map(i -> i.getStudente().getId()).collect(Collectors.toSet());
