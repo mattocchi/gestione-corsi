@@ -34,6 +34,7 @@ import it.attocchi.entity.Studente;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.repository.InsegnanteRepository;
+import it.attocchi.service.GenitoreService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
@@ -110,6 +111,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private GenitoreService genitoreService;
 
     @Test
     @WithAnonymousUser
@@ -802,6 +806,30 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
         assertEquals("Studente Canto3, Studente Chitarra1", grid.getCellText(genitore3, 3));
         assertEquals("2", grid.getCellText(genitore3, 4));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_modificaIDatiDiUnGenitore() {
+        navigate(GenitoriView.class);
+        var grid = test((Grid<Genitore>) find(Grid.class).single());
+        int genitore3 = IntStream.range(0, grid.size())
+            .filter(r -> grid.getRow(r).getUser().getUsername().equals("genitore3")).findFirst().orElseThrow();
+        test(pulsante(grid.getCellComponent(genitore3, 5), "Modifica")).click();
+
+        Dialog dialog = find(Dialog.class).single();
+        assertTrue(find(TextField.class).from(dialog).withLabel("Username").single().isReadOnly());
+        test(find(TextField.class).from(dialog).withLabel("Telefono").single()).setValue("06 1234567");
+        test(find(TextField.class).from(dialog).withLabel("Luogo di nascita").single()).setValue("Napoli");
+        test(find(Button.class).from(dialog).withText("Salva").single()).click();
+        assertFalse(dialog.isOpened());
+
+        Genitore genitore = genitoreService.findByUsername("genitore3").orElseThrow();
+        assertEquals("06 1234567", genitore.getUser().getTelefono());
+        assertEquals("Napoli", genitore.getLuogoNascita());
+        assertEquals("Via Roma 3", genitore.getIndirizzo().getVia());
+        assertTrue(genitore.getUser().getRoles().contains("GENITORE"));
     }
 
     private static void assertAzioni(Component azioni, String... etichette) {
