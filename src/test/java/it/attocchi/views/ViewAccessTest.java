@@ -363,7 +363,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
         Long userId = studenti.getRow(riga).getUser().getId();
 
-        test((Button) studenti.getCellComponent(riga, 5).getChildren().findFirst().orElseThrow()).click();
+        test((Button) studenti.getCellComponent(riga, 6).getChildren().findFirst().orElseThrow()).click();
         test(find(TextField.class).withLabel("Nome").single()).setValue("Giulia");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Neri");
         test(find(Button.class).withText("Salva").single()).click();
@@ -388,20 +388,25 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(PasswordField.class).withLabel("Password").single()).setValue("segreta");
         test(find(TextField.class).withLabel("Nome").single()).setValue("Luca");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Gialli");
-        test(find(TextField.class).withLabel("Codice Fiscale").single()).setValue("GLLLCU12A01H501Z");
-        test(find(DatePicker.class).withLabel("Data Nascita").single()).setValue(LocalDate.of(2012, 1, 1));
+        TextField codiceFiscale = find(TextField.class).withLabel("Codice fiscale").single();
+        test(codiceFiscale).setValue("GLLLCU12A01H501Z");
+        test(find(DatePicker.class).withLabel("Data di nascita").single()).setValue(LocalDate.of(2012, 1, 1));
 
         // Senza genitore lo studente (e il suo utente) non viene creato
         test(find(Button.class).withText("Salva").single()).click();
         assertTrue(find(ComboBox.class).withLabel("Genitore").single().isInvalid());
+        // Carattere di controllo del codice fiscale sbagliato
+        assertTrue(codiceFiscale.isInvalid());
         assertFalse(userService.existsByUsername("studente_nuovo"));
 
         test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
+        test(codiceFiscale).setValue("glllcu12a01h501l");
         test(find(Button.class).withText("Salva").single()).click();
         Studente nuovo = studenteService.findByUsername("studente_nuovo").orElseThrow();
         try {
             assertEquals(14, studenti.size());
             assertEquals("Genitore1 Cognome1", nuovo.getGenitore().getNomeCompleto());
+            assertEquals("GLLLCU12A01H501L", nuovo.getCodiceFiscale());
             assertTrue(nuovo.getUser().getRoles().contains("STUDENTE"));
         } finally {
             studenteService.delete(nuovo);
@@ -697,8 +702,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test(find(Grid.class).single());
         assertEquals(13, grid.size());
         for (int row = 0; row < grid.size(); row++) {
-            assertEquals("1", grid.getCellText(row, 4));
+            assertEquals("1", grid.getCellText(row, 5));
             grid.getCellText(row, 3);
+            // Nessuno studente di esempio ha un indirizzo proprio: si mostra quello del genitore
+            assertTrue(grid.getCellText(row, 4).matches("Via Roma \\d, 00184 Roma \\(RM\\) \\(del genitore\\)"),
+                grid.getCellText(row, 4));
         }
     }
 
@@ -733,7 +741,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(StudentiView.class);
         var studenti = test(find(Grid.class).single());
         assertEquals(13, studenti.size());
-        assertAzioni(studenti.getCellComponent(0, 5), "Modifica");
+        assertAzioni(studenti.getCellComponent(0, 6), "Modifica");
     }
 
     @Test

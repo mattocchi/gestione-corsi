@@ -3,16 +3,14 @@ package it.attocchi.views.admin;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.PasswordField;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
@@ -24,8 +22,10 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.service.UserService;
+import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -67,6 +67,7 @@ public class StudentiView extends VerticalLayout {
             .setComparator(Studente::getDataNascita).setAutoWidth(true).setFlexGrow(0);
         var genitore = grid.addColumn(studente -> studente.getGenitore() != null ? studente.getGenitore().getNomeCompleto() : "")
             .setHeader("Genitore");
+        var indirizzo = grid.addColumn(Formati::indirizzo).setHeader("Indirizzo");
         grid.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(studente -> {
@@ -80,91 +81,65 @@ public class StudentiView extends VerticalLayout {
             return actions;
         }));
 
-        ViewSupport.hideOnMobile(grid, codiceFiscale, dataNascita, genitore);
+        ViewSupport.hideOnMobile(grid, codiceFiscale, dataNascita, genitore, indirizzo);
     }
 
     private void openDialog(Studente studente) {
-        boolean nuovo = studente.getUser() == null;
-        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Studente" : "Modifica Studente", "600px");
+        boolean nuovo = studente.getId() == null;
+        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Studente" : "Modifica Studente", "700px");
 
-        FormLayout formLayout = new FormLayout();
-        Binder<Studente> binder = new Binder<>(Studente.class);
-        // Nome, cognome e credenziali sono dell'utente collegato allo studente
+        // Nome, cognome, contatti e credenziali sono dell'utente collegato allo studente
         User user = nuovo ? new User() : studente.getUser();
-        Binder<User> userBinder = new Binder<>(User.class);
+        UtenteFields utente = new UtenteFields(user, userService);
 
-        TextField username = new TextField("Username");
-        PasswordField password = new PasswordField("Password");
-        TextField nome = new TextField("Nome");
-        TextField cognome = new TextField("Cognome");
-        TextField email = new TextField("Email");
-        TextField codiceFiscale = new TextField("Codice Fiscale");
-        DatePicker dataNascita = new DatePicker("Data Nascita");
-        TextField luogoNascita = new TextField("Luogo Nascita");
-        TextField indirizzo = new TextField("Indirizzo");
-        TextField citta = new TextField("Città");
-
+        Binder<Studente> binder = new Binder<>(Studente.class);
         ComboBox<Genitore> genitore = new ComboBox<>("Genitore");
         genitore.setItems(genitoreService.findAll());
         genitore.setItemLabelGenerator(Genitore::getNomeCompleto);
-
-        userBinder.forField(username).asRequired("Inserisci lo username")
-            .withValidator(u -> !nuovo || !userService.existsByUsername(u), "Username già in uso")
-            .bind(User::getUsername, User::setUsername);
-        userBinder.forField(nome).asRequired("Inserisci il nome").bind(User::getNome, User::setNome);
-        userBinder.forField(cognome).asRequired("Inserisci il cognome").bind(User::getCognome, User::setCognome);
-        userBinder.forField(email).bind(User::getEmail, User::setEmail);
-        userBinder.readBean(user);
-        if (nuovo) {
-            password.setRequiredIndicatorVisible(true);
-        } else {
-            username.setReadOnly(true);
-            password.setVisible(false);
-        }
-
-        binder.forField(codiceFiscale).asRequired("Inserisci il codice fiscale")
-            .bind(Studente::getCodiceFiscale, Studente::setCodiceFiscale);
-        binder.forField(dataNascita).asRequired("Inserisci la data di nascita")
-            .bind(Studente::getDataNascita, Studente::setDataNascita);
-        binder.forField(luogoNascita).bind(Studente::getLuogoNascita, Studente::setLuogoNascita);
-        binder.forField(indirizzo).bind(s -> s.getIndirizzo().getVia(), (s, v) -> s.getIndirizzo().setVia(v));
-        binder.forField(citta).bind(s -> s.getIndirizzo().getComune(), (s, v) -> s.getIndirizzo().setComune(v));
         binder.forField(genitore).asRequired("Scegli il genitore dello studente")
             .bind(Studente::getGenitore, Studente::setGenitore);
-
+        AnagraficaFields<Studente> anagrafica = new AnagraficaFields<>(binder, true);
         binder.readBean(studente);
 
-        formLayout.add(username, password, nome, cognome, email, codiceFiscale, dataNascita, luogoNascita, indirizzo, citta, genitore);
+        Span indirizzoGenitore = new Span();
+        indirizzoGenitore.addClassName("avviso-sola-lettura");
+        genitore.addValueChangeListener(e -> mostraIndirizzoGenitore(indirizzoGenitore, e.getValue()));
+        mostraIndirizzoGenitore(indirizzoGenitore, genitore.getValue());
+
+        FormLayout utenteForm = new FormLayout(utente.getComponents());
+        utenteForm.add(genitore);
+        VerticalLayout content = new VerticalLayout(
+            ViewSupport.sezione("Utente e genitore"), utenteForm,
+            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzoGenitore);
+        content.setPadding(false);
 
         Button saveButton = new Button("Salva", e -> {
             // Valida tutto prima di salvare: niente utenti creati per uno studente che poi non si salva
-            boolean passwordOk = !nuovo || !password.isEmpty();
-            password.setInvalid(!passwordOk);
-            password.setErrorMessage(passwordOk ? null : "Inserisci la password");
-            boolean valido = binder.validate().isOk() & userBinder.validate().isOk() & passwordOk;
-            if (!valido || !binder.writeBeanIfValid(studente) || !userBinder.writeBeanIfValid(user)) {
+            boolean valido = binder.validate().isOk() & utente.validate();
+            if (!valido || !binder.writeBeanIfValid(studente) || !utente.writeBeanIfValid(user)) {
                 return;
             }
             try {
-                if (nuovo) {
-                    user.getRoles().add("STUDENTE");
-                    studente.setUser(userService.save(user, password.getValue()));
-                } else {
-                    userService.save(user, null);
-                }
-                studenteService.save(studente);
+                studenteService.salva(studente, user, utente.getPassword());
                 updateGrid();
                 dialog.close();
                 Notification.show("Studente salvato con successo");
-            } catch (Exception ex) {
+            } catch (RuntimeException ex) {
                 Notification.show("Errore nel salvataggio: " + ex.getMessage());
             }
         });
         saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
-        dialog.add(formLayout);
+        dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
         dialog.open();
+    }
+
+    /** Indirizzo del genitore, mostrato quando lo studente non ne ha uno proprio. */
+    private static void mostraIndirizzoGenitore(Span span, Genitore genitore) {
+        String indirizzo = genitore != null ? genitore.getIndirizzo().getFormattato() : "";
+        span.setText("Se l'indirizzo è vuoto si mostra quello del genitore: " + indirizzo);
+        span.setVisible(!indirizzo.isEmpty());
     }
 
     private void deleteStudente(Studente studente) {

@@ -95,6 +95,16 @@ public class Studente implements Anagrafica {
         this.indirizzo = indirizzo;
     }
 
+    /** {@code true} se lo studente non ha nessun campo dell'indirizzo e si mostra quello del genitore. */
+    public boolean isIndirizzoDelGenitore() {
+        return getIndirizzo().isVuoto() && genitore != null && !genitore.getIndirizzo().isVuoto();
+    }
+
+    /** Indirizzo da mostrare: il proprio o, se non ne ha nessun campo, quello del genitore (non copiato). */
+    public Indirizzo getIndirizzoEffettivo() {
+        return isIndirizzoDelGenitore() ? genitore.getIndirizzo() : getIndirizzo();
+    }
+
     public Set<Iscrizione> getIscrizioni() {
         return iscrizioni;
     }

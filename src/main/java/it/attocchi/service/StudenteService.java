@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Studente;
+import it.attocchi.entity.User;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.StudenteRepository;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,13 @@ public class StudenteService {
 
     private final StudenteRepository studenteRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final UserService userService;
 
-    public StudenteService(StudenteRepository studenteRepository, PagamentoRepository pagamentoRepository) {
+    public StudenteService(StudenteRepository studenteRepository, PagamentoRepository pagamentoRepository,
+                           UserService userService) {
         this.studenteRepository = studenteRepository;
         this.pagamentoRepository = pagamentoRepository;
+        this.userService = userService;
     }
 
     public List<Studente> findAll() {
@@ -43,6 +47,19 @@ public class StudenteService {
 
     @Transactional
     public Studente save(Studente studente) {
+        return studenteRepository.save(studente);
+    }
+
+    /**
+     * Salva insieme utente e scheda dello studente (admin e segreteria). Uno studente nuovo riceve il ruolo
+     * STUDENTE e richiede la password; per uno esistente {@code rawPassword} vuota lascia quella attuale.
+     */
+    @Transactional
+    public Studente salva(Studente studente, User user, String rawPassword) {
+        if (studente.getId() == null) {
+            user.getRoles().add("STUDENTE");
+        }
+        studente.setUser(userService.save(user, rawPassword));
         return studenteRepository.save(studente);
     }
 

@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import it.attocchi.entity.Studente;
+
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -41,5 +43,11 @@ public final class Formati {
         }
         // NumberFormat non è thread-safe: una nuova istanza per chiamata; spazio normale al posto di quello non separabile
         return NumberFormat.getCurrencyInstance(Locale.ITALY).format(importo).replace('\u00a0', ' ');
+    }
+
+    /** Indirizzo dello studente, o quello del genitore con "(del genitore)" se lo studente non ne ha. */
+    public static String indirizzo(Studente studente) {
+        String indirizzo = studente.getIndirizzoEffettivo().getFormattato();
+        return studente.isIndirizzoDelGenitore() ? indirizzo + " (del genitore)" : indirizzo;
     }
 }
