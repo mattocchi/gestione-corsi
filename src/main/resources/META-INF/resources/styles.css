@@ -115,3 +115,39 @@
     max-width: 14rem;
     margin: 1rem;
 }
+
+/* Dashboard iniziale: riquadri che vanno a capo, uno per riga sugli smartphone */
+.dashboard {
+    gap: 1.5rem;
+}
+
+.dashboard-title {
+    font-size: clamp(1.5rem, 1rem + 2vw, 2rem);
+    line-height: 1.2;
+    margin: 0;
+}
+
+.dashboard-section {
+    width: 100%;
+}
+
+.dashboard-section-title {
+    font-size: var(--aura-font-size-l, 1.125rem);
+    margin: 0 0 0.75rem;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+    gap: 1rem;
+}
+
+.dashboard-card-icon {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.dashboard-valore {
+    font-size: 2.25rem;
+    font-weight: var(--aura-font-weight-semibold, 600);
+    line-height: 1.1;
+}

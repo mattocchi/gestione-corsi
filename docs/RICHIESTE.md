@@ -33,8 +33,8 @@
 
 ### DASHBOARD INIZIALE
 
-* [ ] la prima schermata dopo il login che attualmente è vuota per ogni ruolo, deve poter visualizzare delle informazioni di riepilogo in stile dashboard in funzione di ogni ruolo
-* [ ] il ruolo Admin in dashboard vede il numero totale di corsi, il numero totale di allievi, il numero totale di genitori, il numero totale di insegnanti
+* [x] la prima schermata dopo il login che attualmente è vuota per ogni ruolo, deve poter visualizzare delle informazioni di riepilogo in stile dashboard in funzione di ogni ruolo _(completata 2026-10-10)_
+* [x] il ruolo Admin in dashboard vede il numero totale di corsi, il numero totale di allievi, il numero totale di genitori, il numero totale di insegnanti _(completata 2026-10-10)_
 * [ ] il ruolo Genitore in dashboard vede il numero totale dei corsi a cui sono iscritti i suoi figli
 * [ ] il ruolo Insegnate in dashboard vede il numero totale dei corsi a lui assegnato, il numero totale di lezioni fatte e il numero totale di lezioni da fare di tutti i suoi corsi
 * [ ] il ruolo Allievo in dashboard vede il numero totale dei suoi corsi

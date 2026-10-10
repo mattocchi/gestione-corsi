@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -103,6 +104,27 @@ class ViewAccessTest extends SpringBrowserlessTest {
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
         assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Studenti", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
         assertFalse(voci.contains("Le Mie Lezioni"), voci.toString());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    void admin_dashboardConTotali() {
+        navigate(HomeView.class);
+
+        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_dashboardConTotali() {
+        navigate(HomeView.class);
+
+        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori());
+    }
+
+    /** Riquadri della dashboard come "etichetta: valore", nell'ordine di visualizzazione. */
+    private List<String> indicatori() {
+        return find(Card.class).all().stream().map(Card::getAriaLabel).map(o -> o.orElse("")).toList();
     }
 
     @Test
