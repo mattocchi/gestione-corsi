@@ -2,6 +2,7 @@ package it.attocchi.views;
 
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Year;
 
@@ -25,5 +26,12 @@ class FormatiTest {
     @Test
     void data_nulla_stringaVuota() {
         assertEquals("", Formati.data(null, ANNO_CORRENTE));
+    }
+
+    @Test
+    void euro_formatoItaliano() {
+        assertEquals("1.250,50 €", Formati.euro(new BigDecimal("1250.5")));
+        assertEquals("0,00 €", Formati.euro(BigDecimal.ZERO));
+        assertEquals("", Formati.euro(null));
     }
 }

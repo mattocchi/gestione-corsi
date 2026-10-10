@@ -12,6 +12,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -32,6 +33,7 @@ import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
+import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.service.UserService;
@@ -39,6 +41,7 @@ import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.PartecipantiDialog;
+import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.StudentiView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
@@ -90,6 +93,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private CorsoService corsoService;
     @Autowired
     private StudenteService studenteService;
+
+    @Autowired
+    private PagamentoService pagamentoService;
 
     @Autowired
     private UserService userService;
@@ -524,6 +530,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_impostaQuotaPersonalizzata() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+        Long studenteId = studenteService.findByUsername("studente_canto2").orElseThrow().getId();
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Partecipanti")).click();
+        var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(find(PartecipantiDialog.class).single()).single());
+        int riga = IntStream.range(0, partecipanti.size())
+            .filter(r -> partecipanti.getCellText(r, 1).equals("Studente Canto2")).findFirst().orElseThrow();
+        test(pulsante(partecipanti.getCellComponent(riga, 2), "Quota e pagamenti di Studente Canto2")).click();
+
+        QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+        try {
+            new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
+                .setValue(new BigDecimal("450"));
+            test(find(TextField.class).from(dialog).withLabel("Motivo").single()).setValue("fratelli");
+
+            Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, studenteId);
+            assertEquals(0, new BigDecimal("450").compareTo(iscrizione.getQuotaPersonalizzata()));
+            assertEquals("fratelli", iscrizione.getNotaQuota());
+            assertTrue(find(Span.class).from(dialog).withText("Da pagare 450,00 €").exists());
+        } finally {
+            pagamentoService.impostaQuota(corsoId, studenteId, null, null);
+        }
+    }
+
     private Corso disattiva(String nome) {
         Corso corso = corsoService.findAll().stream().filter(c -> c.getNome().equals(nome)).findFirst().orElseThrow();
         corso.setAttivo(false);
@@ -576,7 +612,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 riga = row;
             }
         }
-        test((Button) partecipanti.getCellComponent(riga, 2).getChildren().findFirst().orElseThrow()).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 2), "Rimuovi Studente Canto1")).click();
         assertEquals(6, partecipanti.size());
         assertTrue(presenzaService.findByCorsoAndStudente(corso.getId(), studenteId).isEmpty());
     }

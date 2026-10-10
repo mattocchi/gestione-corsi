@@ -34,6 +34,7 @@ import it.attocchi.entity.Insegnante;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
+import it.attocchi.service.PagamentoService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
@@ -76,6 +77,7 @@ public class CorsiView extends VerticalLayout {
     private final CorsoService corsoService;
     private final InsegnanteService insegnanteService;
     private final StudenteService studenteService;
+    private final PagamentoService pagamentoService;
     /** L'eliminazione dei corsi è riservata all'admin; la segreteria li gestisce senza eliminarli. */
     private final boolean puoEliminare;
 
@@ -87,7 +89,8 @@ public class CorsiView extends VerticalLayout {
     private GridListDataView<Corso> corsi;
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, StudenteService studenteService,
-                     SecurityService securityService) {
+                     PagamentoService pagamentoService, SecurityService securityService) {
+        this.pagamentoService = pagamentoService;
         this.corsoService = corsoService;
         this.insegnanteService = insegnanteService;
         this.studenteService = studenteService;
@@ -251,7 +254,7 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void openPartecipanti(Corso corso) {
-        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, studenteService, corso);
+        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, studenteService, pagamentoService, corso);
         // Alla chiusura ricarica la griglia: numero di studenti e iscrizioni dei corsi aggiornati
         dialog.addOpenedChangeListener(e -> {
             if (!e.isOpened()) {

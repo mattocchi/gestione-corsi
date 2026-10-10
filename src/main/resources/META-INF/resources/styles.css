@@ -157,3 +157,23 @@
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s, 0.8125rem);
 }
+
+/* Partecipanti: il nome va a capo invece di essere troncato */
+.partecipanti-grid > vaadin-grid-cell-content {
+    white-space: normal;
+}
+
+/* Titoli di sezione dentro i dialog */
+.dialog-section-title {
+    font-size: var(--aura-font-size-m, 1rem);
+    margin: 0.5rem 0 0;
+}
+
+/* Riepilogo quota: da pagare, pagato, residuo e stato; va a capo su schermi stretti */
+.pagamenti-riepilogo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    font-weight: var(--aura-font-weight-medium, 500);
+}

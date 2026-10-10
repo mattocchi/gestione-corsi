@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
@@ -30,5 +32,14 @@ public final class Formati {
             return "";
         }
         return (data.getYear() == annoCorrente.getValue() ? DATA : DATA_CON_ANNO).format(data);
+    }
+
+    /** Importo in euro nel formato italiano, es. "1.250,50 €"; stringa vuota se nullo. */
+    public static String euro(BigDecimal importo) {
+        if (importo == null) {
+            return "";
+        }
+        // NumberFormat non è thread-safe: una nuova istanza per chiamata; spazio normale al posto di quello non separabile
+        return NumberFormat.getCurrencyInstance(Locale.ITALY).format(importo).replace('\u00a0', ' ');
     }
 }

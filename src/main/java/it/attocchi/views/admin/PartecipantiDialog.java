@@ -16,6 +16,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Studente;
 import it.attocchi.service.CorsoService;
+import it.attocchi.service.PagamentoService;
 import it.attocchi.service.StudenteService;
 import it.attocchi.views.ViewSupport;
 
@@ -36,13 +37,16 @@ public class PartecipantiDialog extends Dialog {
 
     private final CorsoService corsoService;
     private final StudenteService studenteService;
+    private final PagamentoService pagamentoService;
     private final Corso corso;
     private final Grid<Iscrizione> grid = new Grid<>(Iscrizione.class, false);
     private final ComboBox<Studente> nuovoPartecipante = new ComboBox<>();
 
-    public PartecipantiDialog(CorsoService corsoService, StudenteService studenteService, Corso corso) {
+    public PartecipantiDialog(CorsoService corsoService, StudenteService studenteService,
+                              PagamentoService pagamentoService, Corso corso) {
         this.corsoService = corsoService;
         this.studenteService = studenteService;
+        this.pagamentoService = pagamentoService;
         this.corso = corso;
 
         setHeaderTitle("Partecipanti – " + corso.getNome());
@@ -66,15 +70,23 @@ public class PartecipantiDialog extends Dialog {
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
         boolean modificabile = corso.isAttivo();
+        // Quota e pagamenti sempre disponibili (anche per i corsi non attivi); rimozione solo per i corsi attivi
         var azioni = grid.addComponentColumn(iscrizione -> {
-            Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
-                e -> rimuovi(iscrizione));
-            rimuovi.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(rimuovi);
+            Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getStudente().getNomeCompleto(),
+                e -> openQuotaPagamenti(iscrizione));
+            HorizontalLayout actions = ViewSupport.actions(pagamenti);
+            if (modificabile) {
+                Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
+                    e -> rimuovi(iscrizione));
+                rimuovi.addThemeVariants(ButtonVariant.ERROR);
+                actions.add(rimuovi);
+            }
+            return actions;
         });
         ViewSupport.configureActionsColumn(azioni);
-        azioni.setHeader("").setAutoWidth(false).setWidth("3.5rem");
-        azioni.setVisible(modificabile);
+        azioni.setHeader("").setAutoWidth(false).setWidth(modificabile ? "6rem" : "3.5rem");
+        // Su schermi stretti il nome va a capo invece di essere troncato
+        grid.addClassName("partecipanti-grid");
         grid.setAllRowsVisible(true);
         aggiorna();
 
@@ -110,6 +122,16 @@ public class PartecipantiDialog extends Dialog {
             }
         });
         return orario;
+    }
+
+    private void openQuotaPagamenti(Iscrizione iscrizione) {
+        QuotaPagamentiDialog dialog = new QuotaPagamentiDialog(pagamentoService, corso, iscrizione.getStudente());
+        dialog.addOpenedChangeListener(e -> {
+            if (!e.isOpened()) {
+                aggiorna();
+            }
+        });
+        dialog.open();
     }
 
     private void aggiungi() {
