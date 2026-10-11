@@ -72,5 +72,5 @@
 Per admin e segreteria nella sezione aggiungi dei filtri per poter filtrare per corso o per allievo o per genitore in modo da semplificare l'operatività.
   _Chiarimento 2026-10-11: voce "Gestione Pagamenti" dopo Gestione Corsi per admin e segreteria; una riga per partecipante e corso (corso, allievo, genitore, quota, pagato, residuo, stato) con "Aggiungi pagamento", "Quota e pagamenti" e "Ricevuta"; filtri per corso, allievo, genitore, stato del corso (default Attivi), stato del pagamento e anno scolastico; totali dei partecipanti filtrati. Il genitore ha la voce "Pagamenti" con i soli figli (anche corsi non attivi) in sola lettura, con dettaglio rate e ricevuta._
 
-* [] Rinomina Studente in Allievo che ritengo più adeguato per questo contesto 
+* [x] Rinomina Studente in Allievo che ritengo più adeguato per questo contesto _(completata 2026-10-11; in produzione eseguire prima docs/migrazioni/2026-10-11-studenti-allievi.sql)_
   _Chiarimento 2026-10-11: rinomina completa come per Insegnanti: interfaccia, codice, route /allievi, ruolo ALLIEVO, dati di esempio e database (allievi, corso_allievi, allievo_id); in produzione eseguire prima docs/migrazioni/2026-10-11-studenti-allievi.sql. Username esistenti invariati._
