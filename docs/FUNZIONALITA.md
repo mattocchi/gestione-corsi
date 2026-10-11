@@ -28,4 +28,6 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### LEZIONI NON EFFETTUATE
 
 * [ ] Dobbiamo dare all'insegnante la possibilità di indicare che una lezione non è stata fatta, perché ad esempio era assente.
+  _Chiarimento 2026-10-11: solo l'insegnante del corso; pulsante "Non effettuata" con motivo facoltativo, ripristinabile; presenze conservate ma escluse (allievi e genitori vedono "Lezione non effettuata"); filtro "Non effettuate" in Le Mie Lezioni; in Home riquadro dedicato, escluse da fatte/da fare; "Genera Lezioni" le conserva._
 * [ ] E quindi la possibilità di inserire una nuova lezione qualora quella programmata non fosse stata effettuata. In questo modo può inserire delle nuove e gestione le presenze e indicare quelle programmate  che non ha potuto fare
+  _Chiarimento 2026-10-11: "Recupera" sulla lezione non effettuata (collegata, stesso numero) e "Nuova lezione" libera; data obbligatoria, orario proposto dal corso, presenze dei partecipanti attuali; le lezioni aggiunte non completate si possono eliminare; "Genera Lezioni" le conserva._
