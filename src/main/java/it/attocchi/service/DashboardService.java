@@ -54,6 +54,11 @@ public class DashboardService {
             lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletata(usernameInsegnante, false));
     }
 
+    /** Numero di corsi attivi assegnati all'insegnante. */
+    public long corsiInsegnante(String usernameInsegnante) {
+        return corsoRepository.countByInsegnanteUserUsernameAndAttivoTrue(usernameInsegnante);
+    }
+
     /** Numero di corsi attivi a cui è iscritto l'allievo. */
     public long corsiAllievo(String usernameAllievo) {
         return iscrizioneRepository.countByAllievoUserUsernameAndCorsoAttivoTrue(usernameAllievo);

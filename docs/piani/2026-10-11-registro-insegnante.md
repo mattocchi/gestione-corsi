@@ -28,7 +28,7 @@
 |---|---|---|---|---|
 | 1 | `QuandoLezione` (enum con etichetta e variante, `di(lezione, oggi)`) e test unitario | `views/insegnante/QuandoLezione.java`, test | `./mvnw test` | [x] |
 | 2 | `LezioniInsegnanteView`: badge accanto alla data (desktop e riepilogo mobile); test | `views/insegnante/LezioniInsegnanteView.java`, `styles.css`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 3 | Pagina iniziale dell'insegnante con un solo corso: inoltro alla prima navigazione verso la Home; test | `views/MainLayout.java`, `service/DashboardService.java`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
+| 3 | Pagina iniziale dell'insegnante con un solo corso: inoltro alla prima navigazione verso la Home; test | `views/MainLayout.java`, `service/DashboardService.java`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 4 | `CLAUDE.md`: note su pagina iniziale e badge | `CLAUDE.md` | rilettura | [ ] |
 
 ## Fuori ambito

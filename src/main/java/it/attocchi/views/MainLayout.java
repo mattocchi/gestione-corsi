@@ -13,9 +13,14 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import it.attocchi.security.SecurityService;
+import it.attocchi.service.DashboardService;
+import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import jakarta.annotation.security.PermitAll;
 
 /**
@@ -23,19 +28,48 @@ import jakarta.annotation.security.PermitAll;
  * {@link MenuConfiguration} restituisce solo le voci accessibili all'utente corrente.
  */
 @PermitAll
-public class MainLayout extends AppLayout {
+public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     /** Logo dell'associazione (risorsa statica, accessibile anche senza login). */
     public static final String LOGO = "images/logo-mosson.png";
     public static final String LOGO_ALT = "MOSSON Drum & Bugle Corps";
 
-    private final SecurityService securityService;
+    /** Attributo di sessione: la prima navigazione dopo il login è già avvenuta. */
+    private static final String PAGINA_INIZIALE_DECISA = MainLayout.class.getName() + ".paginaInizialeDecisa";
 
-    public MainLayout(SecurityService securityService) {
+    private final SecurityService securityService;
+    private final DashboardService dashboardService;
+
+    public MainLayout(SecurityService securityService, DashboardService dashboardService) {
         this.securityService = securityService;
+        this.dashboardService = dashboardService;
         setPrimarySection(Section.DRAWER);
         createHeader();
         addToDrawer(createDrawer());
+    }
+
+    /**
+     * Pagina iniziale: alla prima navigazione della sessione (dopo il login) l'insegnante che ha solo quel ruolo
+     * e un solo corso attivo va direttamente a "Le Mie Lezioni" invece della Home. Dopo, la Home resta raggiungibile.
+     */
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session.getAttribute(PAGINA_INIZIALE_DECISA) != null) {
+            return;
+        }
+        session.setAttribute(PAGINA_INIZIALE_DECISA, Boolean.TRUE);
+        if (event.getNavigationTarget() == HomeView.class && soloInsegnanteConUnCorso()) {
+            event.forwardTo(LezioniInsegnanteView.class);
+        }
+    }
+
+    private boolean soloInsegnanteConUnCorso() {
+        if (!securityService.hasRole("INSEGNANTE") || securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")
+                || securityService.hasRole("ALLIEVO") || securityService.hasRole("GENITORE")) {
+            return false;
+        }
+        return securityService.getUsername().map(dashboardService::corsiInsegnante).orElse(0L) == 1;
     }
 
     private void createHeader() {

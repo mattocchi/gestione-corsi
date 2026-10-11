@@ -209,7 +209,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         lezioneService.save(completata);
         try {
             // La Home è già aperta all'avvio del test: si esce e si rientra per ricrearla con i dati aggiornati
-            navigate(LezioniInsegnanteView.class);
+            apriLezioni();
             navigate(HomeView.class);
 
             assertEquals(List.of("Corsi assegnati: 1", "Lezioni fatte: 1", "Lezioni da fare: 29"), indicatori());
@@ -610,7 +610,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void insegnante_nonVedeICorsiNonAttivi() {
         Corso chitarra = disattiva("Corso di Chitarra");
         try {
-            navigate(LezioniInsegnanteView.class);
+            apriLezioni();
             SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
             test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
             assertEquals(0, test(find(Grid.class).single()).size());
@@ -1137,7 +1137,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("insegnante1")
     void insegnante_vedeLeProprieLezioni() {
-        navigate(LezioniInsegnanteView.class);
+        apriLezioni();
 
         var grid = test(find(Grid.class).single());
         assertEquals(30, grid.size());
@@ -1160,7 +1160,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         seconda.setData(oggi.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY)));
         lezioneService.save(seconda);
         try {
-            navigate(LezioniInsegnanteView.class);
+            apriLezioni();
             var grid = test((Grid<Lezione>) find(Grid.class).single());
             Badge oggiBadge = badgeData(grid, riga(grid, prima));
             assertEquals("Oggi", oggiBadge.getText());
@@ -1180,6 +1180,41 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
     }
 
+    /**
+     * Apre "Le Mie Lezioni" ricreandola: per insegnante1 e insegnante2 (un solo corso) la vista è già aperta
+     * all'avvio del test, al posto della Home, con i dati di quel momento.
+     */
+    private void apriLezioni() {
+        navigate(HomeView.class);
+        navigate(LezioniInsegnanteView.class);
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_conUnSoloCorso_alLoginApreLeLezioni() {
+        assertInstanceOf(LezioniInsegnanteView.class, getCurrentView());
+        // Dopo il primo accesso la Home resta raggiungibile
+        assertInstanceOf(HomeView.class, navigate(HomeView.class));
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_conPiuCorsi_alLoginApreLaHome() {
+        Insegnante insegnante1 = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Insegnante insegnante2 = chitarra.getInsegnante();
+        chitarra.setInsegnante(insegnante1);
+        corsoService.save(chitarra);
+        try {
+            // Simula un nuovo login: prima navigazione della sessione verso la Home
+            com.vaadin.flow.server.VaadinSession.getCurrent().setAttribute(MainLayout.class.getName() + ".paginaInizialeDecisa", null);
+            assertInstanceOf(HomeView.class, navigate(HomeView.class));
+        } finally {
+            chitarra.setInsegnante(insegnante2);
+            corsoService.save(chitarra);
+        }
+    }
+
     private static int riga(GridTester<Grid<Lezione>, Lezione> grid, Lezione lezione) {
         return IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getId().equals(lezione.getId()))
             .findFirst().orElseThrow();
@@ -1194,7 +1229,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("insegnante1")
     void insegnante_segnaAssenzaGiustificataConUnTocco() {
-        navigate(LezioniInsegnanteView.class);
+        apriLezioni();
         var lezioni = test(find(Grid.class).single());
         Button gestisciPresenze = (Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow();
         test(gestisciPresenze).click();
@@ -1225,7 +1260,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         completata.setCompletata(true);
         lezioneService.save(completata);
         try {
-            navigate(LezioniInsegnanteView.class);
+            apriLezioni();
             var grid = test(find(Grid.class).single());
             SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
 
