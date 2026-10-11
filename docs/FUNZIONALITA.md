@@ -33,3 +33,10 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-11: "Recupera" sulla lezione non effettuata (collegata, stesso numero) e "Nuova lezione" libera; data obbligatoria, orario proposto dal corso, presenze dei partecipanti attuali; le lezioni aggiunte non completate si possono eliminare; "Genera Lezioni" le conserva._
 * [x] Fai in modo che anche admin e segreteria possano usare la funzionalità appena realizzata per gli insegnanti _(completata 2026-10-11)_
   _Chiarimento 2026-10-11: si riferisce a lezioni non effettuate e nuove lezioni (LEZIONI.1–2, che quindi non sono più solo dell'insegnante); nuova vista di menu "Lezioni" per ADMIN e SEGRETERIA con le stesse funzioni di "Le Mie Lezioni" (presenze e Segna Completata compresi) su tutti i corsi attivi, filtro per corso; eliminare le lezioni aggiunte solo admin (e l'insegnante del corso)._
+
+### RIMBORSI
+
+* [ ] Dobbiamo mettere a disposizione di segreteria e admin una nuova funzionalità per indicare i pagamenti che vengono effettuati agli insegnanti. Serve quindi un'area in cui indichiamo i pagamenti che facciamo verso gli insegnanti
+* [ ] con una vista di un prospetto di quello che è il totale pagato fino a  quel momento per quell'insegnante. Questa sezione si chiama rimborsi perché effettivamente sono dei rimborsi spese che vengono dati mensilmente agli insegnanti collaboratori dell'associazione.
+* [ ] Alla luce di questa nuova informazione, che raccogliamo possiamo creare una visualizzazione di un mini bilancio per l'insegnante di quanto ha percepito e quanto abbiamo incassato dei corsi che gestisce è una proiezione anche non solo sull'effettivo, ma anche su quello che è teorico, ovvero previsto di incassare sulla base dei prezzi assegnati agli allievi e il costo stimato sul totale delle elezioni programmate.
+* [ ] Ti evidenzio un dettaglio che l'insegnante ha un rimborso con un costo orario, mentre le lezioni sono di 40 minuti o comunque configurabili per ogni corso. Di conseguenza il calcoli vanno fatti correttamente
