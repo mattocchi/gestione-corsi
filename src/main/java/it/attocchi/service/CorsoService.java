@@ -19,7 +19,9 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional(readOnly = true)
@@ -108,7 +110,7 @@ public class CorsoService {
         iscrizioneRepository.save(new Iscrizione(corso, allievo));
 
         lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId).stream()
-            .filter(lezione -> !lezione.isCompletata())
+            .filter(Lezione::isDaFare)
             .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE)));
     }
 
@@ -159,11 +161,17 @@ public class CorsoService {
     public void generaLezioni(Corso corsoDaUi) {
         Corso corso = corsoAttivo(corsoDaUi.getId());
 
-        // Elimina lezioni esistenti non completate
+        // Ricrea solo le lezioni programmate ancora da fare: restano completate, non effettuate e aggiunte a mano,
+        // e i numeri delle programmate conservate non vengono ricreati
         List<Lezione> lezioniEsistenti = lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId());
-        lezioniEsistenti.stream()
-            .filter(l -> !l.isCompletata())
-            .forEach(lezioneRepository::delete);
+        Set<Integer> numeriConservati = new HashSet<>();
+        for (Lezione esistente : lezioniEsistenti) {
+            if (esistente.isDaFare() && !esistente.isAggiunta()) {
+                lezioneRepository.delete(esistente);
+            } else if (!esistente.isAggiunta()) {
+                numeriConservati.add(esistente.getNumeroLezione());
+            }
+        }
 
         LocalDate dataCorrente = corso.getDataInizio();
         int numeroLezione = 1;
@@ -171,7 +179,9 @@ public class CorsoService {
         while (numeroLezione <= corso.getNumeroLezioni()) {
             DayOfWeek giornoSettimana = dataCorrente.getDayOfWeek();
 
-            if (corso.getGiorniSettimana().contains(giornoSettimana)) {
+            if (corso.getGiorniSettimana().contains(giornoSettimana) && numeriConservati.contains(numeroLezione)) {
+                numeroLezione++;
+            } else if (corso.getGiorniSettimana().contains(giornoSettimana)) {
                 Lezione lezione = new Lezione(corso, dataCorrente, numeroLezione);
                 lezione.setOrarioInizio(corso.getOrarioInizio());
                 if (corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null) {

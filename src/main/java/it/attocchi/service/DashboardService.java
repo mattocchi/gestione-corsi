@@ -21,7 +21,7 @@ public class DashboardService {
     }
 
     /** Riepilogo dell'insegnante sui propri corsi. */
-    public record RiepilogoInsegnante(long corsi, long lezioniFatte, long lezioniDaFare) {
+    public record RiepilogoInsegnante(long corsi, long lezioniFatte, long lezioniDaFare, long lezioniNonEffettuate) {
     }
 
     private final CorsoRepository corsoRepository;
@@ -50,8 +50,9 @@ public class DashboardService {
     /** Corsi attivi assegnati all'insegnante e lezioni completate / da fare di quei corsi. */
     public RiepilogoInsegnante riepilogoInsegnante(String usernameInsegnante) {
         return new RiepilogoInsegnante(corsoRepository.countByInsegnanteUserUsernameAndAttivoTrue(usernameInsegnante),
-            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletata(usernameInsegnante, true),
-            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletata(usernameInsegnante, false));
+            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletataAndNonEffettuata(usernameInsegnante, true, false),
+            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletataAndNonEffettuata(usernameInsegnante, false, false),
+            lezioneRepository.countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletataAndNonEffettuata(usernameInsegnante, false, true));
     }
 
     /** Numero di corsi attivi assegnati all'insegnante. */

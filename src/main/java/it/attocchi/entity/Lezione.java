@@ -37,6 +37,21 @@ public class Lezione {
     @Column(name = "completata")
     private boolean completata = false;
 
+    /** Lezione programmata che non si è svolta (es. insegnante assente): le sue presenze non contano. */
+    @Column(name = "non_effettuata", nullable = false)
+    private boolean nonEffettuata = false;
+
+    private String motivoNonEffettuata;
+
+    /** Lezione inserita a mano (recupero o lezione in più), non generata dal calendario del corso. */
+    @Column(nullable = false)
+    private boolean aggiunta = false;
+
+    /** Lezione non effettuata di cui questa è il recupero; {@code null} se non è un recupero. */
+    @ManyToOne
+    @JoinColumn(name = "recupero_di_id")
+    private Lezione recuperoDi;
+
     // Costruttori
     public Lezione() {
     }
@@ -118,6 +133,43 @@ public class Lezione {
 
     public void setCompletata(boolean completata) {
         this.completata = completata;
+    }
+
+    public boolean isNonEffettuata() {
+        return nonEffettuata;
+    }
+
+    public void setNonEffettuata(boolean nonEffettuata) {
+        this.nonEffettuata = nonEffettuata;
+    }
+
+    public String getMotivoNonEffettuata() {
+        return motivoNonEffettuata;
+    }
+
+    public void setMotivoNonEffettuata(String motivoNonEffettuata) {
+        this.motivoNonEffettuata = motivoNonEffettuata;
+    }
+
+    public boolean isAggiunta() {
+        return aggiunta;
+    }
+
+    public void setAggiunta(boolean aggiunta) {
+        this.aggiunta = aggiunta;
+    }
+
+    public Lezione getRecuperoDi() {
+        return recuperoDi;
+    }
+
+    public void setRecuperoDi(Lezione recuperoDi) {
+        this.recuperoDi = recuperoDi;
+    }
+
+    /** Ancora da svolgere: né completata né non effettuata. */
+    public boolean isDaFare() {
+        return !completata && !nonEffettuata;
     }
 
     /**

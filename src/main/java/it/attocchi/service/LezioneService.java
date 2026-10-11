@@ -1,21 +1,42 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Corso;
+import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
+import it.attocchi.entity.Presenza;
+import it.attocchi.entity.User;
+import it.attocchi.repository.CorsoRepository;
+import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
+import it.attocchi.repository.PresenzaRepository;
+import it.attocchi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
 public class LezioneService {
 
     private final LezioneRepository lezioneRepository;
+    private final CorsoRepository corsoRepository;
+    private final IscrizioneRepository iscrizioneRepository;
+    private final PresenzaRepository presenzaRepository;
+    private final UserRepository userRepository;
 
-    public LezioneService(LezioneRepository lezioneRepository) {
+    public LezioneService(LezioneRepository lezioneRepository, CorsoRepository corsoRepository,
+                          IscrizioneRepository iscrizioneRepository, PresenzaRepository presenzaRepository,
+                          UserRepository userRepository) {
         this.lezioneRepository = lezioneRepository;
+        this.corsoRepository = corsoRepository;
+        this.iscrizioneRepository = iscrizioneRepository;
+        this.presenzaRepository = presenzaRepository;
+        this.userRepository = userRepository;
     }
 
     public List<Lezione> findAll() {
@@ -33,6 +54,11 @@ public class LezioneService {
     /** Lezioni dei corsi attivi dell'insegnante: i corsi non attivi non sono visibili all'insegnante. */
     public List<Lezione> findByInsegnante(Long insegnanteId) {
         return lezioneRepository.findByCorsoInsegnanteIdAndCorsoAttivoTrueOrderByDataAsc(insegnanteId);
+    }
+
+    /** Lezioni di tutti i corsi attivi (vista Lezioni di admin e segreteria). */
+    public List<Lezione> findDeiCorsiAttivi() {
+        return lezioneRepository.findByCorsoAttivoTrueOrderByDataAsc();
     }
 
     public List<Lezione> findByCorsoAndPeriodo(Long corsoId, LocalDate dataInizio, LocalDate dataFine) {
@@ -55,5 +81,134 @@ public class LezioneService {
     @Transactional
     public void delete(Lezione lezione) {
         lezioneRepository.delete(lezione);
+    }
+
+    /** Segna svolta una lezione da fare. */
+    @Transactional
+    public void completa(Long lezioneId, String username) {
+        Lezione lezione = gestibile(lezioneId, username, false);
+        if (lezione.isNonEffettuata()) {
+            throw new IllegalStateException("La lezione è segnata come non effettuata: ripristinala prima di completarla");
+        }
+        lezione.setCompletata(true);
+    }
+
+    /** Segna come non effettuata una lezione da fare; il motivo è facoltativo. Le sue presenze non contano più. */
+    @Transactional
+    public void segnaNonEffettuata(Long lezioneId, String motivo, String username) {
+        Lezione lezione = gestibile(lezioneId, username, false);
+        if (lezione.isCompletata()) {
+            throw new IllegalStateException("La lezione è già completata");
+        }
+        lezione.setNonEffettuata(true);
+        lezione.setMotivoNonEffettuata(motivo != null && !motivo.isBlank() ? motivo.strip() : null);
+    }
+
+    /** Riporta da fare una lezione non effettuata, creando le presenze dei partecipanti iscritti nel frattempo. */
+    @Transactional
+    public void ripristina(Long lezioneId, String username) {
+        Lezione lezione = gestibile(lezioneId, username, false);
+        if (!lezione.isNonEffettuata()) {
+            return;
+        }
+        if (lezioneRepository.existsByRecuperoDiId(lezioneId)) {
+            throw new IllegalStateException("La lezione ha già un recupero: elimina prima il recupero");
+        }
+        lezione.setNonEffettuata(false);
+        lezione.setMotivoNonEffettuata(null);
+        Set<Long> conPresenza = presenzaRepository.findByLezioneId(lezioneId).stream()
+            .map(p -> p.getAllievo().getId()).collect(Collectors.toSet());
+        for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(lezione.getCorso().getId())) {
+            if (!conPresenza.contains(iscrizione.getAllievo().getId())) {
+                presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+            }
+        }
+    }
+
+    /**
+     * Aggiunge una lezione al corso con le presenze dei partecipanti attuali (Presente). Con {@code recuperoDiId}
+     * è il recupero di quella lezione non effettuata e ne prende il numero, altrimenti il successivo all'ultimo.
+     * Senza orario usa quello del corso.
+     */
+    @Transactional
+    public Lezione aggiungi(Long corsoId, LocalDate data, LocalTime orario, Long recuperoDiId, String username) {
+        if (data == null) {
+            throw new IllegalArgumentException("Inserisci la data della lezione");
+        }
+        Corso corso = corsoRepository.findById(corsoId)
+            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoId));
+        verificaPermesso(corso, username, false);
+        Lezione lezione = new Lezione();
+        lezione.setCorso(corso);
+        lezione.setData(data);
+        lezione.setAggiunta(true);
+        if (recuperoDiId != null) {
+            Lezione saltata = lezioneRepository.findById(recuperoDiId)
+                .orElseThrow(() -> new IllegalArgumentException("Lezione non trovata: " + recuperoDiId));
+            if (!saltata.isNonEffettuata() || !saltata.getCorso().getId().equals(corsoId)) {
+                throw new IllegalArgumentException("Si recupera solo una lezione non effettuata dello stesso corso");
+            }
+            if (lezioneRepository.existsByRecuperoDiId(recuperoDiId)) {
+                throw new IllegalStateException("La lezione ha già un recupero");
+            }
+            lezione.setRecuperoDi(saltata);
+            lezione.setNumeroLezione(saltata.getNumeroLezione());
+        } else {
+            Integer massimo = lezioneRepository.findMaxNumeroLezione(corsoId);
+            lezione.setNumeroLezione(massimo == null ? 1 : massimo + 1);
+        }
+        LocalTime inizio = orario != null ? orario : corso.getOrarioInizio();
+        lezione.setOrarioInizio(inizio);
+        if (inizio != null && corso.getDurataLezioneMinuti() != null) {
+            lezione.setOrarioFine(inizio.plusMinutes(corso.getDurataLezioneMinuti()));
+        }
+        Lezione salvata = lezioneRepository.save(lezione);
+        for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(corsoId)) {
+            presenzaRepository.save(new Presenza(salvata, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+        }
+        return salvata;
+    }
+
+    /** Elimina una lezione aggiunta a mano non ancora completata (insegnante del corso o admin). */
+    @Transactional
+    public void eliminaAggiunta(Long lezioneId, String username) {
+        Lezione lezione = gestibile(lezioneId, username, true);
+        if (!lezione.isAggiunta() || lezione.isCompletata()) {
+            throw new IllegalStateException("Si eliminano solo le lezioni aggiunte non completate");
+        }
+        lezioneRepository.delete(lezione);
+    }
+
+    /** {@code true} se l'utente può eliminare le lezioni aggiunte del corso (il suo insegnante o un admin). */
+    public boolean puoEliminare(Corso corso, String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        return user != null && (user.getRoles().contains("ADMIN") || insegnanteDelCorso(corso, username));
+    }
+
+    private Lezione gestibile(Long lezioneId, String username, boolean elimina) {
+        Lezione lezione = lezioneRepository.findById(lezioneId)
+            .orElseThrow(() -> new IllegalArgumentException("Lezione non trovata: " + lezioneId));
+        verificaPermesso(lezione.getCorso(), username, elimina);
+        return lezione;
+    }
+
+    /**
+     * Corso attivo e utente autorizzato: l'insegnante del corso, oppure admin e segreteria
+     * (per eliminare solo admin).
+     */
+    private void verificaPermesso(Corso corso, String username, boolean elimina) {
+        CorsoService.verificaAttivo(corso);
+        User user = userRepository.findByUsername(username).orElse(null);
+        Set<String> ruoli = user != null ? user.getRoles() : Set.of();
+        boolean autorizzato = insegnanteDelCorso(corso, username) || ruoli.contains("ADMIN")
+            || (!elimina && ruoli.contains("SEGRETERIA"));
+        if (!autorizzato) {
+            throw new IllegalStateException("Non puoi modificare le lezioni di questo corso");
+        }
+    }
+
+    private static boolean insegnanteDelCorso(Corso corso, String username) {
+        return corso.getInsegnante() != null && corso.getInsegnante().getUser() != null
+            && username.equals(corso.getInsegnante().getUser().getUsername());
     }
 }
