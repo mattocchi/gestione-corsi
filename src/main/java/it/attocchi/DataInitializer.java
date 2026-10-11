@@ -28,19 +28,19 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserService userService;
     private final InsegnanteRepository insegnanteRepository;
-    private final StudenteRepository studenteRepository;
+    private final AllievoRepository allievoRepository;
     private final GenitoreRepository genitoreRepository;
     private final CorsoService corsoService;
     private final CorsoRepository corsoRepository;
     private final IscrizioneRepository iscrizioneRepository;
 
     public DataInitializer(UserService userService, InsegnanteRepository insegnanteRepository,
-                          StudenteRepository studenteRepository, GenitoreRepository genitoreRepository,
+                          AllievoRepository allievoRepository, GenitoreRepository genitoreRepository,
                           CorsoService corsoService, CorsoRepository corsoRepository,
                           IscrizioneRepository iscrizioneRepository) {
         this.userService = userService;
         this.insegnanteRepository = insegnanteRepository;
-        this.studenteRepository = studenteRepository;
+        this.allievoRepository = allievoRepository;
         this.genitoreRepository = genitoreRepository;
         this.corsoService = corsoService;
         this.corsoRepository = corsoRepository;
@@ -121,44 +121,44 @@ public class DataInitializer implements CommandLineRunner {
                 genitori[i] = genitoreRepository.save(genitore);
             }
 
-            // Crea 7 studenti per corso di canto
-            Studente[] studentiCanto = new Studente[7];
+            // Crea 7 allievi per corso di canto
+            Allievo[] allieviCanto = new Allievo[7];
             for (int i = 0; i < 7; i++) {
-                User userStudente = new User();
-                userStudente.setUsername("studente_canto" + (i + 1));
-                userStudente.setNome("Studente");
-                userStudente.setCognome("Canto" + (i + 1));
-                userStudente.setEmail("studente_canto" + (i + 1) + "@example.com");
-                userStudente.setRoles(new HashSet<>());
-                userStudente.getRoles().add("STUDENTE");
-                userStudente = userService.save(userStudente, "studente" + (i + 1));
+                User userAllievo = new User();
+                userAllievo.setUsername("allievo_canto" + (i + 1));
+                userAllievo.setNome("Allievo");
+                userAllievo.setCognome("Canto" + (i + 1));
+                userAllievo.setEmail("allievo_canto" + (i + 1) + "@example.com");
+                userAllievo.setRoles(new HashSet<>());
+                userAllievo.getRoles().add("ALLIEVO");
+                userAllievo = userService.save(userAllievo, "allievo" + (i + 1));
 
-                Studente studente = new Studente();
-                studente.setUser(userStudente);
-                studente.setCodiceFiscale(codiceFiscale("CNTSTD" + String.format("%02d", (8 + i) % 100) + "C15H501"));
-                studente.setDataNascita(LocalDate.of(2008 + i, 3, 15));
-                studente.setGenitore(genitori[i]);
-                studentiCanto[i] = studenteRepository.save(studente);
+                Allievo allievo = new Allievo();
+                allievo.setUser(userAllievo);
+                allievo.setCodiceFiscale(codiceFiscale("CNTSTD" + String.format("%02d", (8 + i) % 100) + "C15H501"));
+                allievo.setDataNascita(LocalDate.of(2008 + i, 3, 15));
+                allievo.setGenitore(genitori[i]);
+                allieviCanto[i] = allievoRepository.save(allievo);
             }
 
-            // Crea 6 studenti per corso di chitarra (4 martedì + 2 sabato)
-            Studente[] studentiChitarra = new Studente[6];
+            // Crea 6 allievi per corso di chitarra (4 martedì + 2 sabato)
+            Allievo[] allieviChitarra = new Allievo[6];
             for (int i = 0; i < 6; i++) {
-                User userStudente = new User();
-                userStudente.setUsername("studente_chitarra" + (i + 1));
-                userStudente.setNome("Studente");
-                userStudente.setCognome("Chitarra" + (i + 1));
-                userStudente.setEmail("studente_chitarra" + (i + 1) + "@example.com");
-                userStudente.setRoles(new HashSet<>());
-                userStudente.getRoles().add("STUDENTE");
-                userStudente = userService.save(userStudente, "studente" + (i + 8));
+                User userAllievo = new User();
+                userAllievo.setUsername("allievo_chitarra" + (i + 1));
+                userAllievo.setNome("Allievo");
+                userAllievo.setCognome("Chitarra" + (i + 1));
+                userAllievo.setEmail("allievo_chitarra" + (i + 1) + "@example.com");
+                userAllievo.setRoles(new HashSet<>());
+                userAllievo.getRoles().add("ALLIEVO");
+                userAllievo = userService.save(userAllievo, "allievo" + (i + 8));
 
-                Studente studente = new Studente();
-                studente.setUser(userStudente);
-                studente.setCodiceFiscale(codiceFiscale("CHTSTD" + String.format("%02d", (9 + i) % 100) + "E20H501"));
-                studente.setDataNascita(LocalDate.of(2009 + i, 5, 20));
-                studente.setGenitore(genitori[i + 2]);
-                studentiChitarra[i] = studenteRepository.save(studente);
+                Allievo allievo = new Allievo();
+                allievo.setUser(userAllievo);
+                allievo.setCodiceFiscale(codiceFiscale("CHTSTD" + String.format("%02d", (9 + i) % 100) + "E20H501"));
+                allievo.setDataNascita(LocalDate.of(2009 + i, 5, 20));
+                allievo.setGenitore(genitori[i + 2]);
+                allieviChitarra[i] = allievoRepository.save(allievo);
             }
 
             // Crea corso di Canto - Giovedì
@@ -179,8 +179,8 @@ public class DataInitializer implements CommandLineRunner {
             corsoCanto = corsoRepository.save(corsoCanto);
             // Orari di lezione individuali: i primi 5 in ordine inverso (Canto5 alle 17:00, Canto1 alle 19:40),
             // Canto6 e Canto7 ancora senza orario
-            for (int i = 0; i < studentiCanto.length; i++) {
-                Iscrizione iscrizione = new Iscrizione(corsoCanto, studentiCanto[i]);
+            for (int i = 0; i < allieviCanto.length; i++) {
+                Iscrizione iscrizione = new Iscrizione(corsoCanto, allieviCanto[i]);
                 if (i < 5) {
                     iscrizione.setOrarioLezione(LocalTime.of(17, 0).plusMinutes(40L * (4 - i)));
                 }
@@ -204,7 +204,7 @@ public class DataInitializer implements CommandLineRunner {
             corsoChitarra.setCostoTotale(new BigDecimal("600.00"));
             corsoChitarra.setCostoPerLezione(new BigDecimal("20.00"));
             corsoChitarra = corsoRepository.save(corsoChitarra);
-            for (Studente s : studentiChitarra) {
+            for (Allievo s : allieviChitarra) {
                 iscrizioneRepository.save(new Iscrizione(corsoChitarra, s));
             }
 
@@ -221,7 +221,7 @@ public class DataInitializer implements CommandLineRunner {
                   SEGRETERIA: segreteria/segreteria
                   INSEGNANTI:  insegnante1/insegnante1 (Canto), insegnante2/insegnante2 (Chitarra)
                   GENITORI: genitore1..9 / genitore1..9
-                  STUDENTI: studente_canto1..7 / studente1..7, studente_chitarra1..6 / studente8..13
+                  ALLIEVI: allievo_canto1..7 / allievo1..7, allievo_chitarra1..6 / allievo8..13
                   CORSI:    Canto (giovedì), Chitarra (martedì e sabato), 30 lezioni da 40 min""");
         }
     }

@@ -7,8 +7,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Chiave dell'iscrizione: la coppia (corso, studente), come la chiave primaria della tabella
- * {@code corso_studenti}.
+ * Chiave dell'iscrizione: la coppia (corso, allievo), come la chiave primaria della tabella
+ * {@code corso_allievi}.
  */
 @Embeddable
 public class IscrizioneId implements Serializable {
@@ -16,23 +16,23 @@ public class IscrizioneId implements Serializable {
     @Column(name = "corso_id")
     private Long corsoId;
 
-    @Column(name = "studente_id")
-    private Long studenteId;
+    @Column(name = "allievo_id")
+    private Long allievoId;
 
     public IscrizioneId() {
     }
 
-    public IscrizioneId(Long corsoId, Long studenteId) {
+    public IscrizioneId(Long corsoId, Long allievoId) {
         this.corsoId = corsoId;
-        this.studenteId = studenteId;
+        this.allievoId = allievoId;
     }
 
     public Long getCorsoId() {
         return corsoId;
     }
 
-    public Long getStudenteId() {
-        return studenteId;
+    public Long getAllievoId() {
+        return allievoId;
     }
 
     @Override
@@ -43,11 +43,11 @@ public class IscrizioneId implements Serializable {
         if (!(o instanceof IscrizioneId other)) {
             return false;
         }
-        return Objects.equals(corsoId, other.corsoId) && Objects.equals(studenteId, other.studenteId);
+        return Objects.equals(corsoId, other.corsoId) && Objects.equals(allievoId, other.allievoId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(corsoId, studenteId);
+        return Objects.hash(corsoId, allievoId);
     }
 }

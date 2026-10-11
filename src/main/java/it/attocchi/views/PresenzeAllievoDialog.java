@@ -12,13 +12,13 @@ import it.attocchi.entity.Presenza.StatoPresenza;
 import java.util.List;
 
 /**
- * Dialog in sola lettura con le presenze di uno studente in un corso, usato dalle view
- * di studenti e genitori. Su mobile mostra solo data e stato; la nota resta leggibile
+ * Dialog in sola lettura con le presenze di un allievo in un corso, usato dalle view
+ * di allievi e genitori. Su mobile mostra solo data e stato; la nota resta leggibile
  * come tooltip dello stato.
  */
-public class PresenzeStudenteDialog extends Dialog {
+public class PresenzeAllievoDialog extends Dialog {
 
-    public PresenzeStudenteDialog(String title, List<Presenza> presenze) {
+    public PresenzeAllievoDialog(String title, List<Presenza> presenze) {
         setHeaderTitle(title);
         setWidth("800px");
         setMaxWidth("100%");

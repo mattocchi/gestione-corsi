@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "presenze", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"lezione_id", "studente_id"})
+    @UniqueConstraint(columnNames = {"lezione_id", "allievo_id"})
 })
 public class Presenza {
 
@@ -19,9 +19,9 @@ public class Presenza {
     private Lezione lezione;
 
     @ManyToOne
-    @JoinColumn(name = "studente_id")
+    @JoinColumn(name = "allievo_id")
     @NotNull
-    private Studente studente;
+    private Allievo allievo;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -33,9 +33,9 @@ public class Presenza {
     public Presenza() {
     }
 
-    public Presenza(Lezione lezione, Studente studente, StatoPresenza stato) {
+    public Presenza(Lezione lezione, Allievo allievo, StatoPresenza stato) {
         this.lezione = lezione;
-        this.studente = studente;
+        this.allievo = allievo;
         this.stato = stato;
     }
 
@@ -56,12 +56,12 @@ public class Presenza {
         this.lezione = lezione;
     }
 
-    public Studente getStudente() {
-        return studente;
+    public Allievo getAllievo() {
+        return allievo;
     }
 
-    public void setStudente(Studente studente) {
-        this.studente = studente;
+    public void setAllievo(Allievo allievo) {
+        this.allievo = allievo;
     }
 
     public StatoPresenza getStato() {

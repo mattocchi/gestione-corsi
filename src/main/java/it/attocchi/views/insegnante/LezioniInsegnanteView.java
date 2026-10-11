@@ -142,7 +142,7 @@ public class LezioniInsegnanteView extends VerticalLayout {
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         // Una sola colonna con nome, stato e note: su schermi stretti gli elementi vanno a capo
-        gridPresenze.addComponentColumn(this::createPresenzaRiga).setHeader("Studenti");
+        gridPresenze.addComponentColumn(this::createPresenzaRiga).setHeader("Allievi");
         gridPresenze.setItems(presenzaService.findByLezione(lezione.getId()));
 
         Button completaButton = new Button("Segna Completata", e -> {
@@ -161,7 +161,7 @@ public class LezioniInsegnanteView extends VerticalLayout {
     }
 
     private Div createPresenzaRiga(Presenza presenza) {
-        Span nome = new Span(presenza.getStudente().getNomeCompleto());
+        Span nome = new Span(presenza.getAllievo().getNomeCompleto());
         nome.addClassName("presenza-nome");
 
         StatoPresenzaToggle stato = new StatoPresenzaToggle();
@@ -170,7 +170,7 @@ public class LezioniInsegnanteView extends VerticalLayout {
 
         TextField note = new TextField();
         note.addClassName("presenza-note");
-        note.setAriaLabel("Note per " + presenza.getStudente().getNomeCompleto());
+        note.setAriaLabel("Note per " + presenza.getAllievo().getNomeCompleto());
         note.setPlaceholder("Note");
         note.setValue(presenza.getNote() != null ? presenza.getNote() : "");
         note.addValueChangeListener(e -> salva(presenza, p -> p.setNote(e.getValue())));
@@ -187,7 +187,7 @@ public class LezioniInsegnanteView extends VerticalLayout {
             presenzaService.save(presenza);
         } catch (RuntimeException ex) {
             Notification.show("Errore nel salvataggio della presenza di "
-                + presenza.getStudente().getNomeCompleto() + ": " + ex.getMessage());
+                + presenza.getAllievo().getNomeCompleto() + ": " + ex.getMessage());
         }
     }
 

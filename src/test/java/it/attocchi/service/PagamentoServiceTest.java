@@ -27,62 +27,62 @@ class PagamentoServiceTest {
     private CorsoService corsoService;
 
     @Autowired
-    private StudenteService studenteService;
+    private AllievoService allievoService;
 
     @Test
     void quotaPersonalizzataERateDeterminanoLaSituazione() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        Long studente = studenteService.findByUsername("studente_canto2").orElseThrow().getId();
+        Long allievo = allievoService.findByUsername("allievo_canto2").orElseThrow().getId();
         try {
-            var iniziale = pagamentoService.situazione(canto.getId(), studente);
+            var iniziale = pagamentoService.situazione(canto.getId(), allievo);
             assertEquals(0, new BigDecimal("600").compareTo(iniziale.quota()));
             assertEquals(StatoPagamento.NESSUN_PAGAMENTO, iniziale.stato());
 
-            pagamentoService.impostaQuota(canto.getId(), studente, new BigDecimal("500"), "fratelli");
-            assertEquals("fratelli", pagamentoService.findIscrizione(canto.getId(), studente).getNotaQuota());
+            pagamentoService.impostaQuota(canto.getId(), allievo, new BigDecimal("500"), "fratelli");
+            assertEquals("fratelli", pagamentoService.findIscrizione(canto.getId(), allievo).getNotaQuota());
 
             Pagamento rata = new Pagamento();
             rata.setData(LocalDate.of(2026, 10, 1));
             rata.setImporto(new BigDecimal("200"));
-            pagamentoService.salva(canto.getId(), studente, rata);
-            var parziale = pagamentoService.situazione(canto.getId(), studente);
+            pagamentoService.salva(canto.getId(), allievo, rata);
+            var parziale = pagamentoService.situazione(canto.getId(), allievo);
             assertEquals(StatoPagamento.PARZIALE, parziale.stato());
             assertEquals(0, new BigDecimal("300").compareTo(parziale.residuo()));
             assertEquals(40, parziale.percentualePagata());
-            assertEquals(MetodoPagamento.BONIFICO, pagamentoService.findPagamenti(canto.getId(), studente).getFirst().getMetodo());
+            assertEquals(MetodoPagamento.BONIFICO, pagamentoService.findPagamenti(canto.getId(), allievo).getFirst().getMetodo());
 
             Pagamento saldo = new Pagamento();
             saldo.setData(LocalDate.of(2026, 11, 1));
             saldo.setImporto(new BigDecimal("300"));
             saldo.setMetodo(MetodoPagamento.CASSA);
-            pagamentoService.salva(canto.getId(), studente, saldo);
-            assertEquals(StatoPagamento.SALDATO, pagamentoService.situazioniDelCorso(canto.getId()).get(studente).stato());
+            pagamentoService.salva(canto.getId(), allievo, saldo);
+            assertEquals(StatoPagamento.SALDATO, pagamentoService.situazioniDelCorso(canto.getId()).get(allievo).stato());
 
             Pagamento negativo = new Pagamento();
             negativo.setData(LocalDate.now());
             negativo.setImporto(new BigDecimal("-1"));
-            assertThrows(IllegalArgumentException.class, () -> pagamentoService.salva(canto.getId(), studente, negativo));
+            assertThrows(IllegalArgumentException.class, () -> pagamentoService.salva(canto.getId(), allievo, negativo));
         } finally {
-            pagamentoService.findPagamenti(canto.getId(), studente).forEach(pagamentoService::elimina);
-            pagamentoService.impostaQuota(canto.getId(), studente, null, null);
+            pagamentoService.findPagamenti(canto.getId(), allievo).forEach(pagamentoService::elimina);
+            pagamentoService.impostaQuota(canto.getId(), allievo, null, null);
         }
     }
 
     @Test
     void conPagamentiNonSiRimuoveNeSiEliminaNulla() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        var studente = studenteService.findByUsername("studente_canto4").orElseThrow();
+        var allievo = allievoService.findByUsername("allievo_canto4").orElseThrow();
         Pagamento rata = new Pagamento();
         rata.setData(LocalDate.of(2026, 10, 1));
         rata.setImporto(new BigDecimal("100"));
-        pagamentoService.salva(canto.getId(), studente.getId(), rata);
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
         try {
-            assertThrows(IllegalStateException.class, () -> corsoService.rimuoviIscrizione(canto.getId(), studente.getId()));
+            assertThrows(IllegalStateException.class, () -> corsoService.rimuoviIscrizione(canto.getId(), allievo.getId()));
             assertThrows(IllegalStateException.class, () -> corsoService.delete(canto));
-            assertThrows(IllegalStateException.class, () -> studenteService.delete(studente));
+            assertThrows(IllegalStateException.class, () -> allievoService.delete(allievo));
             assertEquals(7, corsoService.findPartecipanti(canto.getId()).size());
         } finally {
-            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }
 }

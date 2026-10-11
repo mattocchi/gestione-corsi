@@ -18,7 +18,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.Formati;
@@ -41,20 +41,20 @@ public class QuotaPagamentiDialog extends Dialog {
 
     private final PagamentoService pagamentoService;
     private final Corso corso;
-    private final Studente studente;
+    private final Allievo allievo;
     private final Div riepilogo = new Div();
     private final Grid<Pagamento> grid = new Grid<>(Pagamento.class, false);
 
-    public QuotaPagamentiDialog(PagamentoService pagamentoService, Corso corso, Studente studente) {
+    public QuotaPagamentiDialog(PagamentoService pagamentoService, Corso corso, Allievo allievo) {
         this.pagamentoService = pagamentoService;
         this.corso = corso;
-        this.studente = studente;
+        this.allievo = allievo;
 
-        setHeaderTitle("Quota e pagamenti – " + studente.getNomeCompleto());
+        setHeaderTitle("Quota e pagamenti – " + allievo.getNomeCompleto());
         setWidth("700px");
         setMaxWidth("100%");
 
-        Iscrizione iscrizione = pagamentoService.findIscrizione(corso.getId(), studente.getId());
+        Iscrizione iscrizione = pagamentoService.findIscrizione(corso.getId(), allievo.getId());
 
         Span corsoInfo = new Span(corso.getNome() + " · quota piena " + Formati.euro(corso.getCostoTotale()));
         corsoInfo.addClassName("avviso-sola-lettura");
@@ -90,7 +90,7 @@ public class QuotaPagamentiDialog extends Dialog {
         content.setPadding(false);
         add(content);
         Button ricevuta = new Button("Ricevuta", VaadinIcon.PRINT.create());
-        getFooter().add(RicevutaView.link(corso.getId(), studente.getId(), ricevuta), ViewSupport.closeButton(this, "Chiudi"));
+        getFooter().add(RicevutaView.link(corso.getId(), allievo.getId(), ricevuta), ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private void configureGrid() {
@@ -134,7 +134,7 @@ public class QuotaPagamentiDialog extends Dialog {
         binder.forField(nota).bind(Pagamento::getNota, Pagamento::setNota);
         if (nuovo) {
             pagamento.setData(LocalDate.now());
-            BigDecimal residuo = pagamentoService.situazione(corso.getId(), studente.getId()).residuo();
+            BigDecimal residuo = pagamentoService.situazione(corso.getId(), allievo.getId()).residuo();
             pagamento.setImporto(residuo.signum() > 0 ? residuo : null);
         }
         binder.readBean(pagamento);
@@ -144,7 +144,7 @@ public class QuotaPagamentiDialog extends Dialog {
                 return;
             }
             try {
-                pagamentoService.salva(corso.getId(), studente.getId(), pagamento);
+                pagamentoService.salva(corso.getId(), allievo.getId(), pagamento);
                 dialog.close();
                 aggiorna();
             } catch (RuntimeException ex) {
@@ -182,13 +182,13 @@ public class QuotaPagamentiDialog extends Dialog {
     }
 
     private void aggiorna() {
-        grid.setItems(pagamentoService.findPagamenti(corso.getId(), studente.getId()));
+        grid.setItems(pagamentoService.findPagamenti(corso.getId(), allievo.getId()));
         aggiornaRiepilogo();
     }
 
     private void salvaQuota(BigDecimal valore, String nota) {
         try {
-            pagamentoService.impostaQuota(corso.getId(), studente.getId(), valore, nota);
+            pagamentoService.impostaQuota(corso.getId(), allievo.getId(), valore, nota);
             aggiornaRiepilogo();
         } catch (RuntimeException ex) {
             Notification.show("Errore nel salvataggio della quota: " + ex.getMessage());
@@ -197,7 +197,7 @@ public class QuotaPagamentiDialog extends Dialog {
 
     /** Riga con da pagare, pagato, residuo e stato. */
     private void aggiornaRiepilogo() {
-        Situazione situazione = pagamentoService.situazione(corso.getId(), studente.getId());
+        Situazione situazione = pagamentoService.situazione(corso.getId(), allievo.getId());
         riepilogo.removeAll();
         riepilogo.addClassName("pagamenti-riepilogo");
         riepilogo.add(new Span("Da pagare " + Formati.euro(situazione.quota())),

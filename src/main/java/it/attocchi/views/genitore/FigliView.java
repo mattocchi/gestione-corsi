@@ -17,7 +17,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Presenza;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
@@ -25,13 +25,13 @@ import it.attocchi.service.GenitoreService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.PresenzaService;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
-import it.attocchi.views.PagamentiStudenteDialog;
-import it.attocchi.views.PresenzeStudenteDialog;
+import it.attocchi.views.PagamentiAllievoDialog;
+import it.attocchi.views.PresenzeAllievoDialog;
 import it.attocchi.views.RicevutaView;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.UtenteFields;
@@ -47,19 +47,19 @@ import java.util.Map;
 @RolesAllowed("GENITORE")
 public class FigliView extends VerticalLayout {
 
-    private final StudenteService studenteService;
+    private final AllievoService allievoService;
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
     private final PagamentoService pagamentoService;
     private final UserService userService;
 
-    private final Grid<Studente> gridFigli = new Grid<>(Studente.class, false);
+    private final Grid<Allievo> gridFigli = new Grid<>(Allievo.class, false);
     private Genitore genitoreCorrente;
 
-    public FigliView(StudenteService studenteService, CorsoService corsoService,
+    public FigliView(AllievoService allievoService, CorsoService corsoService,
                      PresenzaService presenzaService, PagamentoService pagamentoService,
                      SecurityService securityService, GenitoreService genitoreService, UserService userService) {
-        this.studenteService = studenteService;
+        this.allievoService = allievoService;
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
         this.pagamentoService = pagamentoService;
@@ -75,26 +75,26 @@ public class FigliView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        gridFigli.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
-        var dataNascita = gridFigli.addColumn(studente -> Formati.data(studente.getDataNascita())).setHeader("Data Nascita")
-            .setComparator(Studente::getDataNascita).setAutoWidth(true).setFlexGrow(0);
-        gridFigli.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
+        gridFigli.addColumn(Allievo::getNomeCompleto).setHeader("Nome").setSortable(true);
+        var dataNascita = gridFigli.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
+            .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
+        gridFigli.addColumn(allievo -> allievo.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
-        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(studente -> ViewSupport.actions(
-            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openModificaDialog(studente)),
-            ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(studente)))));
+        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(allievo -> ViewSupport.actions(
+            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openModificaDialog(allievo)),
+            ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(allievo)))));
 
         ViewSupport.hideOnMobile(gridFigli, dataNascita);
     }
 
     /** Contatti e dati anagrafici del figlio; username, genitore e corsi li gestisce la segreteria. */
-    private void openModificaDialog(Studente studente) {
-        Dialog dialog = ViewSupport.dialog("Dati di " + studente.getNomeCompleto(), "700px");
-        User user = studente.getUser();
+    private void openModificaDialog(Allievo allievo) {
+        Dialog dialog = ViewSupport.dialog("Dati di " + allievo.getNomeCompleto(), "700px");
+        User user = allievo.getUser();
         UtenteFields utente = new UtenteFields(user, userService);
-        Binder<Studente> binder = new Binder<>(Studente.class);
-        AnagraficaFields<Studente> anagrafica = new AnagraficaFields<>(binder, true);
-        binder.readBean(studente);
+        Binder<Allievo> binder = new Binder<>(Allievo.class);
+        AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
+        binder.readBean(allievo);
 
         Span indirizzo = new Span("Se l'indirizzo è vuoto si usa il tuo: " + genitoreCorrente.getIndirizzo().getFormattato());
         indirizzo.addClassName("avviso-sola-lettura");
@@ -107,11 +107,11 @@ public class FigliView extends VerticalLayout {
 
         Button salva = new Button("Salva", e -> {
             boolean valido = binder.validate().isOk() & utente.validate();
-            if (!valido || !binder.writeBeanIfValid(studente) || !utente.writeBeanIfValid(user)) {
+            if (!valido || !binder.writeBeanIfValid(allievo) || !utente.writeBeanIfValid(user)) {
                 return;
             }
             try {
-                studenteService.aggiornaDaGenitore(genitoreCorrente.getUser().getUsername(), studente.getId(), studente, user);
+                allievoService.aggiornaDaGenitore(genitoreCorrente.getUser().getUsername(), allievo.getId(), allievo, user);
                 updateGrid();
                 dialog.close();
                 Notification.show("Dati salvati");
@@ -126,29 +126,29 @@ public class FigliView extends VerticalLayout {
         dialog.open();
     }
 
-    private void openDettagliDialog(Studente studente) {
-        Dialog dialog = ViewSupport.dialog("Corsi di " + studente.getNomeCompleto(), "1000px");
+    private void openDettagliDialog(Allievo allievo) {
+        Dialog dialog = ViewSupport.dialog("Corsi di " + allievo.getNomeCompleto(), "1000px");
 
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
         var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
-        Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloStudente(studente.getId());
+        Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
         var pagamento = gridCorsi.addComponentColumn(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso -> {
-            Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Presenze", e -> openPresenzeDialog(studente, corso));
-            Button pagamentiButton = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> openPagamentiDialog(studente, corso));
+            Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Presenze", e -> openPresenzeDialog(allievo, corso));
+            Button pagamentiButton = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> openPagamentiDialog(allievo, corso));
             StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
 
             HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
-            actions.add(RicevutaView.link(corso.getId(), studente.getId(), ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
+            actions.add(RicevutaView.link(corso.getId(), allievo.getId(), ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
             return actions;
         }));
         ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni, pagamento);
 
-        gridCorsi.setItems(corsoService.findByStudente(studente.getId()));
+        gridCorsi.setItems(corsoService.findByAllievo(allievo.getId()));
         gridCorsi.setAllRowsVisible(true);
 
         dialog.add(gridCorsi);
@@ -156,21 +156,21 @@ public class FigliView extends VerticalLayout {
         dialog.open();
     }
 
-    private void openPresenzeDialog(Studente studente, Corso corso) {
-        List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studente.getId());
-        new PresenzeStudenteDialog(corso.getNome() + " – " + studente.getNomeCompleto(), presenze).open();
+    private void openPresenzeDialog(Allievo allievo, Corso corso) {
+        List<Presenza> presenze = presenzaService.findByCorsoAndAllievo(corso.getId(), allievo.getId());
+        new PresenzeAllievoDialog(corso.getNome() + " – " + allievo.getNomeCompleto(), presenze).open();
     }
 
-    private void openPagamentiDialog(Studente studente, Corso corso) {
-        new PagamentiStudenteDialog("Pagamenti " + corso.getNome() + " – " + studente.getNomeCompleto(),
-            pagamentoService.findIscrizione(corso.getId(), studente.getId()),
-            pagamentoService.situazione(corso.getId(), studente.getId()),
-            pagamentoService.findPagamenti(corso.getId(), studente.getId())).open();
+    private void openPagamentiDialog(Allievo allievo, Corso corso) {
+        new PagamentiAllievoDialog("Pagamenti " + corso.getNome() + " – " + allievo.getNomeCompleto(),
+            pagamentoService.findIscrizione(corso.getId(), allievo.getId()),
+            pagamentoService.situazione(corso.getId(), allievo.getId()),
+            pagamentoService.findPagamenti(corso.getId(), allievo.getId())).open();
     }
 
     private void updateGrid() {
         if (genitoreCorrente != null) {
-            List<Studente> figli = studenteService.findByGenitore(genitoreCorrente.getId());
+            List<Allievo> figli = allievoService.findByGenitore(genitoreCorrente.getId());
             gridFigli.setItems(figli);
         }
     }

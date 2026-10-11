@@ -12,7 +12,7 @@ import java.util.Locale;
 
 /**
  * Campi dei dati anagrafici (codice fiscale, nascita, indirizzo in formato italiano) legati a un {@link Binder}
- * di studente, genitore o insegnante. Codice fiscale e provincia sono salvati in maiuscolo.
+ * di allievo, genitore o insegnante. Codice fiscale e provincia sono salvati in maiuscolo.
  */
 public class AnagraficaFields<T extends Anagrafica> {
 
@@ -25,7 +25,7 @@ public class AnagraficaFields<T extends Anagrafica> {
     private final TextField provincia = new TextField("Provincia");
 
     /**
-     * @param obbligatori codice fiscale e data di nascita obbligatori (studenti); altrimenti facoltativi,
+     * @param obbligatori codice fiscale e data di nascita obbligatori (allievi); altrimenti facoltativi,
      *                    ma il codice fiscale se inserito deve essere valido
      */
     public AnagraficaFields(Binder<T> binder, boolean obbligatori) {

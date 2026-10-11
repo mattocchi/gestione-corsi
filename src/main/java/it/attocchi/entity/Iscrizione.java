@@ -7,20 +7,20 @@ import java.time.LocalTime;
 import java.util.Comparator;
 
 /**
- * Iscrizione di uno studente (partecipante) a un corso, con l'orario di inizio della sua lezione.
+ * Iscrizione di un allievo (partecipante) a un corso, con l'orario di inizio della sua lezione.
  * <p>
- * Mappata sulla tabella {@code corso_studenti} che prima era la join table del {@code @ManyToMany}
- * Corso–Studente: in produzione le iscrizioni esistenti restano e {@code ddl-auto=update}
+ * Mappata sulla tabella {@code corso_allievi} che prima era la join table del {@code @ManyToMany}
+ * Corso–Allievo: in produzione le iscrizioni esistenti restano e {@code ddl-auto=update}
  * aggiunge solo la colonna {@code orario_lezione}.
  */
 @Entity
-@Table(name = "corso_studenti")
+@Table(name = "corso_allievi")
 public class Iscrizione {
 
     /** Ordine dei partecipanti: per orario di lezione, quelli senza orario in fondo; a parità per nome. */
     public static final Comparator<Iscrizione> PER_ORARIO = Comparator
         .comparing(Iscrizione::getOrarioLezione, Comparator.nullsLast(Comparator.naturalOrder()))
-        .thenComparing(i -> i.getStudente().getNomeCompleto());
+        .thenComparing(i -> i.getAllievo().getNomeCompleto());
 
     @EmbeddedId
     private IscrizioneId id = new IscrizioneId();
@@ -31,9 +31,9 @@ public class Iscrizione {
     private Corso corso;
 
     @ManyToOne
-    @MapsId("studenteId")
-    @JoinColumn(name = "studente_id")
-    private Studente studente;
+    @MapsId("allievoId")
+    @JoinColumn(name = "allievo_id")
+    private Allievo allievo;
 
     /** Orario di inizio della lezione del partecipante; {@code null} se non ancora assegnato. */
     private LocalTime orarioLezione;
@@ -49,11 +49,11 @@ public class Iscrizione {
     public Iscrizione() {
     }
 
-    /** Corso e studente devono essere già salvati (la chiave è formata dai loro id). */
-    public Iscrizione(Corso corso, Studente studente) {
-        this.id = new IscrizioneId(corso.getId(), studente.getId());
+    /** Corso e allievo devono essere già salvati (la chiave è formata dai loro id). */
+    public Iscrizione(Corso corso, Allievo allievo) {
+        this.id = new IscrizioneId(corso.getId(), allievo.getId());
         this.corso = corso;
-        this.studente = studente;
+        this.allievo = allievo;
     }
 
     // Getters e Setters
@@ -65,8 +65,8 @@ public class Iscrizione {
         return corso;
     }
 
-    public Studente getStudente() {
-        return studente;
+    public Allievo getAllievo() {
+        return allievo;
     }
 
     public LocalTime getOrarioLezione() {
@@ -101,7 +101,7 @@ public class Iscrizione {
         return corso != null && corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
     }
 
-    /** Uguaglianza sulla chiave (corso, studente). */
+    /** Uguaglianza sulla chiave (corso, allievo). */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -110,7 +110,7 @@ public class Iscrizione {
         if (!(o instanceof Iscrizione other)) {
             return false;
         }
-        return id != null && id.getCorsoId() != null && id.getStudenteId() != null && id.equals(other.getId());
+        return id != null && id.getCorsoId() != null && id.getAllievoId() != null && id.equals(other.getId());
     }
 
     @Override

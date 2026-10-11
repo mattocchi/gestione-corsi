@@ -24,7 +24,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Pagamento;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Ricevuta;
@@ -40,7 +40,7 @@ import java.util.Optional;
  * dell'applicazione. Admin e segreteria vedono tutte le ricevute, il genitore solo quelle dei propri figli.
  * Il pulsante "Stampa" usa la stampa del browser (anche per salvare in PDF) e non compare sul foglio.
  */
-@Route("ricevuta/:corsoId([0-9]+)/:studenteId([0-9]+)")
+@Route("ricevuta/:corsoId([0-9]+)/:allievoId([0-9]+)")
 @PageTitle("Ricevuta")
 @RolesAllowed({"ADMIN", "SEGRETERIA", "GENITORE"})
 public class RicevutaView extends Div implements BeforeEnterObserver {
@@ -54,14 +54,14 @@ public class RicevutaView extends Div implements BeforeEnterObserver {
         addClassName("ricevuta");
     }
 
-    /** Parametri della route della ricevuta di uno studente in un corso. */
-    public static RouteParameters parametri(Long corsoId, Long studenteId) {
-        return new RouteParameters(Map.of("corsoId", String.valueOf(corsoId), "studenteId", String.valueOf(studenteId)));
+    /** Parametri della route della ricevuta di un allievo in un corso. */
+    public static RouteParameters parametri(Long corsoId, Long allievoId) {
+        return new RouteParameters(Map.of("corsoId", String.valueOf(corsoId), "allievoId", String.valueOf(allievoId)));
     }
 
     /** Link che apre la ricevuta in una nuova scheda, con il componente indicato (es. un pulsante) come contenuto. */
-    public static Anchor link(Long corsoId, Long studenteId, Component contenuto) {
-        String url = RouteConfiguration.forSessionScope().getUrl(RicevutaView.class, parametri(corsoId, studenteId));
+    public static Anchor link(Long corsoId, Long allievoId, Component contenuto) {
+        String url = RouteConfiguration.forSessionScope().getUrl(RicevutaView.class, parametri(corsoId, allievoId));
         Anchor anchor = new Anchor(url, "");
         anchor.setTarget(AnchorTarget.BLANK);
         anchor.add(contenuto);
@@ -71,15 +71,15 @@ public class RicevutaView extends Div implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         Optional<Long> corsoId = event.getRouteParameters().getLong("corsoId");
-        Optional<Long> studenteId = event.getRouteParameters().getLong("studenteId");
+        Optional<Long> allievoId = event.getRouteParameters().getLong("allievoId");
         Ricevuta ricevuta;
         try {
-            ricevuta = pagamentoService.ricevuta(corsoId.orElseThrow(), studenteId.orElseThrow());
+            ricevuta = pagamentoService.ricevuta(corsoId.orElseThrow(), allievoId.orElseThrow());
         } catch (RuntimeException ex) {
             event.rerouteToError(NotFoundException.class);
             return;
         }
-        if (!puoVedere(ricevuta.iscrizione().getStudente())) {
+        if (!puoVedere(ricevuta.iscrizione().getAllievo())) {
             // Stessa risposta di una ricevuta inesistente: non rivela le iscrizioni di altri
             event.rerouteToError(NotFoundException.class);
             return;
@@ -88,11 +88,11 @@ public class RicevutaView extends Div implements BeforeEnterObserver {
         mostra(ricevuta);
     }
 
-    private boolean puoVedere(Studente studente) {
+    private boolean puoVedere(Allievo allievo) {
         if (securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")) {
             return true;
         }
-        Genitore genitore = studente.getGenitore();
+        Genitore genitore = allievo.getGenitore();
         return genitore != null && securityService.getUsername()
             .map(username -> username.equals(genitore.getUser().getUsername())).orElse(false);
     }
@@ -100,8 +100,8 @@ public class RicevutaView extends Div implements BeforeEnterObserver {
     private void mostra(Ricevuta ricevuta) {
         Iscrizione iscrizione = ricevuta.iscrizione();
         Corso corso = iscrizione.getCorso();
-        Studente studente = iscrizione.getStudente();
-        Genitore genitore = studente.getGenitore();
+        Allievo allievo = iscrizione.getAllievo();
+        Genitore genitore = allievo.getGenitore();
         Situazione situazione = ricevuta.situazione();
 
         Button stampa = new Button("Stampa", VaadinIcon.PRINT.create(),
@@ -118,10 +118,10 @@ public class RicevutaView extends Div implements BeforeEnterObserver {
         Div intestazione = new Div(logo, new Div(titolo, data));
         intestazione.addClassName("ricevuta-intestazione");
 
-        Div allievo = blocco("Allievo",
-            riga("Nome", studente.getNomeCompleto()),
-            riga("Codice fiscale", studente.getCodiceFiscale()),
-            riga("Indirizzo", Formati.indirizzo(studente)));
+        Div allievoBlocco = blocco("Allievo",
+            riga("Nome", allievo.getNomeCompleto()),
+            riga("Codice fiscale", allievo.getCodiceFiscale()),
+            riga("Indirizzo", Formati.indirizzo(allievo)));
         Div genitoreBlocco = blocco("Genitore",
             riga("Nome", genitore != null ? genitore.getNomeCompleto() : ""),
             riga("Codice fiscale", genitore != null ? genitore.getCodiceFiscale() : ""));
@@ -141,7 +141,7 @@ public class RicevutaView extends Div implements BeforeEnterObserver {
             riga("Residuo da pagare", Formati.euro(situazione.residuo())));
         totali.addClassName("ricevuta-totali");
 
-        add(comandi, intestazione, allievo, genitoreBlocco, corsoBlocco, new H2("Pagamenti"), pagamenti(ricevuta), totali);
+        add(comandi, intestazione, allievoBlocco, genitoreBlocco, corsoBlocco, new H2("Pagamenti"), pagamenti(ricevuta), totali);
     }
 
     private static Div blocco(String titolo, Div... righe) {

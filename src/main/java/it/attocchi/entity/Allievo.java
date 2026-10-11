@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "studenti")
-public class Studente implements Anagrafica {
+@Table(name = "allievi")
+public class Allievo implements Anagrafica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class Studente implements Anagrafica {
     @Embedded
     private Indirizzo indirizzo = new Indirizzo();
 
-    @OneToMany(mappedBy = "studente")
+    @OneToMany(mappedBy = "allievo")
     private Set<Iscrizione> iscrizioni = new HashSet<>();
 
     @ManyToOne
@@ -39,7 +39,7 @@ public class Studente implements Anagrafica {
     private Genitore genitore;
 
     // Costruttori
-    public Studente() {
+    public Allievo() {
     }
 
     // Getters e Setters
@@ -95,7 +95,7 @@ public class Studente implements Anagrafica {
         this.indirizzo = indirizzo;
     }
 
-    /** {@code true} se lo studente non ha nessun campo dell'indirizzo e si mostra quello del genitore. */
+    /** {@code true} se l'allievo non ha nessun campo dell'indirizzo e si mostra quello del genitore. */
     public boolean isIndirizzoDelGenitore() {
         return getIndirizzo().isVuoto() && genitore != null && !genitore.getIndirizzo().isVuoto();
     }
@@ -109,7 +109,7 @@ public class Studente implements Anagrafica {
         return iscrizioni;
     }
 
-    /** Corsi a cui lo studente è iscritto, ricavati dalle iscrizioni. */
+    /** Corsi a cui l'allievo è iscritto, ricavati dalle iscrizioni. */
     public Set<Corso> getCorsi() {
         return iscrizioni.stream().map(Iscrizione::getCorso).collect(Collectors.toSet());
     }
@@ -135,7 +135,7 @@ public class Studente implements Anagrafica {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Studente other)) {
+        if (!(o instanceof Allievo other)) {
             return false;
         }
         return getId() != null && getId().equals(other.getId());
@@ -143,6 +143,6 @@ public class Studente implements Anagrafica {
 
     @Override
     public int hashCode() {
-        return Studente.class.hashCode();
+        return Allievo.class.hashCode();
     }
 }

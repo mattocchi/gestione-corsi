@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Indirizzo di residenza in formato italiano. Per studenti e genitori riusa le colonne esistenti
+ * Indirizzo di residenza in formato italiano. Per allievi e genitori riusa le colonne esistenti
  * {@code indirizzo} (via e civico), {@code cap} e {@code citta} (Comune); {@code provincia} è nuova.
  */
 @Embeddable

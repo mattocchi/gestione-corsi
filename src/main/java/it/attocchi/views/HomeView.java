@@ -63,7 +63,7 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
                 indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare())));
         }
-        if (securityService.hasRole("STUDENTE")) {
+        if (securityService.hasRole("ALLIEVO")) {
             add(sezione("I miei corsi",
                 indicatore(VaadinIcon.BOOK, "Corsi a cui sono iscritto", dashboardService.corsiAllievo(username))));
         }

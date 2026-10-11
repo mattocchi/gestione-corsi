@@ -161,9 +161,9 @@ public class Corso {
         return iscrizioni;
     }
 
-    /** Studenti iscritti al corso, ricavati dalle iscrizioni. */
-    public Set<Studente> getStudenti() {
-        return iscrizioni.stream().map(Iscrizione::getStudente).collect(Collectors.toSet());
+    /** Allievi iscritti al corso, ricavati dalle iscrizioni. */
+    public Set<Allievo> getAllievi() {
+        return iscrizioni.stream().map(Iscrizione::getAllievo).collect(Collectors.toSet());
     }
 
     public Set<Lezione> getLezioni() {

@@ -30,7 +30,7 @@ import it.attocchi.entity.Lezione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.Presenza;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.repository.InsegnanteRepository;
@@ -41,19 +41,19 @@ import it.attocchi.service.LezioneService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
 import it.attocchi.service.PresenzaService;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.PartecipantiDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
-import it.attocchi.views.admin.StudentiView;
+import it.attocchi.views.admin.AllieviView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
-import it.attocchi.views.studente.MieiCorsiView;
+import it.attocchi.views.allievo.MieiCorsiView;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -99,7 +99,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Autowired
     private CorsoService corsoService;
     @Autowired
-    private StudenteService studenteService;
+    private AllievoService allievoService;
 
     @Autowired
     private PagamentoService pagamentoService;
@@ -128,7 +128,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
-        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Studenti", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
+        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Allievi", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
         assertFalse(voci.contains("Le Mie Lezioni"), voci.toString());
     }
 
@@ -153,11 +153,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_dashboardConRiepilogoPagamenti() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
         Pagamento rata = new Pagamento();
         rata.setData(LocalDate.now());
         rata.setImporto(new BigDecimal("200"));
-        pagamentoService.salva(canto.getId(), studente.getId(), rata);
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
         try {
             // La Home è già aperta: si ricostruisce navigando altrove e tornando
             navigate(CorsiView.class);
@@ -177,7 +177,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Corso di Chitarra", grid.getCellText(1, 0));
             assertEquals("3.600,00 € (100%)", grid.getCellText(1, 5));
         } finally {
-            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }
 
@@ -186,7 +186,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void genitore_dashboardConICorsiDeiFigli() {
         navigate(HomeView.class);
 
-        // genitore3: Studente Canto3 (Canto) e Studente Chitarra1 (Chitarra)
+        // genitore3: Allievo Canto3 (Canto) e Allievo Chitarra1 (Chitarra)
         assertEquals(List.of("Corsi dei figli: 2"), indicatori());
     }
 
@@ -210,7 +210,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("studente_canto1")
+    @WithUserDetails("allievo_canto1")
     void allievo_dashboardConIPropriCorsi() {
         navigate(HomeView.class);
 
@@ -258,9 +258,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
-        assertEquals(List.of("17:00 Studente Canto5", "17:40 Studente Canto4", "18:20 Studente Canto3",
-            "19:00 Studente Canto2", "19:40 Studente Canto1",
-            "- Studente Canto6", "- Studente Canto7"), ordinePartecipanti(righe));
+        assertEquals(List.of("17:00 Allievo Canto5", "17:40 Allievo Canto4", "18:20 Allievo Canto3",
+            "19:00 Allievo Canto2", "19:40 Allievo Canto1",
+            "- Allievo Canto6", "- Allievo Canto7"), ordinePartecipanti(righe));
     }
 
     @Test
@@ -275,14 +275,14 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
 
         // Canto6 (senza orario, penultimo) alle 16:30: salvato e spostato in cima
-        assertEquals("Studente Canto6", righe.getCellText(5, 1));
+        assertEquals("Allievo Canto6", righe.getCellText(5, 1));
         test((TimePicker) righe.getCellComponent(5, 0)).setValue(LocalTime.of(16, 30));
-        assertEquals("16:30 Studente Canto6", ordinePartecipanti(righe).getFirst());
+        assertEquals("16:30 Allievo Canto6", ordinePartecipanti(righe).getFirst());
         assertEquals(LocalTime.of(16, 30), corsoService.findPartecipanti(corsi.getRow(canto).getId()).getFirst().getOrarioLezione());
 
         // Tolto l'orario torna in fondo (ripristina i dati di test)
         test((TimePicker) righe.getCellComponent(0, 0)).clear();
-        assertEquals("- Studente Canto6", ordinePartecipanti(righe).get(5));
+        assertEquals("- Allievo Canto6", ordinePartecipanti(righe).get(5));
     }
 
     @Test
@@ -398,27 +398,27 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_modificaNomeECognomeDiUnoStudente() {
-        navigate(StudentiView.class);
-        var studenti = test((Grid<Studente>) find(Grid.class).single());
+    void segreteria_modificaNomeECognomeDiUnoAllievo() {
+        navigate(AllieviView.class);
+        var allievi = test((Grid<Allievo>) find(Grid.class).single());
         int riga = -1;
-        for (int row = 0; row < studenti.size(); row++) {
-            if (studenti.getRow(row).getNomeCompleto().equals("Studente Canto2")) {
+        for (int row = 0; row < allievi.size(); row++) {
+            if (allievi.getRow(row).getNomeCompleto().equals("Allievo Canto2")) {
                 riga = row;
             }
         }
-        Long userId = studenti.getRow(riga).getUser().getId();
+        Long userId = allievi.getRow(riga).getUser().getId();
 
-        test((Button) studenti.getCellComponent(riga, 6).getChildren().findFirst().orElseThrow()).click();
+        test((Button) allievi.getCellComponent(riga, 6).getChildren().findFirst().orElseThrow()).click();
         test(find(TextField.class).withLabel("Nome").single()).setValue("Giulia");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Neri");
         test(find(Button.class).withText("Salva").single()).click();
         try {
             assertEquals("Giulia Neri", userService.findById(userId).getNomeCompleto());
-            assertTrue(IntStream.range(0, studenti.size()).anyMatch(row -> studenti.getCellText(row, 0).equals("Giulia Neri")));
+            assertTrue(IntStream.range(0, allievi.size()).anyMatch(row -> allievi.getCellText(row, 0).equals("Giulia Neri")));
         } finally {
             User user = userService.findById(userId);
-            user.setNome("Studente");
+            user.setNome("Allievo");
             user.setCognome("Canto2");
             userService.save(user, null);
         }
@@ -426,11 +426,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
-    void segreteria_creaStudenteAssegnatoAUnGenitore() {
-        navigate(StudentiView.class);
-        var studenti = test(find(Grid.class).single());
-        test(find(Button.class).withText("Nuovo Studente").single()).click();
-        test(find(TextField.class).withLabel("Username").single()).setValue("studente_nuovo");
+    void segreteria_creaAllievoAssegnatoAUnGenitore() {
+        navigate(AllieviView.class);
+        var allievi = test(find(Grid.class).single());
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        test(find(TextField.class).withLabel("Username").single()).setValue("allievo_nuovo");
         test(find(PasswordField.class).withLabel("Password").single()).setValue("segreta");
         test(find(TextField.class).withLabel("Nome").single()).setValue("Luca");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Gialli");
@@ -438,24 +438,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(codiceFiscale).setValue("GLLLCU12A01H501Z");
         test(find(DatePicker.class).withLabel("Data di nascita").single()).setValue(LocalDate.of(2012, 1, 1));
 
-        // Senza genitore lo studente (e il suo utente) non viene creato
+        // Senza genitore l'allievo (e il suo utente) non viene creato
         test(find(Button.class).withText("Salva").single()).click();
         assertTrue(find(ComboBox.class).withLabel("Genitore").single().isInvalid());
         // Carattere di controllo del codice fiscale sbagliato
         assertTrue(codiceFiscale.isInvalid());
-        assertFalse(userService.existsByUsername("studente_nuovo"));
+        assertFalse(userService.existsByUsername("allievo_nuovo"));
 
         test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
         test(codiceFiscale).setValue("glllcu12a01h501l");
         test(find(Button.class).withText("Salva").single()).click();
-        Studente nuovo = studenteService.findByUsername("studente_nuovo").orElseThrow();
+        Allievo nuovo = allievoService.findByUsername("allievo_nuovo").orElseThrow();
         try {
-            assertEquals(14, studenti.size());
+            assertEquals(14, allievi.size());
             assertEquals("Genitore1 Cognome1", nuovo.getGenitore().getNomeCompleto());
             assertEquals("GLLLCU12A01H501L", nuovo.getCodiceFiscale());
-            assertTrue(nuovo.getUser().getRoles().contains("STUDENTE"));
+            assertTrue(nuovo.getUser().getRoles().contains("ALLIEVO"));
         } finally {
-            studenteService.delete(nuovo);
+            allievoService.delete(nuovo);
             userService.delete(nuovo.getUser());
         }
     }
@@ -538,8 +538,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertFalse(find(ComboBox.class).from(dialog).exists());
             assertTrue(find(TimePicker.class).from(dialog).all().stream().allMatch(TimePicker::isReadOnly));
 
-            Long studente = studenteService.findByUsername("studente_canto1").orElseThrow().getId();
-            assertThrows(IllegalStateException.class, () -> corsoService.iscrivi(chitarra.getId(), studente));
+            Long allievo = allievoService.findByUsername("allievo_canto1").orElseThrow().getId();
+            assertThrows(IllegalStateException.class, () -> corsoService.iscrivi(chitarra.getId(), allievo));
             assertThrows(IllegalStateException.class, () -> corsoService.generaLezioni(chitarra));
         } finally {
             riattiva(chitarra);
@@ -559,8 +559,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(HomeView.class);
             assertEquals(List.of("Corsi assegnati: 0", "Lezioni fatte: 0", "Lezioni da fare: 0"), indicatori());
 
-            Presenza presenza = presenzaService.findByCorsoAndStudente(chitarra.getId(),
-                studenteService.findByUsername("studente_chitarra1").orElseThrow().getId()).getFirst();
+            Presenza presenza = presenzaService.findByCorsoAndAllievo(chitarra.getId(),
+                allievoService.findByUsername("allievo_chitarra1").orElseThrow().getId()).getFirst();
             presenza.setStato(StatoPresenza.ASSENTE_GIUSTIFICATA);
             assertThrows(IllegalStateException.class, () -> presenzaService.save(presenza));
         } finally {
@@ -569,7 +569,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("studente_chitarra1")
+    @WithUserDetails("allievo_chitarra1")
     void allievo_nonVedeICorsiNonAttivi() {
         Corso chitarra = disattiva("Corso di Chitarra");
         try {
@@ -604,12 +604,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
-        Long studenteId = studenteService.findByUsername("studente_canto2").orElseThrow().getId();
+        Long allievoId = allievoService.findByUsername("allievo_canto2").orElseThrow().getId();
         test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Partecipanti")).click();
         var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(find(PartecipantiDialog.class).single()).single());
         int riga = IntStream.range(0, partecipanti.size())
-            .filter(r -> partecipanti.getCellText(r, 1).equals("Studente Canto2")).findFirst().orElseThrow();
-        test(pulsante(partecipanti.getCellComponent(riga, 3), "Quota e pagamenti di Studente Canto2")).click();
+            .filter(r -> partecipanti.getCellText(r, 1).equals("Allievo Canto2")).findFirst().orElseThrow();
+        test(pulsante(partecipanti.getCellComponent(riga, 3), "Quota e pagamenti di Allievo Canto2")).click();
 
         QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
         try {
@@ -617,12 +617,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .setValue(new BigDecimal("450"));
             test(find(TextField.class).from(dialog).withLabel("Motivo").single()).setValue("fratelli");
 
-            Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, studenteId);
+            Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
             assertEquals(0, new BigDecimal("450").compareTo(iscrizione.getQuotaPersonalizzata()));
             assertEquals("fratelli", iscrizione.getNotaQuota());
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 450,00 €").exists());
         } finally {
-            pagamentoService.impostaQuota(corsoId, studenteId, null, null);
+            pagamentoService.impostaQuota(corsoId, allievoId, null, null);
         }
     }
 
@@ -631,8 +631,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_registraModificaEdEliminaUnaRata() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
-        new QuotaPagamentiDialog(pagamentoService, canto, studente).open();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
         QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
         var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).single());
         try {
@@ -662,7 +662,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(find(Button.class).withText("Elimina").single()).click();
             assertEquals(0, rate.size());
         } finally {
-            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }
 
@@ -703,24 +703,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         // Aggiunta: compare nell'elenco e ha le presenze in tutte le lezioni (nessuna completata)
         ComboBox<?> nuovo = find(ComboBox.class).from(dialog).single();
-        test(nuovo).selectItem("Studente Canto1");
+        test(nuovo).selectItem("Allievo Canto1");
         test(find(Button.class).from(dialog).withText("Aggiungi").single()).click();
         assertEquals(7, partecipanti.size());
-        Long studenteId = corsoService.findPartecipanti(corso.getId()).stream()
-            .filter(i -> i.getStudente().getNomeCompleto().equals("Studente Canto1"))
-            .findFirst().orElseThrow().getStudente().getId();
-        assertEquals(30, presenzaService.findByCorsoAndStudente(corso.getId(), studenteId).size());
+        Long allievoId = corsoService.findPartecipanti(corso.getId()).stream()
+            .filter(i -> i.getAllievo().getNomeCompleto().equals("Allievo Canto1"))
+            .findFirst().orElseThrow().getAllievo().getId();
+        assertEquals(30, presenzaService.findByCorsoAndAllievo(corso.getId(), allievoId).size());
 
         // Rimozione: sparisce dall'elenco con le presenze delle lezioni da fare
         int riga = -1;
         for (int row = 0; row < partecipanti.size(); row++) {
-            if (partecipanti.getCellText(row, 1).equals("Studente Canto1")) {
+            if (partecipanti.getCellText(row, 1).equals("Allievo Canto1")) {
                 riga = row;
             }
         }
-        test(pulsante(partecipanti.getCellComponent(riga, 3), "Rimuovi Studente Canto1")).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 3), "Rimuovi Allievo Canto1")).click();
         assertEquals(6, partecipanti.size());
-        assertTrue(presenzaService.findByCorsoAndStudente(corso.getId(), studenteId).isEmpty());
+        assertTrue(presenzaService.findByCorsoAndAllievo(corso.getId(), allievoId).isEmpty());
     }
 
     private static int riga(GridTester<Grid<Corso>, Corso> grid, String nome) {
@@ -742,15 +742,15 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("admin")
-    void admin_studenti_grigliaConNumeroCorsi() {
-        navigate(StudentiView.class);
+    void admin_allievi_grigliaConNumeroCorsi() {
+        navigate(AllieviView.class);
 
         var grid = test(find(Grid.class).single());
         assertEquals(13, grid.size());
         for (int row = 0; row < grid.size(); row++) {
             assertEquals("1", grid.getCellText(row, 5));
             grid.getCellText(row, 3);
-            // Nessuno studente di esempio ha un indirizzo proprio: si mostra quello del genitore
+            // Nessuno allievo di esempio ha un indirizzo proprio: si mostra quello del genitore
             assertTrue(grid.getCellText(row, 4).matches("Via Roma \\d, 00184 Roma \\(RM\\) \\(del genitore\\)"),
                 grid.getCellText(row, 4));
         }
@@ -778,16 +778,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_vedeCorsiEStudentiSenzaElimina() {
+    void segreteria_vedeCorsiEAllieviSenzaElimina() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         assertEquals(2, corsi.size());
         assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Genera Lezioni");
 
-        navigate(StudentiView.class);
-        var studenti = test(find(Grid.class).single());
-        assertEquals(13, studenti.size());
-        assertAzioni(studenti.getCellComponent(0, 6), "Modifica");
+        navigate(AllieviView.class);
+        var allievi = test(find(Grid.class).single());
+        assertEquals(13, allievi.size());
+        assertAzioni(allievi.getCellComponent(0, 6), "Modifica");
     }
 
     @Test
@@ -858,7 +858,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 genitore3 = row;
             }
         }
-        assertEquals("Studente Canto3, Studente Chitarra1", grid.getCellText(genitore3, 3));
+        assertEquals("Allievo Canto3, Allievo Chitarra1", grid.getCellText(genitore3, 3));
         assertEquals("2", grid.getCellText(genitore3, 4));
     }
 
@@ -1021,17 +1021,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void genitore_vedeQuotaPagatoResiduoERate() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
         Pagamento rata = new Pagamento();
         rata.setData(LocalDate.now());
         rata.setImporto(new BigDecimal("200"));
         rata.setMetodo(MetodoPagamento.CASSA);
-        pagamentoService.salva(canto.getId(), studente.getId(), rata);
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
         try {
             navigate(FigliView.class);
-            var figli = test((Grid<Studente>) find(Grid.class).single());
+            var figli = test((Grid<Allievo>) find(Grid.class).single());
             int riga = IntStream.range(0, figli.size())
-                .filter(r -> figli.getCellText(r, 0).equals("Studente Canto3")).findFirst().orElseThrow();
+                .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
             test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
 
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
@@ -1039,7 +1039,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 3)).getText());
             test(pulsante(corsi.getCellComponent(0, 4), "Pagamenti")).click();
 
-            PagamentiStudenteDialog dialog = find(PagamentiStudenteDialog.class).single();
+            PagamentiAllievoDialog dialog = find(PagamentiAllievoDialog.class).single();
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 600,00 €").exists());
             assertTrue(find(Span.class).from(dialog).withText("Pagato 200,00 €").exists());
             assertTrue(find(Span.class).from(dialog).withText("Residuo 400,00 €").exists());
@@ -1049,7 +1049,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             // Sola lettura: nessun pulsante di modifica
             assertFalse(find(Button.class).from(dialog).withText("Aggiungi pagamento").exists());
         } finally {
-            pagamentoService.findPagamenti(canto.getId(), studente.getId()).forEach(pagamentoService::elimina);
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }
 
@@ -1072,9 +1072,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void genitore_modificaIDatiDiUnFiglio() {
         navigate(FigliView.class);
-        var figli = test((Grid<Studente>) find(Grid.class).single());
+        var figli = test((Grid<Allievo>) find(Grid.class).single());
         int riga = IntStream.range(0, figli.size())
-            .filter(r -> figli.getCellText(r, 0).equals("Studente Canto3")).findFirst().orElseThrow();
+            .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
         test(pulsante(figli.getCellComponent(riga, 3), "Modifica")).click();
 
         Dialog dialog = find(Dialog.class).single();
@@ -1084,30 +1084,30 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).from(dialog).withText("Salva").single()).click();
         assertFalse(dialog.isOpened());
 
-        Studente studente = studenteService.findByUsername("studente_canto3").orElseThrow();
-        assertEquals("Torino", studente.getLuogoNascita());
-        assertEquals("320 7654321", studente.getUser().getTelefono());
-        assertEquals("genitore3", studente.getGenitore().getUser().getUsername());
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        assertEquals("Torino", allievo.getLuogoNascita());
+        assertEquals("320 7654321", allievo.getUser().getTelefono());
+        assertEquals("genitore3", allievo.getGenitore().getUser().getUsername());
 
         // Un genitore non può modificare i figli di un altro
-        Studente altro = studenteService.findByUsername("studente_canto1").orElseThrow();
+        Allievo altro = allievoService.findByUsername("allievo_canto1").orElseThrow();
         assertThrows(IllegalArgumentException.class,
-            () -> studenteService.aggiornaDaGenitore("genitore3", altro.getId(), altro, altro.getUser()));
+            () -> allievoService.aggiornaDaGenitore("genitore3", altro.getId(), altro, altro.getUser()));
     }
 
     @Test
     @WithUserDetails("genitore3")
     void genitore_stampaLaRicevutaDiUnFiglio() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        Studente figlio = studenteService.findByUsername("studente_canto3").orElseThrow();
-        Studente altro = studenteService.findByUsername("studente_canto1").orElseThrow();
+        Allievo figlio = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Allievo altro = allievoService.findByUsername("allievo_canto1").orElseThrow();
         Pagamento rata = new Pagamento();
         rata.setData(LocalDate.now());
         rata.setImporto(new BigDecimal("200"));
         pagamentoService.salva(canto.getId(), figlio.getId(), rata);
         try {
             navigate("ricevuta/" + canto.getId() + "/" + figlio.getId(), RicevutaView.class);
-            assertTrue(find(Span.class).withText("Studente Canto3").exists());
+            assertTrue(find(Span.class).withText("Allievo Canto3").exists());
             assertTrue(find(Span.class).withText(figlio.getCodiceFiscale()).exists());
             assertTrue(find(Span.class).withText("Via Roma 3, 00184 Roma (RM) (del genitore)").exists());
             assertTrue(find(Span.class).withText("2024/2025").exists());
@@ -1115,7 +1115,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).withText("400,00 €").exists());
             assertTrue(find(Button.class).withText("Stampa").exists());
 
-            // Ricevuta di uno studente che non è suo figlio: come se non esistesse
+            // Ricevuta di un allievo che non è suo figlio: come se non esistesse
             navigate("ricevuta/" + canto.getId() + "/" + altro.getId(), RouteNotFoundError.class);
         } finally {
             pagamentoService.findPagamenti(canto.getId(), figlio.getId()).forEach(pagamentoService::elimina);
@@ -1123,16 +1123,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("studente_canto1")
-    void studente_nonAccedeAllaRicevuta() {
+    @WithUserDetails("allievo_canto1")
+    void allievo_nonAccedeAllaRicevuta() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        Studente studente = studenteService.findByUsername("studente_canto1").orElseThrow();
-        navigate("ricevuta/" + canto.getId() + "/" + studente.getId(), RouteNotFoundError.class);
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        navigate("ricevuta/" + canto.getId() + "/" + allievo.getId(), RouteNotFoundError.class);
     }
 
     @Test
-    @WithUserDetails("studente_canto1")
-    void studente_vedeIlProprioProfiloInSolaLettura() {
+    @WithUserDetails("allievo_canto1")
+    void allievo_vedeIlProprioProfiloInSolaLettura() {
         navigate(ProfiloView.class);
         assertTrue(find(TextField.class).withLabel("Nome").single().isReadOnly());
         assertTrue(find(TextField.class).withLabel("Codice fiscale").single().isReadOnly());
@@ -1143,8 +1143,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
-    @WithUserDetails("studente_canto1")
-    void studente_vedeIPropriCorsi() {
+    @WithUserDetails("allievo_canto1")
+    void allievo_vedeIPropriCorsi() {
         assertInstanceOf(MieiCorsiView.class, navigate(MieiCorsiView.class));
 
         var grid = test(find(Grid.class).single());

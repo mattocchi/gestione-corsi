@@ -111,7 +111,7 @@ public class PagamentoService {
         }
     }
 
-    /** Dati della ricevuta di un partecipante: iscrizione (con corso, studente e genitore), rate e situazione. */
+    /** Dati della ricevuta di un partecipante: iscrizione (con corso, allievo e genitore), rate e situazione. */
     public record Ricevuta(Iscrizione iscrizione, List<Pagamento> pagamenti, Situazione situazione) {
     }
 
@@ -126,48 +126,48 @@ public class PagamentoService {
         this.corsoRepository = corsoRepository;
     }
 
-    public Iscrizione findIscrizione(Long corsoId, Long studenteId) {
-        return iscrizione(corsoId, studenteId);
+    public Iscrizione findIscrizione(Long corsoId, Long allievoId) {
+        return iscrizione(corsoId, allievoId);
     }
 
-    public List<Pagamento> findPagamenti(Long corsoId, Long studenteId) {
-        return pagamentoRepository.findByIscrizione(corsoId, studenteId);
+    public List<Pagamento> findPagamenti(Long corsoId, Long allievoId) {
+        return pagamentoRepository.findByIscrizione(corsoId, allievoId);
     }
 
-    public Situazione situazione(Long corsoId, Long studenteId) {
-        BigDecimal pagato = findPagamenti(corsoId, studenteId).stream()
+    public Situazione situazione(Long corsoId, Long allievoId) {
+        BigDecimal pagato = findPagamenti(corsoId, allievoId).stream()
             .map(Pagamento::getImporto)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new Situazione(iscrizione(corsoId, studenteId).getQuotaDovuta(), pagato);
+        return new Situazione(iscrizione(corsoId, allievoId).getQuotaDovuta(), pagato);
     }
 
     /** Ricevuta del partecipante: disponibile anche per i corsi non attivi. */
-    public Ricevuta ricevuta(Long corsoId, Long studenteId) {
-        return new Ricevuta(iscrizione(corsoId, studenteId), findPagamenti(corsoId, studenteId), situazione(corsoId, studenteId));
+    public Ricevuta ricevuta(Long corsoId, Long allievoId) {
+        return new Ricevuta(iscrizione(corsoId, allievoId), findPagamenti(corsoId, allievoId), situazione(corsoId, allievoId));
     }
 
-    /** Situazione di ogni partecipante del corso, per id dello studente. */
+    /** Situazione di ogni partecipante del corso, per id dell'allievo. */
     public Map<Long, Situazione> situazioniDelCorso(Long corsoId) {
         Map<Long, BigDecimal> pagato = new HashMap<>();
-        for (Object[] riga : pagamentoRepository.sommaPerStudente(corsoId)) {
+        for (Object[] riga : pagamentoRepository.sommaPerAllievo(corsoId)) {
             pagato.put((Long) riga[0], (BigDecimal) riga[1]);
         }
         Map<Long, Situazione> situazioni = new HashMap<>();
-        for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithStudente(corsoId)) {
-            Long studenteId = iscrizione.getStudente().getId();
-            situazioni.put(studenteId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(studenteId, BigDecimal.ZERO)));
+        for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(corsoId)) {
+            Long allievoId = iscrizione.getAllievo().getId();
+            situazioni.put(allievoId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(allievoId, BigDecimal.ZERO)));
         }
         return situazioni;
     }
 
-    /** Situazione dello studente in ognuno dei suoi corsi, per id del corso. */
-    public Map<Long, Situazione> situazioniDelloStudente(Long studenteId) {
+    /** Situazione dell'allievo in ognuno dei suoi corsi, per id del corso. */
+    public Map<Long, Situazione> situazioniDelloAllievo(Long allievoId) {
         Map<Long, BigDecimal> pagato = new HashMap<>();
-        for (Object[] riga : pagamentoRepository.sommaPerCorso(studenteId)) {
+        for (Object[] riga : pagamentoRepository.sommaPerCorso(allievoId)) {
             pagato.put((Long) riga[0], (BigDecimal) riga[1]);
         }
         Map<Long, Situazione> situazioni = new HashMap<>();
-        for (Iscrizione iscrizione : iscrizioneRepository.findByStudenteIdWithCorso(studenteId)) {
+        for (Iscrizione iscrizione : iscrizioneRepository.findByAllievoIdWithCorso(allievoId)) {
             Long corsoId = iscrizione.getCorso().getId();
             situazioni.put(corsoId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(corsoId, BigDecimal.ZERO)));
         }
@@ -198,25 +198,25 @@ public class PagamentoService {
 
     /** Imposta (o con {@code null} toglie) la quota personalizzata del partecipante, con la nota sul motivo. */
     @Transactional
-    public void impostaQuota(Long corsoId, Long studenteId, BigDecimal quota, String nota) {
+    public void impostaQuota(Long corsoId, Long allievoId, BigDecimal quota, String nota) {
         if (quota != null && quota.signum() < 0) {
             throw new IllegalArgumentException("La quota non può essere negativa");
         }
-        Iscrizione iscrizione = iscrizione(corsoId, studenteId);
+        Iscrizione iscrizione = iscrizione(corsoId, allievoId);
         iscrizione.setQuotaPersonalizzata(quota);
         iscrizione.setNotaQuota(quota != null && nota != null && !nota.isBlank() ? nota.trim() : null);
     }
 
     /** Aggiunge o modifica una rata del partecipante indicato. */
     @Transactional
-    public Pagamento salva(Long corsoId, Long studenteId, Pagamento pagamento) {
+    public Pagamento salva(Long corsoId, Long allievoId, Pagamento pagamento) {
         if (pagamento.getImporto() == null || pagamento.getImporto().signum() <= 0) {
             throw new IllegalArgumentException("L'importo deve essere maggiore di zero");
         }
         if (pagamento.getData() == null || pagamento.getMetodo() == null) {
             throw new IllegalArgumentException("Data e metodo del pagamento sono obbligatori");
         }
-        pagamento.setIscrizione(iscrizione(corsoId, studenteId));
+        pagamento.setIscrizione(iscrizione(corsoId, allievoId));
         return pagamentoRepository.save(pagamento);
     }
 
@@ -225,8 +225,8 @@ public class PagamentoService {
         pagamentoRepository.deleteById(pagamento.getId());
     }
 
-    private Iscrizione iscrizione(Long corsoId, Long studenteId) {
-        return iscrizioneRepository.findById(new IscrizioneId(corsoId, studenteId))
-            .orElseThrow(() -> new IllegalArgumentException("Lo studente " + studenteId + " non è iscritto al corso " + corsoId));
+    private Iscrizione iscrizione(Long corsoId, Long allievoId) {
+        return iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
+            .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
     }
 }

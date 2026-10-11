@@ -16,12 +16,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.InsegnanteService;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -41,31 +41,31 @@ import java.util.Optional;
 @Route(value = "profilo", layout = MainLayout.class)
 @PageTitle("Il mio profilo")
 @Menu(title = "Il mio profilo", order = 90, icon = "vaadin:user-card")
-@RolesAllowed({"INSEGNANTE", "GENITORE", "STUDENTE"})
+@RolesAllowed({"INSEGNANTE", "GENITORE", "ALLIEVO"})
 public class ProfiloView extends VerticalLayout {
 
     private final UserService userService;
     private final String username;
 
     public ProfiloView(SecurityService securityService, UserService userService, InsegnanteService insegnanteService,
-                       GenitoreService genitoreService, StudenteService studenteService) {
+                       GenitoreService genitoreService, AllievoService allievoService) {
         this.userService = userService;
         this.username = securityService.getUsername().orElseThrow();
         setMaxWidth("800px");
 
         Optional<Insegnante> insegnante = insegnanteService.findByUsername(username);
         Optional<Genitore> genitore = genitoreService.findByUsername(username);
-        Optional<Studente> studente = studenteService.findByUsername(username);
+        Optional<Allievo> allievo = allievoService.findByUsername(username);
         if (insegnante.isPresent()) {
             profiloInsegnante(insegnante.get(), insegnanteService);
         } else if (genitore.isPresent()) {
             profiloGenitore(genitore.get(), genitoreService);
-        } else if (studente.isPresent()) {
-            profiloStudente(studente.get());
+        } else if (allievo.isPresent()) {
+            profiloAllievo(allievo.get());
         } else {
             add(new Span("Nessuna scheda anagrafica collegata a questo utente."));
         }
-        if (studente.isEmpty() || insegnante.isPresent() || genitore.isPresent()) {
+        if (allievo.isEmpty() || insegnante.isPresent() || genitore.isPresent()) {
             add(ViewSupport.sezione("Cambia password"), cambioPassword());
         }
     }
@@ -139,16 +139,16 @@ public class ProfiloView extends VerticalLayout {
     }
 
     /** Profilo dell'allievo in sola lettura; se non ha un indirizzo proprio si mostra quello del genitore. */
-    private void profiloStudente(Studente studente) {
-        UtenteFields utente = new UtenteFields(studente.getUser(), userService);
+    private void profiloAllievo(Allievo allievo) {
+        UtenteFields utente = new UtenteFields(allievo.getUser(), userService);
         utente.setReadOnly(true);
-        Binder<Studente> binder = new Binder<>(Studente.class);
-        AnagraficaFields<Studente> anagrafica = new AnagraficaFields<>(binder, true);
-        binder.readBean(studente);
+        Binder<Allievo> binder = new Binder<>(Allievo.class);
+        AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
+        binder.readBean(allievo);
         binder.setReadOnly(true);
 
         TextField genitore = new TextField("Genitore");
-        genitore.setValue(studente.getGenitore() != null ? studente.getGenitore().getNomeCompleto() : "");
+        genitore.setValue(allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : "");
         genitore.setReadOnly(true);
         FormLayout utenteForm = new FormLayout(utente.getComponents());
         utenteForm.add(genitore);
@@ -157,8 +157,8 @@ public class ProfiloView extends VerticalLayout {
         avviso.addClassName("avviso-sola-lettura");
         add(avviso, ViewSupport.sezione("Utente e genitore"), utenteForm,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
-        if (studente.isIndirizzoDelGenitore()) {
-            add(new Span("Indirizzo: " + Formati.indirizzo(studente)));
+        if (allievo.isIndirizzoDelGenitore()) {
+            add(new Span("Indirizzo: " + Formati.indirizzo(allievo)));
         }
     }
 

@@ -12,9 +12,9 @@ import java.util.Optional;
 @Repository
 public interface PresenzaRepository extends JpaRepository<Presenza, Long> {
     List<Presenza> findByLezioneId(Long lezioneId);
-    List<Presenza> findByStudenteId(Long studenteId);
-    Optional<Presenza> findByLezioneIdAndStudenteId(Long lezioneId, Long studenteId);
+    List<Presenza> findByAllievoId(Long allievoId);
+    Optional<Presenza> findByLezioneIdAndAllievoId(Long lezioneId, Long allievoId);
 
-    @Query("SELECT p FROM Presenza p WHERE p.lezione.corso.id = :corsoId AND p.studente.id = :studenteId ORDER BY p.lezione.data")
-    List<Presenza> findByCorsoIdAndStudenteId(@Param("corsoId") Long corsoId, @Param("studenteId") Long studenteId);
+    @Query("SELECT p FROM Presenza p WHERE p.lezione.corso.id = :corsoId AND p.allievo.id = :allievoId ORDER BY p.lezione.data")
+    List<Presenza> findByCorsoIdAndAllievoId(@Param("corsoId") Long corsoId, @Param("allievoId") Long allievoId);
 }

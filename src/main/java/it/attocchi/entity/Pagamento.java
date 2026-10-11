@@ -20,7 +20,7 @@ public class Pagamento {
     @ManyToOne(optional = false)
     @JoinColumns({
         @JoinColumn(name = "corso_id", referencedColumnName = "corso_id"),
-        @JoinColumn(name = "studente_id", referencedColumnName = "studente_id")
+        @JoinColumn(name = "allievo_id", referencedColumnName = "allievo_id")
     })
     private Iscrizione iscrizione;
 

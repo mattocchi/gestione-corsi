@@ -1,4 +1,4 @@
-package it.attocchi.views.studente;
+package it.attocchi.views.allievo;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -8,14 +8,14 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Presenza;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PresenzaService;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
-import it.attocchi.views.PresenzeStudenteDialog;
+import it.attocchi.views.PresenzeAllievoDialog;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -24,22 +24,22 @@ import java.util.List;
 @Route(value = "miei-corsi", layout = MainLayout.class)
 @PageTitle("I Miei Corsi")
 @Menu(title = "I Miei Corsi", order = 30, icon = "vaadin:book")
-@RolesAllowed("STUDENTE")
+@RolesAllowed("ALLIEVO")
 public class MieiCorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
 
     private final Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
-    private Studente studenteCorrente;
+    private Allievo allievoCorrente;
 
     public MieiCorsiView(CorsoService corsoService, PresenzaService presenzaService,
-                         SecurityService securityService, StudenteService studenteService) {
+                         SecurityService securityService, AllievoService allievoService) {
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
 
         setSizeFull();
-        studenteCorrente = securityService.getUsername().flatMap(studenteService::findByUsername).orElse(null);
+        allievoCorrente = securityService.getUsername().flatMap(allievoService::findByUsername).orElse(null);
         configureGrid();
 
         add(gridCorsi);
@@ -62,16 +62,16 @@ public class MieiCorsiView extends VerticalLayout {
     }
 
     private void openPresenzeDialog(Corso corso) {
-        if (studenteCorrente == null) {
+        if (allievoCorrente == null) {
             return;
         }
-        List<Presenza> presenze = presenzaService.findByCorsoAndStudente(corso.getId(), studenteCorrente.getId());
-        new PresenzeStudenteDialog("Presenze – " + corso.getNome(), presenze).open();
+        List<Presenza> presenze = presenzaService.findByCorsoAndAllievo(corso.getId(), allievoCorrente.getId());
+        new PresenzeAllievoDialog("Presenze – " + corso.getNome(), presenze).open();
     }
 
     private void updateGrid() {
-        if (studenteCorrente != null) {
-            List<Corso> corsi = corsoService.findAttiviByStudente(studenteCorrente.getId());
+        if (allievoCorrente != null) {
+            List<Corso> corsi = corsoService.findAttiviByAllievo(allievoCorrente.getId());
             gridCorsi.setItems(corsi);
         }
     }

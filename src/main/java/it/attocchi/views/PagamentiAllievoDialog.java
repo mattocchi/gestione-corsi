@@ -12,12 +12,12 @@ import it.attocchi.service.PagamentoService.Situazione;
 import java.util.List;
 
 /**
- * Dialog in sola lettura con quota, pagato, residuo e rate di uno studente in un corso (vista del genitore).
+ * Dialog in sola lettura con quota, pagato, residuo e rate di un allievo in un corso (vista del genitore).
  * Su mobile la griglia mostra solo data e importo.
  */
-public class PagamentiStudenteDialog extends Dialog {
+public class PagamentiAllievoDialog extends Dialog {
 
-    public PagamentiStudenteDialog(String title, Iscrizione iscrizione, Situazione situazione, List<Pagamento> pagamenti) {
+    public PagamentiAllievoDialog(String title, Iscrizione iscrizione, Situazione situazione, List<Pagamento> pagamenti) {
         setHeaderTitle(title);
         setWidth("700px");
         setMaxWidth("100%");

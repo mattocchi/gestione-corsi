@@ -35,7 +35,7 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.PagamentoService;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.SegmentedControl;
@@ -76,7 +76,7 @@ public class CorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final InsegnanteService insegnanteService;
-    private final StudenteService studenteService;
+    private final AllievoService allievoService;
     private final PagamentoService pagamentoService;
     /** L'eliminazione dei corsi è riservata all'admin; la segreteria li gestisce senza eliminarli. */
     private final boolean puoEliminare;
@@ -88,12 +88,12 @@ public class CorsiView extends VerticalLayout {
     private final ComboBox<String> filtroAnno = new ComboBox<>();
     private GridListDataView<Corso> corsi;
 
-    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, StudenteService studenteService,
+    public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, AllievoService allievoService,
                      PagamentoService pagamentoService, SecurityService securityService) {
         this.pagamentoService = pagamentoService;
         this.corsoService = corsoService;
         this.insegnanteService = insegnanteService;
-        this.studenteService = studenteService;
+        this.allievoService = allievoService;
         this.puoEliminare = securityService.hasRole("ADMIN");
 
         setSizeFull();
@@ -129,7 +129,7 @@ public class CorsiView extends VerticalLayout {
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         var numeroLezioni = grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         var durata = grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
-        var numeroStudenti = grid.addColumn(corso -> corso.getStudenti().size()).setHeader("N. Studenti");
+        var numeroAllievi = grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
         var stato = grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
         Signal.effect(grid, () -> stato.setHeader(mobile.get() ? "" : "Stato").setWidth(mobile.get() ? "3rem" : "8.5rem"));
 
@@ -148,7 +148,7 @@ public class CorsiView extends VerticalLayout {
             return actions;
         }));
 
-        ViewSupport.hideOnMobile(grid, anno, insegnante, dataInizio, numeroLezioni, durata, numeroStudenti);
+        ViewSupport.hideOnMobile(grid, anno, insegnante, dataInizio, numeroLezioni, durata, numeroAllievi);
     }
 
     private Badge createStatoBadge(Corso corso) {
@@ -254,8 +254,8 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void openPartecipanti(Corso corso) {
-        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, studenteService, pagamentoService, corso);
-        // Alla chiusura ricarica la griglia: numero di studenti e iscrizioni dei corsi aggiornati
+        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, allievoService, pagamentoService, corso);
+        // Alla chiusura ricarica la griglia: numero di allievi e iscrizioni dei corsi aggiornati
         dialog.addOpenedChangeListener(e -> {
             if (!e.isOpened()) {
                 updateGrid();

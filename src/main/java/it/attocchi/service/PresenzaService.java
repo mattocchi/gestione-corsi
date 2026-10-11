@@ -32,16 +32,16 @@ public class PresenzaService {
         return presenzaRepository.findByLezioneId(lezioneId);
     }
 
-    public List<Presenza> findByStudente(Long studenteId) {
-        return presenzaRepository.findByStudenteId(studenteId);
+    public List<Presenza> findByAllievo(Long allievoId) {
+        return presenzaRepository.findByAllievoId(allievoId);
     }
 
-    public Presenza findByLezioneAndStudente(Long lezioneId, Long studenteId) {
-        return presenzaRepository.findByLezioneIdAndStudenteId(lezioneId, studenteId).orElse(null);
+    public Presenza findByLezioneAndAllievo(Long lezioneId, Long allievoId) {
+        return presenzaRepository.findByLezioneIdAndAllievoId(lezioneId, allievoId).orElse(null);
     }
 
-    public List<Presenza> findByCorsoAndStudente(Long corsoId, Long studenteId) {
-        return presenzaRepository.findByCorsoIdAndStudenteId(corsoId, studenteId);
+    public List<Presenza> findByCorsoAndAllievo(Long corsoId, Long allievoId) {
+        return presenzaRepository.findByCorsoIdAndAllievoId(corsoId, allievoId);
     }
 
     /** Le presenze di un corso non attivo non sono modificabili. */

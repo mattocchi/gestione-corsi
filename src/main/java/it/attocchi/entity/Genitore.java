@@ -28,7 +28,7 @@ public class Genitore implements Anagrafica {
     private Indirizzo indirizzo = new Indirizzo();
 
     @OneToMany(mappedBy = "genitore")
-    private Set<Studente> figli = new HashSet<>();
+    private Set<Allievo> figli = new HashSet<>();
 
     // Costruttori
     public Genitore() {
@@ -87,11 +87,11 @@ public class Genitore implements Anagrafica {
         this.indirizzo = indirizzo;
     }
 
-    public Set<Studente> getFigli() {
+    public Set<Allievo> getFigli() {
         return figli;
     }
 
-    public void setFigli(Set<Studente> figli) {
+    public void setFigli(Set<Allievo> figli) {
         this.figli = figli;
     }
 

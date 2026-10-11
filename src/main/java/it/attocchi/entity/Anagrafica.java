@@ -2,7 +2,7 @@ package it.attocchi.entity;
 
 import java.time.LocalDate;
 
-/** Dati anagrafici comuni a studenti, genitori e insegnanti (nome, cognome e contatti sono sull'utente). */
+/** Dati anagrafici comuni a allievi, genitori e insegnanti (nome, cognome e contatti sono sull'utente). */
 public interface Anagrafica {
 
     String getCodiceFiscale();

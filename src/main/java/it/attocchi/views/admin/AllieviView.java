@@ -16,11 +16,11 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
@@ -29,23 +29,23 @@ import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route(value = "studenti", layout = MainLayout.class)
-@PageTitle("Gestione Studenti")
-@Menu(title = "Gestione Studenti", order = 11, icon = "vaadin:academy-cap")
+@Route(value = "allievi", layout = MainLayout.class)
+@PageTitle("Gestione Allievi")
+@Menu(title = "Gestione Allievi", order = 11, icon = "vaadin:academy-cap")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class StudentiView extends VerticalLayout {
+public class AllieviView extends VerticalLayout {
 
-    private final StudenteService studenteService;
+    private final AllievoService allievoService;
     private final UserService userService;
     private final GenitoreService genitoreService;
-    /** L'eliminazione degli studenti è riservata all'admin. */
+    /** L'eliminazione degli allievi è riservata all'admin. */
     private final boolean puoEliminare;
 
-    private final Grid<Studente> grid = new Grid<>(Studente.class, false);
+    private final Grid<Allievo> grid = new Grid<>(Allievo.class, false);
 
-    public StudentiView(StudenteService studenteService, UserService userService, GenitoreService genitoreService,
+    public AllieviView(AllievoService allievoService, UserService userService, GenitoreService genitoreService,
                         SecurityService securityService) {
-        this.studenteService = studenteService;
+        this.allievoService = allievoService;
         this.userService = userService;
         this.genitoreService = genitoreService;
         this.puoEliminare = securityService.hasRole("ADMIN");
@@ -53,7 +53,7 @@ public class StudentiView extends VerticalLayout {
         setSizeFull();
         configureGrid();
 
-        Button addButton = new Button("Nuovo Studente", e -> openDialog(new Studente()));
+        Button addButton = new Button("Nuovo Allievo", e -> openDialog(new Allievo()));
         add(addButton, grid);
         expand(grid);
 
@@ -61,20 +61,20 @@ public class StudentiView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid.addColumn(Studente::getNomeCompleto).setHeader("Nome").setSortable(true);
-        var codiceFiscale = grid.addColumn(Studente::getCodiceFiscale).setHeader("Codice Fiscale");
-        var dataNascita = grid.addColumn(studente -> Formati.data(studente.getDataNascita())).setHeader("Data Nascita")
-            .setComparator(Studente::getDataNascita).setAutoWidth(true).setFlexGrow(0);
-        var genitore = grid.addColumn(studente -> studente.getGenitore() != null ? studente.getGenitore().getNomeCompleto() : "")
+        grid.addColumn(Allievo::getNomeCompleto).setHeader("Nome").setSortable(true);
+        var codiceFiscale = grid.addColumn(Allievo::getCodiceFiscale).setHeader("Codice Fiscale");
+        var dataNascita = grid.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
+            .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
+        var genitore = grid.addColumn(allievo -> allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : "")
             .setHeader("Genitore");
         var indirizzo = grid.addColumn(Formati::indirizzo).setHeader("Indirizzo");
-        grid.addColumn(studente -> studente.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(allievo -> allievo.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(studente -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(studente));
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(allievo -> {
+            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(allievo));
             HorizontalLayout actions = ViewSupport.actions(editButton);
             if (puoEliminare) {
-                Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteStudente(studente));
+                Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteAllievo(allievo));
                 deleteButton.addThemeVariants(ButtonVariant.ERROR);
                 actions.add(deleteButton);
             }
@@ -84,22 +84,22 @@ public class StudentiView extends VerticalLayout {
         ViewSupport.hideOnMobile(grid, codiceFiscale, dataNascita, genitore, indirizzo);
     }
 
-    private void openDialog(Studente studente) {
-        boolean nuovo = studente.getId() == null;
-        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Studente" : "Modifica Studente", "700px");
+    private void openDialog(Allievo allievo) {
+        boolean nuovo = allievo.getId() == null;
+        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Allievo" : "Modifica Allievo", "700px");
 
-        // Nome, cognome, contatti e credenziali sono dell'utente collegato allo studente
-        User user = nuovo ? new User() : studente.getUser();
+        // Nome, cognome, contatti e credenziali sono dell'utente collegato all'allievo
+        User user = nuovo ? new User() : allievo.getUser();
         UtenteFields utente = new UtenteFields(user, userService);
 
-        Binder<Studente> binder = new Binder<>(Studente.class);
+        Binder<Allievo> binder = new Binder<>(Allievo.class);
         ComboBox<Genitore> genitore = new ComboBox<>("Genitore");
         genitore.setItems(genitoreService.findAll());
         genitore.setItemLabelGenerator(Genitore::getNomeCompleto);
-        binder.forField(genitore).asRequired("Scegli il genitore dello studente")
-            .bind(Studente::getGenitore, Studente::setGenitore);
-        AnagraficaFields<Studente> anagrafica = new AnagraficaFields<>(binder, true);
-        binder.readBean(studente);
+        binder.forField(genitore).asRequired("Scegli il genitore dell'allievo")
+            .bind(Allievo::getGenitore, Allievo::setGenitore);
+        AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
+        binder.readBean(allievo);
 
         Span indirizzoGenitore = new Span();
         indirizzoGenitore.addClassName("avviso-sola-lettura");
@@ -114,16 +114,16 @@ public class StudentiView extends VerticalLayout {
         content.setPadding(false);
 
         Button saveButton = new Button("Salva", e -> {
-            // Valida tutto prima di salvare: niente utenti creati per uno studente che poi non si salva
+            // Valida tutto prima di salvare: niente utenti creati per un allievo che poi non si salva
             boolean valido = binder.validate().isOk() & utente.validate();
-            if (!valido || !binder.writeBeanIfValid(studente) || !utente.writeBeanIfValid(user)) {
+            if (!valido || !binder.writeBeanIfValid(allievo) || !utente.writeBeanIfValid(user)) {
                 return;
             }
             try {
-                studenteService.salva(studente, user, utente.getPassword());
+                allievoService.salva(allievo, user, utente.getPassword());
                 updateGrid();
                 dialog.close();
-                Notification.show("Studente salvato con successo");
+                Notification.show("Allievo salvato con successo");
             } catch (RuntimeException ex) {
                 Notification.show("Errore nel salvataggio: " + ex.getMessage());
             }
@@ -135,24 +135,24 @@ public class StudentiView extends VerticalLayout {
         dialog.open();
     }
 
-    /** Indirizzo del genitore, mostrato quando lo studente non ne ha uno proprio. */
+    /** Indirizzo del genitore, mostrato quando l'allievo non ne ha uno proprio. */
     private static void mostraIndirizzoGenitore(Span span, Genitore genitore) {
         String indirizzo = genitore != null ? genitore.getIndirizzo().getFormattato() : "";
         span.setText("Se l'indirizzo è vuoto si mostra quello del genitore: " + indirizzo);
         span.setVisible(!indirizzo.isEmpty());
     }
 
-    private void deleteStudente(Studente studente) {
+    private void deleteAllievo(Allievo allievo) {
         try {
-            studenteService.delete(studente);
+            allievoService.delete(allievo);
             updateGrid();
-            Notification.show("Studente eliminato");
+            Notification.show("Allievo eliminato");
         } catch (RuntimeException ex) {
-            Notification.show("Impossibile eliminare lo studente: " + ex.getMessage());
+            Notification.show("Impossibile eliminare l'allievo: " + ex.getMessage());
         }
     }
 
     private void updateGrid() {
-        grid.setItems(studenteService.findAll());
+        grid.setItems(allievoService.findAll());
     }
 }

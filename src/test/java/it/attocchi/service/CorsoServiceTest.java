@@ -45,7 +45,7 @@ class CorsoServiceTest {
     }
 
     @Test
-    void generaLezioni_creaUnaPresenzaPerStudente() {
+    void generaLezioni_creaUnaPresenzaPerAllievo() {
         Corso canto = corso("Corso di Canto");
 
         corsoService.generaLezioni(canto);

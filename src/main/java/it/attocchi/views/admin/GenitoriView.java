@@ -13,7 +13,7 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.UserService;
@@ -103,7 +103,7 @@ public class GenitoriView extends VerticalLayout {
 
     private static String nomiFigli(Genitore genitore) {
         return genitore.getFigli().stream()
-            .map(Studente::getNomeCompleto)
+            .map(Allievo::getNomeCompleto)
             .sorted()
             .collect(Collectors.joining(", "));
     }

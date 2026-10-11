@@ -5,13 +5,13 @@ import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.PresenzaRepository;
-import it.attocchi.repository.StudenteRepository;
+import it.attocchi.repository.AllievoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,22 +28,22 @@ public class CorsoService {
     private final LezioneRepository lezioneRepository;
     private final PresenzaRepository presenzaRepository;
     private final IscrizioneRepository iscrizioneRepository;
-    private final StudenteRepository studenteRepository;
+    private final AllievoRepository allievoRepository;
     private final PagamentoRepository pagamentoRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
-                       StudenteRepository studenteRepository, PagamentoRepository pagamentoRepository) {
+                       AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository) {
         this.pagamentoRepository = pagamentoRepository;
         this.corsoRepository = corsoRepository;
         this.lezioneRepository = lezioneRepository;
         this.presenzaRepository = presenzaRepository;
         this.iscrizioneRepository = iscrizioneRepository;
-        this.studenteRepository = studenteRepository;
+        this.allievoRepository = allievoRepository;
     }
 
     public List<Corso> findAll() {
-        return corsoRepository.findAllWithStudenti();
+        return corsoRepository.findAllWithAllievi();
     }
 
     public List<Corso> findAllAttivi() {
@@ -58,14 +58,14 @@ public class CorsoService {
         return corsoRepository.findByInsegnanteId(insegnanteId);
     }
 
-    /** Tutti i corsi dello studente, anche non attivi (consultazione del genitore). */
-    public List<Corso> findByStudente(Long studenteId) {
-        return corsoRepository.findByStudenteId(studenteId);
+    /** Tutti i corsi dell'allievo, anche non attivi (consultazione del genitore). */
+    public List<Corso> findByAllievo(Long allievoId) {
+        return corsoRepository.findByAllievoId(allievoId);
     }
 
-    /** Solo i corsi attivi dello studente: l'allievo non vede i corsi non attivi. */
-    public List<Corso> findAttiviByStudente(Long studenteId) {
-        return corsoRepository.findByStudenteId(studenteId).stream().filter(Corso::isAttivo).toList();
+    /** Solo i corsi attivi dell'allievo: l'allievo non vede i corsi non attivi. */
+    public List<Corso> findAttiviByAllievo(Long allievoId) {
+        return corsoRepository.findByAllievoId(allievoId).stream().filter(Corso::isAttivo).toList();
     }
 
     /**
@@ -87,52 +87,52 @@ public class CorsoService {
 
     /** Partecipanti del corso in ordine di orario di lezione (senza orario in fondo), vedi {@link Iscrizione#PER_ORARIO}. */
     public List<Iscrizione> findPartecipanti(Long corsoId) {
-        return iscrizioneRepository.findByCorsoIdWithStudente(corsoId).stream()
+        return iscrizioneRepository.findByCorsoIdWithAllievo(corsoId).stream()
             .sorted(Iscrizione.PER_ORARIO)
             .toList();
     }
 
     /**
-     * Iscrive lo studente al corso e gli crea le presenze nelle lezioni non ancora completate,
+     * Iscrive l'allievo al corso e gli crea le presenze nelle lezioni non ancora completate,
      * così compare subito nel registro dell'insegnante. Nessun effetto se è già iscritto.
      */
     @Transactional
-    public void iscrivi(Long corsoId, Long studenteId) {
+    public void iscrivi(Long corsoId, Long allievoId) {
         Corso corso = corsoAttivo(corsoId);
-        if (iscrizioneRepository.existsById(new IscrizioneId(corsoId, studenteId))) {
+        if (iscrizioneRepository.existsById(new IscrizioneId(corsoId, allievoId))) {
             return;
         }
-        Studente studente = studenteRepository.findById(studenteId)
-            .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studenteId));
-        iscrizioneRepository.save(new Iscrizione(corso, studente));
+        Allievo allievo = allievoRepository.findById(allievoId)
+            .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));
+        iscrizioneRepository.save(new Iscrizione(corso, allievo));
 
         lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId).stream()
             .filter(lezione -> !lezione.isCompletata())
-            .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, studente, Presenza.StatoPresenza.PRESENTE)));
+            .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE)));
     }
 
     /**
-     * Rimuove lo studente dal corso eliminando le sue presenze nelle lezioni non completate;
+     * Rimuove l'allievo dal corso eliminando le sue presenze nelle lezioni non completate;
      * quelle delle lezioni già svolte restano come storico.
      */
     @Transactional
-    public void rimuoviIscrizione(Long corsoId, Long studenteId) {
+    public void rimuoviIscrizione(Long corsoId, Long allievoId) {
         corsoAttivo(corsoId);
-        if (pagamentoRepository.existsByIscrizione(corsoId, studenteId)) {
+        if (pagamentoRepository.existsByIscrizione(corsoId, allievoId)) {
             throw new IllegalStateException("ha pagamenti registrati: eliminali prima di rimuoverlo dal corso");
         }
-        presenzaRepository.findByCorsoIdAndStudenteId(corsoId, studenteId).stream()
+        presenzaRepository.findByCorsoIdAndAllievoId(corsoId, allievoId).stream()
             .filter(presenza -> !presenza.getLezione().isCompletata())
             .forEach(presenzaRepository::delete);
-        iscrizioneRepository.deleteById(new IscrizioneId(corsoId, studenteId));
+        iscrizioneRepository.deleteById(new IscrizioneId(corsoId, allievoId));
     }
 
     /** Imposta (o con {@code null} toglie) l'orario di inizio lezione di un partecipante. */
     @Transactional
-    public void impostaOrario(Long corsoId, Long studenteId, LocalTime orario) {
+    public void impostaOrario(Long corsoId, Long allievoId, LocalTime orario) {
         corsoAttivo(corsoId);
-        Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, studenteId))
-            .orElseThrow(() -> new IllegalArgumentException("Lo studente " + studenteId + " non è iscritto al corso " + corsoId));
+        Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
+            .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
         iscrizione.setOrarioLezione(orario);
     }
 
@@ -173,9 +173,9 @@ public class CorsoService {
                 }
                 lezioneRepository.save(lezione);
 
-                // Crea presenze per tutti gli studenti iscritti
-                for (Studente studente : corso.getStudenti()) {
-                    Presenza presenza = new Presenza(lezione, studente, Presenza.StatoPresenza.PRESENTE);
+                // Crea presenze per tutti gli allievi iscritti
+                for (Allievo allievo : corso.getAllievi()) {
+                    Presenza presenza = new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE);
                     presenzaRepository.save(presenza);
                 }
 

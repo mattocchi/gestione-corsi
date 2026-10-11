@@ -14,11 +14,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
-import it.attocchi.service.StudenteService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
 
@@ -39,17 +39,17 @@ import java.util.stream.Collectors;
 public class PartecipantiDialog extends Dialog {
 
     private final CorsoService corsoService;
-    private final StudenteService studenteService;
+    private final AllievoService allievoService;
     private final PagamentoService pagamentoService;
     private final Corso corso;
     private final Grid<Iscrizione> grid = new Grid<>(Iscrizione.class, false);
-    private final ComboBox<Studente> nuovoPartecipante = new ComboBox<>();
+    private final ComboBox<Allievo> nuovoPartecipante = new ComboBox<>();
     private Map<Long, Situazione> situazioni = Map.of();
 
-    public PartecipantiDialog(CorsoService corsoService, StudenteService studenteService,
+    public PartecipantiDialog(CorsoService corsoService, AllievoService allievoService,
                               PagamentoService pagamentoService, Corso corso) {
         this.corsoService = corsoService;
-        this.studenteService = studenteService;
+        this.allievoService = allievoService;
         this.pagamentoService = pagamentoService;
         this.corso = corso;
 
@@ -57,9 +57,9 @@ public class PartecipantiDialog extends Dialog {
         setWidth("600px");
         setMaxWidth("100%");
 
-        nuovoPartecipante.setPlaceholder("Aggiungi uno studente");
-        nuovoPartecipante.setAriaLabel("Studente da aggiungere");
-        nuovoPartecipante.setItemLabelGenerator(Studente::getNomeCompleto);
+        nuovoPartecipante.setPlaceholder("Aggiungi un allievo");
+        nuovoPartecipante.setAriaLabel("Allievo da aggiungere");
+        nuovoPartecipante.setItemLabelGenerator(Allievo::getNomeCompleto);
         nuovoPartecipante.setClearButtonVisible(true);
         Button aggiungi = new Button("Aggiungi", VaadinIcon.PLUS.create(), e -> aggiungi());
         aggiungi.addThemeVariants(ButtonVariant.PRIMARY);
@@ -72,18 +72,18 @@ public class PartecipantiDialog extends Dialog {
         aggiunta.expand(nuovoPartecipante);
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
-        grid.addColumn(iscrizione -> iscrizione.getStudente().getNomeCompleto()).setHeader("Partecipante");
+        grid.addColumn(iscrizione -> iscrizione.getAllievo().getNomeCompleto()).setHeader("Partecipante");
         var pagamento = grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = corso.isAttivo();
         // Quota e pagamenti sempre disponibili (anche per i corsi non attivi); rimozione solo per i corsi attivi
         var azioni = grid.addComponentColumn(iscrizione -> {
-            Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getStudente().getNomeCompleto(),
+            Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getAllievo().getNomeCompleto(),
                 e -> openQuotaPagamenti(iscrizione));
             StatoPagamentoUI.coloraPulsante(pagamenti, "Quota e pagamenti", situazione(iscrizione));
             HorizontalLayout actions = ViewSupport.actions(pagamenti);
             if (modificabile) {
-                Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getStudente().getNomeCompleto(),
+                Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getAllievo().getNomeCompleto(),
                     e -> rimuovi(iscrizione));
                 rimuovi.addThemeVariants(ButtonVariant.ERROR);
                 actions.add(rimuovi);
@@ -116,23 +116,23 @@ public class PartecipantiDialog extends Dialog {
         orario.setPlaceholder("da assegnare");
         orario.setClearButtonVisible(true);
         orario.setWidthFull();
-        orario.setAriaLabel("Orario lezione di " + iscrizione.getStudente().getNomeCompleto());
+        orario.setAriaLabel("Orario lezione di " + iscrizione.getAllievo().getNomeCompleto());
         orario.setValue(iscrizione.getOrarioLezione());
         orario.setReadOnly(!corso.isAttivo());
         orario.addValueChangeListener(e -> {
             try {
-                corsoService.impostaOrario(corso.getId(), iscrizione.getStudente().getId(), e.getValue());
+                corsoService.impostaOrario(corso.getId(), iscrizione.getAllievo().getId(), e.getValue());
                 aggiorna();
             } catch (RuntimeException ex) {
                 Notification.show("Errore nel salvataggio dell'orario di "
-                    + iscrizione.getStudente().getNomeCompleto() + ": " + ex.getMessage());
+                    + iscrizione.getAllievo().getNomeCompleto() + ": " + ex.getMessage());
             }
         });
         return orario;
     }
 
     private void openQuotaPagamenti(Iscrizione iscrizione) {
-        QuotaPagamentiDialog dialog = new QuotaPagamentiDialog(pagamentoService, corso, iscrizione.getStudente());
+        QuotaPagamentiDialog dialog = new QuotaPagamentiDialog(pagamentoService, corso, iscrizione.getAllievo());
         dialog.addOpenedChangeListener(e -> {
             if (!e.isOpened()) {
                 aggiorna();
@@ -142,28 +142,28 @@ public class PartecipantiDialog extends Dialog {
     }
 
     private void aggiungi() {
-        Studente studente = nuovoPartecipante.getValue();
+        Allievo allievo = nuovoPartecipante.getValue();
         try {
-            corsoService.iscrivi(corso.getId(), studente.getId());
+            corsoService.iscrivi(corso.getId(), allievo.getId());
             nuovoPartecipante.clear();
             aggiorna();
         } catch (RuntimeException ex) {
-            Notification.show("Errore nell'aggiunta di " + studente.getNomeCompleto() + ": " + ex.getMessage());
+            Notification.show("Errore nell'aggiunta di " + allievo.getNomeCompleto() + ": " + ex.getMessage());
         }
     }
 
     private void rimuovi(Iscrizione iscrizione) {
         try {
-            corsoService.rimuoviIscrizione(corso.getId(), iscrizione.getStudente().getId());
+            corsoService.rimuoviIscrizione(corso.getId(), iscrizione.getAllievo().getId());
             aggiorna();
         } catch (RuntimeException ex) {
-            Notification.show("Errore nella rimozione di " + iscrizione.getStudente().getNomeCompleto() + ": " + ex.getMessage());
+            Notification.show("Errore nella rimozione di " + iscrizione.getAllievo().getNomeCompleto() + ": " + ex.getMessage());
         }
     }
 
-    /** Ricarica i partecipanti e propone come nuovi solo gli studenti non ancora iscritti. */
+    /** Ricarica i partecipanti e propone come nuovi solo gli allievi non ancora iscritti. */
     private Situazione situazione(Iscrizione iscrizione) {
-        return situazioni.getOrDefault(iscrizione.getStudente().getId(),
+        return situazioni.getOrDefault(iscrizione.getAllievo().getId(),
             new Situazione(iscrizione.getQuotaDovuta(), BigDecimal.ZERO));
     }
 
@@ -171,10 +171,10 @@ public class PartecipantiDialog extends Dialog {
         situazioni = pagamentoService.situazioniDelCorso(corso.getId());
         List<Iscrizione> partecipanti = corsoService.findPartecipanti(corso.getId());
         grid.setItems(partecipanti);
-        Set<Long> iscritti = partecipanti.stream().map(i -> i.getStudente().getId()).collect(Collectors.toSet());
-        nuovoPartecipante.setItems(studenteService.findAll().stream()
-            .filter(studente -> !iscritti.contains(studente.getId()))
-            .sorted(Comparator.comparing(Studente::getNomeCompleto))
+        Set<Long> iscritti = partecipanti.stream().map(i -> i.getAllievo().getId()).collect(Collectors.toSet());
+        nuovoPartecipante.setItems(allievoService.findAll().stream()
+            .filter(allievo -> !iscritti.contains(allievo.getId()))
+            .sorted(Comparator.comparing(Allievo::getNomeCompleto))
             .toList());
     }
 }

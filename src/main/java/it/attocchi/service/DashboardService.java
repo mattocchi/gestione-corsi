@@ -5,7 +5,7 @@ import it.attocchi.repository.GenitoreRepository;
 import it.attocchi.repository.InsegnanteRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
-import it.attocchi.repository.StudenteRepository;
+import it.attocchi.repository.AllievoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,17 +25,17 @@ public class DashboardService {
     }
 
     private final CorsoRepository corsoRepository;
-    private final StudenteRepository studenteRepository;
+    private final AllievoRepository allievoRepository;
     private final GenitoreRepository genitoreRepository;
     private final InsegnanteRepository insegnanteRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final LezioneRepository lezioneRepository;
 
-    public DashboardService(CorsoRepository corsoRepository, StudenteRepository studenteRepository,
+    public DashboardService(CorsoRepository corsoRepository, AllievoRepository allievoRepository,
                             GenitoreRepository genitoreRepository, InsegnanteRepository insegnanteRepository,
                             IscrizioneRepository iscrizioneRepository, LezioneRepository lezioneRepository) {
         this.corsoRepository = corsoRepository;
-        this.studenteRepository = studenteRepository;
+        this.allievoRepository = allievoRepository;
         this.genitoreRepository = genitoreRepository;
         this.insegnanteRepository = insegnanteRepository;
         this.iscrizioneRepository = iscrizioneRepository;
@@ -43,7 +43,7 @@ public class DashboardService {
     }
 
     public RiepilogoGenerale riepilogoGenerale() {
-        return new RiepilogoGenerale(corsoRepository.count(), studenteRepository.count(),
+        return new RiepilogoGenerale(corsoRepository.count(), allievoRepository.count(),
             genitoreRepository.count(), insegnanteRepository.count());
     }
 
@@ -55,8 +55,8 @@ public class DashboardService {
     }
 
     /** Numero di corsi attivi a cui è iscritto l'allievo. */
-    public long corsiAllievo(String usernameStudente) {
-        return iscrizioneRepository.countByStudenteUserUsernameAndCorsoAttivoTrue(usernameStudente);
+    public long corsiAllievo(String usernameAllievo) {
+        return iscrizioneRepository.countByAllievoUserUsernameAndCorsoAttivoTrue(usernameAllievo);
     }
 
     /** Numero di corsi distinti a cui sono iscritti i figli del genitore. */

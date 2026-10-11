@@ -1,6 +1,6 @@
 package it.attocchi.views;
 
-import it.attocchi.entity.Studente;
+import it.attocchi.entity.Allievo;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -45,9 +45,9 @@ public final class Formati {
         return NumberFormat.getCurrencyInstance(Locale.ITALY).format(importo).replace('\u00a0', ' ');
     }
 
-    /** Indirizzo dello studente, o quello del genitore con "(del genitore)" se lo studente non ne ha. */
-    public static String indirizzo(Studente studente) {
-        String indirizzo = studente.getIndirizzoEffettivo().getFormattato();
-        return studente.isIndirizzoDelGenitore() ? indirizzo + " (del genitore)" : indirizzo;
+    /** Indirizzo dell'allievo, o quello del genitore con "(del genitore)" se l'allievo non ne ha. */
+    public static String indirizzo(Allievo allievo) {
+        String indirizzo = allievo.getIndirizzoEffettivo().getFormattato();
+        return allievo.isIndirizzoDelGenitore() ? indirizzo + " (del genitore)" : indirizzo;
     }
 }
