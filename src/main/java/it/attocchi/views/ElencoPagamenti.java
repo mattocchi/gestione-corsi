@@ -23,6 +23,7 @@ import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.PagamentoService.StatoPagamento;
 import it.attocchi.views.admin.CorsiView.FiltroStato;
+import it.attocchi.views.admin.InvioEmailDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
 
 import java.math.BigDecimal;
@@ -196,7 +197,8 @@ public class ElencoPagamenti extends VerticalLayout {
                 dialog.open();
             });
             StatoPagamentoUI.coloraPulsante(quota, "Quota e pagamenti", riga.situazione());
-            azioni.add(quota);
+            azioni.add(quota, ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Invia email",
+                e -> InvioEmailDialog.apri(riga.corso(), riga.allievo(), () -> { })));
         } else {
             Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> new PagamentiAllievoDialog(
                 "Pagamenti " + riga.corso().getNome() + " – " + riga.allievo().getNomeCompleto(), riga.iscrizione(),

@@ -46,6 +46,9 @@ import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.DocumentiService;
+import it.attocchi.service.EmailService;
+import it.attocchi.repository.InvioEmailRepository;
+import it.attocchi.entity.InvioEmail;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.RimborsoService;
 import it.attocchi.entity.Rimborso;
@@ -140,6 +143,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private DocumentiService documentiService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private InvioEmailRepository invioEmailRepository;
 
     @Test
     @WithAnonymousUser
@@ -1054,6 +1063,48 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private <T> ComboBox<T> filtro(String ariaLabel) {
         return find(ComboBox.class).all().stream()
             .filter(c -> c.getAriaLabel().filter(ariaLabel::equals).isPresent()).findFirst().orElseThrow();
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_inviaConfermaDaGestionePagamenti_ricevutaSoloConPagamenti() {
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        navigate(GestionePagamentiView.class);
+        var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
+        try {
+            test(pulsante(righe.getCellComponent(rigaDi(righe, allievo), "azioni"), "Invia email")).click();
+            // Destinatario: il genitore
+            assertTrue(find(Span.class).all().stream()
+                .anyMatch(sp -> sp.getText().startsWith("A: ") && sp.getText().endsWith("<genitore3@example.com>")));
+            assertTrue(find(Span.class).withText("Server email non configurato: l'invio sarà solo simulato e registrato.").exists());
+            assertFalse(find(Button.class).withText("Invia ricevuta").single().isEnabled());
+            test(find(Button.class).withText("Invia conferma di iscrizione").single()).click();
+
+            List<InvioEmail> invii = emailService.tuttiGliInvii();
+            assertEquals(1, invii.size());
+            assertEquals(InvioEmail.Esito.SIMULATA, invii.getFirst().getEsito());
+            assertEquals("segreteria", invii.getFirst().getInviatoDa());
+            assertFalse(find(Button.class).withText("Invia conferma di iscrizione").exists());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_inviaLeConfermeATuttiGliIscritti() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Partecipanti")).click();
+        try {
+            test(find(Button.class).withText("Invia conferme").single()).click();
+            test(find(Button.class).withText("Invia").single()).click();
+            assertEquals(7, emailService.tuttiGliInvii().size());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
     }
 
     private static int rigaDi(GridTester<Grid<RigaPagamento>, RigaPagamento> righe, Allievo allievo) {

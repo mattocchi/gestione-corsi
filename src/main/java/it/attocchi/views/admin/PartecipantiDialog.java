@@ -107,7 +107,10 @@ public class PartecipantiDialog extends Dialog {
         }
         content.setPadding(false);
         add(content);
-        getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
+        Button conferme = new Button("Invia conferme", VaadinIcon.ENVELOPE.create(),
+            e -> InvioEmailDialog.inviaConferme(corso, corsoService.findPartecipanti(corso.getId()).size(), () -> { }));
+        conferme.setTooltipText("Invia per email la conferma di iscrizione a tutti gli iscritti");
+        getFooter().add(conferme, ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private TimePicker createOrario(Iscrizione iscrizione) {
