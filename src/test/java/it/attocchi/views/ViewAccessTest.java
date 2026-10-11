@@ -48,6 +48,7 @@ import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
@@ -1311,6 +1312,81 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .forEach(l -> lezioneService.eliminaAggiunta(l.getId(), "insegnante1"));
             lezioneService.ripristina(saltata.getId(), "insegnante1");
         }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_gestisceLeLezioniDiTuttiICorsiSenzaEliminare() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Lezioni")));
+        navigate(LezioniView.class);
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        assertEquals(60, grid.size());
+        ComboBox<Corso> filtroCorso = filtro("Filtra per corso");
+        test(filtroCorso).selectItem("Corso di Canto");
+        assertEquals(30, grid.size());
+        assertEquals("Maria Verdi", grid.getCellText(0, 1));
+
+        Lezione lezione = grid.getRow(0);
+        test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
+        test(find(Button.class).withText("Non effettuata").single()).click();
+        test(find(Button.class).withText("Segna non effettuata").single()).click();
+        Lezione recupero = null;
+        try {
+            assertTrue(lezioneService.findById(lezione.getId()).isNonEffettuata());
+            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+            test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
+            test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
+            test(find(Button.class).withText("Recupera").single()).click();
+            test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
+            test(find(Button.class).withText("Salva").single()).click();
+            recupero = lezioneService.findByCorso(lezione.getCorso().getId()).stream()
+                .filter(l -> l.getRecuperoDi() != null).findFirst().orElseThrow();
+
+            // La segreteria non elimina le lezioni aggiunte
+            test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
+            Long idRecupero = recupero.getId();
+            int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getId().equals(idRecupero)).findFirst().orElseThrow();
+            test(pulsante(grid.getCellComponent(riga, 6), "Gestisci Presenze")).click();
+            assertFalse(find(Button.class).withText("Elimina").exists());
+        } finally {
+            if (recupero != null) {
+                lezioneService.eliminaAggiunta(recupero.getId(), "admin");
+            }
+            lezioneService.ripristina(lezione.getId(), "segreteria");
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_aggiungeEdEliminaUnaLezione() {
+        navigate(LezioniView.class);
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        test(find(Button.class).withText("Nuova lezione").single()).click();
+        // Più corsi: la scelta del corso è obbligatoria
+        test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
+        test(find(Button.class).withText("Salva").single()).click();
+        ComboBox<Corso> corso = find(ComboBox.class).withLabel("Corso").single();
+        assertTrue(corso.isInvalid());
+        test(corso).selectItem("Corso di Chitarra");
+        test(find(Button.class).withText("Salva").single()).click();
+        assertEquals(61, grid.size());
+
+        int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).isAggiunta()).findFirst().orElseThrow();
+        Lezione aggiunta = grid.getRow(riga);
+        test(pulsante(grid.getCellComponent(riga, 6), "Gestisci Presenze")).click();
+        test(find(Button.class).withText("Elimina").single()).click();
+        test(find(Button.class).withText("Elimina").all().getLast()).click();
+        assertNull(lezioneService.findById(aggiunta.getId()));
+        assertEquals(60, grid.size());
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAllaVistaLezioni() {
+        navigate("lezioni", RouteNotFoundError.class);
     }
 
     @Test

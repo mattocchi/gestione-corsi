@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Lista delle lezioni con filtro per stato, badge sulla data e dialog delle presenze: usata da "Le Mie Lezioni"
- * dell'insegnante.
+ * Lista delle lezioni con filtro per stato, badge sulla data, dialog delle presenze, lezioni non effettuate e
+ * nuove lezioni: usata da "Le Mie Lezioni" dell'insegnante e dalla vista "Lezioni" di admin e segreteria.
  */
 public class ElencoLezioni extends VerticalLayout {
 
@@ -66,6 +66,9 @@ public class ElencoLezioni extends VerticalLayout {
     private final SerializableSupplier<List<Lezione>> fonte;
     private final SerializableSupplier<List<Corso>> corsi;
     private final String username;
+    /** Lezioni di più insegnanti (vista Lezioni di admin e segreteria): filtro per corso e colonna Insegnante. */
+    private final boolean tuttiICorsi;
+    private final ComboBox<Corso> filtroCorso = new ComboBox<>();
     private List<Lezione> elenco = List.of();
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
@@ -81,6 +84,13 @@ public class ElencoLezioni extends VerticalLayout {
     public ElencoLezioni(LezioneService lezioneService, PresenzaService presenzaService,
                          SerializableSupplier<List<Lezione>> fonte, SerializableSupplier<List<Corso>> corsi,
                          String username) {
+        this(lezioneService, presenzaService, fonte, corsi, username, false);
+    }
+
+    public ElencoLezioni(LezioneService lezioneService, PresenzaService presenzaService,
+                         SerializableSupplier<List<Lezione>> fonte, SerializableSupplier<List<Corso>> corsi,
+                         String username, boolean tuttiICorsi) {
+        this.tuttiICorsi = tuttiICorsi;
         this.lezioneService = lezioneService;
         this.presenzaService = presenzaService;
         this.fonte = fonte;
@@ -97,7 +107,17 @@ public class ElencoLezioni extends VerticalLayout {
         filtro.addValueChangeListener(e -> applicaFiltro());
 
         Button nuova = new Button("Nuova lezione", VaadinIcon.PLUS.create(), e -> apriNuovaLezione(null));
-        HorizontalLayout barra = new HorizontalLayout(filtro, nuova);
+        HorizontalLayout barra = new HorizontalLayout(filtro);
+        if (tuttiICorsi) {
+            filtroCorso.setPlaceholder("Tutti i corsi");
+            filtroCorso.setAriaLabel("Filtra per corso");
+            filtroCorso.setClearButtonVisible(true);
+            filtroCorso.setItemLabelGenerator(Corso::getNome);
+            filtroCorso.setItems(corsi.get());
+            filtroCorso.addValueChangeListener(e -> applicaFiltro());
+            barra.add(filtroCorso);
+        }
+        barra.add(nuova);
         barra.setWrap(true);
         barra.setAlignItems(Alignment.CENTER);
         add(barra, gridLezioni);
@@ -110,6 +130,8 @@ public class ElencoLezioni extends VerticalLayout {
         var lezione = gridLezioni.addComponentColumn(this::createRiepilogo)
             .setHeader("Lezione").setComparator(Lezione::getData).setSortable(true);
         var corso = gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
+        var insegnante = gridLezioni.addColumn(l -> l.getCorso().getInsegnante() != null
+            ? l.getCorso().getInsegnante().getNomeCompleto() : "").setHeader("Insegnante").setSortable(true);
         // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
         var data = gridLezioni.addComponentColumn(this::createData).setHeader("Data")
             .setComparator(Lezione::getData).setSortable(true).setWidth("17rem").setFlexGrow(0);
@@ -130,6 +152,7 @@ public class ElencoLezioni extends VerticalLayout {
             boolean m = mobile.get();
             lezione.setVisible(m);
             corso.setVisible(!m);
+            insegnante.setVisible(tuttiICorsi && !m);
             data.setVisible(!m);
             numero.setVisible(!m);
             orario.setVisible(!m);
@@ -386,7 +409,9 @@ public class ElencoLezioni extends VerticalLayout {
 
     private void applicaFiltro() {
         if (lezioni != null) {
-            lezioni.setFilter(filtro.getValue().condizione);
+            Corso corso = filtroCorso.getValue();
+            SerializablePredicate<Lezione> stato = filtro.getValue().condizione;
+            lezioni.setFilter(l -> stato.test(l) && (corso == null || corso.getId().equals(l.getCorso().getId())));
         }
     }
 }

@@ -35,7 +35,7 @@
 | 2 | Refactoring: lista delle lezioni estratta da `LezioniInsegnanteView` in `views/ElencoLezioni` (comportamento invariato) | `views/ElencoLezioni.java`, `views/insegnante/LezioniInsegnanteView.java` | `./mvnw test` | [x] |
 | 3 | Non effettuate nella UI: dialog della lezione (Non effettuata con motivo, Ripristina), filtro e badge, `QuandoLezione`, riga "Lezione non effettuata" e statistiche in `PresenzeAllievoDialog`, riquadro in Home; test | `views/ElencoLezioni.java`, `views/insegnante/QuandoLezione.java`, `views/PresenzeAllievoDialog.java`, `views/HomeView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 4 | Nuove lezioni nella UI: "Nuova lezione" e "Recupera" (dialog data/orario/corso), "Recupero" accanto al numero, Elimina per le aggiunte; test | `views/ElencoLezioni.java`, `views/insegnante/LezioniInsegnanteView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 5 | Vista "Lezioni" per admin e segreteria (tutti i corsi attivi, filtro corso, colonna Insegnante, Elimina solo admin); test | `views/admin/LezioniView.java`, `views/ElencoLezioni.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
+| 5 | Vista "Lezioni" per admin e segreteria (tutti i corsi attivi, filtro corso, colonna Insegnante, Elimina solo admin); test | `views/admin/LezioniView.java`, `views/ElencoLezioni.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 6 | `CLAUDE.md` e registro del piano | `CLAUDE.md`, piano | rilettura | [ ] |
 
 ## Fuori ambito
