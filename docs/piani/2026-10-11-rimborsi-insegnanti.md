@@ -39,7 +39,7 @@
 | 1 | Entità `Rimborso` (insegnante, data, mese di riferimento, importo, metodo, nota), repository, `RimborsoService` (elenco per insegnante e anno, salva con validazione, elimina); test | `entity/Rimborso.java`, `repository/RimborsoRepository.java`, `service/RimborsoService.java`, test | `./mvnw test` | [x] |
 | 2 | Calcoli: costo delle lezioni (presenze × durata × tariffa), maturato del mese, prospetto per anno, bilancio per insegnante e anno; test con i dati di esempio | `service/BilancioService.java`, repository, test | `./mvnw test` | [x] |
 | 3 | Vista "Rimborsi": filtro anno, griglia insegnanti con totali, dialog rimborsi (aggiungi/modifica con importo proposto, elimina solo admin); test | `views/admin/RimborsiView.java`, `views/admin/RimborsiDialog.java`, `views/ViewSupport.java`, `views/Formati.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 4 | Dialog "Bilancio": effettivo, maturato, teorico e dettaglio per corso (mobile 390px); test | `views/admin/BilancioDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
+| 4 | Dialog "Bilancio": effettivo, maturato, teorico e dettaglio per corso (mobile 390px); test | `views/admin/BilancioDialog.java`, `views/admin/RimborsiView.java`, `views/HomeView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 5 | Vista "I miei rimborsi" per l'insegnante (sola lettura, totale, filtro anno); test | `views/insegnante/MieiRimborsiView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
 | 6 | `CLAUDE.md` e registro del piano | `CLAUDE.md`, piano | rilettura | [ ] |
 

@@ -52,6 +52,7 @@ import it.attocchi.service.UserService;
 import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.LezioniView;
+import it.attocchi.views.admin.BilancioDialog;
 import it.attocchi.views.admin.RimborsiDialog;
 import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.GenitoriView;
@@ -953,6 +954,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             rimborsoService.rimborsi(insegnante.getId(), "2024/2025").forEach(r -> rimborsoService.elimina(r.getId()));
         }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_vedeIlBilancioDellInsegnante() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        navigate(RimborsiView.class);
+        test(this.<String>filtro("Filtra per anno scolastico")).selectItem("2024/2025");
+        var grid = test((Grid<BilancioService.RigaRimborsi>) find(Grid.class).single());
+        int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).insegnante().getId().equals(insegnante.getId()))
+            .findFirst().orElseThrow();
+        test(pulsante(grid.getCellComponent(riga, 5), "Bilancio")).click();
+
+        BilancioDialog dialog = find(BilancioDialog.class).single();
+        List<String> riquadri = find(Card.class).from(dialog).all().stream().map(c -> c.getAriaLabel().orElse("")).toList();
+        // Canto: 7 allievi × 600 € di quota; 30 lezioni × 7 allievi × 40 minuti a 25 €/h
+        assertTrue(riquadri.contains("Incasso previsto: 4.200,00 € (quote assegnate)"), riquadri.toString());
+        assertTrue(riquadri.contains("Costo previsto: 3.500,00 € (lezioni programmate)"), riquadri.toString());
+        assertTrue(riquadri.contains("Margine previsto: 700,00 € (incasso − costo previsti)"), riquadri.toString());
+        var corsi = test((Grid<BilancioService.BilancioCorso>) find(Grid.class).from(dialog).single());
+        assertEquals(1, corsi.size());
+        assertEquals("Corso di Canto", corsi.getCellText(0, 0));
+        assertEquals("7", corsi.getCellText(0, 1));
+        assertEquals("3.500,00 €", corsi.getCellText(0, 5));
     }
 
     @Test

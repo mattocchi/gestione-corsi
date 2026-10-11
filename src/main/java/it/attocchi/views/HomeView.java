@@ -119,7 +119,8 @@ public class HomeView extends VerticalLayout {
         return Formati.euro(importo) + " (" + percentuale + "%)";
     }
 
-    private static Div sezione(String titolo, Card... indicatori) {
+    /** Sezione con titolo e griglia di riquadri (usata anche dal bilancio degli insegnanti). */
+    public static Div sezione(String titolo, Card... indicatori) {
         H2 heading = new H2(titolo);
         heading.addClassName("dashboard-section-title");
         Div griglia = new Div(indicatori);
@@ -134,7 +135,7 @@ public class HomeView extends VerticalLayout {
     }
 
     /** Riquadro con icona, etichetta, valore e dettaglio facoltativo; l'etichetta è anche il nome accessibile. */
-    static Card indicatore(VaadinIcon icona, String etichetta, String valore, String dettaglio) {
+    public static Card indicatore(VaadinIcon icona, String etichetta, String valore, String dettaglio) {
         Card card = new Card();
         card.addClassName("dashboard-card");
         Icon icon = icona.create();

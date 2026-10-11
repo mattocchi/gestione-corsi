@@ -25,7 +25,8 @@ import java.util.function.Function;
 
 /**
  * Rimborsi spese agli insegnanti per anno scolastico: una riga per insegnante con rimborsato, maturato (lezioni
- * completate) e da rimborsare; dal dialog si registrano i rimborsi (admin e segreteria, eliminazione solo admin).
+ * completate) e da rimborsare; dai dialog si registrano i rimborsi (admin e segreteria, eliminazione solo admin)
+ * e si vede il mini bilancio dell'insegnante.
  */
 @Route(value = "rimborsi", layout = MainLayout.class)
 @PageTitle("Rimborsi")
@@ -72,7 +73,9 @@ public class RimborsiView extends VerticalLayout {
         var daRimborsare = euro("Da rimborsare", RigaRimborsi::daRimborsare);
         ViewSupport.configureActionsColumn(grid.addComponentColumn(r -> ViewSupport.actions(
             ViewSupport.iconButton(VaadinIcon.EURO, "Rimborsi", e -> new RimborsiDialog(rimborsoService, bilancioService,
-                r.insegnante(), filtroAnno.getValue(), puoEliminare, this::aggiorna).open()))));
+                r.insegnante(), filtroAnno.getValue(), puoEliminare, this::aggiorna).open()),
+            ViewSupport.iconButton(VaadinIcon.BAR_CHART, "Bilancio", e -> new BilancioDialog(
+                bilancioService.bilancio(r.insegnante().getId(), filtroAnno.getValue())).open()))));
 
         Signal<Boolean> mobile = ViewSupport.isMobile();
         Signal.effect(grid, () -> riepilogo.setVisible(mobile.get()));
