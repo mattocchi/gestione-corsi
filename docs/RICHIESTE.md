@@ -66,8 +66,11 @@
 ## RICHIESTE del 11-10-2026
 
 * [ ] Localizzazione in italiano del calendario e degli orari. Verifica che tutti gli input Calendario e Orario funzionino correttamente in UI in formato Italiano.
+  _Chiarimento 2026-10-11: lingua italiana per tutta l'app; calendario in italiano (mesi, giorni, Oggi/Annulla) con settimana dal lunedì, data sempre gg/mm/aaaa (accettato anche g/m/aa), ora a 24 ore; vale per tutti i campi data/ora, esistenti e futuri._
 
 * [] Aggiungi una sezione "gestione pagamenti" dedicata ai pagamenti per semplificare inserimento e gestione dei dati in cui mediante elenco corso, partecipante possiamo come admin o segreteria assegnare il prezzo effettivo del corso o aggiungere i pagamenti. Le funzionalità sono già disponibili questa è solo una visualizzazione e gestione semplificata. Il ruolo genitore può visualizzare questa sezione per i propri figli.
 Per admin e segreteria nella sezione aggiungi dei filtri per poter filtrare per corso o per allievo o per genitore in modo da semplificare l'operatività.
+  _Chiarimento 2026-10-11: voce "Gestione Pagamenti" dopo Gestione Corsi per admin e segreteria; una riga per partecipante e corso (corso, allievo, genitore, quota, pagato, residuo, stato) con "Aggiungi pagamento", "Quota e pagamenti" e "Ricevuta"; filtri per corso, allievo, genitore, stato del corso (default Attivi), stato del pagamento e anno scolastico; totali dei partecipanti filtrati. Il genitore ha la voce "Pagamenti" con i soli figli (anche corsi non attivi) in sola lettura, con dettaglio rate e ricevuta._
 
 * [] Rinomina Studente in Allievo che ritengo più adeguato per questo contesto 
+  _Chiarimento 2026-10-11: rinomina completa come per Insegnanti: interfaccia, codice, route /allievi, ruolo ALLIEVO, dati di esempio e database (allievi, corso_allievi, allievo_id); in produzione eseguire prima docs/migrazioni/2026-10-11-studenti-allievi.sql. Username esistenti invariati._
