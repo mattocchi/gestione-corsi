@@ -41,7 +41,7 @@
 | 3 | Vista "Rimborsi": filtro anno, griglia insegnanti con totali, dialog rimborsi (aggiungi/modifica con importo proposto, elimina solo admin); test | `views/admin/RimborsiView.java`, `views/admin/RimborsiDialog.java`, `views/ViewSupport.java`, `views/Formati.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 4 | Dialog "Bilancio": effettivo, maturato, teorico e dettaglio per corso (mobile 390px); test | `views/admin/BilancioDialog.java`, `views/admin/RimborsiView.java`, `views/HomeView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 5 | Vista "I miei rimborsi" per l'insegnante (sola lettura, totale, filtro anno); test | `views/insegnante/MieiRimborsiView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 6 | `CLAUDE.md` e registro del piano | `CLAUDE.md`, piano | rilettura | [ ] |
+| 6 | `CLAUDE.md` e registro del piano | `CLAUDE.md`, piano | rilettura | [x] |
 
 ## Fuori ambito
 
@@ -49,3 +49,11 @@
 - `.idea/.copilot-plugin` (modifica locale preesistente) non incluso.
 
 ## Registro
+
+- Passo 1: `RimborsoServiceTest` (validazione, filtro per anno del mese di riferimento, totale). 102 test verdi.
+- Passo 2: `BilancioServiceTest` sui dati di esempio: Canto 7 allievi × 30 lezioni × 40 min a 25 €/h → costo previsto 3.500,00 €, una lezione 116,67 €, incasso previsto 4.200 €; con una lezione completata, una non effettuata, una rata e un rimborso: saldo, da rimborsare 16,67 €, costo previsto 3.383,33 €, proposta del mese. 104 verdi.
+- Passo 3: 107 verdi (segreteria: filtro anno, aggiunta con validazione e mese dell'anno, modifica, niente Elimina, prospetto aggiornato; admin elimina; insegnante senza accesso).
+- Passo 4: 108 verdi (riquadri e dettaglio per corso del bilancio).
+- Passo 5: 109 verdi (l'insegnante vede solo i propri rimborsi, in lettura).
+- Browser non verificato in questa sessione: da controllare a mano i dialog Rimborsi e Bilancio su mobile.
+- Produzione: `ddl-auto=update` crea la tabella `rimborsi`; nessuno script SQL.
