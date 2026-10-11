@@ -31,6 +31,11 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     @Query("SELECT p.iscrizione.id.corsoId, SUM(p.importo) FROM Pagamento p WHERE p.iscrizione.id.allievoId = :allievoId GROUP BY p.iscrizione.id.corsoId")
     List<Object[]> sommaPerCorso(@Param("allievoId") Long allievoId);
 
+    /** Totale pagato da ogni partecipante di ogni corso: righe [corsoId, allievoId, somma]. */
+    @Query("SELECT p.iscrizione.id.corsoId, p.iscrizione.id.allievoId, SUM(p.importo) FROM Pagamento p "
+        + "GROUP BY p.iscrizione.id.corsoId, p.iscrizione.id.allievoId")
+    List<Object[]> sommaPerIscrizione();
+
     /** Totale pagato da ogni partecipante dei corsi attivi: righe [corsoId, allievoId, somma]. */
     @Query("SELECT p.iscrizione.id.corsoId, p.iscrizione.id.allievoId, SUM(p.importo) FROM Pagamento p "
         + "WHERE p.iscrizione.corso.attivo = true GROUP BY p.iscrizione.id.corsoId, p.iscrizione.id.allievoId")

@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Quote e rate sui dati di test (Corso di Canto, quota piena 600 €).
@@ -66,6 +68,21 @@ class PagamentoServiceTest {
             pagamentoService.findPagamenti(canto.getId(), allievo).forEach(pagamentoService::elimina);
             pagamentoService.impostaQuota(canto.getId(), allievo, null, null);
         }
+    }
+
+    @Test
+    void righePagamenti_tutteLeIscrizioni_eSoloIFigliPerIlGenitore() {
+        var righe = pagamentoService.righePagamenti();
+        long iscrizioni = corsoService.findAll().stream().mapToLong(c -> c.getAllievi().size()).sum();
+        assertEquals(iscrizioni, righe.size());
+        assertEquals("Corso di Canto", righe.getFirst().corso().getNome());
+
+        String genitore = righe.getFirst().genitore().getUser().getUsername();
+        var figli = pagamentoService.righePagamentiDeiFigli(genitore);
+        assertFalse(figli.isEmpty());
+        assertTrue(figli.stream().allMatch(r -> r.genitore().getUser().getUsername().equals(genitore)));
+        assertEquals(righe.stream().filter(r -> r.genitore() != null && r.genitore().getUser().getUsername().equals(genitore)).count(),
+            figli.size());
     }
 
     @Test

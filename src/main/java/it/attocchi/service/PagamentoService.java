@@ -1,6 +1,8 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Pagamento;
@@ -115,6 +117,27 @@ public class PagamentoService {
     public record Ricevuta(Iscrizione iscrizione, List<Pagamento> pagamenti, Situazione situazione) {
     }
 
+    /** Riga della gestione pagamenti: iscrizione (con corso, allievo e genitore) e sua situazione. */
+    public record RigaPagamento(Iscrizione iscrizione, Situazione situazione) {
+
+        public Corso corso() {
+            return iscrizione.getCorso();
+        }
+
+        public Allievo allievo() {
+            return iscrizione.getAllievo();
+        }
+
+        /** Genitore dell'allievo, o {@code null} se non assegnato. */
+        public Genitore genitore() {
+            return iscrizione.getAllievo().getGenitore();
+        }
+    }
+
+    private static final Comparator<RigaPagamento> PER_CORSO_E_ALLIEVO = Comparator
+        .comparing((RigaPagamento r) -> r.corso().getNome(), String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(r -> r.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER);
+
     private final PagamentoRepository pagamentoRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final CorsoRepository corsoRepository;
@@ -194,6 +217,27 @@ public class PagamentoService {
         perCorso.forEach((corso, situazioni) -> riepilogo.add(RiepilogoPagamenti.di(corso.getNome(), situazioni)));
         riepilogo.add(RiepilogoPagamenti.di("Totale", tutte));
         return riepilogo;
+    }
+
+    /** Una riga per ogni partecipante di ogni corso (anche non attivo), in ordine di corso e allievo. */
+    public List<RigaPagamento> righePagamenti() {
+        return righe(iscrizioneRepository.findAllWithCorsoAllievoGenitore());
+    }
+
+    /** Le righe dei soli figli del genitore indicato, anche nei corsi non attivi. */
+    public List<RigaPagamento> righePagamentiDeiFigli(String usernameGenitore) {
+        return righe(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(usernameGenitore));
+    }
+
+    private List<RigaPagamento> righe(List<Iscrizione> iscrizioni) {
+        Map<IscrizioneId, BigDecimal> pagato = new HashMap<>();
+        for (Object[] riga : pagamentoRepository.sommaPerIscrizione()) {
+            pagato.put(new IscrizioneId((Long) riga[0], (Long) riga[1]), (BigDecimal) riga[2]);
+        }
+        return iscrizioni.stream()
+            .map(i -> new RigaPagamento(i, new Situazione(i.getQuotaDovuta(), pagato.getOrDefault(i.getId(), BigDecimal.ZERO))))
+            .sorted(PER_CORSO_E_ALLIEVO)
+            .toList();
     }
 
     /** Imposta (o con {@code null} toglie) la quota personalizzata del partecipante, con la nota sul motivo. */
