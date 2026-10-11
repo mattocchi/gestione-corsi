@@ -1146,6 +1146,53 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_vedeBadgeOggiSettimanaProssimaEInRitardo() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        List<Lezione> tutte = lezioneService.findByInsegnante(insegnante.getId());
+        Lezione prima = tutte.getFirst();
+        Lezione seconda = tutte.get(1);
+        LocalDate dataPrima = prima.getData();
+        LocalDate dataSeconda = seconda.getData();
+        LocalDate oggi = LocalDate.now();
+        prima.setData(oggi);
+        lezioneService.save(prima);
+        seconda.setData(oggi.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY)));
+        lezioneService.save(seconda);
+        try {
+            navigate(LezioniInsegnanteView.class);
+            var grid = test((Grid<Lezione>) find(Grid.class).single());
+            Badge oggiBadge = badgeData(grid, riga(grid, prima));
+            assertEquals("Oggi", oggiBadge.getText());
+            assertTrue(oggiBadge.getThemeNames().contains(BadgeVariant.FILLED.getVariantName()));
+            Badge prossima = badgeData(grid, riga(grid, seconda));
+            assertEquals("Settimana prossima", prossima.getText());
+            assertTrue(prossima.getThemeNames().contains(BadgeVariant.CONTRAST.getVariantName()));
+            // Le lezioni del 2024 ancora da compilare
+            Badge ritardo = badgeData(grid, riga(grid, tutte.get(2)));
+            assertEquals("In ritardo", ritardo.getText());
+            assertTrue(ritardo.getThemeNames().contains(BadgeVariant.ERROR.getVariantName()));
+        } finally {
+            prima.setData(dataPrima);
+            lezioneService.save(prima);
+            seconda.setData(dataSeconda);
+            lezioneService.save(seconda);
+        }
+    }
+
+    private static int riga(GridTester<Grid<Lezione>, Lezione> grid, Lezione lezione) {
+        return IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getId().equals(lezione.getId()))
+            .findFirst().orElseThrow();
+    }
+
+    /** Badge accanto alla data (colonna Data, seconda visibile su desktop). */
+    private static Badge badgeData(GridTester<Grid<Lezione>, Lezione> grid, int riga) {
+        return grid.getCellComponent(riga, 1).getChildren().filter(Badge.class::isInstance).map(Badge.class::cast)
+            .findFirst().orElseThrow();
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
     void insegnante_segnaAssenzaGiustificataConUnTocco() {
         navigate(LezioniInsegnanteView.class);
         var lezioni = test(find(Grid.class).single());

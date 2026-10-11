@@ -71,10 +71,18 @@
     font-weight: var(--aura-font-weight-medium, 500);
 }
 
-.lezione-riepilogo-data,
+.lezione-riepilogo .lezione-data,
 .riepilogo-righe-dettaglio {
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s, 0.8125rem);
+}
+
+/* Le Mie Lezioni: data con il badge Oggi / Settimana scorsa / … sulla stessa riga */
+.lezione-data {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
 }
 
 /* Logo: larghezza fluida, proporzioni mantenute. In tema scuro la scritta nera

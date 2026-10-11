@@ -13,7 +13,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
@@ -33,6 +32,7 @@ import it.attocchi.views.StatoPresenzaToggle;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -92,15 +92,12 @@ public class LezioniInsegnanteView extends VerticalLayout {
 
     private void configureGrid() {
         // Solo su mobile: corso e data in un'unica colonna su due righe, per non troncare nulla
-        var lezione = gridLezioni.addColumn(LitRenderer.<Lezione>of(
-                "<div class=\"lezione-riepilogo\"><div class=\"lezione-riepilogo-corso\">${item.corso}</div>"
-                    + "<div class=\"lezione-riepilogo-data\">${item.data}</div></div>")
-                .withProperty("corso", l -> l.getCorso().getNome())
-                .withProperty("data", l -> Formati.data(l.getData())))
+        var lezione = gridLezioni.addComponentColumn(this::createRiepilogo)
             .setHeader("Lezione").setComparator(Lezione::getData).setSortable(true);
         var corso = gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
-        var data = gridLezioni.addColumn(l -> Formati.data(l.getData())).setHeader("Data")
-            .setComparator(Lezione::getData).setSortable(true).setWidth("10rem").setFlexGrow(0);
+        // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
+        var data = gridLezioni.addComponentColumn(this::createData).setHeader("Data")
+            .setComparator(Lezione::getData).setSortable(true).setWidth("17rem").setFlexGrow(0);
         var numero = gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
         var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
         // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
@@ -123,6 +120,28 @@ public class LezioniInsegnanteView extends VerticalLayout {
             stato.setHeader(m ? "" : "Stato").setWidth(m ? "3rem" : "8.5rem");
             azioni.setHeader(m ? "" : "Azioni").setWidth(m ? "3.5rem" : "5.5rem");
         });
+    }
+
+    private Div createRiepilogo(Lezione lezione) {
+        Div corso = new Div(lezione.getCorso().getNome());
+        corso.addClassName("lezione-riepilogo-corso");
+        Div riepilogo = new Div(corso, createData(lezione));
+        riepilogo.addClassName("lezione-riepilogo");
+        return riepilogo;
+    }
+
+    private Div createData(Lezione lezione) {
+        Div data = new Div(new Span(Formati.data(lezione.getData())));
+        data.addClassName("lezione-data");
+        QuandoLezione.di(lezione, LocalDate.now()).ifPresent(quando -> {
+            Badge badge = new Badge(quando.getEtichetta());
+            badge.addThemeVariants(BadgeVariant.SMALL);
+            if (quando.getVariante() != null) {
+                badge.addThemeVariants(quando.getVariante());
+            }
+            data.add(badge);
+        });
+        return data;
     }
 
     private Badge createStatoBadge(Lezione lezione) {
