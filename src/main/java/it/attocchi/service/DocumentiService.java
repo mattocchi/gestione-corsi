@@ -11,6 +11,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Pagamento;
+import it.attocchi.entity.TipoDocumento;
 import it.attocchi.entity.User;
 import it.attocchi.repository.UserRepository;
 import it.attocchi.service.PagamentoService.Ricevuta;
@@ -40,24 +41,6 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class DocumentiService {
 
-    /** Tipo di documento, con titolo e nome del template. */
-    public enum TipoDocumento {
-        CONFERMA_ISCRIZIONE("Conferma di iscrizione", "conferma"),
-        RICEVUTA("Ricevuta di pagamento", "ricevuta");
-
-        private final String titolo;
-        private final String template;
-
-        TipoDocumento(String titolo, String template) {
-            this.titolo = titolo;
-            this.template = template;
-        }
-
-        public String getTitolo() {
-            return titolo;
-        }
-    }
-
     /** PDF pronto per lo scarico o l'allegato. */
     public record Pdf(String nomeFile, byte[] contenuto) {
     }
@@ -86,7 +69,7 @@ public class DocumentiService {
 
     /** HTML del documento (pagina A4) dell'iscrizione. */
     public String documentoHtml(TipoDocumento tipo, Long corsoId, Long allievoId) {
-        return render("documenti/" + tipo.template + ".ftlh", modello(pagamentoService.ricevuta(corsoId, allievoId)));
+        return render("documenti/" + tipo.getTemplate() + ".ftlh", modello(pagamentoService.ricevuta(corsoId, allievoId)));
     }
 
     /** PDF del documento dell'iscrizione. */
@@ -129,7 +112,7 @@ public class DocumentiService {
     public String emailHtml(TipoDocumento tipo, Long corsoId, Long allievoId, String saluto) {
         Map<String, Object> modello = modello(pagamentoService.ricevuta(corsoId, allievoId));
         modello.put("saluto", saluto);
-        return render("email/" + tipo.template + ".ftlh", modello);
+        return render("email/" + tipo.getTemplate() + ".ftlh", modello);
     }
 
     /** Nome del file PDF, es. "ricevuta-corso-di-canto-mario-rossi.pdf". */

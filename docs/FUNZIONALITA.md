@@ -47,7 +47,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### EMAIL
 
-* [ ] Per completare alcune funzionalità ora occorre predisporre il programma perché possa inviare delle email.
+* [x] Per completare alcune funzionalità ora occorre predisporre il programma perché possa inviare delle email. _(completata 2026-10-11)_
   _Chiarimento 2026-10-11: invio reale se è configurato l'SMTP (variabili MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM), altrimenti simulato e registrato, con qualunque profilo._
 * [ ] In particolare come segretaria o admin è necessario poter inviare sia conferma di iscrizione ad ogni corso in cui il figlio allievo risulta escritto riportante la conferma di iscrizione con importo da pagare,
   _Chiarimento 2026-10-11: una conferma per iscrizione (corso), email HTML con PDF allegato: corso, allievo, anno, insegnante, quota, pagato, residuo e IBAN per il bonifico; al genitore, o all'allievo se non c'è un genitore con email; da Gestione Pagamenti, dal dialog Quota e pagamenti e, per tutti gli iscritti di un corso, dal dialog Partecipanti; dati dell'associazione da configurazione._

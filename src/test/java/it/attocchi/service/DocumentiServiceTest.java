@@ -4,7 +4,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
-import it.attocchi.service.DocumentiService.TipoDocumento;
+import it.attocchi.entity.TipoDocumento;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
