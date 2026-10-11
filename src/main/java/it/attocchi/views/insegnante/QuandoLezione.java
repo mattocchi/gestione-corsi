@@ -10,7 +10,8 @@ import java.util.Optional;
 
 /**
  * Collocazione di una lezione rispetto a oggi, mostrata come badge nella lista delle lezioni dell'insegnante.
- * Settimane di calendario da lunedì a domenica; le lezioni passate sono segnalate solo se non completate.
+ * Settimane di calendario da lunedì a domenica; le lezioni passate sono segnalate solo se ancora da fare,
+ * le non effettuate mai.
  */
 public enum QuandoLezione {
     OGGI("Oggi", BadgeVariant.FILLED),
@@ -38,7 +39,7 @@ public enum QuandoLezione {
 
     public static Optional<QuandoLezione> di(Lezione lezione, LocalDate oggi) {
         LocalDate data = lezione.getData();
-        if (data == null) {
+        if (data == null || lezione.isNonEffettuata()) {
             return Optional.empty();
         }
         if (data.equals(oggi)) {

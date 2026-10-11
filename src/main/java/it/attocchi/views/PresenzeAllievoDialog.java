@@ -28,8 +28,10 @@ public class PresenzeAllievoDialog extends Dialog {
             .setAutoWidth(true).setFlexGrow(0);
         var numero = grid.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione")
             .setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(presenza -> presenza.getStato().getDescrizione()).setHeader("Stato")
-            .setTooltipGenerator(Presenza::getNote);
+        grid.addColumn(presenza -> presenza.getLezione().isNonEffettuata()
+                ? "Lezione non effettuata" : presenza.getStato().getDescrizione()).setHeader("Stato")
+            .setTooltipGenerator(presenza -> presenza.getLezione().isNonEffettuata()
+                ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote());
         var note = grid.addColumn(Presenza::getNote).setHeader("Note");
         grid.setItems(presenze);
         ViewSupport.hideOnMobile(grid, numero, note);
@@ -40,7 +42,9 @@ public class PresenzeAllievoDialog extends Dialog {
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
 
-    private static HorizontalLayout statistiche(List<Presenza> presenze) {
+    /** Statistiche delle sole lezioni effettuate (o da fare): le non effettuate non contano. */
+    private static HorizontalLayout statistiche(List<Presenza> tutte) {
+        List<Presenza> presenze = tutte.stream().filter(p -> !p.getLezione().isNonEffettuata()).toList();
         HorizontalLayout stats = new HorizontalLayout(
             new Span("Totale lezioni: " + presenze.size()),
             new Span("Presenze: " + conta(presenze, StatoPresenza.PRESENTE)),

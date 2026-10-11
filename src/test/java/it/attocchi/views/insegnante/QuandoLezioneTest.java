@@ -43,6 +43,16 @@ class QuandoLezioneTest {
         assertEquals(Optional.of(OGGI), QuandoLezione.di(oggi, OGGI_DOMENICA));
     }
 
+    @Test
+    void lezioniNonEffettuate_senzaBadge() {
+        Lezione oggi = new Lezione(null, OGGI_MERCOLEDI, 1);
+        oggi.setNonEffettuata(true);
+        assertEquals(Optional.empty(), QuandoLezione.di(oggi, OGGI_MERCOLEDI));
+        Lezione vecchia = new Lezione(null, LocalDate.of(2026, 9, 1), 1);
+        vecchia.setNonEffettuata(true);
+        assertEquals(Optional.empty(), QuandoLezione.di(vecchia, OGGI_MERCOLEDI));
+    }
+
     private static Optional<QuandoLezione> quando(LocalDate data, boolean completata) {
         Lezione lezione = new Lezione(null, data, 1);
         lezione.setCompletata(completata);

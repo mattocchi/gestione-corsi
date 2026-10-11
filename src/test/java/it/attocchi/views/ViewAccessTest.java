@@ -212,7 +212,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             apriLezioni();
             navigate(HomeView.class);
 
-            assertEquals(List.of("Corsi assegnati: 1", "Lezioni fatte: 1", "Lezioni da fare: 29"), indicatori());
+            assertEquals(List.of("Corsi assegnati: 1", "Lezioni fatte: 1", "Lezioni da fare: 29", "Lezioni non effettuate: 0"), indicatori());
         } finally {
             completata.setCompletata(false);
             lezioneService.save(completata);
@@ -616,7 +616,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(0, test(find(Grid.class).single()).size());
 
             navigate(HomeView.class);
-            assertEquals(List.of("Corsi assegnati: 0", "Lezioni fatte: 0", "Lezioni da fare: 0"), indicatori());
+            assertEquals(List.of("Corsi assegnati: 0", "Lezioni fatte: 0", "Lezioni da fare: 0", "Lezioni non effettuate: 0"), indicatori());
 
             Presenza presenza = presenzaService.findByCorsoAndAllievo(chitarra.getId(),
                 allievoService.findByUsername("allievo_chitarra1").orElseThrow().getId()).getFirst();
@@ -1224,6 +1224,61 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private static Badge badgeData(GridTester<Grid<Lezione>, Lezione> grid, int riga) {
         return grid.getCellComponent(riga, 1).getChildren().filter(Badge.class::isInstance).map(Badge.class::cast)
             .findFirst().orElseThrow();
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_segnaLezioneNonEffettuataELaRipristina() {
+        apriLezioni();
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        Lezione lezione = grid.getRow(0);
+        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        test(find(Button.class).withText("Non effettuata").single()).click();
+        test(find(TextField.class).withLabel("Motivo").single()).setValue("insegnante assente");
+        test(find(Button.class).withText("Segna non effettuata").single()).click();
+        try {
+            Lezione salvata = lezioneService.findById(lezione.getId());
+            assertTrue(salvata.isNonEffettuata());
+            assertEquals("insegnante assente", salvata.getMotivoNonEffettuata());
+            assertEquals(29, grid.size());
+
+            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+            test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
+            assertEquals(1, grid.size());
+            assertEquals("Non effettuata", ((Badge) grid.getCellComponent(0, 4)).getText());
+
+            // Il dialog della lezione non effettuata non mostra il registro: solo il ripristino
+            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            assertFalse(find(Button.class).withText("Segna Completata").exists());
+            test(find(Button.class).withText("Ripristina").single()).click();
+            assertEquals(0, grid.size());
+            assertTrue(lezioneService.findById(lezione.getId()).isDaFare());
+        } finally {
+            if (lezioneService.findById(lezione.getId()).isNonEffettuata()) {
+                lezioneService.ripristina(lezione.getId(), "insegnante1");
+            }
+        }
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    @SuppressWarnings("unchecked")
+    void allievo_vedeLezioneNonEffettuataEsclusaDalleStatistiche() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Lezione lezione = lezioneService.findByCorso(canto.getId()).getFirst();
+        lezioneService.segnaNonEffettuata(lezione.getId(), "festività", "insegnante1");
+        try {
+            navigate(MieiCorsiView.class);
+            var corsi = test(find(Grid.class).single());
+            test(pulsante(corsi.getCellComponent(0, 8), "Visualizza Presenze")).click();
+            Dialog dialog = find(Dialog.class).single();
+            assertTrue(find(Span.class).from(dialog).withText("Totale lezioni: 29").exists());
+            var presenze = test((Grid<Presenza>) find(Grid.class).from(dialog).single());
+            assertEquals("Lezione non effettuata", presenze.getCellText(0, 2));
+        } finally {
+            lezioneService.ripristina(lezione.getId(), "insegnante1");
+        }
     }
 
     @Test

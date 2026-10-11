@@ -12,6 +12,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.function.SerializableSupplier;
@@ -34,8 +35,9 @@ public class ElencoLezioni extends VerticalLayout {
 
     /** Filtro della griglia per stato della lezione. */
     public enum FiltroLezioni {
-        DA_FARE("Da fare", lezione -> !lezione.isCompletata()),
+        DA_FARE("Da fare", Lezione::isDaFare),
         COMPLETATE("Completate", Lezione::isCompletata),
+        NON_EFFETTUATE("Non effettuate", Lezione::isNonEffettuata),
         TUTTE("Tutte", lezione -> true);
 
         private final String etichetta;
@@ -54,6 +56,7 @@ public class ElencoLezioni extends VerticalLayout {
     private final LezioneService lezioneService;
     private final PresenzaService presenzaService;
     private final SerializableSupplier<List<Lezione>> fonte;
+    private final String username;
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
     private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
@@ -61,12 +64,16 @@ public class ElencoLezioni extends VerticalLayout {
     private GridListDataView<Lezione> lezioni;
     private final Signal<Boolean> mobile = ViewSupport.isMobile();
 
-    /** {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica. */
+    /**
+     * {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica; {@code username} è l'utente corrente,
+     * di cui il service verifica i permessi.
+     */
     public ElencoLezioni(LezioneService lezioneService, PresenzaService presenzaService,
-                         SerializableSupplier<List<Lezione>> fonte) {
+                         SerializableSupplier<List<Lezione>> fonte, String username) {
         this.lezioneService = lezioneService;
         this.presenzaService = presenzaService;
         this.fonte = fonte;
+        this.username = username;
 
         setSizeFull();
         setPadding(false);
@@ -74,7 +81,7 @@ public class ElencoLezioni extends VerticalLayout {
 
         // Di default solo le lezioni ancora da fare
         filtro.setValue(FiltroLezioni.DA_FARE);
-        filtro.getStyle().set("max-width", "24rem");
+        filtro.getStyle().set("max-width", "32rem");
         filtro.addValueChangeListener(e -> applicaFiltro());
 
         add(filtro, gridLezioni);
@@ -137,11 +144,18 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     private Badge createStatoBadge(Lezione lezione) {
-        Badge badge = lezione.isCompletata()
-            ? new Badge("Completata", VaadinIcon.CHECK.create())
-            : new Badge("Da fare", VaadinIcon.CLOCK.create());
+        Badge badge;
         if (lezione.isCompletata()) {
+            badge = new Badge("Completata", VaadinIcon.CHECK.create());
             badge.addThemeVariants(BadgeVariant.SUCCESS);
+        } else if (lezione.isNonEffettuata()) {
+            badge = new Badge("Non effettuata", VaadinIcon.BAN.create());
+            badge.addThemeVariants(BadgeVariant.CONTRAST);
+            if (lezione.getMotivoNonEffettuata() != null) {
+                Tooltip.forComponent(badge).setText(lezione.getMotivoNonEffettuata());
+            }
+        } else {
+            badge = new Badge("Da fare", VaadinIcon.CLOCK.create());
         }
         badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
         return badge;
@@ -151,24 +165,66 @@ public class ElencoLezioni extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog(
             lezione.getCorso().getNome() + " – Lezione " + lezione.getNumeroLezione() + " (" + Formati.data(lezione.getData()) + ")", "800px");
 
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
+
+        if (lezione.isNonEffettuata()) {
+            // Le presenze di una lezione non effettuata non contano: niente registro, solo il ripristino
+            Span avviso = new Span("Lezione non effettuata" + (lezione.getMotivoNonEffettuata() != null
+                ? ": " + lezione.getMotivoNonEffettuata() : ""));
+            avviso.addClassName("avviso-sola-lettura");
+            dialog.add(avviso);
+            Button ripristina = new Button("Ripristina", VaadinIcon.ROTATE_LEFT.create(),
+                e -> esegui(dialog, () -> lezioneService.ripristina(lezione.getId(), username), "Lezione ripristinata"));
+            dialog.getFooter().add(ripristina);
+            dialog.open();
+            return;
+        }
+
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         // Una sola colonna con nome, stato e note: su schermi stretti gli elementi vanno a capo
         gridPresenze.addComponentColumn(this::createPresenzaRiga).setHeader("Allievi");
         gridPresenze.setItems(presenzaService.findByLezione(lezione.getId()));
-
-        Button completaButton = new Button("Segna Completata", e -> {
-            lezione.setCompletata(true);
-            lezioneService.save(lezione);
-            dialog.close();
-            updateGrid();
-            Notification.show("Lezione completata");
-        });
-        completaButton.addThemeVariants(ButtonVariant.SUCCESS);
-        completaButton.setEnabled(!lezione.isCompletata());
-
         dialog.add(gridPresenze);
-        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"), completaButton);
+
+        if (!lezione.isCompletata()) {
+            Button nonEffettuata = new Button("Non effettuata", VaadinIcon.BAN.create(),
+                e -> apriNonEffettuata(lezione, dialog));
+            Button completaButton = new Button("Segna Completata",
+                e -> esegui(dialog, () -> lezioneService.completa(lezione.getId(), username), "Lezione completata"));
+            completaButton.addThemeVariants(ButtonVariant.SUCCESS);
+            dialog.getFooter().add(nonEffettuata, completaButton);
+        }
         dialog.open();
+    }
+
+    /** Conferma con motivo facoltativo prima di segnare la lezione come non effettuata. */
+    private void apriNonEffettuata(Lezione lezione, Dialog dialogLezione) {
+        Dialog dialog = ViewSupport.dialog("Lezione non effettuata", "420px");
+        TextField motivo = new TextField("Motivo");
+        motivo.setPlaceholder("es. insegnante assente");
+        motivo.setWidthFull();
+        Button conferma = new Button("Segna non effettuata", e -> {
+            dialog.close();
+            esegui(dialogLezione, () -> lezioneService.segnaNonEffettuata(lezione.getId(), motivo.getValue(), username),
+                "Lezione segnata come non effettuata");
+        });
+        conferma.addThemeVariants(ButtonVariant.PRIMARY);
+        dialog.add(new Span("Le presenze di questa lezione non verranno conteggiate."), motivo);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), conferma);
+        dialog.open();
+    }
+
+    /** Esegue l'operazione, chiude il dialog e aggiorna la lista; in caso di errore mostra il messaggio. */
+    private void esegui(Dialog dialog, Runnable operazione, String conferma) {
+        try {
+            operazione.run();
+        } catch (RuntimeException ex) {
+            Notification.show(ex.getMessage());
+            return;
+        }
+        dialog.close();
+        updateGrid();
+        Notification.show(conferma);
     }
 
     private Div createPresenzaRiga(Presenza presenza) {

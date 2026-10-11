@@ -27,7 +27,8 @@ public class LezioniInsegnanteView extends VerticalLayout {
         setSizeFull();
         Insegnante insegnante = securityService.getUsername().flatMap(insegnanteService::findByUsername).orElse(null);
         ElencoLezioni elenco = new ElencoLezioni(lezioneService, presenzaService,
-            () -> insegnante != null ? lezioneService.findByInsegnante(insegnante.getId()) : List.of());
+            () -> insegnante != null ? lezioneService.findByInsegnante(insegnante.getId()) : List.of(),
+            securityService.getUsername().orElse(""));
         add(elenco);
         expand(elenco);
     }
