@@ -29,7 +29,7 @@
 | 1 | `QuandoLezione` (enum con etichetta e variante, `di(lezione, oggi)`) e test unitario | `views/insegnante/QuandoLezione.java`, test | `./mvnw test` | [x] |
 | 2 | `LezioniInsegnanteView`: badge accanto alla data (desktop e riepilogo mobile); test | `views/insegnante/LezioniInsegnanteView.java`, `styles.css`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 3 | Pagina iniziale dell'insegnante con un solo corso: inoltro alla prima navigazione verso la Home; test | `views/MainLayout.java`, `service/DashboardService.java`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 4 | `CLAUDE.md`: note su pagina iniziale e badge | `CLAUDE.md` | rilettura | [ ] |
+| 4 | `CLAUDE.md`: note su pagina iniziale e badge | `CLAUDE.md` | rilettura | [x] |
 
 ## Fuori ambito
 
@@ -37,3 +37,9 @@
 - `.idea/.copilot-plugin` (modifica locale preesistente) non incluso.
 
 ## Registro
+
+- Passo 1: `QuandoLezioneTest` (settimane lun–dom, domenica come ultimo giorno, lezioni passate solo se da compilare).
+- Passo 2: `./mvnw test` 87 test verdi (badge Oggi pieno, Settimana prossima grigio, In ritardo rosso sulle lezioni di prova del 2024).
+- Passo 3: 89 test verdi (insegnante1 con un corso parte da Le Mie Lezioni e la Home resta raggiungibile; con due corsi resta la Home). Adeguati i test degli insegnanti che riaprono la vista.
+- Browser non verificato in questa sessione: da controllare a mano il login di un insegnante con un solo corso e i badge su mobile.
+- In produzione nessuna modifica allo schema.
