@@ -55,5 +55,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-11: email con riepilogo e ricevuta in PDF allegato, solo per i corsi con pagamenti; lo scarico web della ricevuta diventa lo stesso PDF (sostituisce la pagina stampabile)._
 * [ ] Ogni invio deve essere registrato come data invio e almeno i metadati di invio.
   _Chiarimento 2026-10-11: data e ora, tipo, corso, allievo, destinatario, oggetto, allegato, chi ha inviato, esito (inviata/simulata/errore); niente corpo; consultabile nel dialog Quota e pagamenti e nella nuova vista "Email inviate"._
-* [ ] Valuterei di usare freemarker per il template HTML della email mentre JasperReport per la produzione PDF delle ricevute in modo da avere consistenza.
+* [x] Valuterei di usare freemarker per il template HTML della email mentre JasperReport per la produzione PDF delle ricevute in modo da avere consistenza. _(completata 2026-10-11: FreeMarker + OpenHTMLtoPDF)_
   _Chiarimento 2026-10-11: scelti FreeMarker + OpenHTMLtoPDF 1.1.85 (un solo template HTML per email, allegato e scarico web) al posto di JasperReports._

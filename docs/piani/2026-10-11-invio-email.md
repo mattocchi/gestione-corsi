@@ -32,7 +32,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Dipendenze (FreeMarker, Mail, OpenHTMLtoPDF 1.1.85) e configurazione: `app.associazione.*`, SMTP da variabili d'ambiente, mittente | `pom.xml`, `application.properties`, `Application.java`, `config/AssociazioneProperties.java`, `config/MailProperties.java`, `deploy/gestione-corsi.env.example` | `./mvnw test` | [x] |
-| 2 | Template FreeMarker di ricevuta e conferma (documento + corpo email) e `DocumentiService` (HTML e PDF); test | `src/main/resources/templates/*.ftlh`, `service/DocumentiService.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
+| 2 | Template FreeMarker di ricevuta e conferma (documento + corpo email) e `DocumentiService` (HTML e PDF); test | `src/main/resources/templates/*.ftlh`, `service/DocumentiService.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 3 | Ricevuta web in PDF: link di download con controllo dei permessi al posto di `RicevutaView`; test | `views/Ricevute.java`, viste che usano la ricevuta, `RicevutaView.java` (rimossa), test | `./mvnw test` | [ ] |
 | 4 | `InvioEmail` (registro) e `EmailService`: destinatario, invio reale o simulato con PDF allegato, registrazione di ogni tentativo; test | `entity/InvioEmail.java`, `repository/InvioEmailRepository.java`, `service/EmailService.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
 | 5 | Invio dalla UI: azione sulla riga di Gestione Pagamenti, pulsanti nel dialog Quota e pagamenti, "Invia conferme" nel dialog Partecipanti; test | `views/ElencoPagamenti.java`, `views/admin/QuotaPagamentiDialog.java`, `views/admin/PartecipantiDialog.java`, `views/admin/InvioEmailDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
