@@ -35,3 +35,7 @@
 - `.idea/.copilot-plugin` (modifica locale preesistente) non incluso.
 
 ## Registro
+
+- Passi 1-2 (un solo commit): `./mvnw test` 76 test verdi (nuovi `AnnoScolasticoServiceTest` e test della proposta in `CorsiView`). In dev l'elenco iniziale è 2024/2025 (corsi di prova), 2025/2026, 2026/2027, 2027/2028.
+- Passo 3: `./mvnw test` 79 test verdi (segreteria: aggiunge, formato/duplicato rifiutati sul campo, attiva/disattiva, niente Elimina; admin: elimina solo anni non usati; insegnante senza accesso). Browser (dev, admin): vista e voce di menu corrette su desktop; la prova a 390px non è riuscita (la finestra di Chrome non si è ridimensionata): la vista usa lo stesso schema di `CorsiView` (badge solo icona, colonna "Usato nei corsi" nascosta), da ricontrollare su un telefono.
+- Produzione: `ddl-auto=update` crea `anni_scolastici`; al primo avvio la tabella viene popolata con anno precedente/corrente/successivo e gli anni dei corsi esistenti. Nessuno script SQL.
