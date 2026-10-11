@@ -54,7 +54,8 @@ module.exports = {
       min_uptime: '60s',
       max_restarts: 10,
       restart_delay: 10000,
-      watch: false,
+      watch: true,
+      ignore_watch : ["node_modules", "\\logs", "\\.git", "*.log", "*.sh"],
 
       // Arresto ordinato: Spring chiude le richieste in corso (fino a 30 s) prima che pm2 forzi l'uscita
       kill_timeout: 35000,
