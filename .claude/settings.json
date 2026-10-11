@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Project reminder: if this prompt asks for a new feature or a change to the application behaviour, UI or data, first record it in docs/FUNZIONALITA.md and commit it, then run the implementation session on it (CLAUDE.md, section \"Feature requests from prompts\"). Questions, reviews, bug fixes and tooling/config/docs changes are not recorded there.'"
+          }
+        ]
+      }
+    ]
+  }
+}

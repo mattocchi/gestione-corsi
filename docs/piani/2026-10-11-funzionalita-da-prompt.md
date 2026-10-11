@@ -25,7 +25,7 @@ Aggiornare la configurazione di Claude Code perché i prompt che chiedono funzio
 |---|---|---|---|---|
 | 1 | Creare `docs/FUNZIONALITA.md` con intestazione e istruzioni di formato | `docs/FUNZIONALITA.md` | rilettura | [x] |
 | 2 | `CLAUDE.md`: sezione sulle richieste di funzionalità dai prompt (riconoscimento, registrazione testuale, riferimenti `F-`, commit di registrazione, poi sessione di implementazione) | `CLAUDE.md` | rilettura | [x] |
-| 3 | Hook `UserPromptSubmit` con il promemoria | `.claude/settings.json` | JSON valido, comando eseguito a mano | [ ] |
+| 3 | Hook `UserPromptSubmit` con il promemoria | `.claude/settings.json` | JSON valido, comando eseguito a mano | [x] |
 
 ## Fuori ambito
 
