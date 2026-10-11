@@ -36,7 +36,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### RIMBORSI
 
-* [ ] Dobbiamo mettere a disposizione di segreteria e admin una nuova funzionalità per indicare i pagamenti che vengono effettuati agli insegnanti. Serve quindi un'area in cui indichiamo i pagamenti che facciamo verso gli insegnanti
+* [x] Dobbiamo mettere a disposizione di segreteria e admin una nuova funzionalità per indicare i pagamenti che vengono effettuati agli insegnanti. Serve quindi un'area in cui indichiamo i pagamenti che facciamo verso gli insegnanti _(completata 2026-10-11)_
   _Chiarimento 2026-10-11: nuova vista di menu "Rimborsi" (admin e segreteria; solo admin elimina); rimborso con data, mese di riferimento, importo (proposto: maturato del mese), metodo Bonifico/Cassa e nota._
 * [ ] con una vista di un prospetto di quello che è il totale pagato fino a  quel momento per quell'insegnante. Questa sezione si chiama rimborsi perché effettivamente sono dei rimborsi spese che vengono dati mensilmente agli insegnanti collaboratori dell'associazione.
   _Chiarimento 2026-10-11: una riga per insegnante con rimborsato, maturato e da rimborsare per anno scolastico (filtro, default l'anno corrente); l'insegnante vede i propri rimborsi in sola lettura in "I miei rimborsi"._

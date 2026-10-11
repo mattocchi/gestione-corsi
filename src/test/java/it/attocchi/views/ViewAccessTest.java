@@ -45,10 +45,15 @@ import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.service.BilancioService;
+import it.attocchi.service.RimborsoService;
+import it.attocchi.entity.Rimborso;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.LezioniView;
+import it.attocchi.views.admin.RimborsiDialog;
+import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
@@ -126,6 +131,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private AnnoScolasticoService annoScolasticoService;
+
+    @Autowired
+    private RimborsoService rimborsoService;
 
     @Test
     @WithAnonymousUser
@@ -898,6 +906,83 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("insegnante1")
     void insegnante_nonAccedeAgliAnniScolastici() {
         navigate("anni-scolastici", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_registraRimborsiSenzaEliminarli() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Rimborsi")));
+        navigate(RimborsiView.class);
+        ComboBox<String> anno = filtro("Filtra per anno scolastico");
+        assertEquals(AnnoScolastico.di(LocalDate.now()), anno.getValue());
+        test(anno).selectItem("2024/2025");
+        var grid = test((Grid<BilancioService.RigaRimborsi>) find(Grid.class).single());
+        int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).insegnante().getId().equals(insegnante.getId()))
+            .findFirst().orElseThrow();
+        assertEquals("25,00 €", grid.getCellText(riga, 1));
+        test(pulsante(grid.getCellComponent(riga, 5), "Rimborsi")).click();
+
+        RimborsiDialog dialog = find(RimborsiDialog.class).single();
+        test(find(Button.class).from(dialog).withText("Aggiungi rimborso").single()).click();
+        // Mese di riferimento tra quelli dell'anno scolastico; nessuna lezione completata: nessun importo proposto
+        ComboBox<java.time.YearMonth> mese = find(ComboBox.class).withLabel("Mese di riferimento").single();
+        assertEquals(java.time.YearMonth.of(2024, 9), mese.getValue());
+        BigDecimalField importo = find(BigDecimalField.class).withLabel("Importo").single();
+        assertNull(importo.getValue());
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(importo.isInvalid());
+        test(mese).selectItem("ottobre 2024");
+        test(importo).setValue(new BigDecimal("80"));
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            assertTrue(find(Span.class).from(dialog).withText("Totale rimborsato: 80,00 €").exists());
+            var rimborsi = test((Grid<Rimborso>) find(Grid.class).from(dialog).single());
+            assertEquals("ottobre 2024", rimborsi.getCellText(0, 0));
+            assertFalse(find(Button.class).from(dialog).all().stream()
+                .anyMatch(b -> "Elimina rimborso".equals(b.getElement().getAttribute("aria-label"))));
+
+            test(pulsante(rimborsi.getCellComponent(0, 5), "Modifica rimborso")).click();
+            test(find(BigDecimalField.class).withLabel("Importo").single()).setValue(new BigDecimal("90"));
+            test(find(Button.class).withText("Salva").single()).click();
+            assertEquals(0, new BigDecimal("90").compareTo(rimborsoService.totale(insegnante.getId(), "2024/2025")));
+            // Il prospetto si aggiorna
+            assertEquals("90,00 €", grid.getCellText(riga, 2));
+        } finally {
+            rimborsoService.rimborsi(insegnante.getId(), "2024/2025").forEach(r -> rimborsoService.elimina(r.getId()));
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_eliminaUnRimborso() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        Rimborso rimborso = new Rimborso();
+        rimborso.setData(LocalDate.now());
+        rimborso.setMese(java.time.YearMonth.from(LocalDate.now()));
+        rimborso.setImporto(new BigDecimal("50"));
+        rimborso.setMetodo(MetodoPagamento.CASSA);
+        rimborsoService.salva(insegnante.getId(), rimborso);
+        navigate(RimborsiView.class);
+        var grid = test((Grid<BilancioService.RigaRimborsi>) find(Grid.class).single());
+        int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).insegnante().getId().equals(insegnante.getId()))
+            .findFirst().orElseThrow();
+        test(pulsante(grid.getCellComponent(riga, 5), "Rimborsi")).click();
+        RimborsiDialog dialog = find(RimborsiDialog.class).single();
+        var rimborsi = test((Grid<Rimborso>) find(Grid.class).from(dialog).single());
+        test(pulsante(rimborsi.getCellComponent(0, 5), "Elimina rimborso")).click();
+        test(find(Button.class).withText("Elimina").single()).click();
+        assertEquals(0, rimborsi.size());
+        assertEquals(0, rimborsoService.totale(insegnante.getId(), AnnoScolastico.di(LocalDate.now())).signum());
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAiRimborsiDiTutti() {
+        navigate("rimborsi", RouteNotFoundError.class);
     }
 
     @SuppressWarnings("unchecked")

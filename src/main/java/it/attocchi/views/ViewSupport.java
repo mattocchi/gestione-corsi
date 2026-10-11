@@ -5,6 +5,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -13,7 +14,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.signals.Signal;
+import it.attocchi.entity.AnnoScolastico;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -67,6 +70,20 @@ public final class ViewSupport {
                 column.setVisible(visible);
             }
         });
+    }
+
+    /**
+     * Filtro per anno scolastico tra quelli indicati (dal più recente), con l'anno corrente preselezionato
+     * se presente, altrimenti il più recente.
+     */
+    public static ComboBox<String> filtroAnnoScolastico(List<String> anni) {
+        ComboBox<String> filtro = new ComboBox<>();
+        filtro.setAriaLabel("Filtra per anno scolastico");
+        filtro.setItems(anni);
+        String corrente = AnnoScolastico.di(LocalDate.now());
+        filtro.setValue(anni.contains(corrente) ? corrente : anni.isEmpty() ? null : anni.getFirst());
+        filtro.setWidth("10rem");
+        return filtro;
     }
 
     /** Pulsante compatto con sola icona; l'etichetta è usata come tooltip e nome accessibile. */
