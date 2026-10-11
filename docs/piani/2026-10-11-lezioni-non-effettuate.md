@@ -36,7 +36,7 @@
 | 3 | Non effettuate nella UI: dialog della lezione (Non effettuata con motivo, Ripristina), filtro e badge, `QuandoLezione`, riga "Lezione non effettuata" e statistiche in `PresenzeAllievoDialog`, riquadro in Home; test | `views/ElencoLezioni.java`, `views/insegnante/QuandoLezione.java`, `views/PresenzeAllievoDialog.java`, `views/HomeView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 4 | Nuove lezioni nella UI: "Nuova lezione" e "Recupera" (dialog data/orario/corso), "Recupero" accanto al numero, Elimina per le aggiunte; test | `views/ElencoLezioni.java`, `views/insegnante/LezioniInsegnanteView.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 5 | Vista "Lezioni" per admin e segreteria (tutti i corsi attivi, filtro corso, colonna Insegnante, Elimina solo admin); test | `views/admin/LezioniView.java`, `views/ElencoLezioni.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 6 | `CLAUDE.md` e registro del piano | `CLAUDE.md`, piano | rilettura | [ ] |
+| 6 | `CLAUDE.md` e registro del piano | `CLAUDE.md`, piano | rilettura | [x] |
 
 ## Fuori ambito
 
@@ -44,3 +44,11 @@
 - `.idea/.copilot-plugin` (modifica locale preesistente) non incluso.
 
 ## Registro
+
+- Passo 1: `LezioneServiceTest` (permessi insegnante/segreteria/admin, ripristino con presenze, recupero con numero e presenze, lezione in più, `generaLezioni` che conserva e non duplica). 93 test verdi.
+- Passo 2: refactoring senza cambi di comportamento, 93 verdi.
+- Passo 3: 95 verdi (insegnante segna non effettuata con motivo, filtro, ripristino; allievo vede "Lezione non effettuata" esclusa dalle statistiche). `Badge` non ha `setTooltipText`: tooltip con `Tooltip.forComponent`. Un compilatore dell'IDE aveva lasciato in `target/classes` una classe con errori che Maven non ricompilava: risolto con `./mvnw clean test`.
+- Passo 4: 97 verdi (recupero e lezione in più, eliminazione). Il campo Corso nascosto (un solo corso) non era scritto dal Binder: letto direttamente dal campo.
+- Passo 5: 100 verdi (segreteria: vista Lezioni, filtro per corso, non effettuata e recupero, niente Elimina; admin: nuova lezione con corso obbligatorio ed eliminazione; insegnante senza accesso alla vista).
+- Browser non verificato in questa sessione: da controllare a mano i dialog (Non effettuata, Recupera, Nuova lezione) e la barra dei filtri su mobile.
+- Produzione: `ddl-auto=update` aggiunge a `lezioni` le colonne `non_effettuata`, `motivo_non_effettuata`, `aggiunta`, `recupero_di_id`; nessuno script SQL. Da verificare al primo avvio su MySQL che le colonne boolean NOT NULL vengano aggiunte con 0 sulle righe esistenti.
