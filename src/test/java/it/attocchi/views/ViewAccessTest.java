@@ -55,6 +55,7 @@ import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
+import it.attocchi.views.genitore.PagamentiFigliView;
 import it.attocchi.views.allievo.MieiCorsiView;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -720,6 +721,48 @@ class ViewAccessTest extends SpringBrowserlessTest {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
             pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
         }
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    @SuppressWarnings("unchecked")
+    void genitore_vedeIPagamentiDeiFigliInSolaLettura() {
+        Corso canto = disattiva("Corso di Canto");
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("200"));
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        try {
+            navigate(HomeView.class);
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(i -> "Pagamenti".equals(i.getLabel())));
+            navigate(PagamentiFigliView.class);
+            var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
+            assertTrue(righe.size() > 0);
+            assertTrue(IntStream.range(0, righe.size())
+                .allMatch(r -> righe.getRow(r).genitore().getUser().getUsername().equals("genitore3")));
+            // Anche il corso non attivo, con il dettaglio in sola lettura e la ricevuta
+            int riga = rigaDi(righe, allievo);
+            assertEquals(canto, righe.getRow(riga).corso());
+            assertTrue(find(Span.class).withText("Incassato 200,00 €").exists());
+            var azioni = righe.getCellComponent(riga, "azioni");
+            assertThrows(AssertionError.class, () -> pulsante(azioni, "Aggiungi pagamento"));
+            test(pulsante(azioni, "Pagamenti")).click();
+            PagamentiAllievoDialog dialog = find(PagamentiAllievoDialog.class).single();
+            assertTrue(find(Span.class).from(dialog).withText("Residuo 400,00 €").exists());
+            assertTrue(find(ComboBox.class).all().stream().noneMatch(c -> c.getAriaLabel().filter("Filtra per genitore"::equals).isPresent()
+                && c.isVisible()));
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+            riattiva(canto);
+        }
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievo_nonAccedeAiPagamenti() {
+        navigate("pagamenti-figli", RouteNotFoundError.class);
+        navigate("pagamenti", RouteNotFoundError.class);
     }
 
     @SuppressWarnings("unchecked")
