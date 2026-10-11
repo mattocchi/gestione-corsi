@@ -1,0 +1,117 @@
+package it.attocchi.service;
+
+import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.Lezione;
+import it.attocchi.entity.MetodoPagamento;
+import it.attocchi.entity.Pagamento;
+import it.attocchi.entity.Rimborso;
+import it.attocchi.service.BilancioService.Bilancio;
+import it.attocchi.service.BilancioService.BilancioCorso;
+import it.attocchi.service.BilancioService.RigaRimborsi;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+/**
+ * Bilancio sui dati di DataInitializer: insegnante1 (25 €/h) ha il Corso di Canto 2024/2025 con 7 allievi,
+ * 30 lezioni da 40 minuti e quota 600 €.
+ */
+@SpringBootTest
+class BilancioServiceTest {
+
+    @Autowired
+    private BilancioService bilancioService;
+
+    @Autowired
+    private InsegnanteService insegnanteService;
+
+    @Autowired
+    private LezioneService lezioneService;
+
+    @Autowired
+    private CorsoService corsoService;
+
+    @Autowired
+    private PagamentoService pagamentoService;
+
+    @Autowired
+    private RimborsoService rimborsoService;
+
+    @Test
+    void costo_minutiPerTariffaOraria() {
+        // 7 allievi × 40 minuti = 280 minuti = 4,67 ore × 25 €/h
+        assertEquals(new BigDecimal("116.67"), BilancioService.costo(280, new BigDecimal("25")));
+        assertEquals(new BigDecimal("3500.00"), BilancioService.costo(30 * 280, new BigDecimal("25")));
+        assertEquals(new BigDecimal("0.00"), BilancioService.costo(280, null));
+    }
+
+    @Test
+    void bilancio_effettivoMaturatoETeorico() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Long cantoId = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow().getId();
+        List<Lezione> lezioni = lezioneService.findByCorso(cantoId);
+        Lezione completata = lezioni.get(0);
+        Lezione saltata = lezioni.get(1);
+        Long allievoId = corsoService.findPartecipanti(cantoId).getFirst().getAllievo().getId();
+
+        Bilancio iniziale = bilancioService.bilancio(insegnante.getId(), "2024/2025");
+        assertFalse(iniziale.senzaTariffa());
+        assertEquals(1, iniziale.corsi().size());
+        BilancioCorso canto = iniziale.corsi().getFirst();
+        assertEquals(7, canto.iscritti());
+        assertEquals(0, new BigDecimal("4200").compareTo(canto.incassoPrevisto()));
+        assertEquals(new BigDecimal("3500.00"), canto.costoPrevisto());
+        assertEquals(0, iniziale.costoMaturato().signum());
+        assertEquals(0, new BigDecimal("700").compareTo(iniziale.marginePrevisto()));
+        assertEquals(0, bilancioService.bilancio(insegnante.getId(), "2025/2026").corsi().size());
+
+        lezioneService.completa(completata.getId(), "insegnante1");
+        lezioneService.segnaNonEffettuata(saltata.getId(), null, "insegnante1");
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.of(2024, 10, 10));
+        rata.setImporto(new BigDecimal("200"));
+        rata.setMetodo(MetodoPagamento.CASSA);
+        pagamentoService.salva(cantoId, allievoId, rata);
+        YearMonth mese = YearMonth.from(completata.getData());
+        Rimborso rimborso = new Rimborso();
+        rimborso.setData(LocalDate.of(2024, 11, 5));
+        rimborso.setMese(mese);
+        rimborso.setImporto(new BigDecimal("100"));
+        rimborso.setMetodo(MetodoPagamento.BONIFICO);
+        rimborsoService.salva(insegnante.getId(), rimborso);
+        try {
+            Bilancio bilancio = bilancioService.bilancio(insegnante.getId(), "2024/2025");
+            assertEquals(0, new BigDecimal("200").compareTo(bilancio.incassato()));
+            assertEquals(0, new BigDecimal("100").compareTo(bilancio.rimborsato()));
+            assertEquals(0, new BigDecimal("100").compareTo(bilancio.saldo()));
+            assertEquals(new BigDecimal("116.67"), bilancio.costoMaturato());
+            assertEquals(0, new BigDecimal("16.67").compareTo(bilancio.daRimborsare()));
+            // La lezione non effettuata non costa: 29 lezioni × 280 minuti
+            assertEquals(new BigDecimal("3383.33"), bilancio.costoPrevisto());
+
+            RigaRimborsi riga = bilancioService.prospetto("2024/2025").stream()
+                .filter(r -> r.insegnante().getId().equals(insegnante.getId())).findFirst().orElseThrow();
+            assertEquals(new BigDecimal("116.67"), riga.maturato());
+            assertEquals(0, new BigDecimal("16.67").compareTo(riga.daRimborsare()));
+
+            // Proposta: maturato del mese meno quanto già rimborsato per quel mese
+            assertEquals(0, new BigDecimal("16.67").compareTo(bilancioService.propostaRimborso(insegnante.getId(), mese)));
+            assertEquals(0, bilancioService.propostaRimborso(insegnante.getId(), mese.plusMonths(6)).signum());
+        } finally {
+            rimborsoService.elimina(rimborso.getId());
+            pagamentoService.findPagamenti(cantoId, allievoId).forEach(pagamentoService::elimina);
+            lezioneService.ripristina(saltata.getId(), "insegnante1");
+            Lezione daRiaprire = lezioneService.findById(completata.getId());
+            daRiaprire.setCompletata(false);
+            lezioneService.save(daRiaprire);
+        }
+    }
+}

@@ -14,6 +14,7 @@ public interface LezioneRepository extends JpaRepository<Lezione, Long> {
     List<Lezione> findByCorsoIdOrderByDataAsc(Long corsoId);
     List<Lezione> findByCorsoInsegnanteIdAndCorsoAttivoTrueOrderByDataAsc(Long insegnanteId);
     List<Lezione> findByCorsoAttivoTrueOrderByDataAsc();
+    List<Lezione> findByCorsoInsegnanteIdOrderByDataAsc(Long insegnanteId);
     long countByCorsoInsegnanteUserUsernameAndCorsoAttivoTrueAndCompletataAndNonEffettuata(String username,
                                                                                          boolean completata, boolean nonEffettuata);
     boolean existsByRecuperoDiId(Long lezioneId);
