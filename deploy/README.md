@@ -57,6 +57,14 @@ Variabili di `gestione-corsi.env`:
 Il profilo `prod` è fissato in `ecosystem.config.js` e `start.sh`: senza, Spring partirebbe con il profilo
 `dev` (H2 in memoria e utenti di prova).
 
+### Email (SMTP)
+
+Conferme di iscrizione e ricevute partono per email solo se in `gestione-corsi.env` è impostata `MAIL_HOST`
+(con `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_STARTTLS`); senza, l'invio è simulato:
+registrato nella vista "Email inviate" con esito "Simulata" e scritto nel log. I dati dell'associazione in testata
+a ricevute e conferme (e l'IBAN per il bonifico) sono le variabili `ASSOCIAZIONE_*`. Dopo averle cambiate:
+`pm2 reload ecosystem.config.js --update-env`.
+
 ### Aggiornamento
 
 1. Backup del database (`mysqldump gestione_corsi > backup-AAAA-MM-GG.sql`).

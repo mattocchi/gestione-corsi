@@ -37,7 +37,7 @@
 | 4 | `InvioEmail` (registro) e `EmailService`: destinatario, invio reale o simulato con PDF allegato, registrazione di ogni tentativo; test | `entity/InvioEmail.java`, `entity/TipoDocumento.java`, `repository/InvioEmailRepository.java`, `config/MailConfig.java`, `service/EmailService.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 5 | Invio dalla UI: azione sulla riga di Gestione Pagamenti, pulsanti nel dialog Quota e pagamenti, "Invia conferme" nel dialog Partecipanti; test | `views/ElencoPagamenti.java`, `views/admin/QuotaPagamentiDialog.java`, `views/admin/PartecipantiDialog.java`, `views/admin/InvioEmailDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 6 | Registro nella UI: sezione "Email inviate" nel dialog Quota e pagamenti e vista "Email inviate" con filtri; test | `views/admin/EmailInviateView.java`, `views/admin/GrigliaInvii.java`, `views/admin/QuotaPagamentiDialog.java`, `views/Formati.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 7 | `CLAUDE.md`, `deploy/README.md` (SMTP), registro del piano | `CLAUDE.md`, `deploy/README.md`, piano | rilettura | [ ] |
+| 7 | `CLAUDE.md`, `deploy/README.md` (SMTP), registro del piano | `CLAUDE.md`, `deploy/README.md`, piano | rilettura | [x] |
 
 ## Fuori ambito
 
@@ -47,3 +47,13 @@
 - `.idea/.copilot-plugin` (modifica locale preesistente) non incluso.
 
 ## Registro
+
+- Passo 1: dipendenze risolte (FreeMarker 2.3.34 e Mail dagli starter di Spring Boot 4.1.1, OpenHTMLtoPDF 1.1.85 con PDFBox 3.0.7); 109 test verdi.
+- Passo 2: `DocumentiServiceTest` (HTML con escape del testo dell'utente, PDF valido con testo estratto: accenti, €, IBAN). 111 verdi.
+- Passo 3: ricevuta in PDF con permessi nel service; `RicevutaView` e stili rimossi; test riscritti. 111 verdi. Scelta tecnica: `Ricevute` (e poi `InvioEmailDialog`) ottengono il service dall'Instantiator di Vaadin invece di passarlo a ogni dialog.
+- Passo 4: `EmailServiceTest` (simulato, metadati, permessi, ricevuta solo con pagamenti, invio multiplo) ed `EmailServiceSmtpTest` (JavaMailSender finto: oggetto, destinatario, mittente, allegato PDF; errore registrato). 116 verdi.
+- Passo 5: 118 verdi (invio da Gestione Pagamenti e dal dialog Partecipanti).
+- Passo 6: 120 verdi (registro nel dialog e vista "Email inviate" con filtri).
+- Nota tecnica: `DocumentiService` usa `views.Formati` per avere gli stessi formati della UI (dipendenza service → views limitata a questa classe di utilità).
+- Non verificato: un invio reale su un server SMTP (serve la configurazione `MAIL_*` sul server) e l'aspetto del PDF in un lettore; browser non verificato in questa sessione.
+- Produzione: `ddl-auto=update` crea la tabella `invii_email`; nessuno script SQL. Da impostare sul server `ASSOCIAZIONE_*` (codice fiscale, indirizzo, IBAN) e `MAIL_*`.
