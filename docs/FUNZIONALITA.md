@@ -44,3 +44,11 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-11: "elezioni" = lezioni; bilancio per anno scolastico con effettivo (incassato, rimborsato, saldo), maturato (lezioni completate, da rimborsare) e teorico (quote assegnate, costo di tutte le lezioni programmate escluse le non effettuate, margine), con dettaglio per corso; solo admin e segreteria._
 * [x] Ti evidenzio un dettaglio che l'insegnante ha un rimborso con un costo orario, mentre le lezioni sono di 40 minuti o comunque configurabili per ogni corso. Di conseguenza il calcoli vanno fatti correttamente _(completata 2026-10-11)_
   _Chiarimento 2026-10-11: lezioni individuali: ore = allievi iscritti alla lezione (assenti compresi) × durata del corso / 60, × tariffa oraria attuale; le lezioni non effettuate non costano._
+
+### EMAIL
+
+* [ ] Per completare alcune funzionalità ora occorre predisporre il programma perché possa inviare delle email.
+* [ ] In particolare come segretaria o admin è necessario poter inviare sia conferma di iscrizione ad ogni corso in cui il figlio allievo risulta escritto riportante la conferma di iscrizione con importo da pagare,
+* [ ] che le ricevute via email al genitore, per ogni corso in cui ha fatto dei pagamenti. Il genitore può scaricare via web ma segreteria o admin devono poter inviare via email.
+* [ ] Ogni invio deve essere registrato come data invio e almeno i metadati di invio.
+* [ ] Valuterei di usare freemarker per il template HTML della email mentre JasperReport per la produzione PDF delle ricevute in modo da avere consistenza.
