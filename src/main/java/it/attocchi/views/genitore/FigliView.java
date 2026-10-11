@@ -31,6 +31,7 @@ import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PagamentiAllievoDialog;
+import it.attocchi.views.PrezziCorso;
 import it.attocchi.views.PresenzeAllievoDialog;
 import it.attocchi.views.RicevutaView;
 import it.attocchi.views.StatoPagamentoUI;
@@ -130,10 +131,11 @@ public class FigliView extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog("Corsi di " + allievo.getNomeCompleto(), "1000px");
 
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
-        gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
+        var nome = gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
         var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
+        PrezziCorso.aggiungiColonne(gridCorsi, nome, situazioni);
         var pagamento = gridCorsi.addComponentColumn(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
 

@@ -13,9 +13,11 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
+import it.attocchi.service.PagamentoService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PresenzeAllievoDialog;
+import it.attocchi.views.PrezziCorso;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -29,14 +31,16 @@ public class MieiCorsiView extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final PresenzaService presenzaService;
+    private final PagamentoService pagamentoService;
 
     private final Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
     private Allievo allievoCorrente;
 
     public MieiCorsiView(CorsoService corsoService, PresenzaService presenzaService,
-                         SecurityService securityService, AllievoService allievoService) {
+                         SecurityService securityService, AllievoService allievoService, PagamentoService pagamentoService) {
         this.corsoService = corsoService;
         this.presenzaService = presenzaService;
+        this.pagamentoService = pagamentoService;
 
         setSizeFull();
         allievoCorrente = securityService.getUsername().flatMap(allievoService::findByUsername).orElse(null);
@@ -48,12 +52,15 @@ public class MieiCorsiView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
+        var nome = gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
         var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
         var dataInizio = gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         var durata = gridCorsi.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
+        if (allievoCorrente != null) {
+            PrezziCorso.aggiungiColonne(gridCorsi, nome, pagamentoService.situazioniDelloAllievo(allievoCorrente.getId()));
+        }
 
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso ->
             ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Visualizza Presenze", e -> openPresenzeDialog(corso)))));

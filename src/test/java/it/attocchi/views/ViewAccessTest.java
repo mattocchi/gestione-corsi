@@ -1270,6 +1270,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         rata.setImporto(new BigDecimal("200"));
         rata.setMetodo(MetodoPagamento.CASSA);
         pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        canto.setPrezzoPreiscrizione(new BigDecimal("510"));
+        corsoService.save(canto);
         try {
             navigate(FigliView.class);
             var figli = test((Grid<Allievo>) find(Grid.class).single());
@@ -1279,8 +1281,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
-            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 3)).getText());
-            test(pulsante(corsi.getCellComponent(0, 4), "Pagamenti")).click();
+            // Costo totale, pre-iscrizione e prezzo applicato (quota dovuta)
+            assertEquals(List.of("600,00 €", "510,00 €", "600,00 €"),
+                List.of(corsi.getCellText(0, 3), corsi.getCellText(0, 4), corsi.getCellText(0, 5)));
+            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 6)).getText());
+            test(pulsante(corsi.getCellComponent(0, 7), "Pagamenti")).click();
 
             PagamentiAllievoDialog dialog = find(PagamentiAllievoDialog.class).single();
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 600,00 €").exists());
@@ -1293,6 +1298,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertFalse(find(Button.class).from(dialog).withText("Aggiungi pagamento").exists());
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+            Corso corso = corsoService.findById(canto.getId());
+            corso.setPrezzoPreiscrizione(null);
+            corsoService.save(corso);
+        }
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievo_vedePrezziDelCorsoEQuotaApplicata() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        canto.setPrezzoPreiscrizione(new BigDecimal("510"));
+        corsoService.save(canto);
+        pagamentoService.impostaQuota(canto.getId(), allievo.getId(), new BigDecimal("510"), "pre-iscrizione");
+        try {
+            navigate(MieiCorsiView.class);
+            var corsi = test(find(Grid.class).single());
+            assertEquals("Corso di Canto", corsi.getCellText(0, 0));
+            assertEquals(List.of("600,00 €", "510,00 €", "510,00 €"),
+                List.of(corsi.getCellText(0, 5), corsi.getCellText(0, 6), corsi.getCellText(0, 7)));
+        } finally {
+            pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
+            Corso corso = corsoService.findById(canto.getId());
+            corso.setPrezzoPreiscrizione(null);
+            corsoService.save(corso);
         }
     }
 
