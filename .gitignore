@@ -24,3 +24,8 @@ webpack.generated.js
 
 # Bundle frontend generati da Vaadin (ricreati automaticamente dalla build)
 src/main/bundles/
+
+# Ambiente di produzione sul server (segreti) e log di pm2
+deploy/*.env
+!deploy/*.env.example
+deploy/logs/
