@@ -46,6 +46,7 @@ import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.UserService;
+import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.GestionePagamentiView;
@@ -786,6 +787,70 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void allievo_nonAccedeAiPagamenti() {
         navigate("pagamenti-figli", RouteNotFoundError.class);
         navigate("pagamenti", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_aggiungeEDisattivaAnniScolasticiSenzaElimina() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Anni scolastici")));
+        navigate(AnniScolasticiView.class);
+        var anni = test((Grid<AnnoScolastico>) find(Grid.class).single());
+        int quanti = anni.size();
+        assertTrue(find(Button.class).all().stream().noneMatch(b -> "Elimina".equals(b.getElement().getAttribute("aria-label"))));
+
+        test(find(Button.class).withText("Nuovo Anno Scolastico").single()).click();
+        TextField nome = find(TextField.class).withLabel("Anno Scolastico").single();
+        test(nome).setValue("2050/2052");
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(nome.isInvalid());
+        test(nome).setValue("2024/2025");
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(nome.isInvalid());
+        assertEquals("L'anno scolastico 2024/2025 è già presente", nome.getErrorMessage());
+        test(nome).setValue("2050/2051");
+        test(find(Button.class).withText("Salva").single()).click();
+
+        AnnoScolastico nuovo = annoScolasticoService.elenco().stream()
+            .filter(a -> a.getNome().equals("2050/2051")).findFirst().orElseThrow();
+        try {
+            assertEquals(quanti + 1, anni.size());
+            assertEquals("2050/2051", anni.getRow(0).getNome());
+            test(pulsante(anni.getCellComponent(0, 3), "Disattiva")).click();
+            assertFalse(annoScolasticoService.scelteCorso(null).contains("2050/2051"));
+            assertEquals("Non attivo", ((Badge) anni.getCellComponent(0, 1)).getText());
+            test(pulsante(anni.getCellComponent(0, 3), "Attiva")).click();
+            assertTrue(annoScolasticoService.scelteCorso(null).contains("2050/2051"));
+        } finally {
+            annoScolasticoService.elimina(nuovo.getId());
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_eliminaSoloAnniScolasticiNonUsati() {
+        AnnoScolastico nuovo = annoScolasticoService.crea("2051/2052");
+        navigate(AnniScolasticiView.class);
+        var anni = test((Grid<AnnoScolastico>) find(Grid.class).single());
+        int quanti = anni.size();
+        for (int row = 0; row < anni.size(); row++) {
+            if (anni.getRow(row).getNome().equals("2024/2025")) {
+                assertFalse(pulsante(anni.getCellComponent(row, 3), "Elimina").isEnabled());
+                assertEquals("Sì", anni.getCellText(row, 2));
+            }
+        }
+        assertEquals("2051/2052", anni.getRow(0).getNome());
+        test(pulsante(anni.getCellComponent(0, 3), "Elimina")).click();
+        assertEquals(quanti - 1, anni.size());
+        assertFalse(annoScolasticoService.elenco().contains(nuovo));
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAgliAnniScolastici() {
+        navigate("anni-scolastici", RouteNotFoundError.class);
     }
 
     @SuppressWarnings("unchecked")
