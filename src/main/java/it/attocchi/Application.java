@@ -5,6 +5,7 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.theme.aura.Aura;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
  * The entry point of the Spring Boot application.
@@ -12,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * The theme stylesheet must be loaded before the application's own styles.
  */
 @SpringBootApplication
+@ConfigurationPropertiesScan
 @StyleSheet(Aura.STYLESHEET)
 @StyleSheet("styles.css")
 public class Application implements AppShellConfigurator {
