@@ -287,6 +287,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    void campiDataOra_inItaliano() {
+        assertEquals(java.util.Locale.ITALY, com.vaadin.flow.component.UI.getCurrent().getLocale());
+        navigate(CorsiView.class);
+        test(find(Button.class).withText("Nuovo Corso").single()).click();
+        DatePicker dataInizio = find(DatePicker.class).withLabel("Data Inizio").single();
+        assertEquals("dd/MM/yyyy", dataInizio.getI18n().getDateFormats().getFirst());
+        assertEquals(1, dataInizio.getI18n().getFirstDayOfWeek());
+        assertEquals(java.util.Locale.ITALY, find(TimePicker.class).withLabel("Orario Inizio").single().getLocale());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_creaCorsoAssegnatoAUnInsegnante() {
         navigate(CorsiView.class);

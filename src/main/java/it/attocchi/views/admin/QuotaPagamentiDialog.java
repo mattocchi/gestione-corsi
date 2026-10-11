@@ -116,8 +116,7 @@ public class QuotaPagamentiDialog extends Dialog {
         boolean nuovo = pagamento.getId() == null;
         Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo pagamento" : "Modifica pagamento", "420px");
 
-        DatePicker data = new DatePicker("Data");
-        data.setLocale(Locale.ITALY);
+        DatePicker data = ViewSupport.datePicker("Data");
         BigDecimalField importo = new BigDecimalField("Importo");
         importo.setLocale(Locale.ITALY);
         importo.setPrefixComponent(new Span("€"));

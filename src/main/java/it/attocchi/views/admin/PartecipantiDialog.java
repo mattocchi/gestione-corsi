@@ -26,7 +26,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,8 +111,7 @@ public class PartecipantiDialog extends Dialog {
     }
 
     private TimePicker createOrario(Iscrizione iscrizione) {
-        TimePicker orario = new TimePicker();
-        orario.setLocale(Locale.ITALY);
+        TimePicker orario = ViewSupport.timePicker(null);
         orario.setStep(Duration.ofMinutes(5));
         orario.setPlaceholder("da assegnare");
         orario.setClearButtonVisible(true);

@@ -17,7 +17,7 @@ import java.util.Locale;
 public class AnagraficaFields<T extends Anagrafica> {
 
     private final TextField codiceFiscale = new TextField("Codice fiscale");
-    private final DatePicker dataNascita = new DatePicker("Data di nascita");
+    private final DatePicker dataNascita = ViewSupport.datePicker("Data di nascita");
     private final TextField luogoNascita = new TextField("Luogo di nascita");
     private final TextField via = new TextField("Indirizzo");
     private final TextField cap = new TextField("CAP");
@@ -30,7 +30,6 @@ public class AnagraficaFields<T extends Anagrafica> {
      */
     public AnagraficaFields(Binder<T> binder, boolean obbligatori) {
         codiceFiscale.setMaxLength(16);
-        dataNascita.setLocale(Locale.ITALY);
         dataNascita.setMax(LocalDate.now());
         via.setPlaceholder("via e numero civico");
         cap.setMaxLength(5);

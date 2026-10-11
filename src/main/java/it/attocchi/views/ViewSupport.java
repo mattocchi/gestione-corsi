@@ -5,12 +5,17 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.signals.Signal;
+
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Supporto comune per il layout responsive delle view.
@@ -22,6 +27,24 @@ public final class ViewSupport {
 
     /** Sotto questa larghezza (px) le view usano il layout per smartphone. */
     public static final int MOBILE_BREAKPOINT = 640;
+
+    /** Lingua dell'applicazione (impostata sulla UI da {@code LocaleItaliano}). */
+    public static final Locale LOCALE = Locale.ITALY;
+
+    /** Calendario in italiano, settimana dal lunedì, data gg/mm/aaaa (accettati anche g/m/aaaa e g/m/aa). */
+    private static final DatePicker.DatePickerI18n DATE_PICKER_I18N = new DatePicker.DatePickerI18n()
+        .setMonthNames(List.of("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+            "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"))
+        .setWeekdays(List.of("domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"))
+        .setWeekdaysShort(List.of("dom", "lun", "mar", "mer", "gio", "ven", "sab"))
+        .setFirstDayOfWeek(1)
+        .setToday("Oggi")
+        .setCancel("Annulla")
+        .setDialogAccessibleName("Calendario")
+        .setDateFormats("dd/MM/yyyy", "d/M/yyyy", "d/M/yy")
+        .setBadInputErrorMessage("Data non valida: usa il formato gg/mm/aaaa")
+        .setMinErrorMessage("Data troppo vecchia")
+        .setMaxErrorMessage("Data troppo avanti");
 
     private ViewSupport() {
     }
@@ -86,6 +109,23 @@ public final class ViewSupport {
         dialog.setWidth(width);
         dialog.setMaxWidth("100%");
         return dialog;
+    }
+
+    /** Campo data in italiano: usarlo per ogni {@code DatePicker} dell'applicazione. */
+    public static DatePicker datePicker(String label) {
+        DatePicker datePicker = new DatePicker(label);
+        datePicker.setLocale(LOCALE);
+        datePicker.setI18n(DATE_PICKER_I18N);
+        return datePicker;
+    }
+
+    /** Campo ora in italiano (24 ore): usarlo per ogni {@code TimePicker} dell'applicazione. */
+    public static TimePicker timePicker(String label) {
+        TimePicker timePicker = new TimePicker(label);
+        timePicker.setLocale(LOCALE);
+        timePicker.setI18n(new TimePicker.TimePickerI18n()
+            .setBadInputErrorMessage("Ora non valida: usa il formato hh:mm (es. 14:30)"));
+        return timePicker;
     }
 
     /** Titolo di una sezione all'interno di un dialog. */
