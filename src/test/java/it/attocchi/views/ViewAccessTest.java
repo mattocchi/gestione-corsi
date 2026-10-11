@@ -63,6 +63,7 @@ import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.AllieviView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
+import it.attocchi.views.insegnante.MieiRimborsiView;
 import it.attocchi.views.ElencoLezioni.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
 import it.attocchi.views.genitore.PagamentiFigliView;
@@ -1003,6 +1004,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Elimina").single()).click();
         assertEquals(0, rimborsi.size());
         assertEquals(0, rimborsoService.totale(insegnante.getId(), AnnoScolastico.di(LocalDate.now())).signum());
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_vedeIPropriRimborsiInLettura() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Insegnante altro = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        java.time.YearMonth mese = java.time.YearMonth.from(LocalDate.now());
+        Rimborso mio = new Rimborso();
+        mio.setData(LocalDate.now());
+        mio.setMese(mese);
+        mio.setImporto(new BigDecimal("120"));
+        mio.setMetodo(MetodoPagamento.BONIFICO);
+        rimborsoService.salva(insegnante.getId(), mio);
+        Rimborso suo = new Rimborso();
+        suo.setData(LocalDate.now());
+        suo.setMese(mese);
+        suo.setImporto(new BigDecimal("300"));
+        suo.setMetodo(MetodoPagamento.BONIFICO);
+        rimborsoService.salva(altro.getId(), suo);
+        try {
+            navigate(HomeView.class);
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("I miei rimborsi")));
+            navigate(MieiRimborsiView.class);
+            var grid = test((Grid<Rimborso>) find(Grid.class).single());
+            assertEquals(1, grid.size());
+            assertEquals(Formati.mese(mese), grid.getCellText(0, 0));
+            assertTrue(find(Span.class).withText("Totale ricevuto: 120,00 €").exists());
+            assertFalse(find(Button.class).all().stream().anyMatch(b -> b.getText().contains("rimborso")));
+        } finally {
+            rimborsoService.elimina(mio.getId());
+            rimborsoService.elimina(suo.getId());
+        }
     }
 
     @Test
