@@ -29,11 +29,11 @@ import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
+import it.attocchi.views.Ricevute;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PagamentiAllievoDialog;
 import it.attocchi.views.PrezziCorso;
 import it.attocchi.views.PresenzeAllievoDialog;
-import it.attocchi.views.RicevutaView;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
@@ -145,7 +145,7 @@ public class FigliView extends VerticalLayout {
             StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
 
             HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
-            actions.add(RicevutaView.link(corso.getId(), allievo.getId(), ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
+            actions.add(Ricevute.link(corso.getId(), allievo.getId(), ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
             return actions;
         }));
         ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni, pagamento);

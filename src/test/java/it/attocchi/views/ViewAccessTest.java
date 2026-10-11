@@ -45,6 +45,7 @@ import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.service.DocumentiService;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.RimborsoService;
 import it.attocchi.entity.Rimborso;
@@ -136,6 +137,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private RimborsoService rimborsoService;
+
+    @Autowired
+    private DocumentiService documentiService;
 
     @Test
     @WithAnonymousUser
@@ -1781,7 +1785,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("genitore3")
-    void genitore_stampaLaRicevutaDiUnFiglio() {
+    @SuppressWarnings("unchecked")
+    void genitore_scaricaLaRicevutaInPdfSoloDeiPropriFigli() throws Exception {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         Allievo figlio = allievoService.findByUsername("allievo_canto3").orElseThrow();
         Allievo altro = allievoService.findByUsername("allievo_canto1").orElseThrow();
@@ -1790,28 +1795,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
         rata.setImporto(new BigDecimal("200"));
         pagamentoService.salva(canto.getId(), figlio.getId(), rata);
         try {
-            navigate("ricevuta/" + canto.getId() + "/" + figlio.getId(), RicevutaView.class);
-            assertTrue(find(Span.class).withText("Allievo Canto3").exists());
-            assertTrue(find(Span.class).withText(figlio.getCodiceFiscale()).exists());
-            assertTrue(find(Span.class).withText("Via Roma 3, 00184 Roma (RM) (del genitore)").exists());
-            assertTrue(find(Span.class).withText("2024/2025").exists());
-            assertTrue(find(Span.class).withText("200,00 €").exists());
-            assertTrue(find(Span.class).withText("400,00 €").exists());
-            assertTrue(find(Button.class).withText("Stampa").exists());
+            navigate(FigliView.class);
+            var figli = test((Grid<Allievo>) find(Grid.class).single());
+            int riga = IntStream.range(0, figli.size())
+                .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
+            test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
+            var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
+            // Il pulsante Ricevuta è dentro un link di download
+            com.vaadin.flow.component.html.Anchor link = (com.vaadin.flow.component.html.Anchor) corsi.getCellComponent(0, 7)
+                .getChildren().filter(com.vaadin.flow.component.html.Anchor.class::isInstance).findFirst().orElseThrow();
+            assertFalse(link.getHref().isBlank());
 
+            var pdf = documentiService.ricevutaPer(canto.getId(), figlio.getId(), "genitore3");
+            assertTrue(pdf.nomeFile().startsWith("ricevuta-corso-di-canto-"));
+            String testo;
+            try (var documento = org.apache.pdfbox.Loader.loadPDF(pdf.contenuto())) {
+                testo = new org.apache.pdfbox.text.PDFTextStripper().getText(documento);
+            }
+            assertTrue(testo.contains("Allievo Canto3"), testo);
+            assertTrue(testo.contains("Via Roma 3, 00184 Roma (RM) (del genitore)"), testo);
+            assertTrue(testo.contains("200,00 €"), testo);
+            assertTrue(testo.contains("400,00 €"), testo);
             // Ricevuta di un allievo che non è suo figlio: come se non esistesse
-            navigate("ricevuta/" + canto.getId() + "/" + altro.getId(), RouteNotFoundError.class);
+            assertThrows(IllegalArgumentException.class, () -> documentiService.ricevutaPer(canto.getId(), altro.getId(), "genitore3"));
         } finally {
             pagamentoService.findPagamenti(canto.getId(), figlio.getId()).forEach(pagamentoService::elimina);
         }
     }
 
     @Test
-    @WithUserDetails("allievo_canto1")
-    void allievo_nonAccedeAllaRicevuta() {
+    void allievo_nonScaricaLaRicevuta() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
-        navigate("ricevuta/" + canto.getId() + "/" + allievo.getId(), RouteNotFoundError.class);
+        assertThrows(IllegalArgumentException.class, () -> documentiService.ricevutaPer(canto.getId(), allievo.getId(), "allievo_canto1"));
+        assertThrows(IllegalArgumentException.class, () -> documentiService.ricevutaPer(canto.getId(), -1L, "admin"));
     }
 
     @Test

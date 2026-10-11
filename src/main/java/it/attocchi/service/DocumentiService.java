@@ -11,6 +11,8 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Pagamento;
+import it.attocchi.entity.User;
+import it.attocchi.repository.UserRepository;
 import it.attocchi.service.PagamentoService.Ricevuta;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.Formati;
@@ -56,6 +58,10 @@ public class DocumentiService {
         }
     }
 
+    /** PDF pronto per lo scarico o l'allegato. */
+    public record Pdf(String nomeFile, byte[] contenuto) {
+    }
+
     private static final String LOGO = "/META-INF/resources/images/logo-mosson.png";
 
     private final PagamentoService pagamentoService;
@@ -63,8 +69,12 @@ public class DocumentiService {
     private final Configuration freemarker;
     private final String logo;
 
-    public DocumentiService(PagamentoService pagamentoService, AssociazioneProperties associazione) {
+    private final UserRepository userRepository;
+
+    public DocumentiService(PagamentoService pagamentoService, AssociazioneProperties associazione,
+                            UserRepository userRepository) {
         this.pagamentoService = pagamentoService;
+        this.userRepository = userRepository;
         this.associazione = associazione;
         this.freemarker = new Configuration(Configuration.VERSION_2_3_34);
         freemarker.setClassForTemplateLoading(DocumentiService.class, "/templates");
@@ -82,6 +92,37 @@ public class DocumentiService {
     /** PDF del documento dell'iscrizione. */
     public byte[] documentoPdf(TipoDocumento tipo, Long corsoId, Long allievoId) {
         return pdf(documentoHtml(tipo, corsoId, allievoId));
+    }
+
+    /**
+     * Ricevuta in PDF per l'utente indicato: admin e segreteria le vedono tutte, il genitore solo quelle dei
+     * propri figli. Altrimenti (o se l'iscrizione non esiste) {@link IllegalArgumentException}, senza distinguere
+     * i due casi per non rivelare le iscrizioni di altri.
+     */
+    public Pdf ricevutaPer(Long corsoId, Long allievoId, String username) {
+        Iscrizione iscrizione;
+        try {
+            iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Ricevuta non trovata");
+        }
+        if (!puoVedere(iscrizione.getAllievo(), username)) {
+            throw new IllegalArgumentException("Ricevuta non trovata");
+        }
+        return new Pdf(nomeFile(TipoDocumento.RICEVUTA, iscrizione), documentoPdf(TipoDocumento.RICEVUTA, corsoId, allievoId));
+    }
+
+    private boolean puoVedere(Allievo allievo, String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return false;
+        }
+        if (user.getRoles().contains("ADMIN") || user.getRoles().contains("SEGRETERIA")) {
+            return true;
+        }
+        Genitore genitore = allievo.getGenitore();
+        return user.getRoles().contains("GENITORE") && genitore != null && genitore.getUser() != null
+            && username.equals(genitore.getUser().getUsername());
     }
 
     /** Corpo HTML dell'email che accompagna il documento; {@code saluto} è il nome del destinatario. */

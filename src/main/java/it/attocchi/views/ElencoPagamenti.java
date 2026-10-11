@@ -204,7 +204,7 @@ public class ElencoPagamenti extends VerticalLayout {
             StatoPagamentoUI.coloraPulsante(pagamenti, "Pagamenti", riga.situazione());
             azioni.add(pagamenti);
         }
-        azioni.add(RicevutaView.link(corsoId, allievoId, ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
+        azioni.add(Ricevute.link(corsoId, allievoId, ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
         return azioni;
     }
 
