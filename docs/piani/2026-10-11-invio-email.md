@@ -38,6 +38,7 @@
 | 5 | Invio dalla UI: azione sulla riga di Gestione Pagamenti, pulsanti nel dialog Quota e pagamenti, "Invia conferme" nel dialog Partecipanti; test | `views/ElencoPagamenti.java`, `views/admin/QuotaPagamentiDialog.java`, `views/admin/PartecipantiDialog.java`, `views/admin/InvioEmailDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 6 | Registro nella UI: sezione "Email inviate" nel dialog Quota e pagamenti e vista "Email inviate" con filtri; test | `views/admin/EmailInviateView.java`, `views/admin/GrigliaInvii.java`, `views/admin/QuotaPagamentiDialog.java`, `views/Formati.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 7 | `CLAUDE.md`, `deploy/README.md` (SMTP), registro del piano | `CLAUDE.md`, `deploy/README.md`, piano | rilettura | [x] |
+| 8 | Date sempre con l'anno nei documenti (emissione e pagamenti): sono conservati, non solo letti a schermo | `service/DocumentiService.java`, `views/Formati.java`, test | `./mvnw test` | [ ] |
 
 ## Fuori ambito
 
