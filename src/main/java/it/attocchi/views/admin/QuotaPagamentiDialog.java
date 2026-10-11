@@ -80,7 +80,8 @@ public class QuotaPagamentiDialog extends Dialog {
 
         FormLayout quotaForm = new FormLayout(quota, motivo);
 
-        Button aggiungi = new Button("Aggiungi pagamento", VaadinIcon.PLUS.create(), e -> openPagamento(new Pagamento()));
+        Button aggiungi = new Button("Aggiungi pagamento", VaadinIcon.PLUS.create(),
+            e -> apriPagamento(pagamentoService, corso.getId(), allievo.getId(), new Pagamento(), this::aggiorna));
         aggiungi.addThemeVariants(ButtonVariant.PRIMARY);
         configureGrid();
         aggiorna();
@@ -99,7 +100,8 @@ public class QuotaPagamentiDialog extends Dialog {
         var metodo = grid.addColumn(p -> p.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
         var nota = grid.addColumn(Pagamento::getNota).setHeader("Nota");
         var azioni = grid.addComponentColumn(p -> {
-            Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica pagamento", e -> openPagamento(p));
+            Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica pagamento",
+                e -> apriPagamento(pagamentoService, corso.getId(), allievo.getId(), p, this::aggiorna));
             Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina pagamento", e -> confermaEliminazione(p));
             elimina.addThemeVariants(ButtonVariant.ERROR);
             return ViewSupport.actions(modifica, elimina);
@@ -111,8 +113,12 @@ public class QuotaPagamentiDialog extends Dialog {
         ViewSupport.hideOnMobile(grid, metodo, nota);
     }
 
-    /** Dialog di inserimento/modifica di una rata: data (default oggi), importo (default il residuo), metodo, nota. */
-    private void openPagamento(Pagamento pagamento) {
+    /**
+     * Dialog di inserimento/modifica di una rata del partecipante: data (default oggi), importo (default il residuo),
+     * metodo, nota. Dopo il salvataggio chiude il dialog ed esegue {@code dopoSalvataggio}.
+     */
+    public static void apriPagamento(PagamentoService pagamentoService, Long corsoId, Long allievoId,
+                                     Pagamento pagamento, Runnable dopoSalvataggio) {
         boolean nuovo = pagamento.getId() == null;
         Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo pagamento" : "Modifica pagamento", "420px");
 
@@ -134,7 +140,7 @@ public class QuotaPagamentiDialog extends Dialog {
         binder.forField(nota).bind(Pagamento::getNota, Pagamento::setNota);
         if (nuovo) {
             pagamento.setData(LocalDate.now());
-            BigDecimal residuo = pagamentoService.situazione(corso.getId(), allievo.getId()).residuo();
+            BigDecimal residuo = pagamentoService.situazione(corsoId, allievoId).residuo();
             pagamento.setImporto(residuo.signum() > 0 ? residuo : null);
         }
         binder.readBean(pagamento);
@@ -144,9 +150,9 @@ public class QuotaPagamentiDialog extends Dialog {
                 return;
             }
             try {
-                pagamentoService.salva(corso.getId(), allievo.getId(), pagamento);
+                pagamentoService.salva(corsoId, allievoId, pagamento);
                 dialog.close();
-                aggiorna();
+                dopoSalvataggio.run();
             } catch (RuntimeException ex) {
                 Notification.show("Errore nel salvataggio del pagamento: " + ex.getMessage());
             }

@@ -72,6 +72,10 @@ public class CorsiView extends VerticalLayout {
         public String getEtichetta() {
             return etichetta;
         }
+
+        public boolean ammette(Corso corso) {
+            return condizione.test(corso);
+        }
     }
 
     private final CorsoService corsoService;
@@ -295,7 +299,7 @@ public class CorsiView extends VerticalLayout {
     private void applicaFiltri() {
         if (corsi != null) {
             String anno = filtroAnno.getValue();
-            corsi.setFilter(corso -> filtroStato.getValue().condizione.test(corso)
+            corsi.setFilter(corso -> filtroStato.getValue().ammette(corso)
                 && (anno == null || anno.equals(corso.getAnnoScolastico())));
         }
     }

@@ -40,11 +40,13 @@ import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
+import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.GenitoriView;
+import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.PartecipantiDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
@@ -128,7 +130,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
-        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Allievi", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
+        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Pagamenti", "Gestione Allievi", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
         assertFalse(voci.contains("Le Mie Lezioni"), voci.toString());
     }
 
@@ -398,7 +400,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_modificaNomeECognomeDiUnoAllievo() {
+    void segreteria_modificaNomeECognomeDiUnAllievo() {
         navigate(AllieviView.class);
         var allievi = test((Grid<Allievo>) find(Grid.class).single());
         int riga = -1;
@@ -664,6 +666,70 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_gestionePagamenti_filtriTotaliEAzioni() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        navigate(GestionePagamentiView.class);
+        var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
+        assertEquals(pagamentoService.righePagamenti().size(), righe.size());
+        assertTrue(find(Span.class).withText(righe.size() + " partecipanti").exists());
+        try {
+            // Filtro per corso: solo il Corso di Canto, con i totali delle righe filtrate
+            ComboBox<Corso> filtroCorso = filtro("Filtra per corso");
+            test(filtroCorso).selectItem("Corso di Canto (" + canto.getAnnoScolastico() + ")");
+            assertTrue(IntStream.range(0, righe.size()).allMatch(r -> righe.getRow(r).corso().equals(canto)));
+            assertTrue(find(Span.class).withText("Da pagare " + Formati.euro(new BigDecimal(600 * righe.size()))).exists());
+
+            // Aggiungi pagamento dalla riga: importo proposto = residuo
+            int riga = rigaDi(righe, allievo);
+            test(pulsante(righe.getCellComponent(riga, "azioni"), "Aggiungi pagamento")).click();
+            BigDecimalField importo = find(BigDecimalField.class).withLabel("Importo").single();
+            assertEquals(0, new BigDecimal("600").compareTo(importo.getValue()));
+            new TextFieldTester<>(importo).setValue(new BigDecimal("200"));
+            test(find(Button.class).withText("Salva").single()).click();
+            riga = rigaDi(righe, allievo);
+            assertEquals(0, new BigDecimal("200").compareTo(righe.getRow(riga).situazione().pagato()));
+            assertEquals("Parziale 33%", ((Badge) righe.getCellComponent(riga, "stato")).getText());
+
+            // Filtro per stato del pagamento e per genitore
+            SegmentedControl<ElencoPagamenti.FiltroPagamento> filtroPagamento = find(SegmentedControl.class).all().stream()
+                .filter(c -> c.getValue() == ElencoPagamenti.FiltroPagamento.TUTTI).findFirst().orElseThrow();
+            test(filtroPagamento.getPulsante(ElencoPagamenti.FiltroPagamento.PARZIALE)).click();
+            assertEquals(1, righe.size());
+            assertEquals(allievo, righe.getRow(0).allievo());
+            test(filtroPagamento.getPulsante(ElencoPagamenti.FiltroPagamento.TUTTI)).click();
+            ComboBox<Genitore> filtroGenitore = filtro("Filtra per genitore");
+            test(filtroGenitore).selectItem(righe.getRow(rigaDi(righe, allievo)).genitore().getNomeCompleto());
+            assertTrue(IntStream.range(0, righe.size())
+                .allMatch(r -> righe.getRow(r).genitore().equals(righe.getRow(0).genitore())));
+
+            // Quota personalizzata dal dialog esistente: la riga si aggiorna alla chiusura
+            riga = rigaDi(righe, allievo);
+            test(pulsante(righe.getCellComponent(riga, "azioni"), "Quota e pagamenti")).click();
+            QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+            new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
+                .setValue(new BigDecimal("400"));
+            test(find(Button.class).from(dialog).withText("Chiudi").single()).click();
+            assertEquals(0, new BigDecimal("200").compareTo(righe.getRow(rigaDi(righe, allievo)).situazione().residuo()));
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+            pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> ComboBox<T> filtro(String ariaLabel) {
+        return find(ComboBox.class).all().stream()
+            .filter(c -> c.getAriaLabel().filter(ariaLabel::equals).isPresent()).findFirst().orElseThrow();
+    }
+
+    private static int rigaDi(GridTester<Grid<RigaPagamento>, RigaPagamento> righe, Allievo allievo) {
+        return IntStream.range(0, righe.size()).filter(r -> righe.getRow(r).allievo().equals(allievo)).findFirst().orElseThrow();
     }
 
     private Corso disattiva(String nome) {
