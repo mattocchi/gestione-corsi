@@ -48,7 +48,12 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### EMAIL
 
 * [ ] Per completare alcune funzionalità ora occorre predisporre il programma perché possa inviare delle email.
+  _Chiarimento 2026-10-11: invio reale se è configurato l'SMTP (variabili MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM), altrimenti simulato e registrato, con qualunque profilo._
 * [ ] In particolare come segretaria o admin è necessario poter inviare sia conferma di iscrizione ad ogni corso in cui il figlio allievo risulta escritto riportante la conferma di iscrizione con importo da pagare,
+  _Chiarimento 2026-10-11: una conferma per iscrizione (corso), email HTML con PDF allegato: corso, allievo, anno, insegnante, quota, pagato, residuo e IBAN per il bonifico; al genitore, o all'allievo se non c'è un genitore con email; da Gestione Pagamenti, dal dialog Quota e pagamenti e, per tutti gli iscritti di un corso, dal dialog Partecipanti; dati dell'associazione da configurazione._
 * [ ] che le ricevute via email al genitore, per ogni corso in cui ha fatto dei pagamenti. Il genitore può scaricare via web ma segreteria o admin devono poter inviare via email.
+  _Chiarimento 2026-10-11: email con riepilogo e ricevuta in PDF allegato, solo per i corsi con pagamenti; lo scarico web della ricevuta diventa lo stesso PDF (sostituisce la pagina stampabile)._
 * [ ] Ogni invio deve essere registrato come data invio e almeno i metadati di invio.
+  _Chiarimento 2026-10-11: data e ora, tipo, corso, allievo, destinatario, oggetto, allegato, chi ha inviato, esito (inviata/simulata/errore); niente corpo; consultabile nel dialog Quota e pagamenti e nella nuova vista "Email inviate"._
 * [ ] Valuterei di usare freemarker per il template HTML della email mentre JasperReport per la produzione PDF delle ricevute in modo da avere consistenza.
+  _Chiarimento 2026-10-11: scelti FreeMarker + OpenHTMLtoPDF 1.1.85 (un solo template HTML per email, allegato e scarico web) al posto di JasperReports._
