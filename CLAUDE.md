@@ -100,6 +100,13 @@ it.attocchi/
 - **Completion**: the commit that completes an item also marks it in `docs/RICHIESTE.md` as `* [x] … _(completata AAAA-MM-GG)_` and has the reference in the subject: `<step id> [AAAA-MM-GG/AMBITO.n] <short description in Italian>`, e.g. `3 [2026-10-10/LOGO.2] Logo in fondo al menu laterale`. One commit per completed request; if a step completes several closely tied items, list all references (`[2026-10-10/LOGO.1][2026-10-10/LOGO.3]`). Preparatory steps that complete no item use the normal subject. An item found already implemented is marked with a note (`_(già presente, verificata AAAA-MM-GG)_`) in its own commit.
 - Never mark an item completed if it is only partially done: leave `[ ]` and add a short note under it.
 
+## Feature requests from prompts: `docs/FUNZIONALITA.md`
+
+When a prompt asks for a new feature or a change to the application's behaviour, UI or data (not for questions, reviews, bug fixes or changes to tooling/configuration/docs, which follow the normal workflow), first record it, then process it. A `UserPromptSubmit` hook in `.claude/settings.json` reminds you of this on every prompt; when in doubt whether a prompt is a feature request, ask.
+
+1. **Record**: add the request to `docs/FUNZIONALITA.md`, same format as `RICHIESTE.md`: section `## FUNZIONALITA del GG-MM-AAAA` (today, created if missing), scope `### AMBITO` (reuse an existing scope of that date when it fits), one `* [ ] …` item per distinct request, with the user's words reported faithfully (split a multi-request prompt into items, don't rephrase or add interpretations). Reference: `[F-AAAA-MM-GG/AMBITO.n]` (the `F-` prefix distinguishes it from `RICHIESTE.md` items). Commit the file alone: `Funzionalità: <short description>`.
+2. **Process**: immediately run the *implementation session* described above on the new items, with `docs/FUNZIONALITA.md` in place of `docs/RICHIESTE.md` for clarifications (`_Chiarimento …_`), completion marks and commit references (e.g. `2 [F-2026-10-11/CORSI.1] …`).
+
 ## Workflow: plan first, then execute with one commit per step
 
 Every user request that changes the repository (code, configuration, build, docs) follows this workflow — no exceptions for "small" changes. Pure questions, explanations or reviews without changes don't need a plan.
