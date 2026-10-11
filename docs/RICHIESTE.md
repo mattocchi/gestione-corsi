@@ -61,3 +61,13 @@
 
 * [x] Ogni corso fa riferimento ad uno specifico anno scolastico quindi ogni corso deve poter essere indicato a quale anno scolastico fa riferimento e se è attivo o non attivo. Per i corsi non attivi non è poi possibile inserire allievi (per segreteria) o completare lezioni e presenza per gli insegnanti. I corsi non attivi sono disponibili in consultazione solo a segreteria ed admin ed i genitori perché possono anche successivamente stampare la ricevuta del corso. _(completata 2026-10-10)_
   _Chiarimento 2026-10-10: anno scolastico "2026/2027" da elenco, obbligatorio, proposto dalla data di inizio; corsi esistenti calcolati con script SQL. Corso non attivo: bloccati partecipanti, orari, Genera Lezioni, presenze e completamento lezioni; quote e pagamenti restano modificabili. Insegnante e allievo non vedono i corsi non attivi. Filtri per stato (default Attivi) e anno in Gestione Corsi. Ricevuta come pagina stampabile al posto del riepilogo .txt._
+
+
+## RICHIESTE del 11-10-2026
+
+* [ ] Localizzazione in italiano del calendario e degli orari. Verifica che tutti gli input Calendario e Orario funzionino correttamente in UI in formato Italiano.
+
+* [] Aggiungi una sezione "gestione pagamenti" dedicata ai pagamenti per semplificare inserimento e gestione dei dati in cui mediante elenco corso, partecipante possiamo come admin o segreteria assegnare il prezzo effettivo del corso o aggiungere i pagamenti. Le funzionalità sono già disponibili questa è solo una visualizzazione e gestione semplificata. Il ruolo genitore può visualizzare questa sezione per i propri figli.
+Per admin e segreteria nella sezione aggiungi dei filtri per poter filtrare per corso o per allievo o per genitore in modo da semplificare l'operatività.
+
+* [] Rinomina Studente in Allievo che ritengo più adeguato per questo contesto 
