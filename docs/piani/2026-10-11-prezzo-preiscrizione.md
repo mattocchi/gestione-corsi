@@ -36,3 +36,9 @@
 - `.idea/.copilot-plugin` (modifica locale preesistente) non incluso.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 81 test verdi (campo nel dialog, aiuto "Di solito 510,00 € (sconto 15%)", valore oltre il costo totale rifiutato sul campo e nel service, quota dovuta invariata).
+- Passo 2: 82 test verdi (riga "quota piena … · pre-iscrizione …" solo se il prezzo è impostato).
+- Passo 3: 83 test verdi (genitore e allievo vedono costo totale, pre-iscrizione e prezzo applicato; con quota personalizzata l'applicato è quella). Adeguati gli indici di colonna del test esistente del genitore.
+- Browser non verificato in questa sessione (finestra di Chrome non ridimensionabile e login non automatizzabile): da controllare a mano la colonna riassuntiva su mobile in "I Miei Corsi" e "I Miei Figli".
+- Produzione: `ddl-auto=update` aggiunge la colonna nullable `prezzo_preiscrizione` a `corsi`; nessuno script SQL.
