@@ -184,6 +184,10 @@ public class CorsiView extends VerticalLayout {
         BigDecimalField costoTotale = new BigDecimalField("Costo Totale");
         costoTotale.setLocale(Locale.ITALY);
         costoTotale.setPrefixComponent(new Span("€"));
+        BigDecimalField prezzoPreiscrizione = new BigDecimalField("Prezzo con pre-iscrizione");
+        prezzoPreiscrizione.setLocale(Locale.ITALY);
+        prezzoPreiscrizione.setPrefixComponent(new Span("€"));
+        prezzoPreiscrizione.setClearButtonVisible(true);
 
         CheckboxGroup<DayOfWeek> giorniSettimana = new CheckboxGroup<>();
         giorniSettimana.setLabel("Giorni Settimana");
@@ -228,6 +232,19 @@ public class CorsiView extends VerticalLayout {
         binder.forField(costoTotale)
             .withValidator(costo -> costo == null || costo.signum() >= 0, "Il costo non può essere negativo")
             .bind(Corso::getCostoTotale, Corso::setCostoTotale);
+        var bindingPreiscrizione = binder.forField(prezzoPreiscrizione)
+            .withValidator(prezzo -> prezzo == null || prezzo.signum() >= 0, "Il prezzo non può essere negativo")
+            .withValidator(prezzo -> prezzo == null || (costoTotale.getValue() != null && prezzo.compareTo(costoTotale.getValue()) <= 0),
+                "Non può superare il costo totale")
+            .bind(Corso::getPrezzoPreiscrizione, Corso::setPrezzoPreiscrizione);
+        // Aiuto sul valore tipico (sconto 15%), assegnato comunque a mano
+        costoTotale.addValueChangeListener(e -> {
+            BigDecimal tipico = Corso.prezzoPreiscrizioneTipico(e.getValue());
+            prezzoPreiscrizione.setHelperText(tipico != null ? "Di solito " + Formati.euro(tipico) + " (sconto 15%)" : null);
+            if (!prezzoPreiscrizione.isEmpty()) {
+                bindingPreiscrizione.validate();
+            }
+        });
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
         binder.forField(annoScolastico).asRequired("Scegli l'anno scolastico").bind(Corso::getAnnoScolastico, Corso::setAnnoScolastico);
@@ -235,7 +252,7 @@ public class CorsiView extends VerticalLayout {
 
         binder.readBean(corso);
 
-        formLayout.add(nome, insegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, attivo, giorniSettimana, descrizione);
+        formLayout.add(nome, insegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi

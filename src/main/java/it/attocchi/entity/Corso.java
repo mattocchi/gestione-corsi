@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -42,6 +43,13 @@ public class Corso {
     private LocalTime orarioInizio;
 
     private BigDecimal costoTotale;
+
+    /**
+     * Prezzo con pre-iscrizione, assegnato a mano (di solito il costo totale scontato del 15%):
+     * solo informativo, la quota dovuta resta il costo totale o la quota personalizzata.
+     */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal prezzoPreiscrizione;
 
     private BigDecimal costoPerLezione;
 
@@ -139,6 +147,19 @@ public class Corso {
 
     public void setCostoTotale(BigDecimal costoTotale) {
         this.costoTotale = costoTotale;
+    }
+
+    public BigDecimal getPrezzoPreiscrizione() {
+        return prezzoPreiscrizione;
+    }
+
+    public void setPrezzoPreiscrizione(BigDecimal prezzoPreiscrizione) {
+        this.prezzoPreiscrizione = prezzoPreiscrizione;
+    }
+
+    /** Valore tipico del prezzo con pre-iscrizione: costo totale scontato del 15%. */
+    public static BigDecimal prezzoPreiscrizioneTipico(BigDecimal costoTotale) {
+        return costoTotale == null ? null : costoTotale.multiply(new BigDecimal("0.85")).setScale(2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal getCostoPerLezione() {

@@ -24,7 +24,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `Corso.prezzoPreiscrizione`; controllo in `CorsoService.save` (≥ 0, ≤ costo totale); campo nel dialog di `CorsiView` con aiuto sul valore tipico; test | `entity/Corso.java`, `service/CorsoService.java`, `views/admin/CorsiView.java`, test | `./mvnw test` | [ ] |
+| 1 | `Corso.prezzoPreiscrizione`; controllo in `CorsoService.save` (≥ 0, ≤ costo totale); campo nel dialog di `CorsiView` con aiuto sul valore tipico; test | `entity/Corso.java`, `service/CorsoService.java`, `views/admin/CorsiView.java`, test | `./mvnw test` | [x] |
 | 2 | `QuotaPagamentiDialog`: riga "quota piena … · pre-iscrizione …"; test | `views/admin/QuotaPagamentiDialog.java`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 3 | `MieiCorsiView` e `FigliView`: colonne Costo totale, Pre-iscrizione, Applicato (riassunto su mobile); test; chiude la richiesta | `views/allievo/MieiCorsiView.java`, `views/genitore/FigliView.java`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test`, browser | [ ] |
 | 4 | `CLAUDE.md`: nota sul prezzo con pre-iscrizione | `CLAUDE.md` | rilettura | [ ] |

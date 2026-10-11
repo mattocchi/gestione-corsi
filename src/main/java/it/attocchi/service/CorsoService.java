@@ -15,6 +15,7 @@ import it.attocchi.repository.AllievoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -138,6 +139,11 @@ public class CorsoService {
 
     @Transactional
     public Corso save(Corso corso) {
+        BigDecimal preiscrizione = corso.getPrezzoPreiscrizione();
+        if (preiscrizione != null && (preiscrizione.signum() < 0
+                || corso.getCostoTotale() == null || preiscrizione.compareTo(corso.getCostoTotale()) > 0)) {
+            throw new IllegalArgumentException("Il prezzo con pre-iscrizione deve essere tra zero e il costo totale");
+        }
         return corsoRepository.save(corso);
     }
 

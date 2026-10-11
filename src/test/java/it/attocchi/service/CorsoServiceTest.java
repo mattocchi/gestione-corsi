@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -28,6 +29,15 @@ class CorsoServiceTest {
 
     @Autowired
     private PresenzaService presenzaService;
+
+    @Test
+    void save_prezzoConPreiscrizioneTraZeroECostoTotale() {
+        Corso canto = corso("Corso di Canto");
+        canto.setPrezzoPreiscrizione(new java.math.BigDecimal("600.01"));
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto));
+        canto.setPrezzoPreiscrizione(new java.math.BigDecimal("-1"));
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto));
+    }
 
     @Test
     void generaLezioni_rispettaNumeroLezioniEGiorniSettimana() {

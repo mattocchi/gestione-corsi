@@ -78,6 +78,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -484,6 +485,37 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertFalse(test(annoScolastico).getSuggestions().contains("2045/2046"));
         } finally {
             annoScolasticoService.elimina(anno.getId());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_impostaPrezzoConPreiscrizione() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
+        BigDecimalField prezzo = find(BigDecimalField.class).withLabel("Prezzo con pre-iscrizione").single();
+        assertEquals("Di solito 510,00 € (sconto 15%)", prezzo.getHelperText());
+        test(prezzo).setValue(new BigDecimal("700"));
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(prezzo.isInvalid());
+        assertNull(corsoService.findById(corsoId).getPrezzoPreiscrizione());
+
+        test(prezzo).setValue(new BigDecimal("500"));
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            assertEquals(0, new BigDecimal("500").compareTo(corsoService.findById(corsoId).getPrezzoPreiscrizione()));
+            // Solo informativo: la quota dovuta resta il costo totale
+            Long allievoId = corsoService.findPartecipanti(corsoId).getFirst().getAllievo().getId();
+            assertEquals(0, new BigDecimal("600").compareTo(pagamentoService.situazione(corsoId, allievoId).quota()));
+        } finally {
+            Corso corso = corsoService.findById(corsoId);
+            corso.setPrezzoPreiscrizione(null);
+            corsoService.save(corso);
         }
     }
 
