@@ -40,6 +40,11 @@ public final class Formati {
         return (data.getYear() == annoCorrente.getValue() ? DATA : DATA_CON_ANNO).format(data);
     }
 
+    /** Data con il giorno della settimana e sempre l'anno, es. "mer 7 ottobre 2026" (documenti PDF). */
+    public static String dataCompleta(LocalDate data) {
+        return data != null ? DATA_CON_ANNO.format(data) : "";
+    }
+
     /** Data e ora, es. "mer 7 ottobre, 10:35" (anno come in {@link #data(LocalDate)}); stringa vuota se nulla. */
     public static String dataOra(LocalDateTime dataOra) {
         return dataOra != null ? data(dataOra.toLocalDate()) + ", " + ORA.format(dataOra) : "";

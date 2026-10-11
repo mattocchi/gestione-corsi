@@ -38,7 +38,7 @@
 | 5 | Invio dalla UI: azione sulla riga di Gestione Pagamenti, pulsanti nel dialog Quota e pagamenti, "Invia conferme" nel dialog Partecipanti; test | `views/ElencoPagamenti.java`, `views/admin/QuotaPagamentiDialog.java`, `views/admin/PartecipantiDialog.java`, `views/admin/InvioEmailDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 6 | Registro nella UI: sezione "Email inviate" nel dialog Quota e pagamenti e vista "Email inviate" con filtri; test | `views/admin/EmailInviateView.java`, `views/admin/GrigliaInvii.java`, `views/admin/QuotaPagamentiDialog.java`, `views/Formati.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 7 | `CLAUDE.md`, `deploy/README.md` (SMTP), registro del piano | `CLAUDE.md`, `deploy/README.md`, piano | rilettura | [x] |
-| 8 | Date sempre con l'anno nei documenti (emissione e pagamenti): sono conservati, non solo letti a schermo | `service/DocumentiService.java`, `views/Formati.java`, test | `./mvnw test` | [ ] |
+| 8 | Date sempre con l'anno nei documenti (emissione e pagamenti): sono conservati, non solo letti a schermo | `service/DocumentiService.java`, `views/Formati.java`, test | `./mvnw test` | [x] |
 
 ## Fuori ambito
 
@@ -58,3 +58,4 @@
 - Nota tecnica: `DocumentiService` usa `views.Formati` per avere gli stessi formati della UI (dipendenza service → views limitata a questa classe di utilità).
 - Non verificato: un invio reale su un server SMTP (serve la configurazione `MAIL_*` sul server) e l'aspetto del PDF in un lettore; browser non verificato in questa sessione.
 - Produzione: `ddl-auto=update` crea la tabella `invii_email`; nessuno script SQL. Da impostare sul server `ASSOCIAZIONE_*` (codice fiscale, indirizzo, IBAN) e `MAIL_*`.
+- Passo 8: PDF di esempio generati e controllati (testata, dati, importi, riquadro IBAN, accenti ed €); "Emessa il" e le date dei pagamenti ora riportano sempre l'anno. 120 verdi.

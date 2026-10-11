@@ -49,6 +49,9 @@ class DocumentiServiceTest {
             assertTrue(html.contains("Ricevuta di pagamento"));
             assertTrue(html.contains(iscrizione.getAllievo().getNomeCompleto()));
             assertTrue(html.contains("150,00 €"));
+            // Nei documenti la data ha sempre l'anno
+            assertTrue(html.contains("gio 10 ottobre 2024"));
+            assertTrue(html.contains("Emessa il " + it.attocchi.views.Formati.dataCompleta(LocalDate.now())));
             assertTrue(html.contains("C.F. 90000000000"));
             // Testo dell'utente sempre escapato
             assertTrue(html.contains("prima rata &lt;acconto&gt;"));

@@ -160,7 +160,7 @@ public class DocumentiService {
         if (logo != null) {
             modello.put("logo", logo);
         }
-        modello.put("emessa", Formati.data(LocalDate.now()));
+        modello.put("emessa", Formati.dataCompleta(LocalDate.now()));
         modello.put("allievo", Map.of("nome", allievo.getNomeCompleto(), "codiceFiscale", testo(allievo.getCodiceFiscale()),
             "indirizzo", testo(Formati.indirizzo(allievo))));
         if (genitore != null) {
@@ -182,7 +182,7 @@ public class DocumentiService {
 
     private static Map<String, String> pagamento(Pagamento pagamento) {
         Map<String, String> riga = new LinkedHashMap<>();
-        riga.put("data", Formati.data(pagamento.getData()));
+        riga.put("data", Formati.dataCompleta(pagamento.getData()));
         riga.put("importo", Formati.euro(pagamento.getImporto()));
         riga.put("metodo", pagamento.getMetodo().getDescrizione());
         riga.put("nota", testo(pagamento.getNota()));
