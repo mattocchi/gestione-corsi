@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="d9986e01-f05b-4514-80b9-398accb9ad3a" name="casa.attocchi.it" url="https://corsi.bandamosson.org">
+        <fileTransfer rootFolder="/home/cloud/gestionecorsi" accessType="SFTP" host="casa.attocchi.it" port="2022" sshConfigId="eea9fd8a-1985-4c58-81e4-43e8ab5a27ce" sshConfig="cloud@casa.attocchi.it:2022 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
