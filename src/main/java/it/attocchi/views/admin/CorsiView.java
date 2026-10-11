@@ -36,6 +36,7 @@ import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.AllievoService;
+import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.SegmentedControl;
@@ -44,7 +45,6 @@ import jakarta.annotation.security.RolesAllowed;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -82,6 +82,7 @@ public class CorsiView extends VerticalLayout {
     private final InsegnanteService insegnanteService;
     private final AllievoService allievoService;
     private final PagamentoService pagamentoService;
+    private final AnnoScolasticoService annoScolasticoService;
     /** L'eliminazione dei corsi è riservata all'admin; la segreteria li gestisce senza eliminarli. */
     private final boolean puoEliminare;
 
@@ -93,8 +94,10 @@ public class CorsiView extends VerticalLayout {
     private GridListDataView<Corso> corsi;
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, AllievoService allievoService,
-                     PagamentoService pagamentoService, SecurityService securityService) {
+                     PagamentoService pagamentoService, AnnoScolasticoService annoScolasticoService,
+                     SecurityService securityService) {
         this.pagamentoService = pagamentoService;
+        this.annoScolasticoService = annoScolasticoService;
         this.corsoService = corsoService;
         this.insegnanteService = insegnanteService;
         this.allievoService = allievoService;
@@ -199,10 +202,11 @@ public class CorsiView extends VerticalLayout {
         });
 
         ComboBox<String> annoScolastico = new ComboBox<>("Anno Scolastico");
-        annoScolastico.setItems(AnnoScolastico.elenco(LocalDate.now(), corso.getAnnoScolastico()));
-        // Proposto dalla data di inizio finché non viene scelto
+        List<String> anni = annoScolasticoService.scelteCorso(corso.getAnnoScolastico());
+        annoScolastico.setItems(anni);
+        // Proposto dalla data di inizio finché non viene scelto, se è tra gli anni attivi
         dataInizio.addValueChangeListener(e -> {
-            if (e.getValue() != null && annoScolastico.isEmpty()) {
+            if (e.getValue() != null && annoScolastico.isEmpty() && anni.contains(AnnoScolastico.di(e.getValue()))) {
                 annoScolastico.setValue(AnnoScolastico.di(e.getValue()));
             }
         });

@@ -31,6 +31,7 @@ import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.repository.InsegnanteRepository;
@@ -43,6 +44,7 @@ import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
 import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
+import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.GenitoriView;
@@ -118,6 +120,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private GenitoreService genitoreService;
+
+    @Autowired
+    private AnnoScolasticoService annoScolasticoService;
 
     @Test
     @WithAnonymousUser
@@ -460,6 +465,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             allievoService.delete(nuovo);
             userService.delete(nuovo.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_annoScolasticoDisattivatoNonVienePropostoNeScelto() {
+        AnnoScolastico anno = annoScolasticoService.crea("2045/2046");
+        annoScolasticoService.impostaAttivo(anno.getId(), false);
+        try {
+            navigate(CorsiView.class);
+            test(find(Button.class).withText("Nuovo Corso").single()).click();
+            ComboBox<String> annoScolastico = find(ComboBox.class).withLabel("Anno Scolastico").single();
+            test(find(DatePicker.class).withLabel("Data Inizio").single()).setValue(LocalDate.of(2045, 10, 2));
+            assertTrue(annoScolastico.isEmpty());
+            assertFalse(test(annoScolastico).getSuggestions().contains("2045/2046"));
+        } finally {
+            annoScolasticoService.elimina(anno.getId());
         }
     }
 

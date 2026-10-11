@@ -3,9 +3,10 @@ package it.attocchi.entity;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AnnoScolasticoTest {
 
@@ -16,9 +17,12 @@ class AnnoScolasticoTest {
     }
 
     @Test
-    void elenco_annoPrecedenteCorrenteSuccessivoPiuValoreAttuale() {
-        LocalDate oggi = LocalDate.of(2026, 10, 10);
-        assertEquals(List.of("2025/2026", "2026/2027", "2027/2028"), AnnoScolastico.elenco(oggi, null));
-        assertEquals(List.of("2024/2025", "2025/2026", "2026/2027", "2027/2028"), AnnoScolastico.elenco(oggi, "2024/2025"));
+    void valido_soloAAAASlashAAAAConAnniConsecutivi() {
+        assertTrue(AnnoScolastico.valido("2026/2027"));
+        assertFalse(AnnoScolastico.valido("2026/2028"));
+        assertFalse(AnnoScolastico.valido("2026-2027"));
+        assertFalse(AnnoScolastico.valido("26/27"));
+        assertFalse(AnnoScolastico.valido(" 2026/2027"));
+        assertFalse(AnnoScolastico.valido(null));
     }
 }

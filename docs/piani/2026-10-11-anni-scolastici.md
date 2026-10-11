@@ -23,8 +23,8 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Entità `AnnoScolastico` (id, nome unico, attivo; `di` e `valido` statici), `AnnoScolasticoRepository`, `AnnoScolasticoService` (elenco, scelte per il corso, salva con validazione formato/unicità, attiva/disattiva, elimina se non usato, popolamento iniziale) e popolamento all'avvio; test del service | `entity/AnnoScolastico.java`, `repository/AnnoScolasticoRepository.java`, `repository/CorsoRepository.java`, `service/AnnoScolasticoService.java`, `AnniScolasticiIniziali.java`, test | `./mvnw test` | [ ] |
-| 2 | `CorsiView`: scelte dell'anno dal service (attivi + valore del corso), proposta dalla data di inizio solo se attivo; test | `views/admin/CorsiView.java`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | Entità `AnnoScolastico` (id, nome unico, attivo; `di` e `valido` statici), `AnnoScolasticoRepository`, `AnnoScolasticoService` (elenco, scelte per il corso, salva con validazione formato/unicità, attiva/disattiva, elimina se non usato, popolamento iniziale) e popolamento all'avvio; test del service | `entity/AnnoScolastico.java`, `repository/AnnoScolasticoRepository.java`, `repository/CorsoRepository.java`, `service/AnnoScolasticoService.java`, `AnniScolasticiIniziali.java`, test | `./mvnw test` | [x] |
+| 2 | `CorsiView`: scelte dell'anno dal service (attivi + valore del corso), proposta dalla data di inizio solo se attivo; test | `views/admin/CorsiView.java`, `ViewAccessTest` | `./mvnw test` | [x] nello stesso commit del passo 1: senza `AnnoScolastico.elenco` CorsiView non compilava |
 | 3 | Vista `AnniScolasticiView` (menu, admin/segreteria, Nuovo, attiva/disattiva, Elimina solo admin e solo se non usato, mobile 390px); test browserless; chiude la richiesta | `views/admin/AnniScolasticiView.java`, `ViewAccessTest`, `docs/FUNZIONALITA.md` | `./mvnw test`, browser | [ ] |
 | 4 | `CLAUDE.md`: nota sugli anni scolastici | `CLAUDE.md` | rilettura | [ ] |
 

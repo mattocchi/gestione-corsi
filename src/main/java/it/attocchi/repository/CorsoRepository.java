@@ -13,6 +13,10 @@ public interface CorsoRepository extends JpaRepository<Corso, Long> {
     List<Corso> findByAttivoTrue();
     List<Corso> findByInsegnanteId(Long insegnanteId);
     long countByInsegnanteUserUsernameAndAttivoTrue(String username);
+    boolean existsByAnnoScolastico(String annoScolastico);
+
+    @Query("SELECT DISTINCT c.annoScolastico FROM Corso c WHERE c.annoScolastico IS NOT NULL")
+    List<String> findAnniScolasticiUsati();
 
     @Query("SELECT c FROM Corso c JOIN c.iscrizioni i WHERE i.allievo.id = :allievoId")
     List<Corso> findByAllievoId(@Param("allievoId") Long allievoId);
