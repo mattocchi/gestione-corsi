@@ -5,6 +5,7 @@ import it.attocchi.entity.Allievo;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -18,6 +19,7 @@ public final class Formati {
     private static final Locale ITALIANO = Locale.ITALIAN;
     private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("EEE d MMMM", ITALIANO);
     private static final DateTimeFormatter DATA_CON_ANNO = DateTimeFormatter.ofPattern("EEE d MMMM yyyy", ITALIANO);
+    private static final DateTimeFormatter ORA = DateTimeFormatter.ofPattern("HH:mm", ITALIANO);
     private static final DateTimeFormatter MESE = DateTimeFormatter.ofPattern("LLLL yyyy", ITALIANO);
 
     private Formati() {
@@ -36,6 +38,11 @@ public final class Formati {
             return "";
         }
         return (data.getYear() == annoCorrente.getValue() ? DATA : DATA_CON_ANNO).format(data);
+    }
+
+    /** Data e ora, es. "mer 7 ottobre, 10:35" (anno come in {@link #data(LocalDate)}); stringa vuota se nulla. */
+    public static String dataOra(LocalDateTime dataOra) {
+        return dataOra != null ? data(dataOra.toLocalDate()) + ", " + ORA.format(dataOra) : "";
     }
 
     /** Mese con l'anno, es. "ottobre 2026"; stringa vuota se nullo. */

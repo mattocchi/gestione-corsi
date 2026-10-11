@@ -36,7 +36,7 @@
 | 3 | Ricevuta web in PDF: link di download con controllo dei permessi al posto di `RicevutaView`; test | `views/Ricevute.java`, `ElencoPagamenti`, `FigliView`, `QuotaPagamentiDialog`, `RicevutaView.java` (rimossa), `styles.css`, `DocumentiService`, test | `./mvnw test` | [x] |
 | 4 | `InvioEmail` (registro) e `EmailService`: destinatario, invio reale o simulato con PDF allegato, registrazione di ogni tentativo; test | `entity/InvioEmail.java`, `entity/TipoDocumento.java`, `repository/InvioEmailRepository.java`, `config/MailConfig.java`, `service/EmailService.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 5 | Invio dalla UI: azione sulla riga di Gestione Pagamenti, pulsanti nel dialog Quota e pagamenti, "Invia conferme" nel dialog Partecipanti; test | `views/ElencoPagamenti.java`, `views/admin/QuotaPagamentiDialog.java`, `views/admin/PartecipantiDialog.java`, `views/admin/InvioEmailDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
-| 6 | Registro nella UI: sezione "Email inviate" nel dialog Quota e pagamenti e vista "Email inviate" con filtri; test | `views/admin/EmailInviateView.java`, `views/admin/QuotaPagamentiDialog.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [ ] |
+| 6 | Registro nella UI: sezione "Email inviate" nel dialog Quota e pagamenti e vista "Email inviate" con filtri; test | `views/admin/EmailInviateView.java`, `views/admin/GrigliaInvii.java`, `views/admin/QuotaPagamentiDialog.java`, `views/Formati.java`, test, `docs/FUNZIONALITA.md` | `./mvnw test` | [x] |
 | 7 | `CLAUDE.md`, `deploy/README.md` (SMTP), registro del piano | `CLAUDE.md`, `deploy/README.md`, piano | rilettura | [ ] |
 
 ## Fuori ambito

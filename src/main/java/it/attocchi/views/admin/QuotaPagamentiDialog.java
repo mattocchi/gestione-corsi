@@ -13,12 +13,14 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.data.binder.Binder;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.Allievo;
+import it.attocchi.service.EmailService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.Formati;
@@ -44,6 +46,7 @@ public class QuotaPagamentiDialog extends Dialog {
     private final Allievo allievo;
     private final Div riepilogo = new Div();
     private final Grid<Pagamento> grid = new Grid<>(Pagamento.class, false);
+    private final GrigliaInvii invii = new GrigliaInvii(false);
 
     public QuotaPagamentiDialog(PagamentoService pagamentoService, Corso corso, Allievo allievo) {
         this.pagamentoService = pagamentoService;
@@ -87,8 +90,9 @@ public class QuotaPagamentiDialog extends Dialog {
         configureGrid();
         aggiorna();
 
+        invii.setAllRowsVisible(true);
         VerticalLayout content = new VerticalLayout(corsoInfo, ViewSupport.sezione("Quota"), quotaForm, riepilogo,
-            ViewSupport.sezione("Pagamenti"), aggiungi, grid);
+            ViewSupport.sezione("Pagamenti"), aggiungi, grid, ViewSupport.sezione("Email inviate"), invii);
         content.setPadding(false);
         add(content);
         Button ricevuta = new Button("Ricevuta", VaadinIcon.PRINT.create());
@@ -191,6 +195,8 @@ public class QuotaPagamentiDialog extends Dialog {
 
     private void aggiorna() {
         grid.setItems(pagamentoService.findPagamenti(corso.getId(), allievo.getId()));
+        invii.setItems(VaadinService.getCurrent().getInstantiator().getOrCreate(EmailService.class)
+            .invii(corso.getId(), allievo.getId()));
         aggiornaRiepilogo();
     }
 

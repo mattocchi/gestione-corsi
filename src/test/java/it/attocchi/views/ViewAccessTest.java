@@ -49,6 +49,7 @@ import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
 import it.attocchi.repository.InvioEmailRepository;
 import it.attocchi.entity.InvioEmail;
+import it.attocchi.entity.TipoDocumento;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.RimborsoService;
 import it.attocchi.entity.Rimborso;
@@ -57,6 +58,8 @@ import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
+import it.attocchi.views.admin.EmailInviateView;
+import it.attocchi.views.admin.GrigliaInvii;
 import it.attocchi.views.admin.RimborsiDialog;
 import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.GenitoriView;
@@ -85,6 +88,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -731,7 +735,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
         new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
         QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
-        var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).single());
+        var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).all().stream()
+            .filter(g -> !(g instanceof GrigliaInvii)).findFirst().orElseThrow());
         try {
             // Nuova rata: data di oggi, importo proposto = residuo, metodo di default Bonifico
             test(find(Button.class).from(dialog).withText("Aggiungi pagamento").single()).click();
@@ -1105,6 +1110,46 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             invioEmailRepository.deleteAll();
         }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_vedeIlRegistroDegliInvii() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        emailService.inviaConferme(canto.getId(), "segreteria");
+        try {
+            // Nel dialog Quota e pagamenti: solo gli invii del partecipante
+            new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
+            var inviiPartecipante = test((Grid<InvioEmail>) find(GrigliaInvii.class).single());
+            assertEquals(1, inviiPartecipante.size());
+            assertEquals("Conferma di iscrizione", inviiPartecipante.getCellText(0, 1));
+            assertEquals("Simulata", ((Badge) inviiPartecipante.getCellComponent(0, 3)).getText());
+            find(QuotaPagamentiDialog.class).single().close();
+
+            navigate(HomeView.class);
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Email inviate")));
+            navigate(EmailInviateView.class);
+            var registro = test((Grid<InvioEmail>) find(GrigliaInvii.class).single());
+            assertEquals(7, registro.size());
+            test(find(TextField.class).all().stream().filter(t -> t.getAriaLabel().filter("Cerca negli invii"::equals).isPresent())
+                .findFirst().orElseThrow()).setValue("canto3");
+            assertEquals(1, registro.size());
+            assertEquals("Allievo Canto3", registro.getCellText(0, 3));
+            assertEquals("segreteria", registro.getCellText(0, 5));
+            SegmentedControl<Optional<TipoDocumento>> tipo = find(SegmentedControl.class).single();
+            test(tipo.getPulsante(Optional.of(TipoDocumento.RICEVUTA))).click();
+            assertEquals(0, registro.size());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAlRegistroEmail() {
+        navigate("email-inviate", RouteNotFoundError.class);
     }
 
     private static int rigaDi(GridTester<Grid<RigaPagamento>, RigaPagamento> righe, Allievo allievo) {
@@ -1757,7 +1802,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 600,00 €").exists());
             assertTrue(find(Span.class).from(dialog).withText("Pagato 200,00 €").exists());
             assertTrue(find(Span.class).from(dialog).withText("Residuo 400,00 €").exists());
-            var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).single());
+            var rate = test((Grid<Pagamento>) find(Grid.class).from(dialog).all().stream()
+            .filter(g -> !(g instanceof GrigliaInvii)).findFirst().orElseThrow());
             assertEquals(1, rate.size());
             assertEquals("Cassa", rate.getCellText(0, 2));
             // Sola lettura: nessun pulsante di modifica
