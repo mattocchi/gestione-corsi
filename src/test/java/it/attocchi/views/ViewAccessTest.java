@@ -56,7 +56,7 @@ import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.AllieviView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
-import it.attocchi.views.insegnante.LezioniInsegnanteView.FiltroLezioni;
+import it.attocchi.views.ElencoLezioni.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
 import it.attocchi.views.genitore.PagamentiFigliView;
 import it.attocchi.views.allievo.MieiCorsiView;
