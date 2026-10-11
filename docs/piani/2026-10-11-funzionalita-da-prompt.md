@@ -35,3 +35,7 @@ Aggiornare la configurazione di Claude Code perché i prompt che chiedono funzio
 
 ## Registro
 
+- Passo 1: creato `docs/FUNZIONALITA.md` (intestazione e formato, nessuna voce).
+- Passo 2: nuova sezione *Feature requests from prompts* in `CLAUDE.md`: cosa registrare, formato e riferimenti `[F-AAAA-MM-GG/AMBITO.n]`, commit `Funzionalità: …`, poi sessione di implementazione con `FUNZIONALITA.md` al posto di `RICHIESTE.md`.
+- Passo 3: hook `UserPromptSubmit` in `.claude/settings.json` (condiviso; `settings.local.json` è ignorato da git). JSON valido, comando eseguito a mano con exit 0. Il promemoria è attivo dalla prossima sessione di Claude Code (o dopo `/hooks`).
+- Nessun codice toccato, nessun test necessario.
