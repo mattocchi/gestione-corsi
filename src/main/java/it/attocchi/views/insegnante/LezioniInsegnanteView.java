@@ -4,8 +4,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.security.SecurityService;
+import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
@@ -23,11 +25,14 @@ import java.util.List;
 public class LezioniInsegnanteView extends VerticalLayout {
 
     public LezioniInsegnanteView(LezioneService lezioneService, PresenzaService presenzaService,
-                                 SecurityService securityService, InsegnanteService insegnanteService) {
+                                 SecurityService securityService, InsegnanteService insegnanteService,
+                                 CorsoService corsoService) {
         setSizeFull();
         Insegnante insegnante = securityService.getUsername().flatMap(insegnanteService::findByUsername).orElse(null);
         ElencoLezioni elenco = new ElencoLezioni(lezioneService, presenzaService,
             () -> insegnante != null ? lezioneService.findByInsegnante(insegnante.getId()) : List.of(),
+            () -> insegnante != null
+                ? corsoService.findByInsegnante(insegnante.getId()).stream().filter(Corso::isAttivo).toList() : List.of(),
             securityService.getUsername().orElse(""));
         add(elenco);
         expand(elenco);

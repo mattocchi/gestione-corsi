@@ -1262,6 +1262,58 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_recuperaLezioneNonEffettuataEAggiungeLezione() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Lezione saltata = lezioneService.findByCorso(canto.getId()).getFirst();
+        lezioneService.segnaNonEffettuata(saltata.getId(), null, "insegnante1");
+        try {
+            apriLezioni();
+            var grid = test((Grid<Lezione>) find(Grid.class).single());
+            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+            test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
+            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            test(find(Button.class).withText("Recupera").single()).click();
+
+            // Un solo corso: la scelta del corso è nascosta, l'orario è quello del corso; la data è obbligatoria
+            assertFalse(find(ComboBox.class).withLabel("Corso").exists());
+            assertEquals(canto.getOrarioInizio(), find(TimePicker.class).withLabel("Orario").single().getValue());
+            test(find(Button.class).withText("Salva").single()).click();
+            assertTrue(find(DatePicker.class).withLabel("Data").single().isInvalid());
+            test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
+            test(find(Button.class).withText("Salva").single()).click();
+
+            test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
+            int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getRecuperoDi() != null).findFirst().orElseThrow();
+            Lezione recupero = grid.getRow(riga);
+            assertEquals(saltata.getNumeroLezione() + " · Recupero", grid.getCellText(riga, 2));
+            assertEquals(7, presenzaService.findByLezione(recupero.getId()).size());
+
+            // Lezione in più dal pulsante sopra la lista
+            test(find(Button.class).withText("Nuova lezione").single()).click();
+            test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now().plusDays(1));
+            test(find(Button.class).withText("Salva").single()).click();
+            int rigaExtra = IntStream.range(0, grid.size())
+                .filter(r -> grid.getRow(r).isAggiunta() && grid.getRow(r).getRecuperoDi() == null).findFirst().orElseThrow();
+            assertTrue(grid.getCellText(rigaExtra, 2).endsWith(" · Aggiunta"));
+
+            // L'insegnante elimina le lezioni aggiunte non completate
+            for (Lezione aggiunta : List.of(grid.getRow(rigaExtra), recupero)) {
+                int r = IntStream.range(0, grid.size()).filter(i -> grid.getRow(i).getId().equals(aggiunta.getId())).findFirst().orElseThrow();
+                test(pulsante(grid.getCellComponent(r, 5), "Gestisci Presenze")).click();
+                test(find(Button.class).withText("Elimina").single()).click();
+                test(find(Button.class).withText("Elimina").all().getLast()).click();
+                assertNull(lezioneService.findById(aggiunta.getId()));
+            }
+        } finally {
+            lezioneService.findByCorso(canto.getId()).stream().filter(Lezione::isAggiunta)
+                .forEach(l -> lezioneService.eliminaAggiunta(l.getId(), "insegnante1"));
+            lezioneService.ripristina(saltata.getId(), "insegnante1");
+        }
+    }
+
+    @Test
     @WithUserDetails("allievo_canto1")
     @SuppressWarnings("unchecked")
     void allievo_vedeLezioneNonEffettuataEsclusaDalleStatistiche() {

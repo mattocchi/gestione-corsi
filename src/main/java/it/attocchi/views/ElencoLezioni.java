@@ -4,6 +4,9 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
@@ -11,12 +14,16 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.signals.Signal;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.service.LezioneService;
@@ -24,6 +31,7 @@ import it.attocchi.service.PresenzaService;
 import it.attocchi.views.insegnante.QuandoLezione;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -56,7 +64,9 @@ public class ElencoLezioni extends VerticalLayout {
     private final LezioneService lezioneService;
     private final PresenzaService presenzaService;
     private final SerializableSupplier<List<Lezione>> fonte;
+    private final SerializableSupplier<List<Corso>> corsi;
     private final String username;
+    private List<Lezione> elenco = List.of();
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
     private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
@@ -65,14 +75,16 @@ public class ElencoLezioni extends VerticalLayout {
     private final Signal<Boolean> mobile = ViewSupport.isMobile();
 
     /**
-     * {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica; {@code username} è l'utente corrente,
-     * di cui il service verifica i permessi.
+     * {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica; {@code corsi} i corsi attivi a cui
+     * si possono aggiungere lezioni; {@code username} è l'utente corrente, di cui il service verifica i permessi.
      */
     public ElencoLezioni(LezioneService lezioneService, PresenzaService presenzaService,
-                         SerializableSupplier<List<Lezione>> fonte, String username) {
+                         SerializableSupplier<List<Lezione>> fonte, SerializableSupplier<List<Corso>> corsi,
+                         String username) {
         this.lezioneService = lezioneService;
         this.presenzaService = presenzaService;
         this.fonte = fonte;
+        this.corsi = corsi;
         this.username = username;
 
         setSizeFull();
@@ -84,7 +96,11 @@ public class ElencoLezioni extends VerticalLayout {
         filtro.getStyle().set("max-width", "32rem");
         filtro.addValueChangeListener(e -> applicaFiltro());
 
-        add(filtro, gridLezioni);
+        Button nuova = new Button("Nuova lezione", VaadinIcon.PLUS.create(), e -> apriNuovaLezione(null));
+        HorizontalLayout barra = new HorizontalLayout(filtro, nuova);
+        barra.setWrap(true);
+        barra.setAlignItems(Alignment.CENTER);
+        add(barra, gridLezioni);
         expand(gridLezioni);
         updateGrid();
     }
@@ -97,7 +113,8 @@ public class ElencoLezioni extends VerticalLayout {
         // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
         var data = gridLezioni.addComponentColumn(this::createData).setHeader("Data")
             .setComparator(Lezione::getData).setSortable(true).setWidth("17rem").setFlexGrow(0);
-        var numero = gridLezioni.addColumn(Lezione::getNumeroLezione).setHeader("N. Lezione");
+        var numero = gridLezioni.addColumn(ElencoLezioni::numero).setHeader("N. Lezione")
+            .setComparator(Lezione::getNumeroLezione);
         var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
         // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
         // verrebbe calcolata sulle sole righe visibili all'apertura ("Da fare") e troncherebbe "Completata".
@@ -173,9 +190,20 @@ public class ElencoLezioni extends VerticalLayout {
                 ? ": " + lezione.getMotivoNonEffettuata() : ""));
             avviso.addClassName("avviso-sola-lettura");
             dialog.add(avviso);
-            Button ripristina = new Button("Ripristina", VaadinIcon.ROTATE_LEFT.create(),
-                e -> esegui(dialog, () -> lezioneService.ripristina(lezione.getId(), username), "Lezione ripristinata"));
-            dialog.getFooter().add(ripristina);
+            Lezione recupero = elenco.stream().filter(l -> l.getRecuperoDi() != null
+                && l.getRecuperoDi().getId().equals(lezione.getId())).findFirst().orElse(null);
+            if (recupero != null) {
+                dialog.add(new Span("Recuperata il " + Formati.data(recupero.getData())));
+            } else {
+                Button recupera = new Button("Recupera", VaadinIcon.PLUS.create(), e -> {
+                    dialog.close();
+                    apriNuovaLezione(lezione);
+                });
+                recupera.addThemeVariants(ButtonVariant.PRIMARY);
+                Button ripristina = new Button("Ripristina", VaadinIcon.ROTATE_LEFT.create(),
+                    e -> esegui(dialog, () -> lezioneService.ripristina(lezione.getId(), username), "Lezione ripristinata"));
+                dialog.getFooter().add(ripristina, recupera);
+            }
             dialog.open();
             return;
         }
@@ -192,9 +220,101 @@ public class ElencoLezioni extends VerticalLayout {
             Button completaButton = new Button("Segna Completata",
                 e -> esegui(dialog, () -> lezioneService.completa(lezione.getId(), username), "Lezione completata"));
             completaButton.addThemeVariants(ButtonVariant.SUCCESS);
-            dialog.getFooter().add(nonEffettuata, completaButton);
+            if (lezione.isAggiunta()) {
+                // Le lezioni aggiunte a mano non si segnano non effettuate: si eliminano (insegnante o admin)
+                if (lezioneService.puoEliminare(lezione.getCorso(), username)) {
+                    Button elimina = new Button("Elimina", VaadinIcon.TRASH.create(), e -> confermaEliminazione(lezione, dialog));
+                    elimina.addThemeVariants(ButtonVariant.ERROR);
+                    dialog.getFooter().add(elimina);
+                }
+                dialog.getFooter().add(completaButton);
+            } else {
+                dialog.getFooter().add(nonEffettuata, completaButton);
+            }
         }
         dialog.open();
+    }
+
+    /**
+     * Nuova lezione: con {@code saltata} è il suo recupero (stesso corso e numero), altrimenti una lezione in più
+     * di uno dei corsi. Data obbligatoria, orario proposto dal corso.
+     */
+    private void apriNuovaLezione(Lezione saltata) {
+        Dialog dialog = ViewSupport.dialog(saltata != null
+            ? "Recupero della lezione " + saltata.getNumeroLezione() + " (" + Formati.data(saltata.getData()) + ")"
+            : "Nuova lezione", "480px");
+        List<Corso> scelte = saltata != null ? List.of(saltata.getCorso()) : corsi.get();
+        if (scelte.isEmpty()) {
+            Notification.show("Nessun corso attivo a cui aggiungere lezioni");
+            return;
+        }
+        ComboBox<Corso> corso = new ComboBox<>("Corso");
+        corso.setItems(scelte);
+        corso.setItemLabelGenerator(Corso::getNome);
+        corso.setVisible(scelte.size() > 1);
+        DatePicker data = ViewSupport.datePicker("Data");
+        TimePicker orario = ViewSupport.timePicker("Orario");
+        corso.addValueChangeListener(e -> orario.setValue(e.getValue() != null ? e.getValue().getOrarioInizio() : null));
+        corso.setValue(scelte.getFirst());
+        if (scelte.size() > 1) {
+            corso.clear();
+        }
+
+        // Il corso non è nel Binder: con un solo corso il campo è nascosto e il Binder non lo scriverebbe
+        corso.setRequiredIndicatorVisible(true);
+        corso.setErrorMessage("Scegli il corso");
+        Binder<NuovaLezione> binder = new Binder<>();
+        binder.forField(data).asRequired("Inserisci la data della lezione").bind(NuovaLezione::getData, NuovaLezione::setData);
+        binder.forField(orario).bind(NuovaLezione::getOrario, NuovaLezione::setOrario);
+
+        Button salva = new Button("Salva", e -> {
+            NuovaLezione nuova = new NuovaLezione();
+            corso.setInvalid(corso.isEmpty());
+            if (!binder.writeBeanIfValid(nuova) || corso.isEmpty()) {
+                return;
+            }
+            Long corsoId = corso.getValue().getId();
+            esegui(dialog, () -> lezioneService.aggiungi(corsoId, nuova.getData(), nuova.getOrario(),
+                saltata != null ? saltata.getId() : null, username), saltata != null ? "Recupero inserito" : "Lezione inserita");
+        });
+        salva.addThemeVariants(ButtonVariant.PRIMARY);
+        FormLayout form = new FormLayout(corso, data, orario);
+        dialog.add(form);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
+        dialog.open();
+    }
+
+    private void confermaEliminazione(Lezione lezione, Dialog dialogLezione) {
+        Dialog conferma = ViewSupport.dialog("Eliminare la lezione?", "420px");
+        conferma.add(new Span(lezione.getCorso().getNome() + " – lezione " + lezione.getNumeroLezione()
+            + " del " + Formati.data(lezione.getData()) + ", con le sue presenze"));
+        Button elimina = new Button("Elimina", e -> {
+            conferma.close();
+            esegui(dialogLezione, () -> lezioneService.eliminaAggiunta(lezione.getId(), username), "Lezione eliminata");
+        });
+        elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
+        conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);
+        conferma.open();
+    }
+
+    /** Numero della lezione, con l'indicazione delle lezioni di recupero e di quelle aggiunte. */
+    private static String numero(Lezione lezione) {
+        String numero = String.valueOf(lezione.getNumeroLezione());
+        if (lezione.getRecuperoDi() != null) {
+            return numero + " · Recupero";
+        }
+        return lezione.isAggiunta() ? numero + " · Aggiunta" : numero;
+    }
+
+    /** Valori del dialog "Nuova lezione". */
+    private static class NuovaLezione {
+        private LocalDate data;
+        private LocalTime orario;
+
+        LocalDate getData() { return data; }
+        void setData(LocalDate data) { this.data = data; }
+        LocalTime getOrario() { return orario; }
+        void setOrario(LocalTime orario) { this.orario = orario; }
     }
 
     /** Conferma con motivo facoltativo prima di segnare la lezione come non effettuata. */
@@ -259,7 +379,8 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     private void updateGrid() {
-        lezioni = gridLezioni.setItems(fonte.get());
+        elenco = fonte.get();
+        lezioni = gridLezioni.setItems(elenco);
         applicaFiltro();
     }
 
