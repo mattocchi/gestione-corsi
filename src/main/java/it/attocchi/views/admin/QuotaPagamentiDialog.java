@@ -56,7 +56,8 @@ public class QuotaPagamentiDialog extends Dialog {
 
         Iscrizione iscrizione = pagamentoService.findIscrizione(corso.getId(), allievo.getId());
 
-        Span corsoInfo = new Span(corso.getNome() + " · quota piena " + Formati.euro(corso.getCostoTotale()));
+        Span corsoInfo = new Span(corso.getNome() + " · quota piena " + Formati.euro(corso.getCostoTotale())
+            + (corso.getPrezzoPreiscrizione() != null ? " · pre-iscrizione " + Formati.euro(corso.getPrezzoPreiscrizione()) : ""));
         corsoInfo.addClassName("avviso-sola-lettura");
 
         BigDecimalField quota = new BigDecimalField("Quota personalizzata");

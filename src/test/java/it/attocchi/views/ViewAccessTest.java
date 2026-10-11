@@ -687,6 +687,20 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    void segreteria_vedePrezzoConPreiscrizioneInQuotaEPagamenti() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
+        assertTrue(find(Span.class).withText("Corso di Canto · quota piena 600,00 €").exists());
+        find(QuotaPagamentiDialog.class).single().close();
+
+        canto.setPrezzoPreiscrizione(new BigDecimal("510"));
+        new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
+        assertTrue(find(Span.class).withText("Corso di Canto · quota piena 600,00 € · pre-iscrizione 510,00 €").exists());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_registraModificaEdEliminaUnaRata() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
