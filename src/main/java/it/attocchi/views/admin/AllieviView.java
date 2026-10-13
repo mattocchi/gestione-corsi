@@ -1,5 +1,7 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -11,16 +13,19 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.AllievoService;
+import it.attocchi.service.DocumentiService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.Formati;
@@ -61,7 +66,9 @@ public class AllieviView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid.addColumn(Allievo::getNomeCompleto).setHeader("Nome").setSortable(true);
+        Signal<Boolean> mobile = ViewSupport.isMobile();
+        grid.addComponentColumn(allievo -> nome(allievo, mobile)).setHeader("Nome")
+            .setComparator(Allievo::getNomeCompleto);
         var codiceFiscale = grid.addColumn(Allievo::getCodiceFiscale).setHeader("Codice Fiscale");
         var dataNascita = grid.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
             .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
@@ -82,6 +89,22 @@ public class AllieviView extends VerticalLayout {
         }));
 
         ViewSupport.hideOnMobile(grid, codiceFiscale, dataNascita, genitore, indirizzo);
+    }
+
+    /** Nome con il badge "Dati mancanti" se non ci sono codice fiscale o data di nascita (servono ai documenti). */
+    private static HorizontalLayout nome(Allievo allievo, Signal<Boolean> mobile) {
+        HorizontalLayout cella = new HorizontalLayout(new Span(allievo.getNomeCompleto()));
+        cella.setSpacing(true);
+        cella.setAlignItems(Alignment.CENTER);
+        String avviso = DocumentiService.avvisoDatiMancanti(allievo);
+        if (avviso != null) {
+            Badge badge = new Badge("Dati mancanti", VaadinIcon.WARNING.create());
+            badge.addThemeVariants(BadgeVariant.WARNING);
+            badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
+            Tooltip.forComponent(badge).setText(avviso);
+            cella.add(badge);
+        }
+        return cella;
     }
 
     private void openDialog(Allievo allievo) {

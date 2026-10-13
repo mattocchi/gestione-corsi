@@ -69,7 +69,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### ALLIEVI
 
-* [ ] rendi non obbligatorio lo username, codice fiscale, data di nascia nel momento di inserimento di un nuovo allievo o modifica
+* [x] rendi non obbligatorio lo username, codice fiscale, data di nascia nel momento di inserimento di un nuovo allievo o modifica _(completata 2026-10-13)_
   _Chiarimento 2026-10-13: username vuoto → username generato da nome e cognome, password casuale e accesso disattivato (riattivabile da Gestione Utenti con il nuovo campo "Attivo"); codice fiscale e data di nascita facoltativi anche per il genitore (I miei figli) e nel profilo, il codice fiscale se inserito deve essere valido; badge "Dati mancanti" in Gestione Allievi._
-* [ ] il dato codice fiscale e data di nascita sono obbligatori solo per stampa di eventuale ricevuta o conferma
+* [x] il dato codice fiscale e data di nascita sono obbligatori solo per stampa di eventuale ricevuta o conferma _(completata 2026-10-13)_
   _Chiarimento 2026-10-13: senza codice fiscale o data di nascita dell'allievo ricevuta e conferma non si generano: scarico e invio email disabilitati con avviso, l'invio multiplo delle conferme salta questi allievi e li conta nel riepilogo._

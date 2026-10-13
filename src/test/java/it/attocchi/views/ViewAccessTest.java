@@ -467,6 +467,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_creaAllievoSenzaCodiceFiscaleNeDataDiNascita() {
         navigate(AllieviView.class);
         test(find(Button.class).withText("Nuovo Allievo").single()).click();
@@ -483,6 +484,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertNull(nuovo.getCodiceFiscale());
             assertNull(nuovo.getDataNascita());
             assertEquals(List.of("codice fiscale", "data di nascita"), nuovo.getDatiMancantiPerDocumenti());
+            // In elenco il badge "Dati mancanti" accanto al nome
+            var allievi = test((Grid<Allievo>) find(Grid.class).single());
+            int riga = IntStream.range(0, allievi.size()).filter(r -> allievi.getRow(r).equals(nuovo)).findFirst().orElseThrow();
+            Component cella = allievi.getCellComponent(riga, 0);
+            assertEquals("Dati mancanti", cella.getChildren().filter(Badge.class::isInstance).map(b -> ((Badge) b).getText())
+                .findFirst().orElseThrow());
         } finally {
             allievoService.delete(nuovo);
             userService.delete(nuovo.getUser());
