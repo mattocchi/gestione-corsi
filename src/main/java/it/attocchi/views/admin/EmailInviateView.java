@@ -1,6 +1,8 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -10,6 +12,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
+import it.attocchi.security.SecurityService;
 import it.attocchi.service.EmailService;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.SegmentedControl;
@@ -20,7 +23,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Registro di tutti gli invii email (conferme di iscrizione e ricevute), con filtri per tipo e testo. */
+/**
+ * Registro di tutti gli invii email (conferme di iscrizione e ricevute), con filtri per tipo e testo; per l'admin
+ * anche l'email di test ({@link EmailDiTestDialog}).
+ */
 @Route(value = "email-inviate", layout = MainLayout.class)
 @PageTitle("Email inviate")
 @Menu(title = "Email inviate", order = 10.8, icon = "vaadin:envelopes")
@@ -32,7 +38,7 @@ public class EmailInviateView extends VerticalLayout {
     private final TextField cerca = new TextField();
     private final GridListDataView<InvioEmail> invii;
 
-    public EmailInviateView(EmailService emailService) {
+    public EmailInviateView(EmailService emailService, SecurityService securityService) {
         setSizeFull();
         List<Optional<TipoDocumento>> tipi = new java.util.ArrayList<>();
         tipi.add(Optional.empty());
@@ -52,6 +58,12 @@ public class EmailInviateView extends VerticalLayout {
         HorizontalLayout filtri = new HorizontalLayout(filtroTipo, cerca);
         filtri.setWrap(true);
         filtri.setAlignItems(Alignment.CENTER);
+        if (securityService.hasRole("ADMIN")) {
+            // Prova della configurazione SMTP e dei template: solo admin, non registrata
+            Button emailDiTest = new Button("Email di test", VaadinIcon.ENVELOPE.create(),
+                e -> new EmailDiTestDialog(emailService, securityService.getUsername().orElse("")).open());
+            filtri.add(emailDiTest);
+        }
 
         invii = grid.setItems(emailService.tuttiGliInvii());
         add(filtri, grid);

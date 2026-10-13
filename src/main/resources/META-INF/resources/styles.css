@@ -204,3 +204,12 @@
     gap: 0.5rem 1.25rem;
     font-weight: var(--aura-font-weight-medium, 500);
 }
+
+/* Esito dell'email di test: badge e messaggio (anche lungo, errore SMTP) */
+.esito-email-test {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--vaadin-gap-s, 0.5rem);
+    overflow-wrap: anywhere;
+}

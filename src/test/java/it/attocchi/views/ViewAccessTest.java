@@ -16,6 +16,7 @@ import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
+import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextFieldTester;
@@ -58,6 +59,7 @@ import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
+import it.attocchi.views.admin.EmailDiTestDialog;
 import it.attocchi.views.admin.EmailInviateView;
 import it.attocchi.views.admin.GrigliaInvii;
 import it.attocchi.views.admin.RimborsiDialog;
@@ -1144,6 +1146,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             invioEmailRepository.deleteAll();
         }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_inviaEmailDiTestConIlTemplateScelto() {
+        navigate(EmailInviateView.class);
+        test(find(Button.class).withText("Email di test").single()).click();
+        assertTrue(find(Span.class).all().stream().anyMatch(s -> s.getText().startsWith("Server email non configurato")));
+
+        // Senza destinatario valido non invia
+        test(find(Button.class).withText("Invia").single()).click();
+        assertTrue(find(EmailField.class).withLabel("Destinatario").single().isInvalid());
+
+        test(find(EmailField.class).withLabel("Destinatario").single()).setValue("prova@example.org");
+        EmailDiTestDialog dialog = find(EmailDiTestDialog.class).single();
+        SegmentedControl<Optional<TipoDocumento>> template = find(SegmentedControl.class, dialog).single();
+        test(template.getPulsante(Optional.of(TipoDocumento.RICEVUTA))).click();
+        test(find(Button.class).withText("Invia").single()).click();
+        assertEquals("Simulata", find(Badge.class, dialog).single().getText());
+        assertTrue(dialog.isOpened());
+        // Il test non finisce nel registro degli invii
+        assertTrue(emailService.tuttiGliInvii().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_nonVedeLEmailDiTest() {
+        navigate(EmailInviateView.class);
+        assertTrue(find(Button.class).withText("Email di test").all().isEmpty());
     }
 
     @Test

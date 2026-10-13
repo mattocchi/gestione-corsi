@@ -32,7 +32,7 @@ controllarne la resa HTML nei client di posta.
 |---|---|---|---|---|
 | 1 | `DocumentiService`: corpo email e PDF di esempio con dati fittizi; template `email/test.ftlh` | `DocumentiService.java`, `templates/email/test.ftlh`, `DocumentiServiceTest.java` | `./mvnw test` | [x] |
 | 2 | `EmailService.inviaTest` (solo admin, senza registro) e `configurazione()` senza password | `EmailService.java`, `EmailServiceTest.java` | `./mvnw test` | [x] |
-| 3 | `EmailDiTestDialog` e pulsante in "Email inviate" solo per admin; completa EMAIL.1 e EMAIL.2 | `views/admin/EmailDiTestDialog.java`, `EmailInviateView.java`, `ViewAccessTest.java`, `CLAUDE.md`, `docs/FUNZIONALITA.md` | `./mvnw test`, browser | [ ] |
+| 3 | `EmailDiTestDialog` e pulsante in "Email inviate" solo per admin; completa EMAIL.1 e EMAIL.2 | `views/admin/EmailDiTestDialog.java`, `EmailInviateView.java`, `ViewAccessTest.java`, `CLAUDE.md`, `docs/FUNZIONALITA.md` | `./mvnw test`, browser | [x] |
 
 ## Fuori ambito
 

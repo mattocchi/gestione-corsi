@@ -62,7 +62,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### EMAIL
 
-* [ ] aggiungi in admin la possibilità di inviare una email di test ad un destinatario inseribile da ui per testare la configurazione in produzione
+* [x] aggiungi in admin la possibilità di inviare una email di test ad un destinatario inseribile da ui per testare la configurazione in produzione _(completata 2026-10-13)_
   _Chiarimento 2026-10-13: solo ADMIN, pulsante "Email di test" nella vista "Email inviate"; destinatario libero obbligatorio; il dialog mostra la configurazione SMTP (senza password) e avvisa se l'invio è simulato; esito ed errore nel dialog e nel log, nessuna registrazione in "Email inviate"._
-* [ ] e che permetta di selezionare uno dei template disponibili tra le email esistenti per verificare anche la resa html in client di posta
+* [x] e che permetta di selezionare uno dei template disponibili tra le email esistenti per verificare anche la resa html in client di posta _(completata 2026-10-13)_
   _Chiarimento 2026-10-13: scelta tra "Solo testo", "Conferma di iscrizione" e "Ricevuta"; template compilati con dati fittizi, PDF allegato come negli invii reali, oggetto con prefisso "[TEST]"._
