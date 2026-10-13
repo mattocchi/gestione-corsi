@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -53,12 +54,19 @@ public class AllievoService {
 
     /**
      * Salva insieme utente e scheda dell'allievo (admin e segreteria). Un allievo nuovo riceve il ruolo
-     * ALLIEVO e richiede la password; per uno esistente {@code rawPassword} vuota lascia quella attuale.
+     * ALLIEVO; senza username non ha accesso: username generato da nome e cognome, password casuale e utente
+     * disattivato (si attiva da Gestione Utenti). Con lo username serve la password. Per un allievo esistente
+     * {@code rawPassword} vuota lascia quella attuale.
      */
     @Transactional
     public Allievo salva(Allievo allievo, User user, String rawPassword) {
         if (allievo.getId() == null) {
             user.getRoles().add("ALLIEVO");
+            if (user.getUsername() == null || user.getUsername().isBlank()) {
+                user.setUsername(userService.usernameLibero(user.getNome(), user.getCognome()));
+                user.setEnabled(false);
+                rawPassword = UUID.randomUUID().toString();
+            }
         }
         allievo.setUser(userService.save(user, rawPassword));
         return allievoRepository.save(allievo);

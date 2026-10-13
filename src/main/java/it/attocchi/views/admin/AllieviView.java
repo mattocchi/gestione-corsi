@@ -90,7 +90,7 @@ public class AllieviView extends VerticalLayout {
 
         // Nome, cognome, contatti e credenziali sono dell'utente collegato all'allievo
         User user = nuovo ? new User() : allievo.getUser();
-        UtenteFields utente = new UtenteFields(user, userService);
+        UtenteFields utente = new UtenteFields(user, userService, true);
 
         Binder<Allievo> binder = new Binder<>(Allievo.class);
         ComboBox<Genitore> genitore = new ComboBox<>("Genitore");

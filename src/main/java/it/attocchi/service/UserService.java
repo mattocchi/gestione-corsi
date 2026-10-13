@@ -6,7 +6,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @Transactional(readOnly = true)
@@ -72,6 +74,28 @@ public class UserService {
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    /** Primo username libero ricavato da nome e cognome: "mario.rossi", poi "mario.rossi2", "mario.rossi3"… */
+    public String usernameLibero(String nome, String cognome) {
+        String base = (semplifica(nome) + "." + semplifica(cognome)).replaceAll("(^\\.|\\.$)", "");
+        if (base.isEmpty()) {
+            base = "utente";
+        }
+        String candidato = base;
+        for (int n = 2; userRepository.existsByUsername(candidato); n++) {
+            candidato = base + n;
+        }
+        return candidato;
+    }
+
+    /** Minuscolo, senza accenti, solo lettere e cifre. */
+    private static String semplifica(String testo) {
+        if (testo == null) {
+            return "";
+        }
+        return Normalizer.normalize(testo, Normalizer.Form.NFD).replaceAll("\\p{M}", "")
+            .toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     private User utente(String username) {

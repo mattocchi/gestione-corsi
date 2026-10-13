@@ -490,6 +490,42 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    void segreteria_creaAllievoSenzaUsername_utenteGeneratoEDisattivato() {
+        navigate(AllieviView.class);
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Nicolò");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("D'Amico");
+        test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
+        test(find(Button.class).withText("Salva").single()).click();
+
+        Allievo nuovo = allievoService.findByUsername("nicolo.damico").orElseThrow();
+        try {
+            assertFalse(nuovo.getUser().isEnabled());
+            assertTrue(nuovo.getUser().getRoles().contains("ALLIEVO"));
+            // Omonimo: username con un numero
+            assertEquals("nicolo.damico2", userService.usernameLibero("Nicolo", "Damico"));
+        } finally {
+            allievoService.delete(nuovo);
+            userService.delete(nuovo.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_conUsernameLaPasswordEObbligatoria() {
+        navigate(AllieviView.class);
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        test(find(TextField.class).withLabel("Username").single()).setValue("allievo_senza_password");
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Lia");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("Blu");
+        test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(find(PasswordField.class).withLabel("Password").single().isInvalid());
+        assertFalse(userService.existsByUsername("allievo_senza_password"));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
     void segreteria_creaAllievoAssegnatoAUnGenitore() {
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());

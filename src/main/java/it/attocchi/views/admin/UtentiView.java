@@ -2,6 +2,7 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -75,6 +76,9 @@ public class UtentiView extends VerticalLayout {
         TextField email = new TextField("Email");
         TextField telefono = new TextField("Telefono");
 
+        Checkbox attivo = new Checkbox("Attivo");
+        attivo.setTooltipText("Solo un utente attivo può accedere all'app");
+
         CheckboxGroup<String> roles = new CheckboxGroup<>();
         roles.setLabel("Ruoli");
         roles.setItems(Arrays.asList("ADMIN", "SEGRETERIA", "INSEGNANTE", "ALLIEVO", "GENITORE"));
@@ -88,11 +92,12 @@ public class UtentiView extends VerticalLayout {
         binder.forField(cognome).bind(User::getCognome, User::setCognome);
         binder.forField(email).bind(User::getEmail, User::setEmail);
         binder.forField(telefono).bind(User::getTelefono, User::setTelefono);
+        binder.forField(attivo).bind(User::isEnabled, User::setEnabled);
         binder.forField(roles).bind(User::getRoles, User::setRoles);
 
         binder.readBean(user);
 
-        formLayout.add(username, password, nome, cognome, email, telefono, roles);
+        formLayout.add(username, password, nome, cognome, email, telefono, attivo, roles);
 
         Button saveButton = new Button("Salva", e -> {
             try {
