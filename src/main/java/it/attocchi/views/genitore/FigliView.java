@@ -145,7 +145,7 @@ public class FigliView extends VerticalLayout {
             StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
 
             HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
-            actions.add(Ricevute.link(corso.getId(), allievo.getId(), ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
+            actions.add(Ricevute.link(corso.getId(), allievo, ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
             return actions;
         }));
         ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni, pagamento);

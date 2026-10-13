@@ -67,6 +67,7 @@ import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
+import it.attocchi.views.admin.InvioEmailDialog;
 import it.attocchi.views.admin.PartecipantiDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.AllieviView;
@@ -1205,6 +1206,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(0, registro.size());
         } finally {
             invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_senzaDatiAnagraficiNonInviaDocumenti() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        LocalDate dataNascita = allievo.getDataNascita();
+        allievo.setDataNascita(null);
+        allievoService.save(allievo);
+        try {
+            InvioEmailDialog.apri(canto, allievo, () -> { });
+            assertFalse(find(Button.class).withText("Invia conferma di iscrizione").single().isEnabled());
+            assertTrue(find(Span.class).all().stream().anyMatch(s -> s.getText().startsWith("Manca data di nascita di Allievo Canto3")));
+        } finally {
+            allievo.setDataNascita(dataNascita);
+            allievoService.save(allievo);
         }
     }
 

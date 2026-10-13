@@ -46,7 +46,7 @@ public class EmailService {
     }
 
     /** Esito di un invio multiplo. */
-    public record Riepilogo(int inviate, int simulate, int errori, int senzaEmail) {
+    public record Riepilogo(int inviate, int simulate, int errori, int senzaEmail, int datiMancanti) {
     }
 
     /** Configurazione SMTP in uso, mai con la password; {@code reale} è {@code false} se l'invio è simulato. */
@@ -146,6 +146,10 @@ public class EmailService {
         if (tipo == TipoDocumento.RICEVUTA && !haPagamenti(corsoId, allievoId)) {
             throw new IllegalStateException("Nessun pagamento registrato: non c'è una ricevuta da inviare");
         }
+        String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo());
+        if (datiMancanti != null) {
+            throw new IllegalStateException(datiMancanti);
+        }
 
         InvioEmail invio = new InvioEmail();
         invio.setDataOra(LocalDateTime.now());
@@ -182,7 +186,10 @@ public class EmailService {
         return invioEmailRepository.save(invio);
     }
 
-    /** Invia la conferma di iscrizione a tutti i partecipanti del corso che hanno un destinatario. */
+    /**
+     * Invia la conferma di iscrizione a tutti i partecipanti del corso che hanno un destinatario e i dati per i
+     * documenti (codice fiscale e data di nascita); gli altri sono solo contati.
+     */
     @Transactional
     public Riepilogo inviaConferme(Long corsoId, String username) {
         verificaPermesso(username);
@@ -190,7 +197,12 @@ public class EmailService {
         int simulate = 0;
         int errori = 0;
         int senzaEmail = 0;
+        int datiMancanti = 0;
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(corsoId)) {
+            if (!iscrizione.getAllievo().isDatiPerDocumenti()) {
+                datiMancanti++;
+                continue;
+            }
             if (destinatario(iscrizione.getAllievo()).isEmpty()) {
                 senzaEmail++;
                 continue;
@@ -201,7 +213,7 @@ public class EmailService {
                 case ERRORE -> errori++;
             }
         }
-        return new Riepilogo(inviate, simulate, errori, senzaEmail);
+        return new Riepilogo(inviate, simulate, errori, senzaEmail, datiMancanti);
     }
 
     /** Invii di un'iscrizione, dal più recente. */

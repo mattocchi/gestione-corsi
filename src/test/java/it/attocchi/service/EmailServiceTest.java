@@ -41,6 +41,9 @@ class EmailServiceTest {
     @Autowired
     private InvioEmailRepository invioEmailRepository;
 
+    @Autowired
+    private DocumentiService documentiService;
+
     @AfterEach
     void pulisci() {
         invioEmailRepository.deleteAll();
@@ -90,8 +93,29 @@ class EmailServiceTest {
     @Test
     void inviaConferme_aTuttiGliIscrittiDelCorso() {
         EmailService.Riepilogo riepilogo = emailService.inviaConferme(canto().getId(), "segreteria");
-        assertEquals(new EmailService.Riepilogo(0, 7, 0, 0), riepilogo);
+        assertEquals(new EmailService.Riepilogo(0, 7, 0, 0, 0), riepilogo);
         assertEquals(7, emailService.tuttiGliInvii().size());
+    }
+
+    @Test
+    void senzaCodiceFiscale_niente_documentiNeEmail() {
+        Corso canto = canto();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        String codiceFiscale = allievo.getCodiceFiscale();
+        allievo.setCodiceFiscale(null);
+        allievoService.save(allievo);
+        try {
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> emailService.invia(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(), "segreteria"));
+            assertEquals("Manca codice fiscale di Allievo Canto3: completa i dati nella scheda dell'allievo per stampare o inviare"
+                + " ricevute e conferme", ex.getMessage());
+            assertThrows(IllegalStateException.class,
+                () -> documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId()));
+            assertEquals(new EmailService.Riepilogo(0, 6, 0, 0, 1), emailService.inviaConferme(canto.getId(), "segreteria"));
+        } finally {
+            allievo.setCodiceFiscale(codiceFiscale);
+            allievoService.save(allievo);
+        }
     }
 
     @Test

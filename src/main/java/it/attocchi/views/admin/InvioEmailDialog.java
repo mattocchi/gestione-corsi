@@ -12,6 +12,7 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
+import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
 import it.attocchi.service.EmailService.Destinatario;
 import it.attocchi.service.EmailService.Riepilogo;
@@ -44,6 +45,12 @@ public final class InvioEmailDialog {
             .orElse("Né il genitore né l'allievo hanno un indirizzo email: aggiungilo nella loro scheda per poter inviare."));
         a.addClassName("avviso-sola-lettura");
         content.add(a);
+        String datiMancanti = DocumentiService.avvisoDatiMancanti(allievo);
+        if (datiMancanti != null) {
+            Span avviso = new Span(datiMancanti + ".");
+            avviso.addClassName("avviso-sola-lettura");
+            content.add(avviso);
+        }
         if (!emailService.invioReale()) {
             Span simulato = new Span("Server email non configurato: l'invio sarà solo simulato e registrato.");
             simulato.addClassName("avviso-sola-lettura");
@@ -56,8 +63,8 @@ public final class InvioEmailDialog {
         Button ricevuta = new Button("Invia ricevuta", VaadinIcon.ENVELOPE.create(),
             e -> invia(emailService, TipoDocumento.RICEVUTA, corso, allievo, username, dialog, dopoInvio));
         boolean conPagamenti = emailService.haPagamenti(corso.getId(), allievo.getId());
-        conferma.setEnabled(destinatario.isPresent());
-        ricevuta.setEnabled(destinatario.isPresent() && conPagamenti);
+        conferma.setEnabled(destinatario.isPresent() && datiMancanti == null);
+        ricevuta.setEnabled(destinatario.isPresent() && conPagamenti && datiMancanti == null);
         if (!conPagamenti) {
             ricevuta.setTooltipText("Nessun pagamento registrato");
         }
@@ -82,7 +89,8 @@ public final class InvioEmailDialog {
                 Riepilogo r = emailService.inviaConferme(corso.getId(), username);
                 dialog.close();
                 Notification.show("Conferme: " + r.inviate() + " inviate, " + r.simulate() + " simulate, " + r.errori()
-                    + " con errore, " + r.senzaEmail() + " senza email");
+                    + " con errore, " + r.senzaEmail() + " senza email"
+                    + (r.datiMancanti() > 0 ? ", " + r.datiMancanti() + " senza codice fiscale o data di nascita" : ""));
                 dopoInvio.run();
             } catch (RuntimeException ex) {
                 Notification.show("Invio non riuscito: " + ex.getMessage());
