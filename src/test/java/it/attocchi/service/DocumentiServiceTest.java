@@ -87,6 +87,28 @@ class DocumentiServiceTest {
             documentiService.nomeFile(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione));
     }
 
+    @Test
+    void esempio_templateCompilatiConDatiFittizi() throws IOException {
+        String email = documentiService.emailEsempioHtml(TipoDocumento.RICEVUTA, "Prova");
+        assertTrue(email.contains("Gentile Prova"));
+        assertTrue(email.contains("Anna Esempio"));
+        assertTrue(email.contains("350,00 €"));
+
+        String conferma = documentiService.emailEsempioHtml(TipoDocumento.CONFERMA_ISCRIZIONE, "Prova");
+        assertTrue(conferma.contains("Luca Esempio"));
+        assertTrue(conferma.contains("190,00 €"));
+
+        String testo = testo(documentiService.documentoEsempioPdf(TipoDocumento.RICEVUTA));
+        assertTrue(testo.contains("Ricevuta di pagamento"), testo);
+        assertTrue(testo.contains("Maria Esempio"), testo);
+        assertTrue(testo.contains("sconto fratelli"), testo);
+        assertEquals("ricevuta-corso-di-esempio-anna-esempio.pdf", documentiService.nomeFileEsempio(TipoDocumento.RICEVUTA));
+
+        String prova = documentiService.emailProvaHtml("Prova");
+        assertTrue(prova.contains("Gentile Prova"));
+        assertTrue(prova.contains("email di prova"));
+    }
+
     private Iscrizione iscrizione() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         return corsoService.findPartecipanti(canto.getId()).getFirst();

@@ -9,7 +9,10 @@ import it.attocchi.config.AssociazioneProperties;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
+import it.attocchi.entity.Indirizzo;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.entity.User;
@@ -25,8 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -115,6 +120,32 @@ public class DocumentiService {
         return render("email/" + tipo.getTemplate() + ".ftlh", modello);
     }
 
+    /** Corpo HTML di prova del template, compilato con i dati fittizi di {@link #ricevutaEsempio()}. */
+    public String emailEsempioHtml(TipoDocumento tipo, String saluto) {
+        Map<String, Object> modello = modello(ricevutaEsempio());
+        modello.put("saluto", saluto);
+        return render("email/" + tipo.getTemplate() + ".ftlh", modello);
+    }
+
+    /** PDF del documento compilato con i dati fittizi di {@link #ricevutaEsempio()}. */
+    public byte[] documentoEsempioPdf(TipoDocumento tipo) {
+        return pdf(render("documenti/" + tipo.getTemplate() + ".ftlh", modello(ricevutaEsempio())));
+    }
+
+    /** Nome del file PDF di esempio, es. "ricevuta-corso-di-esempio-anna-esempio.pdf". */
+    public String nomeFileEsempio(TipoDocumento tipo) {
+        return nomeFile(tipo, ricevutaEsempio().iscrizione());
+    }
+
+    /** Corpo HTML del semplice messaggio di prova (solo testo, senza documento). */
+    public String emailProvaHtml(String saluto) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("dataOra", Formati.dataOra(LocalDateTime.now()));
+        return render("email/test.ftlh", modello);
+    }
+
     /** Nome del file PDF, es. "ricevuta-corso-di-canto-mario-rossi.pdf". */
     public String nomeFile(TipoDocumento tipo, Iscrizione iscrizione) {
         String base = (tipo == TipoDocumento.RICEVUTA ? "ricevuta" : "conferma-iscrizione") + "-"
@@ -153,10 +184,7 @@ public class DocumentiService {
         Situazione situazione = ricevuta.situazione();
 
         Map<String, Object> modello = new HashMap<>();
-        modello.put("associazione", Map.of(
-            "nome", testo(associazione.nome()), "indirizzo", testo(associazione.indirizzo()),
-            "codiceFiscale", testo(associazione.codiceFiscale()), "email", testo(associazione.email()),
-            "iban", testo(associazione.iban())));
+        modello.put("associazione", associazione());
         if (logo != null) {
             modello.put("logo", logo);
         }
@@ -178,6 +206,58 @@ public class DocumentiService {
         modello.put("totali", Map.of("quota", Formati.euro(situazione.quota()), "pagato", Formati.euro(situazione.pagato()),
             "residuo", Formati.euro(situazione.residuo())));
         return modello;
+    }
+
+    private Map<String, String> associazione() {
+        return Map.of("nome", testo(associazione.nome()), "indirizzo", testo(associazione.indirizzo()),
+            "codiceFiscale", testo(associazione.codiceFiscale()), "email", testo(associazione.email()),
+            "iban", testo(associazione.iban()));
+    }
+
+    /**
+     * Iscrizione fittizia (mai salvata) per le email di test: corso con insegnante, allievo con genitore, quota
+     * personalizzata e due pagamenti, così i template mostrano tutte le loro parti senza usare dati reali.
+     */
+    static Ricevuta ricevutaEsempio() {
+        Corso corso = new Corso();
+        corso.setNome("Corso di esempio");
+        corso.setAnnoScolastico("2026/2027");
+        corso.setCostoTotale(new BigDecimal("600.00"));
+        Insegnante insegnante = new Insegnante();
+        insegnante.setUser(new User("esempio.insegnante", null, "Luca", "Esempio", null));
+        corso.setInsegnante(insegnante);
+
+        Genitore genitore = new Genitore();
+        genitore.setUser(new User("esempio.genitore", null, "Maria", "Esempio", null));
+        genitore.setCodiceFiscale("SMPMRA80A41H501X");
+        Allievo allievo = new Allievo();
+        allievo.setUser(new User("esempio.allievo", null, "Anna", "Esempio", null));
+        allievo.setCodiceFiscale("SMPNNA12C45H501Y");
+        Indirizzo indirizzo = new Indirizzo();
+        indirizzo.setVia("Via di Prova 1");
+        indirizzo.setCap("00100");
+        indirizzo.setComune("Roma");
+        indirizzo.setProvincia("RM");
+        allievo.setIndirizzo(indirizzo);
+        allievo.setGenitore(genitore);
+
+        Iscrizione iscrizione = new Iscrizione(corso, allievo);
+        iscrizione.setQuotaPersonalizzata(new BigDecimal("540.00"));
+        iscrizione.setNotaQuota("sconto fratelli");
+
+        LocalDate oggi = LocalDate.now();
+        Pagamento acconto = new Pagamento(iscrizione);
+        acconto.setData(oggi.minusMonths(1));
+        acconto.setImporto(new BigDecimal("200.00"));
+        acconto.setMetodo(MetodoPagamento.BONIFICO);
+        acconto.setNota("acconto");
+        Pagamento rata = new Pagamento(iscrizione);
+        rata.setData(oggi);
+        rata.setImporto(new BigDecimal("150.00"));
+        rata.setMetodo(MetodoPagamento.CASSA);
+        List<Pagamento> pagamenti = List.of(acconto, rata);
+        BigDecimal pagato = pagamenti.stream().map(Pagamento::getImporto).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new Ricevuta(iscrizione, pagamenti, new Situazione(iscrizione.getQuotaPersonalizzata(), pagato));
     }
 
     private static Map<String, String> pagamento(Pagamento pagamento) {
