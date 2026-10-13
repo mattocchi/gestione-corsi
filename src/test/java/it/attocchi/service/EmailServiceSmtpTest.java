@@ -91,6 +91,41 @@ class EmailServiceSmtpTest {
         assertEquals(1, emailService.invii(canto.getId(), allievo.getId()).size());
     }
 
+    @Test
+    void test_templateConAllegatoOSoloTesto() throws Exception {
+        when(mailSender.createMimeMessage()).thenAnswer(i -> new MimeMessage(Session.getInstance(new Properties())));
+
+        EmailService.EsitoTest esito = emailService.inviaTest("prova@example.org", TipoDocumento.CONFERMA_ISCRIZIONE, "admin");
+        assertEquals(Esito.INVIATA, esito.esito());
+        ArgumentCaptor<MimeMessage> inviato = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(inviato.capture());
+        MimeMessage messaggio = inviato.getValue();
+        messaggio.saveChanges();
+        assertEquals("[TEST] Conferma di iscrizione – esempio", messaggio.getSubject());
+        assertEquals("prova@example.org", messaggio.getAllRecipients()[0].toString());
+        assertEquals("conferma-iscrizione-corso-di-esempio-anna-esempio.pdf", ((Multipart) messaggio.getContent()).getBodyPart(1).getFileName());
+
+        reset(mailSender);
+        when(mailSender.createMimeMessage()).thenAnswer(i -> new MimeMessage(Session.getInstance(new Properties())));
+        assertEquals(Esito.INVIATA, emailService.inviaTest("prova@example.org", null, "admin").esito());
+        verify(mailSender).send(inviato.capture());
+        inviato.getValue().saveChanges();
+        assertEquals(1, ((Multipart) inviato.getValue().getContent()).getCount());
+        assertTrue(invioEmailRepository.findAll().isEmpty());
+    }
+
+    @Test
+    void test_erroreConLeCause() {
+        when(mailSender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
+        doThrow(new MailSendException("invio fallito", new IllegalStateException("535 autenticazione rifiutata")))
+            .when(mailSender).send(any(MimeMessage.class));
+
+        EmailService.EsitoTest esito = emailService.inviaTest("prova@example.org", null, "admin");
+
+        assertEquals(Esito.ERRORE, esito.esito());
+        assertTrue(esito.errore().contains("535 autenticazione rifiutata"), esito.errore());
+    }
+
     private Corso canto() {
         return corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
     }

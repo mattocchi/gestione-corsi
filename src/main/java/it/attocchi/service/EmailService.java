@@ -12,6 +12,9 @@ import it.attocchi.repository.InvioEmailRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.UserRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +47,14 @@ public class EmailService {
 
     /** Esito di un invio multiplo. */
     public record Riepilogo(int inviate, int simulate, int errori, int senzaEmail) {
+    }
+
+    /** Configurazione SMTP in uso, mai con la password; {@code reale} è {@code false} se l'invio è simulato. */
+    public record ConfigurazioneSmtp(String host, int port, String username, String from, boolean starttls, boolean reale) {
+    }
+
+    /** Esito di un'email di test; {@code errore} (con le cause) solo con esito {@link Esito#ERRORE}. */
+    public record EsitoTest(Esito esito, String oggetto, String errore) {
     }
 
     private final PagamentoService pagamentoService;
@@ -71,6 +83,43 @@ public class EmailService {
     /** {@code true} se l'invio è reale (SMTP configurato), {@code false} se simulato. */
     public boolean invioReale() {
         return mailSender.getIfAvailable() != null;
+    }
+
+    /** Configurazione SMTP in uso, per verificarla dall'email di test. */
+    public ConfigurazioneSmtp configurazione() {
+        return new ConfigurazioneSmtp(mail.host(), mail.port(), mail.username(), mail.from(), mail.starttls(), invioReale());
+    }
+
+    /**
+     * Email di test (solo admin) a un indirizzo qualunque, per verificare l'SMTP e la resa dei template: con
+     * {@code tipo} il template di quel documento compilato con dati fittizi e il PDF allegato, con {@code null} un
+     * semplice messaggio di prova. Non è registrata tra gli invii; un errore di invio è restituito nell'esito.
+     */
+    public EsitoTest inviaTest(String destinatario, TipoDocumento tipo, String username) {
+        verificaAdmin(username);
+        String indirizzo = destinatario != null ? destinatario.strip() : "";
+        try {
+            new InternetAddress(indirizzo, true).validate();
+        } catch (AddressException ex) {
+            throw new IllegalArgumentException("Indirizzo email non valido: " + indirizzo);
+        }
+        String oggetto = "[TEST] " + (tipo != null ? tipo.getTitolo() + " – esempio" : "Email di prova");
+        try {
+            String corpo = tipo != null ? documentiService.emailEsempioHtml(tipo, "Maria Esempio") : documentiService.emailProvaHtml(indirizzo);
+            String allegato = tipo != null ? documentiService.nomeFileEsempio(tipo) : null;
+            byte[] pdf = tipo != null ? documentiService.documentoEsempioPdf(tipo) : null;
+            JavaMailSender sender = mailSender.getIfAvailable();
+            if (sender == null) {
+                log.info("Email di test simulata (SMTP non configurato): {} a {}", oggetto, indirizzo);
+                return new EsitoTest(Esito.SIMULATA, oggetto, null);
+            }
+            spedisci(sender, indirizzo, oggetto, corpo, allegato, pdf);
+            log.info("Email di test inviata da {}: {} a {}", username, oggetto, indirizzo);
+            return new EsitoTest(Esito.INVIATA, oggetto, null);
+        } catch (Exception ex) {
+            log.warn("Email di test non riuscita: {} a {}", oggetto, indirizzo, ex);
+            return new EsitoTest(Esito.ERRORE, oggetto, cause(ex));
+        }
     }
 
     /** Destinatario dell'iscrizione, vuoto se né il genitore né l'allievo hanno un'email. */
@@ -121,16 +170,7 @@ public class EmailService {
                 log.info("Invio email simulato (SMTP non configurato): {} a {}", invio.getOggetto(), destinatario.email());
                 invio.setEsito(Esito.SIMULATA);
             } else {
-                MimeMessage messaggio = sender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(messaggio, true, "UTF-8");
-                helper.setTo(destinatario.email());
-                if (mail.from() != null && !mail.from().isBlank()) {
-                    helper.setFrom(mail.from());
-                }
-                helper.setSubject(invio.getOggetto());
-                helper.setText(corpo, true);
-                helper.addAttachment(invio.getAllegato(), new ByteArrayResource(pdf), "application/pdf");
-                sender.send(messaggio);
+                spedisci(sender, destinatario.email(), invio.getOggetto(), corpo, invio.getAllegato(), pdf);
                 invio.setEsito(Esito.INVIATA);
             }
         } catch (Exception ex) {
@@ -174,6 +214,32 @@ public class EmailService {
         return invioEmailRepository.findAllByOrderByDataOraDesc();
     }
 
+    /** Messaggio HTML con l'eventuale PDF allegato ({@code allegato} null = nessun allegato). */
+    private void spedisci(JavaMailSender sender, String a, String oggetto, String corpo, String allegato, byte[] pdf)
+            throws MessagingException {
+        MimeMessage messaggio = sender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(messaggio, true, "UTF-8");
+        helper.setTo(a);
+        if (mail.from() != null && !mail.from().isBlank()) {
+            helper.setFrom(mail.from());
+        }
+        helper.setSubject(oggetto);
+        helper.setText(corpo, true);
+        if (allegato != null) {
+            helper.addAttachment(allegato, new ByteArrayResource(pdf), "application/pdf");
+        }
+        sender.send(messaggio);
+    }
+
+    /** Messaggi dell'eccezione e delle sue cause, per capire un errore SMTP (es. autenticazione, TLS, host). */
+    private static String cause(Throwable ex) {
+        Set<String> messaggi = new LinkedHashSet<>();
+        for (Throwable t = ex; t != null && messaggi.size() < 5; t = t.getCause()) {
+            messaggi.add(t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+        }
+        return String.join(" ← ", messaggi);
+    }
+
     private static Optional<Destinatario> destinatario(Allievo allievo) {
         Genitore genitore = allievo.getGenitore();
         if (genitore != null && genitore.getUser() != null && conEmail(genitore.getUser())) {
@@ -187,6 +253,12 @@ public class EmailService {
 
     private static boolean conEmail(User user) {
         return user.getEmail() != null && !user.getEmail().isBlank();
+    }
+
+    private void verificaAdmin(String username) {
+        if (!userRepository.findByUsername(username).map(User::getRoles).orElse(Set.of()).contains("ADMIN")) {
+            throw new IllegalStateException("Solo l'admin può inviare email di test");
+        }
     }
 
     private void verificaPermesso(String username) {

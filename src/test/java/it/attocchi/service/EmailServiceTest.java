@@ -94,6 +94,21 @@ class EmailServiceTest {
         assertEquals(7, emailService.tuttiGliInvii().size());
     }
 
+    @Test
+    void test_soloAdminSimulataENonRegistrata() {
+        EmailService.EsitoTest esito = emailService.inviaTest(" prova@example.org ", TipoDocumento.RICEVUTA, "admin");
+        assertEquals(Esito.SIMULATA, esito.esito());
+        assertEquals("[TEST] Ricevuta di pagamento – esempio", esito.oggetto());
+        assertNull(esito.errore());
+        assertEquals(Esito.SIMULATA, emailService.inviaTest("prova@example.org", null, "admin").esito());
+        assertTrue(emailService.tuttiGliInvii().isEmpty());
+        assertFalse(emailService.configurazione().reale());
+
+        assertThrows(IllegalStateException.class, () -> emailService.inviaTest("prova@example.org", null, "segreteria"));
+        assertThrows(IllegalArgumentException.class, () -> emailService.inviaTest("non-un-indirizzo", null, "admin"));
+        assertThrows(IllegalArgumentException.class, () -> emailService.inviaTest("", null, "admin"));
+    }
+
     private Corso canto() {
         return corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
     }
