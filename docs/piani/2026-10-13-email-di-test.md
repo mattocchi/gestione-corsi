@@ -41,3 +41,6 @@ controllarne la resa HTML nei client di posta.
 
 ## Registro
 
+- Passi 1–3 completati; `./mvnw test`: 126 test, 0 fallimenti (nuovi: esempio in `DocumentiServiceTest`, email di test in `EmailServiceTest` e `EmailServiceSmtpTest`, dialog e visibilità per ruolo in `ViewAccessTest`).
+- Browser (dev, admin): pulsante visibile in "Email inviate", dialog con avviso "Server email non configurato", invio "Ricevuta" a un indirizzo di prova → badge "Simulata", nessuna riga aggiunta al registro. Non riuscito il ridimensionamento della finestra a 390px: il dialog è tutto verticale con `maxWidth 100%`, come gli altri.
+- Da verificare in produzione (con `MAIL_*` impostate): ricezione reale e resa dei template nei client di posta.
