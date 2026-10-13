@@ -46,3 +46,6 @@ perché in Vaadin 25.3 i tooltip dei pulsanti disabilitati compaiono solo con il
 
 ## Registro
 
+- Passi 1–4 completati; `./mvnw test`: 131 test, 0 fallimenti (nuovi in `ViewAccessTest`: allievo senza CF/data con badge, allievo senza username generato e disattivato, password obbligatoria con username, dialog email bloccato senza dati; in `EmailServiceTest`: documenti e invii rifiutati, invio multiplo che salta e conta).
+- Verifica nel browser non eseguita in questa sessione (passo 4): coperta dai test browserless; da controllare a mano il badge su mobile.
+- **Produzione**: eseguire `docs/migrazioni/2026-10-13-allievi-dati-facoltativi.sql` su MySQL al deploy, altrimenti il salvataggio di un allievo senza codice fiscale o data di nascita fallisce.
