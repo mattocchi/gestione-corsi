@@ -57,3 +57,10 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-11: data e ora, tipo, corso, allievo, destinatario, oggetto, allegato, chi ha inviato, esito (inviata/simulata/errore); niente corpo; consultabile nel dialog Quota e pagamenti e nella nuova vista "Email inviate"._
 * [x] Valuterei di usare freemarker per il template HTML della email mentre JasperReport per la produzione PDF delle ricevute in modo da avere consistenza. _(completata 2026-10-11: FreeMarker + OpenHTMLtoPDF)_
   _Chiarimento 2026-10-11: scelti FreeMarker + OpenHTMLtoPDF 1.1.85 (un solo template HTML per email, allegato e scarico web) al posto di JasperReports._
+
+## FUNZIONALITA del 13-10-2026
+
+### EMAIL
+
+* [ ] aggiungi in admin la possibilità di inviare una email di test ad un destinatario inseribile da ui per testare la configurazione in produzione
+* [ ] e che permetta di selezionare uno dei template disponibili tra le email esistenti per verificare anche la resa html in client di posta
