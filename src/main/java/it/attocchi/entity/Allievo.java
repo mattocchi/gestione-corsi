@@ -1,10 +1,10 @@
 package it.attocchi.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,10 +20,10 @@ public class Allievo implements Anagrafica {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @NotBlank
+    /** Facoltativo, ma necessario per ricevute e conferme di iscrizione ({@link #getDatiMancantiPerDocumenti()}). */
     private String codiceFiscale;
 
-    @NotNull
+    /** Facoltativa, ma necessaria per ricevute e conferme di iscrizione. */
     private LocalDate dataNascita;
 
     private String luogoNascita;
@@ -103,6 +103,23 @@ public class Allievo implements Anagrafica {
     /** Indirizzo da mostrare: il proprio o, se non ne ha nessun campo, quello del genitore (non copiato). */
     public Indirizzo getIndirizzoEffettivo() {
         return isIndirizzoDelGenitore() ? genitore.getIndirizzo() : getIndirizzo();
+    }
+
+    /** Dati necessari per ricevute e conferme che mancano ("codice fiscale", "data di nascita"); vuota se completi. */
+    public List<String> getDatiMancantiPerDocumenti() {
+        List<String> mancanti = new ArrayList<>();
+        if (codiceFiscale == null || codiceFiscale.isBlank()) {
+            mancanti.add("codice fiscale");
+        }
+        if (dataNascita == null) {
+            mancanti.add("data di nascita");
+        }
+        return mancanti;
+    }
+
+    /** {@code true} se ci sono i dati per stampare ricevute e conferme. */
+    public boolean isDatiPerDocumenti() {
+        return getDatiMancantiPerDocumenti().isEmpty();
     }
 
     public Set<Iscrizione> getIscrizioni() {

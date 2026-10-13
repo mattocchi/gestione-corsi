@@ -25,10 +25,12 @@ public class AnagraficaFields<T extends Anagrafica> {
     private final TextField provincia = new TextField("Provincia");
 
     /**
-     * @param obbligatori codice fiscale e data di nascita obbligatori (allievi); altrimenti facoltativi,
-     *                    ma il codice fiscale se inserito deve essere valido
+     * Tutti i campi sono facoltativi; il codice fiscale, se inserito, deve essere valido.
+     *
+     * @param perDocumenti codice fiscale e data di nascita servono per ricevute e conferme (allievi): lo dice il
+     *                     testo di aiuto dei due campi
      */
-    public AnagraficaFields(Binder<T> binder, boolean obbligatori) {
+    public AnagraficaFields(Binder<T> binder, boolean perDocumenti) {
         codiceFiscale.setMaxLength(16);
         dataNascita.setMax(LocalDate.now());
         via.setPlaceholder("via e numero civico");
@@ -37,19 +39,15 @@ public class AnagraficaFields<T extends Anagrafica> {
         provincia.setMaxLength(2);
         provincia.setPlaceholder("es. RM");
 
-        var cf = binder.forField(codiceFiscale);
-        if (obbligatori) {
-            cf.asRequired("Inserisci il codice fiscale");
+        if (perDocumenti) {
+            codiceFiscale.setHelperText("Necessario per ricevute e conferme");
+            dataNascita.setHelperText("Necessaria per ricevute e conferme");
         }
-        cf.withConverter(CodiceFiscale::normalizza, v -> v != null ? v : "")
+        binder.forField(codiceFiscale).withConverter(CodiceFiscale::normalizza, v -> v != null ? v : "")
             .withValidator(v -> v == null || CodiceFiscale.isValido(v), "Codice fiscale non valido")
             .bind(Anagrafica::getCodiceFiscale, Anagrafica::setCodiceFiscale);
 
-        var nascita = binder.forField(dataNascita);
-        if (obbligatori) {
-            nascita.asRequired("Inserisci la data di nascita");
-        }
-        nascita.withValidator(d -> d == null || !d.isAfter(LocalDate.now()), "La data di nascita non può essere futura")
+        binder.forField(dataNascita).withValidator(d -> d == null || !d.isAfter(LocalDate.now()), "La data di nascita non può essere futura")
             .bind(Anagrafica::getDataNascita, Anagrafica::setDataNascita);
 
         binder.forField(luogoNascita).withNullRepresentation("")

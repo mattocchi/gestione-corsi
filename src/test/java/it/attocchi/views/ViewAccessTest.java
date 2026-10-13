@@ -466,6 +466,30 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    void segreteria_creaAllievoSenzaCodiceFiscaleNeDataDiNascita() {
+        navigate(AllieviView.class);
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        test(find(TextField.class).withLabel("Username").single()).setValue("allievo_senza_dati");
+        test(find(PasswordField.class).withLabel("Password").single()).setValue("segreta");
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Sara");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("Neri");
+        test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
+        assertEquals("Necessario per ricevute e conferme", find(TextField.class).withLabel("Codice fiscale").single().getHelperText());
+        test(find(Button.class).withText("Salva").single()).click();
+
+        Allievo nuovo = allievoService.findByUsername("allievo_senza_dati").orElseThrow();
+        try {
+            assertNull(nuovo.getCodiceFiscale());
+            assertNull(nuovo.getDataNascita());
+            assertEquals(List.of("codice fiscale", "data di nascita"), nuovo.getDatiMancantiPerDocumenti());
+        } finally {
+            allievoService.delete(nuovo);
+            userService.delete(nuovo.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
     void segreteria_creaAllievoAssegnatoAUnGenitore() {
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());

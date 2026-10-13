@@ -30,7 +30,7 @@ crea o modifica un allievo; codice fiscale e data di nascita servono solo per st
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | CF e data di nascita facoltativi: entità, campi dei form allievo, servizio genitore; script MySQL; nota "necessari per ricevute e conferme" | `Allievo.java`, `AnagraficaFields.java`, `AllieviView.java`, `FigliView.java`, `ProfiloView.java`, `AllievoService.java`, `docs/migrazioni/2026-10-13-allievi-dati-facoltativi.sql`, test | `./mvnw test` | [ ] |
+| 1 | CF e data di nascita facoltativi: entità, campi dei form allievo, servizio genitore; script MySQL; nota "necessari per ricevute e conferme" | `Allievo.java`, `AnagraficaFields.java`, `AllieviView.java`, `FigliView.java`, `ProfiloView.java`, `AllievoService.java`, `docs/migrazioni/2026-10-13-allievi-dati-facoltativi.sql`, test | `./mvnw test` | [x] |
 | 2 | Username facoltativo: generato, password casuale, utente disattivato; campo "Attivo" in Gestione Utenti | `UtenteFields.java`, `AllievoService.java`, `UserService.java`, `AllieviView.java`, `UtentiView.java`, test | `./mvnw test` | [ ] |
 | 3 | Documenti solo con i dati: controllo nei servizi, riepilogo invio multiplo, link ricevuta e dialog email disabilitati | `DocumentiService.java`, `EmailService.java`, `Ricevute.java`, `ElencoPagamenti.java`, `FigliView.java`, `QuotaPagamentiDialog.java`, `InvioEmailDialog.java`, test | `./mvnw test` | [ ] |
 | 4 | Badge "Dati mancanti" in Gestione Allievi; CLAUDE.md; completa ALLIEVI.1 e ALLIEVI.2 | `AllieviView.java`, `CLAUDE.md`, `docs/FUNZIONALITA.md`, test | `./mvnw test`, browser | [ ] |

@@ -75,9 +75,6 @@ public class AllievoService {
         if (allievo.getGenitore() == null || !allievo.getGenitore().getUser().getUsername().equals(usernameGenitore)) {
             throw new IllegalArgumentException("L'allievo non è un figlio dell'utente " + usernameGenitore);
         }
-        if (dati.getCodiceFiscale() == null || dati.getDataNascita() == null) {
-            throw new IllegalArgumentException("Codice fiscale e data di nascita sono obbligatori");
-        }
         userService.aggiornaContatti(allievo.getUser().getUsername(), datiUtente);
         Anagrafica.copia(dati, allievo);
         return allievo;
