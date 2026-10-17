@@ -1,7 +1,5 @@
 package it.attocchi.views;
 
-import com.vaadin.flow.component.badge.Badge;
-import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
@@ -11,9 +9,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.function.SerializableSupplier;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
@@ -68,7 +64,6 @@ public class ElencoPagamenti extends VerticalLayout {
     private final PagamentoService pagamentoService;
     private final SerializableSupplier<List<RigaPagamento>> caricaRighe;
     private final boolean gestione;
-    private final Signal<Boolean> mobile = ViewSupport.isMobile();
 
     private final Grid<RigaPagamento> grid = new Grid<>(RigaPagamento.class, false);
     private final Div totali = new Div();
@@ -135,49 +130,36 @@ public class ElencoPagamenti extends VerticalLayout {
     }
 
     private void configureGrid() {
-        // Su mobile una sola colonna con allievo, corso e residuo al posto delle singole colonne
-        var riepilogo = grid.addColumn(LitRenderer.<RigaPagamento>of(
-                "<div class=\"riepilogo-righe\"><div class=\"riepilogo-righe-titolo\">${item.allievo}</div>"
-                    + "<div class=\"riepilogo-righe-dettaglio\">${item.dettaglio}</div></div>")
-                .withProperty("allievo", r -> r.allievo().getNomeCompleto())
-                .withProperty("dettaglio", r -> r.corso().getNome() + " · residuo " + Formati.euro(r.situazione().residuo())))
-            .setHeader("Partecipante");
-        var corso = grid.addColumn(r -> r.corso().getNome()).setHeader("Corso").setSortable(true);
-        var anno = grid.addColumn(r -> r.corso().getAnnoScolastico()).setHeader("Anno").setSortable(true)
+        grid.addColumn(r -> r.corso().getNome()).setHeader("Corso").setSortable(true);
+        grid.addColumn(r -> r.corso().getAnnoScolastico()).setHeader("Anno").setSortable(true)
             .setWidth("7rem").setFlexGrow(0);
-        var allievo = grid.addColumn(r -> r.allievo().getNomeCompleto()).setHeader("Allievo").setSortable(true);
+        grid.addColumn(r -> r.allievo().getNomeCompleto()).setHeader("Allievo").setSortable(true);
         var genitore = grid.addColumn(r -> r.genitore() != null ? r.genitore().getNomeCompleto() : "").setHeader("Genitore")
             .setSortable(true);
         genitore.setVisible(gestione);
-        var quota = euro("Quota", Situazione::quota);
-        var pagato = euro("Pagato", Situazione::pagato);
-        var residuo = euro("Residuo", Situazione::residuo);
-        var stato = grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("9rem").setFlexGrow(0)
+        euro("Quota", Situazione::quota);
+        euro("Pagato", Situazione::pagato);
+        euro("Residuo", Situazione::residuo);
+        grid.addComponentColumn(r -> StatoPagamentoUI.badge(r.situazione())).setHeader("Stato").setWidth("9rem").setFlexGrow(0)
             .setComparator(r -> r.situazione().stato()).setKey("stato");
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createAzioni).setKey("azioni"));
 
-        Signal.effect(grid, () -> {
-            boolean m = mobile.get();
-            riepilogo.setVisible(m);
-            stato.setHeader(m ? "" : "Stato").setWidth(m ? "3rem" : "9rem");
-        });
-        if (gestione) {
-            ViewSupport.hideOnMobile(grid, corso, anno, allievo, genitore, quota, pagato, residuo);
-        } else {
-            ViewSupport.hideOnMobile(grid, corso, anno, allievo, quota, pagato, residuo);
-        }
+        CardMobile.per(grid)
+            .titolo(r -> r.allievo().getNomeCompleto())
+            .sottotitolo(r -> r.corso().getNome() + " · " + r.corso().getAnnoScolastico())
+            .stato(r -> StatoPagamentoUI.badge(r.situazione()))
+            .campo("Genitore", r -> gestione && r.genitore() != null ? r.genitore().getNomeCompleto() : null)
+            .campo("Quota", r -> Formati.euro(r.situazione().quota()))
+            .campo("Pagato", r -> Formati.euro(r.situazione().pagato()))
+            .campo("Residuo", r -> Formati.euro(r.situazione().residuo()))
+            .azioni(this::createAzioni)
+            .applica();
         grid.setEmptyStateText("Nessun partecipante");
     }
 
     private Grid.Column<RigaPagamento> euro(String header, Function<Situazione, BigDecimal> valore) {
         return grid.addColumn(r -> Formati.euro(valore.apply(r.situazione()))).setHeader(header)
             .setComparator(r -> valore.apply(r.situazione())).setWidth("7.5rem").setFlexGrow(0);
-    }
-
-    private Badge createStatoBadge(RigaPagamento riga) {
-        Badge badge = StatoPagamentoUI.badge(riga.situazione());
-        badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
-        return badge;
     }
 
     private HorizontalLayout createAzioni(RigaPagamento riga) {

@@ -39,7 +39,7 @@ prima di fare viste personalizzate; minor complessità possibile.
 | 1 | Helper `CardMobile<T>` + stili; applicato a Gestione Corsi | `views/CardMobile.java`, `styles.css`, `admin/CorsiView.java` | test, browser 390px | [x] |
 | 2 | Anagrafiche: Allievi, Genitori, Insegnanti, Utenti, Anni scolastici | `admin/*View.java` | test | [x] |
 | 3 | Lezioni e presenze: `ElencoLezioni` (sostituisce il riepilogo mobile), `PresenzeAllievoDialog`, `PartecipantiDialog` | | test | [x] |
-| 4 | Pagamenti: `ElencoPagamenti`, `QuotaPagamentiDialog`, `PagamentiAllievoDialog`, `GrigliaInvii` | | test | [ ] |
+| 4 | Pagamenti: `ElencoPagamenti`, `QuotaPagamentiDialog`, `PagamentiAllievoDialog`, `GrigliaInvii` | | test | [x] |
 | 5 | Rimborsi e bilancio: `RimborsiView`, `RimborsiDialog`, `BilancioDialog`, `MieiRimborsiView` | | test | [ ] |
 | 6 | Home, allievo e genitore: `HomeView`, `MieiCorsiView`, `FigliView`, `PrezziCorso` | | test | [ ] |
 | 7 | Pulizia: rimozione di `hideOnMobile` e stili riepilogo non più usati; CLAUDE.md (layout mobile) | | test | [ ] |

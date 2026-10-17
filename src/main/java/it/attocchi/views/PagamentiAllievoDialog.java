@@ -39,12 +39,17 @@ public class PagamentiAllievoDialog extends Dialog {
         Grid<Pagamento> grid = new Grid<>(Pagamento.class, false);
         grid.addColumn(p -> Formati.data(p.getData())).setHeader("Data").setComparator(Pagamento::getData);
         grid.addColumn(p -> Formati.euro(p.getImporto())).setHeader("Importo").setWidth("7rem").setFlexGrow(0);
-        var metodo = grid.addColumn(p -> p.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
-        var nota = grid.addColumn(Pagamento::getNota).setHeader("Nota");
+        grid.addColumn(p -> p.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
+        grid.addColumn(Pagamento::getNota).setHeader("Nota");
         grid.setItems(pagamenti);
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun pagamento registrato");
-        ViewSupport.hideOnMobile(grid, metodo, nota);
+        CardMobile.per(grid)
+            .titolo(p -> Formati.euro(p.getImporto()))
+            .sottotitolo(p -> Formati.data(p.getData()))
+            .campo("Metodo", p -> p.getMetodo().getDescrizione())
+            .campo("Nota", Pagamento::getNota)
+            .applica();
 
         content.add(grid);
         content.setPadding(false);

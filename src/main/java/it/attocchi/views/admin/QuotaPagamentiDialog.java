@@ -10,6 +10,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -23,6 +24,7 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.service.EmailService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.Ricevute;
 import it.attocchi.views.SegmentedControl;
@@ -103,20 +105,28 @@ public class QuotaPagamentiDialog extends Dialog {
     private void configureGrid() {
         grid.addColumn(p -> Formati.data(p.getData())).setHeader("Data").setComparator(Pagamento::getData);
         grid.addColumn(p -> Formati.euro(p.getImporto())).setHeader("Importo").setWidth("7rem").setFlexGrow(0);
-        var metodo = grid.addColumn(p -> p.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
-        var nota = grid.addColumn(Pagamento::getNota).setHeader("Nota");
-        var azioni = grid.addComponentColumn(p -> {
-            Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica pagamento",
-                e -> apriPagamento(pagamentoService, corso.getId(), allievo.getId(), p, this::aggiorna));
-            Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina pagamento", e -> confermaEliminazione(p));
-            elimina.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(modifica, elimina);
-        });
+        grid.addColumn(p -> p.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
+        grid.addColumn(Pagamento::getNota).setHeader("Nota");
+        var azioni = grid.addComponentColumn(this::createAzioni);
         ViewSupport.configureActionsColumn(azioni);
         azioni.setHeader("").setAutoWidth(false).setWidth("6rem");
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun pagamento registrato");
-        ViewSupport.hideOnMobile(grid, metodo, nota);
+        CardMobile.per(grid)
+            .titolo(p -> Formati.euro(p.getImporto()))
+            .sottotitolo(p -> Formati.data(p.getData()))
+            .campo("Metodo", p -> p.getMetodo().getDescrizione())
+            .campo("Nota", Pagamento::getNota)
+            .azioni(this::createAzioni)
+            .applica();
+    }
+
+    private HorizontalLayout createAzioni(Pagamento p) {
+        Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica pagamento",
+            e -> apriPagamento(pagamentoService, corso.getId(), allievo.getId(), p, this::aggiorna));
+        Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina pagamento", e -> confermaEliminazione(p));
+        elimina.addThemeVariants(ButtonVariant.ERROR);
+        return ViewSupport.actions(modifica, elimina);
     }
 
     /**
