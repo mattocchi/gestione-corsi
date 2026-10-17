@@ -83,3 +83,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 * [x] La card mi sembra di ricordare che vadim ha già questa funzionalità. Nativa USA la parte nativa se questo non fosse confermabile e devi realizzare viste personalizzate, ti chiedo di chiedermi conferma prima di procedere _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: verificato che Vaadin 25.3 non ha una modalità card nativa per la Grid; confermato l'approccio con un unico helper che aggiunge alla stessa Grid una colonna con una Card Vaadin visibile solo su mobile._
 * [x] Vorrei ottenere minore complessità possibile e pure un design che risponde desktop mobile _(completata 2026-10-17)_
+
+### TAILWIND
+
+* [ ] Su questo stesso branch ora attiva la modalità sperimentale per supportare taiwind css
+* [ ] Riscrivi quindi la parte di layout o css custom con taiwind css
