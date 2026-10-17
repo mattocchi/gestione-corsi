@@ -73,3 +73,11 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-13: username vuoto → username generato da nome e cognome, password casuale e accesso disattivato (riattivabile da Gestione Utenti con il nuovo campo "Attivo"); codice fiscale e data di nascita facoltativi anche per il genitore (I miei figli) e nel profilo, il codice fiscale se inserito deve essere valido; badge "Dati mancanti" in Gestione Allievi._
 * [x] il dato codice fiscale e data di nascita sono obbligatori solo per stampa di eventuale ricevuta o conferma _(completata 2026-10-13)_
   _Chiarimento 2026-10-13: senza codice fiscale o data di nascita dell'allievo ricevuta e conferma non si generano: scarico e invio email disabilitati con avviso, l'invio multiplo delle conferme salta questi allievi e li conta nel riepilogo._
+
+## FUNZIONALITA del 17-10-2026
+
+### TABELLE RESPONSIVE
+
+* [ ] Su un branch a parte prepara una versione con tutte le tabelle in modalità responsive per fare in modo che in modalità desktop ci siano le tabelle con le righe nelle liste, mentre in modalità mobile ci sono delle card con i dati visibili in griglia in desktop riportati dentro
+* [ ] La card mi sembra di ricordare che vadim ha già questa funzionalità. Nativa USA la parte nativa se questo non fosse confermabile e devi realizzare viste personalizzate, ti chiedo di chiedermi conferma prima di procedere
+* [ ] Vorrei ottenere minore complessità possibile e pure un design che risponde desktop mobile
