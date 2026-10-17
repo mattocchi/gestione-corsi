@@ -61,17 +61,6 @@ public final class ViewSupport {
             .map(size -> size.width() > 0 && size.width() < MOBILE_BREAKPOINT);
     }
 
-    /** Nasconde le colonne indicate quando la finestra è in formato mobile. */
-    public static void hideOnMobile(Grid<?> grid, Grid.Column<?>... columns) {
-        Signal<Boolean> mobile = isMobile();
-        Signal.effect(grid, () -> {
-            boolean visible = !mobile.get();
-            for (Grid.Column<?> column : columns) {
-                column.setVisible(visible);
-            }
-        });
-    }
-
     /**
      * Filtro per anno scolastico tra quelli indicati (dal più recente), con l'anno corrente preselezionato
      * se presente, altrimenti il più recente.
