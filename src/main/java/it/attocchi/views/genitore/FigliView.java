@@ -69,12 +69,12 @@ public class FigliView extends VerticalLayout {
         this.pagamentoService = pagamentoService;
         this.userService = userService;
 
-        setSizeFull();
+        addClassNames("size-full");
         genitoreCorrente = securityService.getUsername().flatMap(genitoreService::findByUsername).orElse(null);
         configureGrid();
 
         add(gridFigli);
-        expand(gridFigli);
+        gridFigli.addClassNames("grow");
         updateGrid();
     }
 
@@ -116,7 +116,7 @@ public class FigliView extends VerticalLayout {
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzo);
-        content.setPadding(false);
+        content.addClassNames("p-0");
 
         Button salva = new Button("Salva", e -> {
             boolean valido = binder.validate().isOk() & utente.validate();

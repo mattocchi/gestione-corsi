@@ -20,11 +20,11 @@ import java.util.List;
 public class PagamentiFigliView extends VerticalLayout {
 
     public PagamentiFigliView(PagamentoService pagamentoService, SecurityService securityService) {
-        setSizeFull();
+        addClassNames("size-full");
         String username = securityService.getUsername().orElse(null);
         ElencoPagamenti elenco = new ElencoPagamenti(pagamentoService,
             () -> username != null ? pagamentoService.righePagamentiDeiFigli(username) : List.of(), false);
         add(elenco);
-        expand(elenco);
+        elenco.addClassNames("grow");
     }
 }

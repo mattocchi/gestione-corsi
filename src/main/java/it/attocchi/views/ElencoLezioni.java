@@ -95,8 +95,7 @@ public class ElencoLezioni extends VerticalLayout {
         this.corsi = corsi;
         this.username = username;
 
-        setSizeFull();
-        setPadding(false);
+        addClassNames("size-full p-0");
         configureGrid();
 
         // Di default solo le lezioni ancora da fare
@@ -116,10 +115,9 @@ public class ElencoLezioni extends VerticalLayout {
             barra.add(filtroCorso);
         }
         barra.add(nuova);
-        barra.setWrap(true);
-        barra.setAlignItems(Alignment.CENTER);
+        barra.addClassNames("flex-wrap items-center");
         add(barra, gridLezioni);
-        expand(gridLezioni);
+        gridLezioni.addClassNames("grow");
         updateGrid();
     }
 
@@ -341,7 +339,7 @@ public class ElencoLezioni extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog("Lezione non effettuata", "420px");
         TextField motivo = new TextField("Motivo");
         motivo.setPlaceholder("es. insegnante assente");
-        motivo.setWidthFull();
+        motivo.addClassNames("w-full");
         Button conferma = new Button("Segna non effettuata", e -> {
             dialog.close();
             esegui(dialogLezione, () -> lezioneService.segnaNonEffettuata(lezione.getId(), motivo.getValue(), username),
@@ -375,7 +373,7 @@ public class ElencoLezioni extends VerticalLayout {
 
     private TextField createNotePresenza(Presenza presenza) {
         TextField note = new TextField();
-        note.setWidthFull();
+        note.addClassNames("w-full");
         note.setAriaLabel("Note per " + presenza.getAllievo().getNomeCompleto());
         note.setPlaceholder("Note");
         note.setValue(presenza.getNote() != null ? presenza.getNote() : "");

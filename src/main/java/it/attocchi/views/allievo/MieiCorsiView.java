@@ -46,12 +46,12 @@ public class MieiCorsiView extends VerticalLayout {
         this.presenzaService = presenzaService;
         this.pagamentoService = pagamentoService;
 
-        setSizeFull();
+        addClassNames("size-full");
         allievoCorrente = securityService.getUsername().flatMap(allievoService::findByUsername).orElse(null);
         configureGrid();
 
         add(gridCorsi);
-        expand(gridCorsi);
+        gridCorsi.addClassNames("grow");
         updateGrid();
     }
 

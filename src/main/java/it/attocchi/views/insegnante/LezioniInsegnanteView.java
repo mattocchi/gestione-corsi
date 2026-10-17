@@ -27,7 +27,7 @@ public class LezioniInsegnanteView extends VerticalLayout {
     public LezioniInsegnanteView(LezioneService lezioneService, PresenzaService presenzaService,
                                  SecurityService securityService, InsegnanteService insegnanteService,
                                  CorsoService corsoService) {
-        setSizeFull();
+        addClassNames("size-full");
         Insegnante insegnante = securityService.getUsername().flatMap(insegnanteService::findByUsername).orElse(null);
         ElencoLezioni elenco = new ElencoLezioni(lezioneService, presenzaService,
             () -> insegnante != null ? lezioneService.findByInsegnante(insegnante.getId()) : List.of(),
@@ -35,6 +35,6 @@ public class LezioniInsegnanteView extends VerticalLayout {
                 ? corsoService.findByInsegnante(insegnante.getId()).stream().filter(Corso::isAttivo).toList() : List.of(),
             securityService.getUsername().orElse(""));
         add(elenco);
-        expand(elenco);
+        elenco.addClassNames("grow");
     }
 }

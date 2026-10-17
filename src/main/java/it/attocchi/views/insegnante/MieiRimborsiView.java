@@ -40,14 +40,13 @@ public class MieiRimborsiView extends VerticalLayout {
                             AnnoScolasticoService annoScolasticoService, SecurityService securityService) {
         this.rimborsoService = rimborsoService;
         this.insegnante = securityService.getUsername().flatMap(insegnanteService::findByUsername).orElse(null);
-        setSizeFull();
+        addClassNames("size-full");
 
         filtroAnno = ViewSupport.filtroAnnoScolastico(
             annoScolasticoService.elenco().stream().map(AnnoScolastico::getNome).toList());
         filtroAnno.addValueChangeListener(e -> aggiorna());
         HorizontalLayout barra = new HorizontalLayout(filtroAnno, totale);
-        barra.setAlignItems(Alignment.CENTER);
-        barra.setWrap(true);
+        barra.addClassNames("items-center flex-wrap");
 
         grid.addColumn(r -> Formati.mese(r.getMese())).setHeader("Mese").setComparator(Rimborso::getMese);
         grid.addColumn(r -> Formati.data(r.getData())).setHeader("Pagato il").setComparator(Rimborso::getData);
@@ -64,7 +63,7 @@ public class MieiRimborsiView extends VerticalLayout {
             .applica();
 
         add(barra, grid);
-        expand(grid);
+        grid.addClassNames("grow");
         aggiorna();
     }
 

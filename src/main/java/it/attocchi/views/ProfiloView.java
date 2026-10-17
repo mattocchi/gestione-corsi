@@ -185,7 +185,7 @@ public class ProfiloView extends VerticalLayout {
             }
         });
         VerticalLayout layout = new VerticalLayout(new FormLayout(nuova, conferma), cambia);
-        layout.setPadding(false);
+        layout.addClassNames("p-0");
         return layout;
     }
 }

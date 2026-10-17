@@ -87,8 +87,7 @@ public class ElencoPagamenti extends VerticalLayout {
         this.caricaRighe = caricaRighe;
         this.gestione = gestione;
 
-        setSizeFull();
-        setPadding(false);
+        addClassNames("size-full p-0");
         configureGrid();
 
         // Il genitore vede anche i corsi non attivi e non ha filtri per stato
@@ -101,9 +100,7 @@ public class ElencoPagamenti extends VerticalLayout {
         filtroGenitore.setItemLabelGenerator(Genitore::getNomeCompleto);
 
         HorizontalLayout filtri = new HorizontalLayout();
-        filtri.setWrap(true);
-        filtri.setWidthFull();
-        filtri.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        filtri.addClassNames("flex-wrap w-full items-center");
         if (gestione) {
             filtri.add(filtroCorsi, filtroPagamento, filtroCorso, filtroAllievo, filtroGenitore, filtroAnno);
         } else {
@@ -114,7 +111,7 @@ public class ElencoPagamenti extends VerticalLayout {
         totali.addClassNames(Stili.RIEPILOGO_PAGAMENTI);
 
         add(filtri, totali, grid);
-        expand(grid);
+        grid.addClassNames("grow");
         aggiorna();
     }
 
