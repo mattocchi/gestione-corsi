@@ -33,11 +33,14 @@ public class CorsoService {
     private final IscrizioneRepository iscrizioneRepository;
     private final AllievoRepository allievoRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final FestivitaService festivitaService;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
-                       AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository) {
+                       AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository,
+                       FestivitaService festivitaService) {
         this.pagamentoRepository = pagamentoRepository;
+        this.festivitaService = festivitaService;
         this.corsoRepository = corsoRepository;
         this.lezioneRepository = lezioneRepository;
         this.presenzaRepository = presenzaRepository;
@@ -173,15 +176,18 @@ public class CorsoService {
             }
         }
 
+        // I giorni festivi si saltano senza consumare un numero: la fine del corso slitta
+        CalendarioFestivita festivita = festivitaService.calendario();
         LocalDate dataCorrente = corso.getDataInizio();
         int numeroLezione = 1;
 
         while (numeroLezione <= corso.getNumeroLezioni()) {
-            DayOfWeek giornoSettimana = dataCorrente.getDayOfWeek();
+            boolean giornoDiLezione = corso.getGiorniSettimana().contains(dataCorrente.getDayOfWeek())
+                && !festivita.festivo(dataCorrente);
 
-            if (corso.getGiorniSettimana().contains(giornoSettimana) && numeriConservati.contains(numeroLezione)) {
+            if (giornoDiLezione && numeriConservati.contains(numeroLezione)) {
                 numeroLezione++;
-            } else if (corso.getGiorniSettimana().contains(giornoSettimana)) {
+            } else if (giornoDiLezione) {
                 Lezione lezione = new Lezione(corso, dataCorrente, numeroLezione);
                 lezione.setOrarioInizio(corso.getOrarioInizio());
                 if (corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null) {

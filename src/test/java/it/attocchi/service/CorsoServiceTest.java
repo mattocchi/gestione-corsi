@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,6 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest
 class CorsoServiceTest {
+
+    @Autowired
+    private FestivitaService festivitaService;
 
     @Autowired
     private CorsoService corsoService;
@@ -63,6 +68,21 @@ class CorsoServiceTest {
         List<Lezione> lezioni = lezioneService.findByCorso(canto.getId());
         assertTrue(lezioni.stream().allMatch(l -> l.getData().getDayOfWeek() == DayOfWeek.THURSDAY));
         lezioni.forEach(l -> assertEquals(7, presenzaService.findByLezione(l.getId()).size()));
+    }
+
+    @Test
+    void generaLezioni_saltaLeFestivitaSenzaPerdereLezioni() {
+        // Canto: il giovedì dal 3/10/2024; Santo Stefano (26/12/2024) e Festa del Lavoro (1/5/2025) sono giovedì
+        Corso canto = corso("Corso di Canto");
+
+        corsoService.generaLezioni(canto);
+
+        List<LocalDate> date = lezioneService.findByCorso(canto.getId()).stream().map(Lezione::getData).toList();
+        assertEquals(30, date.size());
+        assertFalse(date.contains(LocalDate.of(2024, 12, 26)));
+        assertTrue(date.containsAll(List.of(LocalDate.of(2024, 12, 19), LocalDate.of(2025, 1, 2))));
+        CalendarioFestivita festivita = festivitaService.calendario();
+        assertTrue(date.stream().noneMatch(festivita::festivo));
     }
 
     private Corso corso(String nome) {
