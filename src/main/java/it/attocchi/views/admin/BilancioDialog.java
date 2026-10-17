@@ -29,7 +29,7 @@ public class BilancioDialog extends Dialog {
         setMaxWidth("100%");
 
         VerticalLayout content = new VerticalLayout();
-        content.setPadding(false);
+        content.addClassNames("p-0");
         Span tariffa = new Span(bilancio.senzaTariffa()
             ? "Tariffa oraria non impostata: i costi delle lezioni sono a zero"
             : "Tariffa oraria " + Formati.euro(bilancio.insegnante().getTariffaOraria())

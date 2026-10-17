@@ -52,7 +52,7 @@ public class PagamentiAllievoDialog extends Dialog {
             .applica();
 
         content.add(grid);
-        content.setPadding(false);
+        content.addClassNames("p-0");
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }

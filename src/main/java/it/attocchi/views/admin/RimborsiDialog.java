@@ -68,7 +68,7 @@ public class RimborsiDialog extends Dialog {
         configureGrid();
 
         VerticalLayout content = new VerticalLayout(tariffa, totale, aggiungi, grid);
-        content.setPadding(false);
+        content.addClassNames("p-0");
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
         aggiorna();
@@ -162,11 +162,11 @@ public class RimborsiDialog extends Dialog {
         salva.addThemeVariants(ButtonVariant.PRIMARY);
 
         VerticalLayout form = new VerticalLayout(data, mese, importo, metodo, nota);
-        form.setPadding(false);
-        data.setWidthFull();
-        mese.setWidthFull();
-        importo.setWidthFull();
-        nota.setWidthFull();
+        form.addClassNames("p-0");
+        data.addClassNames("w-full");
+        mese.addClassNames("w-full");
+        importo.addClassNames("w-full");
+        nota.addClassNames("w-full");
         dialog.add(form);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
         dialog.open();

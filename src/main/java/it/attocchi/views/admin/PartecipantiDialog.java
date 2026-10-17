@@ -8,7 +8,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.timepicker.TimePicker;
@@ -69,9 +68,8 @@ public class PartecipantiDialog extends Dialog {
         nuovoPartecipante.addValueChangeListener(e -> aggiungi.setEnabled(e.getValue() != null));
 
         HorizontalLayout aggiunta = new HorizontalLayout(nuovoPartecipante, aggiungi);
-        aggiunta.setWidthFull();
-        aggiunta.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.BASELINE);
-        aggiunta.expand(nuovoPartecipante);
+        aggiunta.addClassNames("w-full items-baseline");
+        nuovoPartecipante.addClassNames("grow");
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getAllievo().getNomeCompleto()).setHeader("Partecipante");
@@ -100,7 +98,7 @@ public class PartecipantiDialog extends Dialog {
             avviso.addClassNames(Stili.TESTO_SECONDARIO);
             content.addComponentAsFirst(avviso);
         }
-        content.setPadding(false);
+        content.addClassNames("p-0");
         add(content);
         Button conferme = new Button("Invia conferme", VaadinIcon.ENVELOPE.create(),
             e -> InvioEmailDialog.inviaConferme(corso, corsoService.findPartecipanti(corso.getId()).size(), () -> { }));
@@ -127,7 +125,7 @@ public class PartecipantiDialog extends Dialog {
         orario.setStep(Duration.ofMinutes(5));
         orario.setPlaceholder("da assegnare");
         orario.setClearButtonVisible(true);
-        orario.setWidthFull();
+        orario.addClassNames("w-full");
         orario.setAriaLabel("Orario lezione di " + iscrizione.getAllievo().getNomeCompleto());
         orario.setValue(iscrizione.getOrarioLezione());
         orario.setReadOnly(!corso.isAttivo());

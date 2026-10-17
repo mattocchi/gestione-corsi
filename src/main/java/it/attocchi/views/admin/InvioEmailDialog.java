@@ -38,7 +38,7 @@ public final class InvioEmailDialog {
         String username = username();
         Dialog dialog = ViewSupport.dialog("Invia email – " + allievo.getNomeCompleto(), "460px");
         VerticalLayout content = new VerticalLayout();
-        content.setPadding(false);
+        content.addClassNames("p-0");
         content.add(new Span(corso.getNome() + (corso.getAnnoScolastico() != null ? " " + corso.getAnnoScolastico() : "")));
 
         Optional<Destinatario> destinatario = emailService.destinatario(corso.getId(), allievo.getId());
@@ -69,8 +69,8 @@ public final class InvioEmailDialog {
         if (!conPagamenti) {
             ricevuta.setTooltipText("Nessun pagamento registrato");
         }
-        conferma.setWidthFull();
-        ricevuta.setWidthFull();
+        conferma.addClassNames("w-full");
+        ricevuta.addClassNames("w-full");
         content.add(conferma, ricevuta);
         dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));

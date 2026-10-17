@@ -51,7 +51,7 @@ public class EmailDiTestDialog extends Dialog {
         setWidth("480px");
         setMaxWidth("100%");
         VerticalLayout content = new VerticalLayout();
-        content.setPadding(false);
+        content.addClassNames("p-0");
 
         content.add(ViewSupport.sezione("Configurazione"));
         ConfigurazioneSmtp smtp = emailService.configurazione();
@@ -66,7 +66,7 @@ public class EmailDiTestDialog extends Dialog {
         }
 
         content.add(ViewSupport.sezione("Messaggio"));
-        destinatario.setWidthFull();
+        destinatario.addClassNames("w-full");
         destinatario.setHelperText("Qualunque indirizzo: l'invio non è registrato tra le email inviate");
         List<Optional<TipoDocumento>> opzioni = new ArrayList<>();
         opzioni.add(Optional.empty());

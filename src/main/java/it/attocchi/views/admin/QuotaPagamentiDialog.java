@@ -96,7 +96,7 @@ public class QuotaPagamentiDialog extends Dialog {
         invii.setAllRowsVisible(true);
         VerticalLayout content = new VerticalLayout(corsoInfo, ViewSupport.sezione("Quota"), quotaForm, riepilogo,
             ViewSupport.sezione("Pagamenti"), aggiungi, grid, ViewSupport.sezione("Email inviate"), invii);
-        content.setPadding(false);
+        content.addClassNames("p-0");
         add(content);
         Button ricevuta = new Button("Ricevuta", VaadinIcon.PRINT.create());
         Button email = new Button("Invia email", VaadinIcon.ENVELOPE.create(), e -> InvioEmailDialog.apri(corso, allievo, this::aggiorna));
@@ -177,10 +177,10 @@ public class QuotaPagamentiDialog extends Dialog {
         salva.addThemeVariants(ButtonVariant.PRIMARY);
 
         VerticalLayout form = new VerticalLayout(data, importo, metodo, nota);
-        form.setPadding(false);
-        data.setWidthFull();
-        importo.setWidthFull();
-        nota.setWidthFull();
+        form.addClassNames("p-0");
+        data.addClassNames("w-full");
+        importo.addClassNames("w-full");
+        nota.addClassNames("w-full");
         dialog.add(form);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
         dialog.open();

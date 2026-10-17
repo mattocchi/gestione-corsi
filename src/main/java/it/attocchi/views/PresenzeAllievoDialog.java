@@ -3,7 +3,6 @@ package it.attocchi.views;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import it.attocchi.entity.Presenza;
@@ -42,7 +41,7 @@ public class PresenzeAllievoDialog extends Dialog {
             .applica();
 
         VerticalLayout content = new VerticalLayout(statistiche(presenze), grid);
-        content.setPadding(false);
+        content.addClassNames("p-0");
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
@@ -59,8 +58,7 @@ public class PresenzeAllievoDialog extends Dialog {
             new Span("Presenze: " + conta(presenze, StatoPresenza.PRESENTE)),
             new Span("Assenze giustificate: " + conta(presenze, StatoPresenza.ASSENTE_GIUSTIFICATA)),
             new Span("Assenze ingiustificate: " + conta(presenze, StatoPresenza.ASSENTE_INGIUSTIFICATA)));
-        stats.setWrap(true);
-        stats.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.BASELINE);
+        stats.addClassNames("flex-wrap items-baseline");
         return stats;
     }
 
