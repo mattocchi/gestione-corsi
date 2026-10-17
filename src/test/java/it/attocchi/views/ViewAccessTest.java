@@ -33,6 +33,7 @@ import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.AnnoScolastico;
+import it.attocchi.entity.Festivita;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.repository.InsegnanteRepository;
@@ -46,6 +47,7 @@ import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.service.FestivitaService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
 import it.attocchi.repository.InvioEmailRepository;
@@ -56,6 +58,7 @@ import it.attocchi.service.RimborsoService;
 import it.attocchi.entity.Rimborso;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.AnniScolasticiView;
+import it.attocchi.views.admin.FestivitaView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
@@ -144,6 +147,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private AnnoScolasticoService annoScolasticoService;
+
+    @Autowired
+    private FestivitaService festivitaService;
 
     @Autowired
     private RimborsoService rimborsoService;
@@ -996,6 +1002,78 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("insegnante1")
     void insegnante_nonAccedeAgliAnniScolastici() {
         navigate("anni-scolastici", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_aggiungeEDisattivaFestivitaSenzaElimina() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Festività")));
+        navigate(FestivitaView.class);
+        var festivita = test((Grid<Festivita>) find(Grid.class).single());
+        int quante = festivita.size();
+        assertTrue(find(Button.class).all().stream().noneMatch(b -> "Elimina".equals(b.getElement().getAttribute("aria-label"))));
+
+        // Giorno inesistente: errore sul campo, nulla salvato
+        test(find(Button.class).withText("Nuova Festività").single()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Patrono");
+        IntegerField giorno = find(IntegerField.class).withLabel("Giorno").single();
+        test(giorno).setValue(31);
+        test((ComboBox<Integer>) find(ComboBox.class).withLabel("Mese").single()).selectItem("aprile");
+        test(find(Button.class).withText("Salva").single()).click();
+        assertTrue(giorno.isInvalid());
+        assertEquals(quante, festivitaService.elenco().size());
+
+        // Ponte in date precise
+        @SuppressWarnings("rawtypes")
+        SegmentedControl<Festivita.Tipo> tipo = find(SegmentedControl.class).single();
+        test(tipo.getPulsante(Festivita.Tipo.DATE)).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Ponte di prova");
+        LocalDate ponte = LocalDate.now().plusYears(3);
+        test(find(DatePicker.class).withLabel("Dal").single()).setValue(ponte);
+        test(find(Button.class).withText("Salva").single()).click();
+
+        Festivita nuova = festivitaService.elenco().stream()
+            .filter(f -> f.getNome().equals("Ponte di prova")).findFirst().orElseThrow();
+        try {
+            assertEquals(quante + 1, festivita.size());
+            assertTrue(festivitaService.calendario().festivo(ponte));
+            int riga = IntStream.range(0, festivita.size())
+                .filter(r -> festivita.getRow(r).getNome().equals("Ponte di prova")).findFirst().orElseThrow();
+            test(pulsante(festivita.getCellComponent(riga, 4), "Disattiva")).click();
+            assertFalse(festivitaService.calendario().festivo(ponte));
+        } finally {
+            festivitaService.elimina(nuova.getId());
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_eliminaUnaFestivitaDopoConferma() {
+        Festivita ponte = new Festivita();
+        ponte.setNome("Da eliminare");
+        ponte.setTipo(Festivita.Tipo.DATE);
+        ponte.setDataInizio(LocalDate.now().plusYears(4));
+        festivitaService.salva(ponte);
+        navigate(FestivitaView.class);
+        var festivita = test((Grid<Festivita>) find(Grid.class).single());
+        int quante = festivita.size();
+        int riga = IntStream.range(0, quante)
+            .filter(r -> festivita.getRow(r).getNome().equals("Da eliminare")).findFirst().orElseThrow();
+
+        test(pulsante(festivita.getCellComponent(riga, 4), "Elimina")).click();
+        test(find(Button.class).withText("Elimina").single()).click();
+
+        assertEquals(quante - 1, festivita.size());
+        assertTrue(festivitaService.elenco().stream().noneMatch(f -> f.getNome().equals("Da eliminare")));
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAlleFestivita() {
+        navigate("festivita", RouteNotFoundError.class);
     }
 
     @Test
