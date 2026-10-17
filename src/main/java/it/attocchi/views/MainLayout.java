@@ -8,7 +8,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -75,16 +74,13 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     private void createHeader() {
         H1 title = new H1("Gestione Corsi Musica");
         // Il titolo si accorcia con i puntini invece di spingere fuori il pulsante Logout
-        title.addClassNames("text-(length:--aura-font-size-l) m-0 min-w-0 truncate");
+        title.addClassNames("grow text-(length:--aura-font-size-l) m-0 min-w-0 truncate");
 
         Button logout = new Button("Logout", e -> securityService.logout());
         logout.addThemeVariants(ButtonVariant.TERTIARY);
 
         HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), title, logout);
-        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        header.expand(title);
-        header.setWidthFull();
-        header.addClassNames("px-4 min-w-0");
+        header.addClassNames("w-full items-center px-4 min-w-0");
 
         addToNavbar(header);
     }

@@ -71,7 +71,7 @@ public final class ViewSupport {
         filtro.setItems(anni);
         String corrente = AnnoScolastico.di(LocalDate.now());
         filtro.setValue(anni.contains(corrente) ? corrente : anni.isEmpty() ? null : anni.getFirst());
-        filtro.setWidth("10rem");
+        filtro.addClassNames("w-40");
         return filtro;
     }
 
@@ -95,8 +95,7 @@ public final class ViewSupport {
     /** Contenitore per i pulsanti di una colonna "Azioni" che non va a capo. */
     public static HorizontalLayout actions(Button... buttons) {
         HorizontalLayout layout = new HorizontalLayout(buttons);
-        layout.setSpacing(false);
-        layout.setWrap(false);
+        layout.addClassNames("gap-0");
         return layout;
     }
 

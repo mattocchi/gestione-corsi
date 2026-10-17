@@ -115,7 +115,7 @@ public class CardMobile<T> implements Serializable {
     private Card creaCard(T item) {
         Card card = new Card();
         card.addThemeVariants(CardVariant.OUTLINED);
-        card.setWidthFull();
+        card.addClassNames("w-full");
         if (titolo != null) {
             card.setTitle(titolo.apply(item));
         }

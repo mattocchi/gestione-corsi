@@ -71,10 +71,10 @@ public class ElencoPagamenti extends VerticalLayout {
         List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Corsi: " + f.getEtichetta(), null);
     private final SegmentedControl<FiltroPagamento> filtroPagamento = new SegmentedControl<>("Filtra per stato del pagamento",
         List.of(FiltroPagamento.values()), FiltroPagamento::getEtichetta, f -> "Pagamento: " + f.getEtichetta(), null);
-    private final ComboBox<Corso> filtroCorso = filtro("Tutti i corsi", "Filtra per corso", "14rem");
-    private final ComboBox<Allievo> filtroAllievo = filtro("Tutti gli allievi", "Filtra per allievo", "13rem");
-    private final ComboBox<Genitore> filtroGenitore = filtro("Tutti i genitori", "Filtra per genitore", "13rem");
-    private final ComboBox<String> filtroAnno = filtro("Tutti gli anni", "Filtra per anno scolastico", "10rem");
+    private final ComboBox<Corso> filtroCorso = filtro("Tutti i corsi", "Filtra per corso", "w-56");
+    private final ComboBox<Allievo> filtroAllievo = filtro("Tutti gli allievi", "Filtra per allievo", "w-52");
+    private final ComboBox<Genitore> filtroGenitore = filtro("Tutti i genitori", "Filtra per genitore", "w-52");
+    private final ComboBox<String> filtroAnno = filtro("Tutti gli anni", "Filtra per anno scolastico", "w-40");
     private GridListDataView<RigaPagamento> righe;
 
     /**
@@ -118,13 +118,13 @@ public class ElencoPagamenti extends VerticalLayout {
         aggiorna();
     }
 
-    private <T> ComboBox<T> filtro(String placeholder, String ariaLabel, String width) {
+    /** {@code larghezza}: classe Tailwind di larghezza, scritta per intero dal chiamante (es. {@code "w-56"}). */
+    private <T> ComboBox<T> filtro(String placeholder, String ariaLabel, String larghezza) {
         ComboBox<T> comboBox = new ComboBox<>();
         comboBox.setPlaceholder(placeholder);
         comboBox.setAriaLabel(ariaLabel);
         comboBox.setClearButtonVisible(true);
-        comboBox.setWidth(width);
-        comboBox.setMaxWidth("100%");
+        comboBox.addClassNames(larghezza, "max-w-full");
         comboBox.addValueChangeListener(e -> applicaFiltri());
         return comboBox;
     }
