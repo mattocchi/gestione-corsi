@@ -44,7 +44,7 @@ prima di fare viste personalizzate; minor complessità possibile.
 | 5 | Rimborsi e bilancio: `RimborsiView`, `RimborsiDialog`, `BilancioDialog`, `MieiRimborsiView` | | test | [x] |
 | 6 | Home, allievo e genitore: `HomeView`, `MieiCorsiView`, `FigliView`, `PrezziCorso` | | test | [x] |
 | 7 | Pulizia: rimozione di `hideOnMobile` e stili riepilogo non più usati; CLAUDE.md (layout mobile) | | test | [x] |
-| 8 | Verifica nel browser desktop/390px delle viste principali; registro | | browser | [ ] |
+| 8 | Verifica nel browser desktop/390px delle viste principali; registro | | browser | [x] |
 
 ## Fuori ambito
 
@@ -53,3 +53,14 @@ prima di fare viste personalizzate; minor complessità possibile.
 
 ## Registro
 
+- Branch `feature/tabelle-responsive-card`, 9 commit di passo (1–7, 3.1, 8) dopo la registrazione della richiesta e il piano.
+- `./mvnw test`: 131 test, tutti verdi (aggiornato `insegnante_segnaAssenzaGiustificataConUnTocco` per le nuove colonne delle presenze).
+- Tutte le 21 Grid hanno la card mobile (`CardMobile.per`), verificato con grep.
+- Browser (dev, admin): a 390px (iframe, la finestra non era ridimensionabile) Gestione Corsi, Gestione Allievi, Lezioni con il
+  dialog delle presenze, Gestione Pagamenti, Home; su desktop Gestione Corsi, Gestione Pagamenti e il dialog delle presenze
+  (nuove colonne Allievo · Stato · Note). Nessuna intestazione su mobile, azioni nel footer della card.
+- Nota build: `Card` ora è usato da quasi tutte le route: cancellare `src/main/bundles/prod.bundle` prima di
+  `./build.sh` / `./mvnw clean package` (vedi CLAUDE.md).
+- Da valutare in uso reale: con `ComponentRenderer` le celle (anche della colonna nascosta) creano componenti lato server;
+  con i volumi attuali (decine di righe) non è un problema.
+- Branch non unito a `develop` e non pushato.

@@ -78,8 +78,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### TABELLE RESPONSIVE
 
-* [ ] Su un branch a parte prepara una versione con tutte le tabelle in modalità responsive per fare in modo che in modalità desktop ci siano le tabelle con le righe nelle liste, mentre in modalità mobile ci sono delle card con i dati visibili in griglia in desktop riportati dentro
+* [x] Su un branch a parte prepara una versione con tutte le tabelle in modalità responsive per fare in modo che in modalità desktop ci siano le tabelle con le righe nelle liste, mentre in modalità mobile ci sono delle card con i dati visibili in griglia in desktop riportati dentro _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: tutte le Grid, anche nei dialog e nella Home; branch `feature/tabelle-responsive-card`; card con il dato principale come titolo, badge di stato, tutti gli altri dati come "Etichetta: valore" e le azioni in fondo; card sotto i 640px, tabella da tablet in su._
-* [ ] La card mi sembra di ricordare che vadim ha già questa funzionalità. Nativa USA la parte nativa se questo non fosse confermabile e devi realizzare viste personalizzate, ti chiedo di chiedermi conferma prima di procedere
+* [x] La card mi sembra di ricordare che vadim ha già questa funzionalità. Nativa USA la parte nativa se questo non fosse confermabile e devi realizzare viste personalizzate, ti chiedo di chiedermi conferma prima di procedere _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: verificato che Vaadin 25.3 non ha una modalità card nativa per la Grid; confermato l'approccio con un unico helper che aggiunge alla stessa Grid una colonna con una Card Vaadin visibile solo su mobile._
-* [ ] Vorrei ottenere minore complessità possibile e pure un design che risponde desktop mobile
+* [x] Vorrei ottenere minore complessità possibile e pure un design che risponde desktop mobile _(completata 2026-10-17)_
