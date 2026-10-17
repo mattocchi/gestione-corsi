@@ -213,3 +213,34 @@
     gap: var(--vaadin-gap-s, 0.5rem);
     overflow-wrap: anywhere;
 }
+
+/* Grid in modalità card su mobile (CardMobile): una card per riga, senza intestazione né bordi di riga */
+vaadin-grid.grid-card-mobile::part(header-cell) {
+    display: none;
+}
+
+vaadin-grid.grid-card-mobile::part(body-cell) {
+    background: transparent;
+}
+
+vaadin-grid.grid-card-mobile > vaadin-grid-cell-content {
+    padding: 0.25rem 0;
+    white-space: normal;
+}
+
+.card-mobile-campo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.5rem;
+    line-height: 1.4;
+}
+
+.card-mobile-etichetta {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s, 0.8125rem);
+}
+
+.card-mobile-etichetta::after {
+    content: ":";
+}

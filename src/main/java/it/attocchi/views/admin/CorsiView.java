@@ -27,7 +27,6 @@ import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
@@ -37,6 +36,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.SegmentedControl;
@@ -87,7 +87,6 @@ public class CorsiView extends VerticalLayout {
     private final boolean puoEliminare;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
-    private final Signal<Boolean> mobile = ViewSupport.isMobile();
     private final SegmentedControl<FiltroStato> filtroStato = new SegmentedControl<>("Filtra i corsi per stato",
         List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Mostra corsi: " + f.getEtichetta(), null);
     private final ComboBox<String> filtroAnno = new ComboBox<>();
@@ -130,32 +129,42 @@ public class CorsiView extends VerticalLayout {
 
     private void configureGrid() {
         grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
-        var anno = grid.addColumn(Corso::getAnnoScolastico).setHeader("Anno").setSortable(true).setWidth("7rem").setFlexGrow(0);
-        var insegnante = grid.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
-        var dataInizio = grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
+        grid.addColumn(Corso::getAnnoScolastico).setHeader("Anno").setSortable(true).setWidth("7rem").setFlexGrow(0);
+        grid.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
+        grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
-        var numeroLezioni = grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
-        var durata = grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
-        var numeroAllievi = grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
-        var stato = grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
-        Signal.effect(grid, () -> stato.setHeader(mobile.get() ? "" : "Stato").setWidth(mobile.get() ? "3rem" : "8.5rem"));
+        grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
+        grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
+        grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
 
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(corso -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
-            Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
-                e -> openPartecipanti(corso));
-            Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
-            generateButton.setEnabled(corso.isAttivo());
-            HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
-            if (puoEliminare) {
-                Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
-                deleteButton.addThemeVariants(ButtonVariant.ERROR);
-                actions.add(deleteButton);
-            }
-            return actions;
-        }));
+        CardMobile.per(grid)
+            .titolo(Corso::getNome)
+            .stato(this::createStatoBadge)
+            .campo("Anno", Corso::getAnnoScolastico)
+            .campo("Insegnante", corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : null)
+            .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
+            .campo("N. Lezioni", Corso::getNumeroLezioni)
+            .campo("Durata (min)", Corso::getDurataLezioneMinuti)
+            .campo("N. Allievi", corso -> corso.getAllievi().size())
+            .azioni(this::createActions)
+            .applica();
+    }
 
-        ViewSupport.hideOnMobile(grid, anno, insegnante, dataInizio, numeroLezioni, durata, numeroAllievi);
+    private HorizontalLayout createActions(Corso corso) {
+        Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
+        Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
+            e -> openPartecipanti(corso));
+        Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
+        generateButton.setEnabled(corso.isAttivo());
+        HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
+        if (puoEliminare) {
+            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
+            deleteButton.addThemeVariants(ButtonVariant.ERROR);
+            actions.add(deleteButton);
+        }
+        return actions;
     }
 
     private Badge createStatoBadge(Corso corso) {
@@ -165,7 +174,6 @@ public class CorsiView extends VerticalLayout {
         if (corso.isAttivo()) {
             badge.addThemeVariants(BadgeVariant.SUCCESS);
         }
-        badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
         return badge;
     }
 
