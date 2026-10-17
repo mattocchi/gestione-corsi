@@ -1826,6 +1826,35 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_vedeLeLezioniDaFareInUnaFestivitaEUnAvvisoSullaNuovaLezione() {
+        navigate(LezioniView.class);
+        Lezione prima = test((Grid<Lezione>) find(Grid.class).single()).getRow(0);
+        Festivita chiusura = new Festivita();
+        chiusura.setNome("Chiusura di prova");
+        chiusura.setTipo(Festivita.Tipo.DATE);
+        chiusura.setDataInizio(prima.getData());
+        festivitaService.salva(chiusura);
+        try {
+            navigate(HomeView.class);
+            navigate(LezioniView.class);
+            var grid = test((Grid<Lezione>) find(Grid.class).single());
+            assertEquals(prima, grid.getRow(0));
+            // Colonne su desktop: Corso, Insegnante, Data, …
+            assertTrue(grid.getCellComponent(0, 2).getChildren()
+                .anyMatch(c -> c instanceof Badge badge && badge.getText().contains("Chiusura di prova")));
+
+            test(find(Button.class).withText("Nuova lezione").single()).click();
+            test(find(DatePicker.class).withLabel("Data").single()).setValue(prima.getData());
+            assertTrue(find(Span.class).all().stream().anyMatch(span -> span.isVisible()
+                && span.getText().startsWith("È una festività (Chiusura di prova)")));
+        } finally {
+            festivitaService.elimina(chiusura.getId());
+        }
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
     void insegnante_nonAccedeAllaVistaLezioni() {
         navigate("lezioni", RouteNotFoundError.class);

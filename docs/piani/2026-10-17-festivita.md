@@ -35,7 +35,7 @@
 | 2 | Precaricamento festività nazionali prima di `DataInitializer` | `FestivitaIniziali.java` | test | [x] |
 | 3 | `generaLezioni` salta le festività | `CorsoService` | test, test esistenti aggiornati se servono | [x] |
 | 4 | Vista "Festività" con dialog e card mobile | `admin/FestivitaView.java` | `ViewAccessTest`, browser desktop/390px | [x] |
-| 5 | Lezioni: badge "Festività" e avviso nel dialog di nuova lezione/recupero | `ElencoLezioni` | test, browser | [ ] |
+| 5 | Lezioni: badge "Festività" e avviso nel dialog di nuova lezione/recupero | `ElencoLezioni` | test, browser | [x] |
 | 6 | CLAUDE.md, verifica finale, registro | | browser | [ ] |
 
 ## Fuori ambito

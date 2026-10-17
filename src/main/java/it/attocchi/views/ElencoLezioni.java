@@ -22,9 +22,12 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.function.SerializableSupplier;
+import com.vaadin.flow.server.VaadinService;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
+import it.attocchi.service.CalendarioFestivita;
+import it.attocchi.service.FestivitaService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.insegnante.QuandoLezione;
@@ -32,6 +35,7 @@ import it.attocchi.views.insegnante.QuandoLezione;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -69,6 +73,8 @@ public class ElencoLezioni extends VerticalLayout {
     private final boolean tuttiICorsi;
     private final ComboBox<Corso> filtroCorso = new ComboBox<>();
     private List<Lezione> elenco = List.of();
+    /** Festività attive, rilette con l'elenco: segnalano le lezioni da fare che cadono in un giorno festivo. */
+    private CalendarioFestivita festivita;
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
     private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
@@ -169,7 +175,19 @@ public class ElencoLezioni extends VerticalLayout {
             }
             data.add(badge);
         });
+        if (lezione.isDaFare()) {
+            festivita.festivita(lezione.getData()).ifPresent(nome -> {
+                Badge badge = new Badge(nome, VaadinIcon.FLAG_O.create());
+                badge.addThemeVariants(BadgeVariant.SMALL, BadgeVariant.WARNING);
+                Tooltip.forComponent(badge).setText("Festività: con \"Genera Lezioni\" la lezione viene spostata");
+                data.add(badge);
+            });
+        }
         return data;
+    }
+
+    private static FestivitaService festivitaService() {
+        return VaadinService.getCurrent().getInstantiator().getOrCreate(FestivitaService.class);
     }
 
     private Badge createStatoBadge(Lezione lezione) {
@@ -277,6 +295,17 @@ public class ElencoLezioni extends VerticalLayout {
             corso.clear();
         }
 
+        // In un giorno festivo la lezione si può inserire comunque, con un avviso
+        Span avvisoFestivita = new Span();
+        avvisoFestivita.addClassNames(Stili.TESTO_SECONDARIO);
+        avvisoFestivita.setVisible(false);
+        CalendarioFestivita calendario = festivitaService().calendario();
+        data.addValueChangeListener(e -> {
+            var nome = e.getValue() != null ? calendario.festivita(e.getValue()) : Optional.<String>empty();
+            avvisoFestivita.setText(nome.map(n -> "È una festività (" + n + "): la lezione si può comunque inserire.").orElse(""));
+            avvisoFestivita.setVisible(nome.isPresent());
+        });
+
         // Il corso non è nel Binder: con un solo corso il campo è nascosto e il Binder non lo scriverebbe
         corso.setRequiredIndicatorVisible(true);
         corso.setErrorMessage("Scegli il corso");
@@ -295,7 +324,7 @@ public class ElencoLezioni extends VerticalLayout {
                 saltata != null ? saltata.getId() : null, username), saltata != null ? "Recupero inserito" : "Lezione inserita");
         });
         salva.addThemeVariants(ButtonVariant.PRIMARY);
-        FormLayout form = new FormLayout(corso, data, orario);
+        FormLayout form = new FormLayout(corso, data, orario, avvisoFestivita);
         dialog.add(form);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
         dialog.open();
@@ -393,6 +422,7 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     private void updateGrid() {
+        festivita = festivitaService().calendario();
         elenco = fonte.get();
         lezioni = gridLezioni.setItems(elenco);
         applicaFiltro();

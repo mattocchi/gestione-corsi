@@ -97,5 +97,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] Aggiungi un admin una sezione per gestire le festività italiane sia quelle annuali che quelle con date variabili _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: vista "Festività" per admin e segreteria (eliminazione solo admin); tipi: ogni anno (giorno o periodo, anche a cavallo d'anno), date precise (giorno o periodo), Pasqua e Pasquetta calcolate in automatico (niente periodi relativi alla Pasqua); festività nazionali precaricate se la tabella è vuota (4 ottobre compreso), ognuna disattivabile._
-* [ ] Questo per fare in modo che quando si generano le lezioni vengono escluse, ovviamente saltando, le festività note
+* [x] Questo per fare in modo che quando si generano le lezioni vengono escluse, ovviamente saltando, le festività note _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: valgono per tutti i corsi; la generazione salta i giorni festivi mantenendo il numero di lezioni; le lezioni già generate si sistemano con "Genera Lezioni" e nelle Lezioni un badge "Festività" segnala quelle da fare in un giorno festivo; nuova lezione o recupero a mano in un giorno festivo consentiti con avviso._
