@@ -1785,8 +1785,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Grid<Presenza> gridPresenze = find(Grid.class).all().getLast();
         var presenze = test(gridPresenze);
         Presenza presenza = presenze.getRow(0);
-        StatoPresenzaToggle toggle = (StatoPresenzaToggle) presenze.getCellComponent(0, 0).getChildren()
-            .filter(StatoPresenzaToggle.class::isInstance).findFirst().orElseThrow();
+        // Colonne su desktop: Allievo, Stato, Note
+        StatoPresenzaToggle toggle = (StatoPresenzaToggle) presenze.getCellComponent(0, 1);
         assertEquals(StatoPresenza.PRESENTE, toggle.getValue());
 
         test(toggle.getPulsante(StatoPresenza.ASSENTE_GIUSTIFICATA)).click();

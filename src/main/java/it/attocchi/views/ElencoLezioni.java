@@ -222,8 +222,14 @@ public class ElencoLezioni extends VerticalLayout {
         }
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
-        // Una sola colonna con nome, stato e note: su schermi stretti gli elementi vanno a capo
-        gridPresenze.addComponentColumn(this::createPresenzaRiga).setHeader("Allievi");
+        gridPresenze.addColumn(p -> p.getAllievo().getNomeCompleto()).setHeader("Allievo");
+        gridPresenze.addComponentColumn(this::createStatoPresenza).setHeader("Stato").setWidth("20rem").setFlexGrow(0);
+        gridPresenze.addComponentColumn(this::createNotePresenza).setHeader("Note");
+        CardMobile.per(gridPresenze)
+            .titolo(p -> p.getAllievo().getNomeCompleto())
+            .campo("Stato", this::createStatoPresenza)
+            .campo("Note", this::createNotePresenza)
+            .applica();
         gridPresenze.setItems(presenzaService.findByLezione(lezione.getId()));
         dialog.add(gridPresenze);
 
@@ -360,24 +366,21 @@ public class ElencoLezioni extends VerticalLayout {
         Notification.show(conferma);
     }
 
-    private Div createPresenzaRiga(Presenza presenza) {
-        Span nome = new Span(presenza.getAllievo().getNomeCompleto());
-        nome.addClassName("presenza-nome");
-
+    private StatoPresenzaToggle createStatoPresenza(Presenza presenza) {
         StatoPresenzaToggle stato = new StatoPresenzaToggle();
         stato.setValue(presenza.getStato());
         stato.addValueChangeListener(e -> salva(presenza, p -> p.setStato(e.getValue())));
+        return stato;
+    }
 
+    private TextField createNotePresenza(Presenza presenza) {
         TextField note = new TextField();
-        note.addClassName("presenza-note");
+        note.setWidthFull();
         note.setAriaLabel("Note per " + presenza.getAllievo().getNomeCompleto());
         note.setPlaceholder("Note");
         note.setValue(presenza.getNote() != null ? presenza.getNote() : "");
         note.addValueChangeListener(e -> salva(presenza, p -> p.setNote(e.getValue())));
-
-        Div riga = new Div(nome, stato, note);
-        riga.addClassName("presenza-riga");
-        return riga;
+        return note;
     }
 
     /** Salva subito la modifica; il riscontro è lo stato visibile nella riga, la notifica solo in caso di errore. */
