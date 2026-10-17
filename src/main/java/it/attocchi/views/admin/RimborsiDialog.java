@@ -9,6 +9,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -18,6 +19,7 @@ import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Rimborso;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.RimborsoService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.ViewSupport;
@@ -73,24 +75,33 @@ public class RimborsiDialog extends Dialog {
 
     private void configureGrid() {
         grid.addColumn(r -> Formati.mese(r.getMese())).setHeader("Mese").setComparator(Rimborso::getMese);
-        var data = grid.addColumn(r -> Formati.data(r.getData())).setHeader("Pagato il").setComparator(Rimborso::getData);
+        grid.addColumn(r -> Formati.data(r.getData())).setHeader("Pagato il").setComparator(Rimborso::getData);
         grid.addColumn(r -> Formati.euro(r.getImporto())).setHeader("Importo").setWidth("7.5rem").setFlexGrow(0);
-        var metodo = grid.addColumn(r -> r.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
-        var nota = grid.addColumn(Rimborso::getNota).setHeader("Nota");
-        var azioni = grid.addComponentColumn(r -> {
-            Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica rimborso", e -> apriRimborso(r));
-            if (!puoEliminare) {
-                return ViewSupport.actions(modifica);
-            }
-            Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina rimborso", e -> confermaEliminazione(r));
-            elimina.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(modifica, elimina);
-        });
+        grid.addColumn(r -> r.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
+        grid.addColumn(Rimborso::getNota).setHeader("Nota");
+        var azioni = grid.addComponentColumn(this::createAzioni);
         ViewSupport.configureActionsColumn(azioni);
         azioni.setHeader("").setAutoWidth(false).setWidth(puoEliminare ? "6rem" : "3.5rem");
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun rimborso registrato");
-        ViewSupport.hideOnMobile(grid, data, metodo, nota);
+        CardMobile.per(grid)
+            .titolo(r -> Formati.mese(r.getMese()))
+            .campo("Pagato il", r -> Formati.data(r.getData()))
+            .campo("Importo", r -> Formati.euro(r.getImporto()))
+            .campo("Metodo", r -> r.getMetodo().getDescrizione())
+            .campo("Nota", Rimborso::getNota)
+            .azioni(this::createAzioni)
+            .applica();
+    }
+
+    private HorizontalLayout createAzioni(Rimborso r) {
+        Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica rimborso", e -> apriRimborso(r));
+        if (!puoEliminare) {
+            return ViewSupport.actions(modifica);
+        }
+        Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina rimborso", e -> confermaEliminazione(r));
+        elimina.addThemeVariants(ButtonVariant.ERROR);
+        return ViewSupport.actions(modifica, elimina);
     }
 
     /**

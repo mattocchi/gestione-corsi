@@ -15,6 +15,7 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.RimborsoService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
@@ -49,12 +50,18 @@ public class MieiRimborsiView extends VerticalLayout {
         barra.setWrap(true);
 
         grid.addColumn(r -> Formati.mese(r.getMese())).setHeader("Mese").setComparator(Rimborso::getMese);
-        var data = grid.addColumn(r -> Formati.data(r.getData())).setHeader("Pagato il").setComparator(Rimborso::getData);
+        grid.addColumn(r -> Formati.data(r.getData())).setHeader("Pagato il").setComparator(Rimborso::getData);
         grid.addColumn(r -> Formati.euro(r.getImporto())).setHeader("Importo").setWidth("7.5rem").setFlexGrow(0);
-        var metodo = grid.addColumn(r -> r.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
-        var nota = grid.addColumn(Rimborso::getNota).setHeader("Nota");
+        grid.addColumn(r -> r.getMetodo().getDescrizione()).setHeader("Metodo").setWidth("6.5rem").setFlexGrow(0);
+        grid.addColumn(Rimborso::getNota).setHeader("Nota");
         grid.setEmptyStateText("Nessun rimborso in questo anno scolastico");
-        ViewSupport.hideOnMobile(grid, data, metodo, nota);
+        CardMobile.per(grid)
+            .titolo(r -> Formati.mese(r.getMese()))
+            .campo("Pagato il", r -> Formati.data(r.getData()))
+            .campo("Importo", r -> Formati.euro(r.getImporto()))
+            .campo("Metodo", r -> r.getMetodo().getDescrizione())
+            .campo("Nota", Rimborso::getNota)
+            .applica();
 
         add(barra, grid);
         expand(grid);

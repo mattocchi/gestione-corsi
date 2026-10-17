@@ -5,10 +5,9 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.LitRenderer;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.service.BilancioService.Bilancio;
 import it.attocchi.service.BilancioService.BilancioCorso;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.HomeView;
 import it.attocchi.views.ViewSupport;
@@ -58,24 +57,20 @@ public class BilancioDialog extends Dialog {
 
     private static Grid<BilancioCorso> grigliaCorsi(Bilancio bilancio) {
         Grid<BilancioCorso> grid = new Grid<>(BilancioCorso.class, false);
-        // Su mobile corso e importi su più righe
-        var riepilogo = grid.addColumn(LitRenderer.<BilancioCorso>of(
-                "<div class=\"riepilogo-righe\"><div class=\"riepilogo-righe-titolo\">${item.corso}</div>"
-                    + "<div class=\"riepilogo-righe-dettaglio\">${item.incassi}</div>"
-                    + "<div class=\"riepilogo-righe-dettaglio\">${item.costi}</div></div>")
-                .withProperty("corso", c -> c.corso().getNome() + " (" + c.iscritti() + " allievi)")
-                .withProperty("incassi", c -> "Incassato " + Formati.euro(c.incassato()) + " su " + Formati.euro(c.incassoPrevisto()))
-                .withProperty("costi", c -> "Costo " + Formati.euro(c.costoMaturato()) + " su " + Formati.euro(c.costoPrevisto())))
-            .setHeader("Corso");
-        var corso = grid.addColumn(c -> c.corso().getNome()).setHeader("Corso");
-        var allievi = grid.addColumn(BilancioCorso::iscritti).setHeader("Allievi").setWidth("6rem").setFlexGrow(0);
-        var incassato = euro(grid, "Incassato", BilancioCorso::incassato);
-        var incassoPrevisto = euro(grid, "Incasso previsto", BilancioCorso::incassoPrevisto);
-        var costoMaturato = euro(grid, "Costo maturato", BilancioCorso::costoMaturato);
-        var costoPrevisto = euro(grid, "Costo previsto", BilancioCorso::costoPrevisto);
-        Signal<Boolean> mobile = ViewSupport.isMobile();
-        Signal.effect(grid, () -> riepilogo.setVisible(mobile.get()));
-        ViewSupport.hideOnMobile(grid, corso, allievi, incassato, incassoPrevisto, costoMaturato, costoPrevisto);
+        grid.addColumn(c -> c.corso().getNome()).setHeader("Corso");
+        grid.addColumn(BilancioCorso::iscritti).setHeader("Allievi").setWidth("6rem").setFlexGrow(0);
+        euro(grid, "Incassato", BilancioCorso::incassato);
+        euro(grid, "Incasso previsto", BilancioCorso::incassoPrevisto);
+        euro(grid, "Costo maturato", BilancioCorso::costoMaturato);
+        euro(grid, "Costo previsto", BilancioCorso::costoPrevisto);
+        CardMobile.per(grid)
+            .titolo(c -> c.corso().getNome())
+            .campo("Allievi", BilancioCorso::iscritti)
+            .campo("Incassato", c -> Formati.euro(c.incassato()))
+            .campo("Incasso previsto", c -> Formati.euro(c.incassoPrevisto()))
+            .campo("Costo maturato", c -> Formati.euro(c.costoMaturato()))
+            .campo("Costo previsto", c -> Formati.euro(c.costoPrevisto()))
+            .applica();
         grid.setItems(bilancio.corsi());
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun corso dell'insegnante in questo anno scolastico");

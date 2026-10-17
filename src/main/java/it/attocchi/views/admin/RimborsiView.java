@@ -3,18 +3,18 @@ package it.attocchi.views.admin;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.BilancioService.RigaRimborsi;
 import it.attocchi.service.RimborsoService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
@@ -57,29 +57,30 @@ public class RimborsiView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        // Su mobile una sola colonna con insegnante e importi
-        var riepilogo = grid.addColumn(LitRenderer.<RigaRimborsi>of(
-                "<div class=\"riepilogo-righe\"><div class=\"riepilogo-righe-titolo\">${item.insegnante}</div>"
-                    + "<div class=\"riepilogo-righe-dettaglio\">${item.dettaglio}</div></div>")
-                .withProperty("insegnante", r -> r.insegnante().getNomeCompleto())
-                .withProperty("dettaglio", r -> "Rimborsato " + Formati.euro(r.rimborsato())
-                    + " · da rimborsare " + Formati.euro(r.daRimborsare())))
-            .setHeader("Insegnante");
-        var nome = grid.addColumn(r -> r.insegnante().getNomeCompleto()).setHeader("Insegnante").setSortable(true);
-        var tariffa = grid.addColumn(r -> Formati.euro(r.insegnante().getTariffaOraria())).setHeader("Tariffa oraria")
+        grid.addColumn(r -> r.insegnante().getNomeCompleto()).setHeader("Insegnante").setSortable(true);
+        grid.addColumn(r -> Formati.euro(r.insegnante().getTariffaOraria())).setHeader("Tariffa oraria")
             .setWidth("8rem").setFlexGrow(0);
-        var rimborsato = euro("Rimborsato", RigaRimborsi::rimborsato);
-        var maturato = euro("Maturato", RigaRimborsi::maturato);
-        var daRimborsare = euro("Da rimborsare", RigaRimborsi::daRimborsare);
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(r -> ViewSupport.actions(
+        euro("Rimborsato", RigaRimborsi::rimborsato);
+        euro("Maturato", RigaRimborsi::maturato);
+        euro("Da rimborsare", RigaRimborsi::daRimborsare);
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createAzioni));
+
+        CardMobile.per(grid)
+            .titolo(r -> r.insegnante().getNomeCompleto())
+            .campo("Tariffa oraria", r -> Formati.euro(r.insegnante().getTariffaOraria()))
+            .campo("Rimborsato", r -> Formati.euro(r.rimborsato()))
+            .campo("Maturato", r -> Formati.euro(r.maturato()))
+            .campo("Da rimborsare", r -> Formati.euro(r.daRimborsare()))
+            .azioni(this::createAzioni)
+            .applica();
+    }
+
+    private HorizontalLayout createAzioni(RigaRimborsi r) {
+        return ViewSupport.actions(
             ViewSupport.iconButton(VaadinIcon.EURO, "Rimborsi", e -> new RimborsiDialog(rimborsoService, bilancioService,
                 r.insegnante(), filtroAnno.getValue(), puoEliminare, this::aggiorna).open()),
             ViewSupport.iconButton(VaadinIcon.BAR_CHART, "Bilancio", e -> new BilancioDialog(
-                bilancioService.bilancio(r.insegnante().getId(), filtroAnno.getValue())).open()))));
-
-        Signal<Boolean> mobile = ViewSupport.isMobile();
-        Signal.effect(grid, () -> riepilogo.setVisible(mobile.get()));
-        ViewSupport.hideOnMobile(grid, nome, tariffa, rimborsato, maturato, daRimborsare);
+                bilancioService.bilancio(r.insegnante().getId(), filtroAnno.getValue())).open()));
     }
 
     private Grid.Column<RigaRimborsi> euro(String header, Function<RigaRimborsi, BigDecimal> valore) {
