@@ -37,12 +37,13 @@ public class HomeView extends VerticalLayout {
 
     public HomeView(SecurityService securityService, UserService userService, DashboardService dashboardService,
                     PagamentoService pagamentoService) {
-        addClassName("dashboard");
+        // Riquadri che vanno a capo, uno per riga sugli smartphone
+        addClassNames("gap-6");
 
         String username = securityService.getUsername().orElse("");
         User user = userService.findByUsername(username);
         H1 title = new H1("Ciao " + (user != null ? user.getNome() : username) + "!");
-        title.addClassName("dashboard-title");
+        title.addClassNames("text-[length:clamp(1.5rem,1rem_+_2vw,2rem)] leading-[1.2] m-0");
         add(title);
 
         if (securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")) {
@@ -102,7 +103,7 @@ public class HomeView extends VerticalLayout {
         grid.setItems(riepilogo.subList(0, riepilogo.size() - 1));
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun corso attivo");
-        grid.addClassName("dashboard-pagamenti");
+        grid.addClassNames("mt-4");
         sezione.add(grid);
         return sezione;
     }
@@ -114,11 +115,11 @@ public class HomeView extends VerticalLayout {
     /** Sezione con titolo e griglia di riquadri (usata anche dal bilancio degli insegnanti). */
     public static Div sezione(String titolo, Card... indicatori) {
         H2 heading = new H2(titolo);
-        heading.addClassName("dashboard-section-title");
+        heading.addClassNames("text-(length:--aura-font-size-l) mt-0 mx-0 mb-3");
         Div griglia = new Div(indicatori);
-        griglia.addClassName("dashboard-grid");
+        griglia.addClassNames("grid grid-cols-[repeat(auto-fill,minmax(min(100%,11rem),1fr))] gap-4");
         Div sezione = new Div(heading, griglia);
-        sezione.addClassName("dashboard-section");
+        sezione.addClassNames("w-full");
         return sezione;
     }
 
@@ -129,19 +130,20 @@ public class HomeView extends VerticalLayout {
     /** Riquadro con icona, etichetta, valore e dettaglio facoltativo; l'etichetta è anche il nome accessibile. */
     public static Card indicatore(VaadinIcon icona, String etichetta, String valore, String dettaglio) {
         Card card = new Card();
-        card.addClassName("dashboard-card");
         Icon icon = icona.create();
-        icon.addClassName("dashboard-card-icon");
+        icon.addClassNames("text-(--vaadin-text-color-secondary)");
         card.setHeaderPrefix(icon);
         card.setTitle(etichetta);
         Span numero = new Span(valore);
-        numero.addClassName("dashboard-valore");
+        numero.addClassNames("font-(--aura-font-weight-semibold) leading-[1.1]");
         card.add(numero);
-        if (dettaglio != null) {
-            // I riquadri con dettaglio mostrano importi in euro, più lunghi dei conteggi
-            numero.addClassName("dashboard-valore-importo");
+        if (dettaglio == null) {
+            numero.addClassNames("text-[2.25rem]");
+        } else {
+            // I riquadri con dettaglio mostrano importi in euro: più piccoli dei conteggi, su una riga anche se stretti
+            numero.addClassNames("text-[1.6rem] whitespace-nowrap");
             Span testo = new Span(dettaglio);
-            testo.addClassName("dashboard-dettaglio");
+            testo.addClassNames("block", Stili.TESTO_SECONDARIO);
             card.add(testo);
         }
         card.setAriaLabel(etichetta + ": " + valore + (dettaglio != null ? " (" + dettaglio + ")" : ""));
