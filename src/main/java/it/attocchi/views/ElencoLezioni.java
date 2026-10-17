@@ -162,7 +162,7 @@ public class ElencoLezioni extends VerticalLayout {
 
     private Div createData(Lezione lezione) {
         Div data = new Div(new Span(Formati.data(lezione.getData())));
-        data.addClassName("lezione-data");
+        data.addClassNames("flex flex-wrap items-center gap-x-2 gap-y-1");
         QuandoLezione.di(lezione, LocalDate.now()).ifPresent(quando -> {
             Badge badge = new Badge(quando.getEtichetta());
             badge.addThemeVariants(BadgeVariant.SMALL);
@@ -201,7 +201,7 @@ public class ElencoLezioni extends VerticalLayout {
             // Le presenze di una lezione non effettuata non contano: niente registro, solo il ripristino
             Span avviso = new Span("Lezione non effettuata" + (lezione.getMotivoNonEffettuata() != null
                 ? ": " + lezione.getMotivoNonEffettuata() : ""));
-            avviso.addClassName("avviso-sola-lettura");
+            avviso.addClassNames(Stili.TESTO_SECONDARIO);
             dialog.add(avviso);
             Lezione recupero = elenco.stream().filter(l -> l.getRecuperoDi() != null
                 && l.getRecuperoDi().getId().equals(lezione.getId())).findFirst().orElse(null);

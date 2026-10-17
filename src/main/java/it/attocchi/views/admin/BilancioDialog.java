@@ -10,6 +10,7 @@ import it.attocchi.service.BilancioService.BilancioCorso;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.HomeView;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
@@ -33,7 +34,7 @@ public class BilancioDialog extends Dialog {
             ? "Tariffa oraria non impostata: i costi delle lezioni sono a zero"
             : "Tariffa oraria " + Formati.euro(bilancio.insegnante().getTariffaOraria())
                 + " · costo di una lezione = allievi iscritti × durata × tariffa");
-        tariffa.addClassName("avviso-sola-lettura");
+        tariffa.addClassNames(Stili.TESTO_SECONDARIO);
         content.add(tariffa,
             HomeView.sezione("Effettivo",
                 HomeView.indicatore(VaadinIcon.EURO, "Incassato", Formati.euro(bilancio.incassato()), "dagli allievi"),

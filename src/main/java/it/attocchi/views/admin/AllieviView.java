@@ -30,6 +30,7 @@ import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.Stili;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -143,7 +144,7 @@ public class AllieviView extends VerticalLayout {
         binder.readBean(allievo);
 
         Span indirizzoGenitore = new Span();
-        indirizzoGenitore.addClassName("avviso-sola-lettura");
+        indirizzoGenitore.addClassNames(Stili.TESTO_SECONDARIO);
         genitore.addValueChangeListener(e -> mostraIndirizzoGenitore(indirizzoGenitore, e.getValue()));
         mostraIndirizzoGenitore(indirizzoGenitore, genitore.getValue());
 

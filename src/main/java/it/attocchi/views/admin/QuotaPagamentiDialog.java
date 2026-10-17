@@ -29,6 +29,7 @@ import it.attocchi.views.Formati;
 import it.attocchi.views.Ricevute;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.StatoPagamentoUI;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 
@@ -63,7 +64,7 @@ public class QuotaPagamentiDialog extends Dialog {
 
         Span corsoInfo = new Span(corso.getNome() + " · quota piena " + Formati.euro(corso.getCostoTotale())
             + (corso.getPrezzoPreiscrizione() != null ? " · pre-iscrizione " + Formati.euro(corso.getPrezzoPreiscrizione()) : ""));
-        corsoInfo.addClassName("avviso-sola-lettura");
+        corsoInfo.addClassNames(Stili.TESTO_SECONDARIO);
 
         BigDecimalField quota = new BigDecimalField("Quota personalizzata");
         quota.setLocale(Locale.ITALY);
@@ -223,7 +224,7 @@ public class QuotaPagamentiDialog extends Dialog {
     private void aggiornaRiepilogo() {
         Situazione situazione = pagamentoService.situazione(corso.getId(), allievo.getId());
         riepilogo.removeAll();
-        riepilogo.addClassName("pagamenti-riepilogo");
+        riepilogo.addClassNames(Stili.RIEPILOGO_PAGAMENTI);
         riepilogo.add(new Span("Da pagare " + Formati.euro(situazione.quota())),
             new Span("Pagato " + Formati.euro(situazione.pagato())),
             new Span("Residuo " + Formati.euro(situazione.residuo())),

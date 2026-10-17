@@ -111,7 +111,7 @@ public class ElencoPagamenti extends VerticalLayout {
             filtroAllievo.setAriaLabel("Filtra per figlio");
             filtri.add(filtroAllievo);
         }
-        totali.addClassName("pagamenti-riepilogo");
+        totali.addClassNames(Stili.RIEPILOGO_PAGAMENTI);
 
         add(filtri, totali, grid);
         expand(grid);

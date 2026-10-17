@@ -37,6 +37,7 @@ import it.attocchi.views.PagamentiAllievoDialog;
 import it.attocchi.views.PrezziCorso;
 import it.attocchi.views.PresenzeAllievoDialog;
 import it.attocchi.views.StatoPagamentoUI;
+import it.attocchi.views.Stili;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -109,7 +110,7 @@ public class FigliView extends VerticalLayout {
         binder.readBean(allievo);
 
         Span indirizzo = new Span("Se l'indirizzo è vuoto si usa il tuo: " + genitoreCorrente.getIndirizzo().getFormattato());
-        indirizzo.addClassName("avviso-sola-lettura");
+        indirizzo.addClassNames(Stili.TESTO_SECONDARIO);
         indirizzo.setVisible(!genitoreCorrente.getIndirizzo().isVuoto());
 
         VerticalLayout content = new VerticalLayout(

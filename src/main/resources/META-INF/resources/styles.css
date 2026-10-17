@@ -36,14 +36,6 @@
     margin: 0;
 }
 
-/* Le Mie Lezioni: data con il badge Oggi / Settimana scorsa / … sulla stessa riga */
-.lezione-data {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem 0.5rem;
-}
-
 /* Logo: larghezza fluida, proporzioni mantenute. In tema scuro la scritta nera
    resta leggibile grazie a uno sfondo chiaro arrotondato. */
 .app-logo {
@@ -138,39 +130,9 @@
     margin-top: 1rem;
 }
 
-/* Messaggio sopra un contenuto in sola lettura (es. corso non attivo) */
-.avviso-sola-lettura {
-    color: var(--vaadin-text-color-secondary);
-    font-size: var(--aura-font-size-s, 0.8125rem);
-}
-
 /* Partecipanti: il nome va a capo invece di essere troncato */
 .partecipanti-grid > vaadin-grid-cell-content {
     white-space: normal;
-}
-
-/* Titoli di sezione dentro i dialog */
-.dialog-section-title {
-    font-size: var(--aura-font-size-m, 1rem);
-    margin: 0.5rem 0 0;
-}
-
-/* Riepilogo quota: da pagare, pagato, residuo e stato; va a capo su schermi stretti */
-.pagamenti-riepilogo {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 1.25rem;
-    font-weight: var(--aura-font-weight-medium, 500);
-}
-
-/* Esito dell'email di test: badge e messaggio (anche lungo, errore SMTP) */
-.esito-email-test {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--vaadin-gap-s, 0.5rem);
-    overflow-wrap: anywhere;
 }
 
 /* Grid in modalità card su mobile (CardMobile): una card per riga, senza intestazione né bordi di riga */

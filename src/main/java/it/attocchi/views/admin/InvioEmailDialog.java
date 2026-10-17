@@ -16,6 +16,7 @@ import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
 import it.attocchi.service.EmailService.Destinatario;
 import it.attocchi.service.EmailService.Riepilogo;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,17 +44,17 @@ public final class InvioEmailDialog {
         Optional<Destinatario> destinatario = emailService.destinatario(corso.getId(), allievo.getId());
         Span a = new Span(destinatario.map(d -> "A: " + d.nome() + " <" + d.email() + ">")
             .orElse("Né il genitore né l'allievo hanno un indirizzo email: aggiungilo nella loro scheda per poter inviare."));
-        a.addClassName("avviso-sola-lettura");
+        a.addClassNames(Stili.TESTO_SECONDARIO);
         content.add(a);
         String datiMancanti = DocumentiService.avvisoDatiMancanti(allievo);
         if (datiMancanti != null) {
             Span avviso = new Span(datiMancanti + ".");
-            avviso.addClassName("avviso-sola-lettura");
+            avviso.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(avviso);
         }
         if (!emailService.invioReale()) {
             Span simulato = new Span("Server email non configurato: l'invio sarà solo simulato e registrato.");
-            simulato.addClassName("avviso-sola-lettura");
+            simulato.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(simulato);
         }
 

@@ -154,7 +154,7 @@ public class ProfiloView extends VerticalLayout {
         utenteForm.add(genitore);
 
         Span avviso = new Span("Per modificare i dati rivolgiti alla segreteria o al genitore.");
-        avviso.addClassName("avviso-sola-lettura");
+        avviso.addClassNames(Stili.TESTO_SECONDARIO);
         add(avviso, ViewSupport.sezione("Utente e genitore"), utenteForm,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
         if (allievo.isIndirizzoDelGenitore()) {

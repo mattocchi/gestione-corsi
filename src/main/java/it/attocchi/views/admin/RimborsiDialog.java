@@ -22,6 +22,7 @@ import it.attocchi.service.RimborsoService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.SegmentedControl;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
@@ -61,7 +62,7 @@ public class RimborsiDialog extends Dialog {
 
         Span tariffa = new Span("Tariffa oraria " + (insegnante.getTariffaOraria() != null
             ? Formati.euro(insegnante.getTariffaOraria()) : "non impostata"));
-        tariffa.addClassName("avviso-sola-lettura");
+        tariffa.addClassNames(Stili.TESTO_SECONDARIO);
         Button aggiungi = new Button("Aggiungi rimborso", VaadinIcon.PLUS.create(), e -> apriRimborso(new Rimborso()));
         aggiungi.addThemeVariants(ButtonVariant.PRIMARY);
         configureGrid();

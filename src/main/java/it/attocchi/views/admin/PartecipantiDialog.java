@@ -21,6 +21,7 @@ import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.AllievoService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.StatoPagamentoUI;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
@@ -96,7 +97,7 @@ public class PartecipantiDialog extends Dialog {
         if (!modificabile) {
             aggiunta.setVisible(false);
             Span avviso = new Span("Corso non attivo: partecipanti e orari non sono modificabili.");
-            avviso.addClassName("avviso-sola-lettura");
+            avviso.addClassNames(Stili.TESTO_SECONDARIO);
             content.addComponentAsFirst(avviso);
         }
         content.setPadding(false);

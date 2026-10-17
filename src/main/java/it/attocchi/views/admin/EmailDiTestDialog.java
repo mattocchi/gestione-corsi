@@ -19,6 +19,7 @@ import it.attocchi.service.EmailService;
 import it.attocchi.service.EmailService.ConfigurazioneSmtp;
 import it.attocchi.service.EmailService.EsitoTest;
 import it.attocchi.views.SegmentedControl;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class EmailDiTestDialog extends Dialog {
                 riga("Mittente: " + (vuoto(smtp.from()) ? "non impostato (MAIL_FROM)" : smtp.from())));
         } else {
             Span simulato = new Span("Server email non configurato (MAIL_HOST): l'invio sarà solo simulato.");
-            simulato.addClassName("avviso-sola-lettura");
+            simulato.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(simulato);
         }
 
@@ -76,10 +77,10 @@ public class EmailDiTestDialog extends Dialog {
             null);
         template.setValue(Optional.empty());
         Span etichetta = new Span("Template");
-        etichetta.addClassName("avviso-sola-lettura");
+        etichetta.addClassNames(Stili.TESTO_SECONDARIO);
         Span nota = new Span("Conferma e ricevuta usano dati di esempio (nessun dato reale) e allegano il PDF.");
-        nota.addClassName("avviso-sola-lettura");
-        esito.addClassName("esito-email-test");
+        nota.addClassNames(Stili.TESTO_SECONDARIO);
+        esito.addClassNames("flex flex-wrap items-baseline gap-(--vaadin-gap-s) wrap-anywhere");
         content.add(destinatario, etichetta, template, nota, esito);
         add(content);
 

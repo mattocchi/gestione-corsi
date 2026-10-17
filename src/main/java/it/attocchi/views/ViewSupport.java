@@ -137,7 +137,7 @@ public final class ViewSupport {
     /** Titolo di una sezione all'interno di un dialog. */
     public static H3 sezione(String titolo) {
         H3 h3 = new H3(titolo);
-        h3.addClassName("dialog-section-title");
+        h3.addClassNames(Stili.TITOLO_SEZIONE);
         return h3;
     }
 

@@ -26,13 +26,13 @@ public class PagamentiAllievoDialog extends Dialog {
             new Span("Pagato " + Formati.euro(situazione.pagato())),
             new Span("Residuo " + Formati.euro(situazione.residuo())),
             StatoPagamentoUI.badge(situazione));
-        riepilogo.addClassName("pagamenti-riepilogo");
+        riepilogo.addClassNames(Stili.RIEPILOGO_PAGAMENTI);
 
         VerticalLayout content = new VerticalLayout(riepilogo);
         if (iscrizione.getQuotaPersonalizzata() != null) {
             Span quota = new Span("Quota personalizzata (quota piena " + Formati.euro(iscrizione.getCorso().getCostoTotale()) + ")"
                 + (iscrizione.getNotaQuota() != null ? ": " + iscrizione.getNotaQuota() : ""));
-            quota.addClassName("avviso-sola-lettura");
+            quota.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(quota);
         }
 
