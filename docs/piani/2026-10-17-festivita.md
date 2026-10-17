@@ -36,7 +36,7 @@
 | 3 | `generaLezioni` salta le festività | `CorsoService` | test, test esistenti aggiornati se servono | [x] |
 | 4 | Vista "Festività" con dialog e card mobile | `admin/FestivitaView.java` | `ViewAccessTest`, browser desktop/390px | [x] |
 | 5 | Lezioni: badge "Festività" e avviso nel dialog di nuova lezione/recupero | `ElencoLezioni` | test, browser | [x] |
-| 6 | CLAUDE.md, verifica finale, registro | | browser | [ ] |
+| 6 | CLAUDE.md, verifica finale, registro | | browser | [x] |
 
 ## Fuori ambito
 
@@ -45,3 +45,14 @@
 
 ## Registro
 
+- `./mvnw test`: tutti verdi; nuovi `FestivitaTest` (Pasqua 2024–2027 e 2038, Pasquetta, periodo a cavallo d'anno, date
+  precise), `FestivitaServiceTest` (precaricamento, calendario, validazione), `CorsoServiceTest` (Canto salta Santo
+  Stefano 2024 mantenendo 30 lezioni), `ViewAccessTest` (segreteria crea/disattiva senza eliminare, admin elimina con
+  conferma, insegnante senza accesso, badge e avviso nelle Lezioni). I test esistenti non hanno richiesto modifiche.
+- Browser (dev, admin): vista Festività su desktop (13 festività precaricate, ordinate dalla prossima, Pasqua 2027 = 28
+  marzo) e a 390px (card, dialog con giorno/mese affiancati). Badge e avviso nelle Lezioni verificati solo dal test
+  browserless (i dati di prova saltano già le festività, quindi non ci sono lezioni festive da mostrare).
+- Nel controllo segmentato del tipo, a 390px "Pasquetta" si tronca (nome completo nel tooltip).
+- Produzione: tabella `festivita` creata da `ddl-auto=update`, festività precaricate al primo avvio; le lezioni già
+  generate si spostano solo con "Genera Lezioni" sui corsi.
+- Non pushato.
