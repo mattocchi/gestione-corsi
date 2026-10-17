@@ -17,7 +17,8 @@
     "proj4": "2.21.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-router": "8.4.0"
+    "react-router": "8.4.0",
+    "tailwindcss": "4.3.3"
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
@@ -29,6 +30,7 @@
     "@rolldown/plugin-babel": "0.2.4",
     "@rollup/plugin-replace": "6.0.3",
     "@rollup/pluginutils": "5.4.0",
+    "@tailwindcss/vite": "4.3.3",
     "@types/node": "26.6.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -59,7 +61,8 @@
       "proj4": "2.21.0",
       "react": "19.3.0",
       "react-dom": "19.3.0",
-      "react-router": "8.4.0"
+      "react-router": "8.4.0",
+      "tailwindcss": "4.3.3"
     },
     "devDependencies": {
       "@babel/core": "7.29.7",
@@ -71,6 +74,7 @@
       "@rolldown/plugin-babel": "0.2.4",
       "@rollup/plugin-replace": "6.0.3",
       "@rollup/pluginutils": "5.4.0",
+      "@tailwindcss/vite": "4.3.3",
       "@types/node": "26.6.3",
       "@types/react": "19.3.0",
       "@types/react-dom": "19.3.0",
@@ -85,7 +89,7 @@
       "vite": "8.3.1",
       "vite-plugin-checker": "0.14.5"
     },
-    "hash": "803c2d9c15c0d6e690c725179b794ee88717b849d2df24617a832cf7f37f8ee0"
+    "hash": "77e2455af1c42b562f5c872579d762e90454191f8383a73606900bd74f0ed50b"
   },
   "overrides": {
     "@vaadin/a11y-base": "25.3.2",
@@ -172,6 +176,7 @@
     "proj4": "$proj4",
     "react": "$react",
     "react-dom": "$react-dom",
-    "react-router": "$react-router"
+    "react-router": "$react-router",
+    "tailwindcss": "$tailwindcss"
   }
 }

@@ -29,3 +29,6 @@ src/main/bundles/
 deploy/*.env
 !deploy/*.env.example
 deploy/logs/
+
+# Lock temporaneo dei task Node di Vaadin (dev server con Vite)
+.vaadin-node-tasks.lock
