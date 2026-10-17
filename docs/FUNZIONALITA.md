@@ -87,4 +87,6 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### TAILWIND
 
 * [ ] Su questo stesso branch ora attiva la modalità sperimentale per supportare taiwind css
+  _Chiarimento 2026-10-17: flag `com.vaadin.experimental.tailwindCss` attivo in tutti i profili sul branch `feature/tabelle-responsive-card`._
 * [ ] Riscrivi quindi la parte di layout o css custom con taiwind css
+  _Chiarimento 2026-10-17: approccio ibrido (in `styles.css` restano solo le regole sugli interni dei componenti Vaadin, es. `::part` della Grid); combinazioni ripetute come costanti Java in `views/Stili`; colori e tipografia dai token del tema Aura, Tailwind per layout e spaziature; convertiti anche i `getStyle().set`, restano le API di `HorizontalLayout`/`VerticalLayout`._
