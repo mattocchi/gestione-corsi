@@ -22,7 +22,6 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.function.SerializableSupplier;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
@@ -75,7 +74,6 @@ public class ElencoLezioni extends VerticalLayout {
     private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
         List.of(FiltroLezioni.values()), FiltroLezioni::getEtichetta, f -> "Mostra lezioni: " + f.getEtichetta(), null);
     private GridListDataView<Lezione> lezioni;
-    private final Signal<Boolean> mobile = ViewSupport.isMobile();
 
     /**
      * {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica; {@code corsi} i corsi attivi a cui
@@ -126,47 +124,40 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     private void configureGrid() {
-        // Solo su mobile: corso e data in un'unica colonna su due righe, per non troncare nulla
-        var lezione = gridLezioni.addComponentColumn(this::createRiepilogo)
-            .setHeader("Lezione").setComparator(Lezione::getData).setSortable(true);
-        var corso = gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
-        var insegnante = gridLezioni.addColumn(l -> l.getCorso().getInsegnante() != null
-            ? l.getCorso().getInsegnante().getNomeCompleto() : "").setHeader("Insegnante").setSortable(true);
+        gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
+        var insegnante = gridLezioni.addColumn(ElencoLezioni::insegnante).setHeader("Insegnante").setSortable(true);
+        insegnante.setVisible(tuttiICorsi);
         // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
-        var data = gridLezioni.addComponentColumn(this::createData).setHeader("Data")
+        gridLezioni.addComponentColumn(this::createData).setHeader("Data")
             .setComparator(Lezione::getData).setSortable(true).setWidth("17rem").setFlexGrow(0);
-        var numero = gridLezioni.addColumn(ElencoLezioni::numero).setHeader("N. Lezione")
+        gridLezioni.addColumn(ElencoLezioni::numero).setHeader("N. Lezione")
             .setComparator(Lezione::getNumeroLezione);
-        var orario = gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
+        gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
         // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
         // verrebbe calcolata sulle sole righe visibili all'apertura ("Da fare") e troncherebbe "Completata".
-        var stato = gridLezioni.addComponentColumn(this::createStatoBadge).setFlexGrow(0);
-        var azioni = gridLezioni.addComponentColumn(l ->
-            ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Gestisci Presenze", e -> openPresenzeDialog(l))));
+        gridLezioni.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
+        var azioni = gridLezioni.addComponentColumn(this::createAzioni);
         ViewSupport.configureActionsColumn(azioni);
-        azioni.setAutoWidth(false);
+        azioni.setAutoWidth(false).setWidth("5.5rem");
 
-        // Mobile: Lezione | stato (solo icona) | azioni, senza intestazioni testuali che verrebbero troncate.
-        // Desktop: tutte le colonne singole.
-        Signal.effect(gridLezioni, () -> {
-            boolean m = mobile.get();
-            lezione.setVisible(m);
-            corso.setVisible(!m);
-            insegnante.setVisible(tuttiICorsi && !m);
-            data.setVisible(!m);
-            numero.setVisible(!m);
-            orario.setVisible(!m);
-            stato.setHeader(m ? "" : "Stato").setWidth(m ? "3rem" : "8.5rem");
-            azioni.setHeader(m ? "" : "Azioni").setWidth(m ? "3.5rem" : "5.5rem");
-        });
+        CardMobile.per(gridLezioni)
+            .titolo(l -> l.getCorso().getNome())
+            .stato(this::createStatoBadge)
+            .campo("Data", this::createData)
+            .campo("Insegnante", l -> tuttiICorsi ? insegnante(l) : null)
+            .campo("N. Lezione", ElencoLezioni::numero)
+            .campo("Orario", Lezione::getOrarioInizio)
+            .azioni(this::createAzioni)
+            .applica();
     }
 
-    private Div createRiepilogo(Lezione lezione) {
-        Div corso = new Div(lezione.getCorso().getNome());
-        corso.addClassName("lezione-riepilogo-corso");
-        Div riepilogo = new Div(corso, createData(lezione));
-        riepilogo.addClassName("lezione-riepilogo");
-        return riepilogo;
+    private HorizontalLayout createAzioni(Lezione lezione) {
+        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Gestisci Presenze",
+            e -> openPresenzeDialog(lezione)));
+    }
+
+    private static String insegnante(Lezione lezione) {
+        return lezione.getCorso().getInsegnante() != null ? lezione.getCorso().getInsegnante().getNomeCompleto() : "";
     }
 
     private Div createData(Lezione lezione) {
@@ -197,7 +188,6 @@ public class ElencoLezioni extends VerticalLayout {
         } else {
             badge = new Badge("Da fare", VaadinIcon.CLOCK.create());
         }
-        badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
         return badge;
     }
 

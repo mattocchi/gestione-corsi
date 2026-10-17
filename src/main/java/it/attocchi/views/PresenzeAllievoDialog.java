@@ -26,20 +26,29 @@ public class PresenzeAllievoDialog extends Dialog {
         Grid<Presenza> grid = new Grid<>(Presenza.class, false);
         grid.addColumn(presenza -> Formati.data(presenza.getLezione().getData())).setHeader("Data")
             .setAutoWidth(true).setFlexGrow(0);
-        var numero = grid.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione")
+        grid.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione")
             .setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(presenza -> presenza.getLezione().isNonEffettuata()
-                ? "Lezione non effettuata" : presenza.getStato().getDescrizione()).setHeader("Stato")
+        grid.addColumn(PresenzeAllievoDialog::stato).setHeader("Stato")
             .setTooltipGenerator(presenza -> presenza.getLezione().isNonEffettuata()
                 ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote());
-        var note = grid.addColumn(Presenza::getNote).setHeader("Note");
+        grid.addColumn(Presenza::getNote).setHeader("Note");
         grid.setItems(presenze);
-        ViewSupport.hideOnMobile(grid, numero, note);
+        CardMobile.per(grid)
+            .titolo(presenza -> Formati.data(presenza.getLezione().getData()))
+            .campo("N. Lezione", presenza -> presenza.getLezione().getNumeroLezione())
+            .campo("Stato", PresenzeAllievoDialog::stato)
+            .campo("Note", presenza -> presenza.getLezione().isNonEffettuata()
+                ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote())
+            .applica();
 
         VerticalLayout content = new VerticalLayout(statistiche(presenze), grid);
         content.setPadding(false);
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
+    }
+
+    private static String stato(Presenza presenza) {
+        return presenza.getLezione().isNonEffettuata() ? "Lezione non effettuata" : presenza.getStato().getDescrizione();
     }
 
     /** Statistiche delle sole lezioni effettuate (o da fare): le non effettuate non contano. */

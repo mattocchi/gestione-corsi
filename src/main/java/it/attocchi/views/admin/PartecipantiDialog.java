@@ -19,6 +19,7 @@ import it.attocchi.service.CorsoService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.AllievoService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
 
@@ -73,28 +74,21 @@ public class PartecipantiDialog extends Dialog {
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getAllievo().getNomeCompleto()).setHeader("Partecipante");
-        var pagamento = grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
+        grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = corso.isAttivo();
         // Quota e pagamenti sempre disponibili (anche per i corsi non attivi); rimozione solo per i corsi attivi
-        var azioni = grid.addComponentColumn(iscrizione -> {
-            Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getAllievo().getNomeCompleto(),
-                e -> openQuotaPagamenti(iscrizione));
-            StatoPagamentoUI.coloraPulsante(pagamenti, "Quota e pagamenti", situazione(iscrizione));
-            HorizontalLayout actions = ViewSupport.actions(pagamenti);
-            if (modificabile) {
-                Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getAllievo().getNomeCompleto(),
-                    e -> rimuovi(iscrizione));
-                rimuovi.addThemeVariants(ButtonVariant.ERROR);
-                actions.add(rimuovi);
-            }
-            return actions;
-        });
+        var azioni = grid.addComponentColumn(iscrizione -> createAzioni(iscrizione, modificabile));
         ViewSupport.configureActionsColumn(azioni);
         azioni.setHeader("").setAutoWidth(false).setWidth(modificabile ? "6rem" : "3.5rem");
         // Su schermi stretti il nome va a capo invece di essere troncato
         grid.addClassName("partecipanti-grid");
-        ViewSupport.hideOnMobile(grid, pagamento);
+        CardMobile.per(grid)
+            .titolo(iscrizione -> iscrizione.getAllievo().getNomeCompleto())
+            .stato(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
+            .campo("Orario", this::createOrario)
+            .azioni(iscrizione -> createAzioni(iscrizione, modificabile))
+            .applica();
         grid.setAllRowsVisible(true);
         aggiorna();
 
@@ -111,6 +105,20 @@ public class PartecipantiDialog extends Dialog {
             e -> InvioEmailDialog.inviaConferme(corso, corsoService.findPartecipanti(corso.getId()).size(), () -> { }));
         conferme.setTooltipText("Invia per email la conferma di iscrizione a tutti gli iscritti");
         getFooter().add(conferme, ViewSupport.closeButton(this, "Chiudi"));
+    }
+
+    private HorizontalLayout createAzioni(Iscrizione iscrizione, boolean modificabile) {
+        Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Quota e pagamenti di " + iscrizione.getAllievo().getNomeCompleto(),
+            e -> openQuotaPagamenti(iscrizione));
+        StatoPagamentoUI.coloraPulsante(pagamenti, "Quota e pagamenti", situazione(iscrizione));
+        HorizontalLayout actions = ViewSupport.actions(pagamenti);
+        if (modificabile) {
+            Button rimuovi = ViewSupport.iconButton(VaadinIcon.TRASH, "Rimuovi " + iscrizione.getAllievo().getNomeCompleto(),
+                e -> rimuovi(iscrizione));
+            rimuovi.addThemeVariants(ButtonVariant.ERROR);
+            actions.add(rimuovi);
+        }
+        return actions;
     }
 
     private TimePicker createOrario(Iscrizione iscrizione) {
