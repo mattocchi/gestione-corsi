@@ -15,10 +15,10 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -40,7 +40,6 @@ public class AnniScolasticiView extends VerticalLayout {
     private final AnnoScolasticoService annoScolasticoService;
     private final boolean puoEliminare;
     private final Grid<AnnoScolastico> grid = new Grid<>(AnnoScolastico.class, false);
-    private final Signal<Boolean> mobile = ViewSupport.isMobile();
     private Set<String> usati = Set.of();
 
     public AnniScolasticiView(AnnoScolasticoService annoScolasticoService, SecurityService securityService) {
@@ -49,12 +48,16 @@ public class AnniScolasticiView extends VerticalLayout {
         setSizeFull();
 
         grid.addColumn(AnnoScolastico::getNome).setHeader("Anno").setSortable(true);
-        var stato = grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
-        Signal.effect(grid, () -> stato.setHeader(mobile.get() ? "" : "Stato").setWidth(mobile.get() ? "3rem" : "8.5rem"));
-        var inUso = grid.addColumn(anno -> usati.contains(anno.getNome()) ? "Sì" : "No").setHeader("Usato nei corsi")
+        grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
+        grid.addColumn(anno -> usati.contains(anno.getNome()) ? "Sì" : "No").setHeader("Usato nei corsi")
             .setWidth("9rem").setFlexGrow(0);
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createAzioni));
-        ViewSupport.hideOnMobile(grid, inUso);
+        CardMobile.per(grid)
+            .titolo(AnnoScolastico::getNome)
+            .stato(this::createStatoBadge)
+            .campo("Usato nei corsi", anno -> usati.contains(anno.getNome()) ? "Sì" : "No")
+            .azioni(this::createAzioni)
+            .applica();
 
         Button addButton = new Button("Nuovo Anno Scolastico", e -> openDialog());
         add(addButton, grid);
@@ -69,7 +72,6 @@ public class AnniScolasticiView extends VerticalLayout {
         if (anno.isAttivo()) {
             badge.addThemeVariants(BadgeVariant.SUCCESS);
         }
-        badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
         return badge;
     }
 

@@ -18,7 +18,6 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
@@ -28,6 +27,7 @@ import it.attocchi.service.AllievoService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.UtenteFields;
@@ -66,45 +66,63 @@ public class AllieviView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        Signal<Boolean> mobile = ViewSupport.isMobile();
-        grid.addComponentColumn(allievo -> nome(allievo, mobile)).setHeader("Nome")
+        grid.addComponentColumn(AllieviView::nome).setHeader("Nome")
             .setComparator(Allievo::getNomeCompleto);
-        var codiceFiscale = grid.addColumn(Allievo::getCodiceFiscale).setHeader("Codice Fiscale");
-        var dataNascita = grid.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
+        grid.addColumn(Allievo::getCodiceFiscale).setHeader("Codice Fiscale");
+        grid.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
             .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
-        var genitore = grid.addColumn(allievo -> allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : "")
+        grid.addColumn(allievo -> allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : "")
             .setHeader("Genitore");
-        var indirizzo = grid.addColumn(Formati::indirizzo).setHeader("Indirizzo");
+        grid.addColumn(Formati::indirizzo).setHeader("Indirizzo");
         grid.addColumn(allievo -> allievo.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(allievo -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(allievo));
-            HorizontalLayout actions = ViewSupport.actions(editButton);
-            if (puoEliminare) {
-                Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteAllievo(allievo));
-                deleteButton.addThemeVariants(ButtonVariant.ERROR);
-                actions.add(deleteButton);
-            }
-            return actions;
-        }));
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
 
-        ViewSupport.hideOnMobile(grid, codiceFiscale, dataNascita, genitore, indirizzo);
+        CardMobile.per(grid)
+            .titolo(Allievo::getNomeCompleto)
+            .stato(AllieviView::datiMancanti)
+            .campo("Codice Fiscale", Allievo::getCodiceFiscale)
+            .campo("Data Nascita", allievo -> Formati.data(allievo.getDataNascita()))
+            .campo("Genitore", allievo -> allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : null)
+            .campo("Indirizzo", Formati::indirizzo)
+            .campo("N. Corsi", allievo -> allievo.getCorsi().size())
+            .azioni(this::createActions)
+            .applica();
+    }
+
+    private HorizontalLayout createActions(Allievo allievo) {
+        Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(allievo));
+        HorizontalLayout actions = ViewSupport.actions(editButton);
+        if (puoEliminare) {
+            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteAllievo(allievo));
+            deleteButton.addThemeVariants(ButtonVariant.ERROR);
+            actions.add(deleteButton);
+        }
+        return actions;
     }
 
     /** Nome con il badge "Dati mancanti" se non ci sono codice fiscale o data di nascita (servono ai documenti). */
-    private static HorizontalLayout nome(Allievo allievo, Signal<Boolean> mobile) {
+    private static HorizontalLayout nome(Allievo allievo) {
         HorizontalLayout cella = new HorizontalLayout(new Span(allievo.getNomeCompleto()));
         cella.setSpacing(true);
         cella.setAlignItems(Alignment.CENTER);
-        String avviso = DocumentiService.avvisoDatiMancanti(allievo);
-        if (avviso != null) {
-            Badge badge = new Badge("Dati mancanti", VaadinIcon.WARNING.create());
-            badge.addThemeVariants(BadgeVariant.WARNING);
-            badge.bindThemeVariant(BadgeVariant.ICON_ONLY, mobile);
-            Tooltip.forComponent(badge).setText(avviso);
+        Badge badge = datiMancanti(allievo);
+        if (badge != null) {
             cella.add(badge);
         }
         return cella;
+    }
+
+    /** Badge "Dati mancanti" con l'elenco nel tooltip, {@code null} se i dati per i documenti ci sono. */
+    private static Badge datiMancanti(Allievo allievo) {
+        String avviso = DocumentiService.avvisoDatiMancanti(allievo);
+        if (avviso == null) {
+            return null;
+        }
+        Badge badge = new Badge("Dati mancanti", VaadinIcon.WARNING.create());
+        badge.addThemeVariants(BadgeVariant.WARNING);
+        Tooltip.forComponent(badge).setText(avviso);
+        return badge;
     }
 
     private void openDialog(Allievo allievo) {

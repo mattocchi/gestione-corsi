@@ -9,6 +9,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -18,6 +19,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.User;
 import it.attocchi.service.UserService;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -48,19 +50,28 @@ public class UtentiView extends VerticalLayout {
 
     private void configureGrid() {
         grid.addColumn(User::getUsername).setHeader("Username").setSortable(true);
-        var nome = grid.addColumn(User::getNome).setHeader("Nome").setSortable(true);
-        var cognome = grid.addColumn(User::getCognome).setHeader("Cognome").setSortable(true);
-        var email = grid.addColumn(User::getEmail).setHeader("Email");
+        grid.addColumn(User::getNome).setHeader("Nome").setSortable(true);
+        grid.addColumn(User::getCognome).setHeader("Cognome").setSortable(true);
+        grid.addColumn(User::getEmail).setHeader("Email");
         grid.addColumn(user -> String.join(", ", user.getRoles())).setHeader("Ruoli");
 
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(user -> {
-            Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(user));
-            Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteUser(user));
-            deleteButton.addThemeVariants(ButtonVariant.ERROR);
-            return ViewSupport.actions(editButton, deleteButton);
-        }));
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
 
-        ViewSupport.hideOnMobile(grid, nome, cognome, email);
+        CardMobile.per(grid)
+            .titolo(User::getUsername)
+            .campo("Nome", User::getNome)
+            .campo("Cognome", User::getCognome)
+            .campo("Email", User::getEmail)
+            .campo("Ruoli", user -> String.join(", ", user.getRoles()))
+            .azioni(this::createActions)
+            .applica();
+    }
+
+    private HorizontalLayout createActions(User user) {
+        Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(user));
+        Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteUser(user));
+        deleteButton.addThemeVariants(ButtonVariant.ERROR);
+        return ViewSupport.actions(editButton, deleteButton);
     }
 
     private void openDialog(User user) {

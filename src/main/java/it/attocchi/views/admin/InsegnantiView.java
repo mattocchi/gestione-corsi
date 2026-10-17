@@ -8,6 +8,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -21,6 +22,7 @@ import it.attocchi.entity.User;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.UtenteFields;
@@ -49,20 +51,30 @@ public class InsegnantiView extends VerticalLayout {
         setSizeFull();
 
         grid.addColumn(Insegnante::getNomeCompleto).setHeader("Nome").setSortable(true);
-        var specializzazione = grid.addColumn(Insegnante::getSpecializzazione).setHeader("Specializzazione").setSortable(true);
-        var email = grid.addColumn(insegnante -> insegnante.getUser() != null ? insegnante.getUser().getEmail() : "")
+        grid.addColumn(Insegnante::getSpecializzazione).setHeader("Specializzazione").setSortable(true);
+        grid.addColumn(insegnante -> insegnante.getUser() != null ? insegnante.getUser().getEmail() : "")
             .setHeader("Email");
-        var tariffa = grid.addColumn(insegnante -> Formati.euro(insegnante.getTariffaOraria())).setHeader("Tariffa oraria")
+        grid.addColumn(insegnante -> Formati.euro(insegnante.getTariffaOraria())).setHeader("Tariffa oraria")
             .setWidth("8rem").setFlexGrow(0);
         grid.addColumn(insegnante -> insegnante.getCorsi().size()).setHeader("N. Corsi").setWidth("6.5rem").setFlexGrow(0);
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(insegnante -> ViewSupport.actions(
-            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(insegnante)))));
-        ViewSupport.hideOnMobile(grid, specializzazione, email, tariffa);
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
+        CardMobile.per(grid)
+            .titolo(Insegnante::getNomeCompleto)
+            .sottotitolo(Insegnante::getSpecializzazione)
+            .campo("Email", insegnante -> insegnante.getUser() != null ? insegnante.getUser().getEmail() : null)
+            .campo("Tariffa oraria", insegnante -> Formati.euro(insegnante.getTariffaOraria()))
+            .campo("N. Corsi", insegnante -> insegnante.getCorsi().size())
+            .azioni(this::createActions)
+            .applica();
 
         Button addButton = new Button("Nuovo Insegnante", e -> openDialog(new Insegnante()));
         add(addButton, grid);
         expand(grid);
         updateGrid();
+    }
+
+    private HorizontalLayout createActions(Insegnante insegnante) {
+        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(insegnante)));
     }
 
     private void openDialog(Insegnante insegnante) {

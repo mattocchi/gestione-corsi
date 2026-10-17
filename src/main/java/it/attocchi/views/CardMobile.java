@@ -68,7 +68,7 @@ public class CardMobile<T> implements Serializable {
         return this;
     }
 
-    /** Componente in alto a destra, di solito il badge di stato. */
+    /** Componente in alto a destra, di solito il badge di stato ({@code null} = nessuno). */
     public CardMobile<T> stato(SerializableFunction<T, ? extends Component> stato) {
         this.stato = stato;
         return this;
@@ -126,8 +126,9 @@ public class CardMobile<T> implements Serializable {
                 card.setSubtitle(testo);
             }
         }
-        if (stato != null) {
-            card.setHeaderSuffix(stato.apply(item));
+        Component suffisso = stato != null ? stato.apply(item) : null;
+        if (suffisso != null) {
+            card.setHeaderSuffix(suffisso);
         }
         for (Campo<T> campo : campi) {
             Component valore = valore(campo.valore().apply(item));

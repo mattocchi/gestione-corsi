@@ -37,7 +37,7 @@ prima di fare viste personalizzate; minor complessità possibile.
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Helper `CardMobile<T>` + stili; applicato a Gestione Corsi | `views/CardMobile.java`, `styles.css`, `admin/CorsiView.java` | test, browser 390px | [x] |
-| 2 | Anagrafiche: Allievi, Genitori, Insegnanti, Utenti, Anni scolastici | `admin/*View.java` | test | [ ] |
+| 2 | Anagrafiche: Allievi, Genitori, Insegnanti, Utenti, Anni scolastici | `admin/*View.java` | test | [x] |
 | 3 | Lezioni e presenze: `ElencoLezioni` (sostituisce il riepilogo mobile), `PresenzeAllievoDialog`, `PartecipantiDialog` | | test | [ ] |
 | 4 | Pagamenti: `ElencoPagamenti`, `QuotaPagamentiDialog`, `PagamentiAllievoDialog`, `GrigliaInvii` | | test | [ ] |
 | 5 | Rimborsi e bilancio: `RimborsiView`, `RimborsiDialog`, `BilancioDialog`, `MieiRimborsiView` | | test | [ ] |

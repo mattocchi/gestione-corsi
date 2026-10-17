@@ -7,6 +7,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.Menu;
@@ -18,6 +19,7 @@ import it.attocchi.entity.User;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
@@ -44,20 +46,29 @@ public class GenitoriView extends VerticalLayout {
         setSizeFull();
 
         grid.addColumn(Genitore::getNomeCompleto).setHeader("Nome").setSortable(true);
-        var email = grid.addColumn(genitore -> genitore.getUser() != null ? genitore.getUser().getEmail() : "")
+        grid.addColumn(genitore -> genitore.getUser() != null ? genitore.getUser().getEmail() : "")
             .setHeader("Email");
-        var telefono = grid.addColumn(genitore -> genitore.getUser() != null ? genitore.getUser().getTelefono() : "")
+        grid.addColumn(genitore -> genitore.getUser() != null ? genitore.getUser().getTelefono() : "")
             .setHeader("Telefono");
-        var figli = grid.addColumn(GenitoriView::nomiFigli).setHeader("Figli");
+        grid.addColumn(GenitoriView::nomiFigli).setHeader("Figli");
         grid.addColumn(genitore -> genitore.getFigli().size()).setHeader("N. Figli").setWidth("6.5rem").setFlexGrow(0);
-        ViewSupport.configureActionsColumn(grid.addComponentColumn(genitore -> ViewSupport.actions(
-            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)))));
-        ViewSupport.hideOnMobile(grid, email, telefono, figli);
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
+        CardMobile.per(grid)
+            .titolo(Genitore::getNomeCompleto)
+            .campo("Email", genitore -> genitore.getUser() != null ? genitore.getUser().getEmail() : null)
+            .campo("Telefono", genitore -> genitore.getUser() != null ? genitore.getUser().getTelefono() : null)
+            .campo("Figli", GenitoriView::nomiFigli)
+            .azioni(this::createActions)
+            .applica();
 
         Button addButton = new Button("Nuovo Genitore", e -> openDialog(new Genitore()));
         add(addButton, grid);
         expand(grid);
         updateGrid();
+    }
+
+    private HorizontalLayout createActions(Genitore genitore) {
+        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)));
     }
 
     private void openDialog(Genitore genitore) {
