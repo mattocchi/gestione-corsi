@@ -37,7 +37,8 @@ public class SegmentedControl<T> extends AbstractCompositeField<Div, SegmentedCo
         this.varianteSelezionata = varianteSelezionata;
 
         Div container = getContent();
-        container.addClassName("segmented-control");
+        // Pulsanti della stessa larghezza su tutta la riga, scelta con un tocco
+        container.addClassNames("flex gap-1 w-full");
         container.getElement().setAttribute("role", "radiogroup");
         container.getElement().setAttribute("aria-label", ariaLabel);
 
@@ -46,6 +47,7 @@ public class SegmentedControl<T> extends AbstractCompositeField<Div, SegmentedCo
                 setPresentationValue(opzione);
                 setModelValue(opzione, e.isFromClient());
             });
+            pulsante.addClassNames("flex-1 min-w-0 m-0");
             pulsante.getElement().setAttribute("role", "radio");
             pulsante.setAriaLabel(descrizione.apply(opzione));
             pulsante.setTooltipText(descrizione.apply(opzione));

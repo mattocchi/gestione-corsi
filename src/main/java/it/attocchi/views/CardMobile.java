@@ -115,7 +115,6 @@ public class CardMobile<T> implements Serializable {
     private Card creaCard(T item) {
         Card card = new Card();
         card.addThemeVariants(CardVariant.OUTLINED);
-        card.addClassName("card-mobile");
         card.setWidthFull();
         if (titolo != null) {
             card.setTitle(titolo.apply(item));
@@ -134,9 +133,9 @@ public class CardMobile<T> implements Serializable {
             Component valore = valore(campo.valore().apply(item));
             if (valore != null) {
                 Span etichetta = new Span(campo.etichetta());
-                etichetta.addClassName("card-mobile-etichetta");
+                etichetta.addClassNames(Stili.TESTO_SECONDARIO, "after:content-[':']");
                 Div riga = new Div(etichetta, valore);
-                riga.addClassName("card-mobile-campo");
+                riga.addClassNames("flex flex-wrap items-center gap-x-2 leading-[1.4]");
                 card.add(riga);
             }
         }
@@ -153,8 +152,6 @@ public class CardMobile<T> implements Serializable {
         if (valore == null || valore.toString().isBlank()) {
             return null;
         }
-        Span testo = new Span(valore.toString());
-        testo.addClassName("card-mobile-valore");
-        return testo;
+        return new Span(valore.toString());
     }
 }

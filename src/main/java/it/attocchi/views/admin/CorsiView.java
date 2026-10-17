@@ -109,7 +109,7 @@ public class CorsiView extends VerticalLayout {
 
         // Di default solo i corsi attivi, di tutti gli anni
         filtroStato.setValue(FiltroStato.ATTIVI);
-        filtroStato.getStyle().set("max-width", "22rem");
+        filtroStato.addClassNames("max-w-[22rem]");
         filtroStato.addValueChangeListener(e -> applicaFiltri());
         filtroAnno.setPlaceholder("Tutti gli anni");
         filtroAnno.setAriaLabel("Filtra per anno scolastico");

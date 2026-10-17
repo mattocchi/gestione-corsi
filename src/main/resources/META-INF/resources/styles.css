@@ -1,18 +1,5 @@
 /* Stili dell'applicazione. Il tema Aura è caricato in Application con @StyleSheet(Aura.STYLESHEET). */
 
-/* Pulsanti segmentati (SegmentedControl): stessa larghezza, scelta con un tocco */
-.segmented-control {
-    display: flex;
-    gap: 0.25rem;
-    width: 100%;
-}
-
-.segmented-control vaadin-button {
-    flex: 1 1 0;
-    min-width: 0;
-    margin: 0;
-}
-
 /* Partecipanti: il nome va a capo invece di essere troncato */
 .partecipanti-grid > vaadin-grid-cell-content {
     white-space: normal;
@@ -30,21 +17,4 @@ vaadin-grid.grid-card-mobile::part(body-cell) {
 vaadin-grid.grid-card-mobile > vaadin-grid-cell-content {
     padding: 0.25rem 0;
     white-space: normal;
-}
-
-.card-mobile-campo {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 0.5rem;
-    line-height: 1.4;
-}
-
-.card-mobile-etichetta {
-    color: var(--vaadin-text-color-secondary);
-    font-size: var(--aura-font-size-s, 0.8125rem);
-}
-
-.card-mobile-etichetta::after {
-    content: ":";
 }

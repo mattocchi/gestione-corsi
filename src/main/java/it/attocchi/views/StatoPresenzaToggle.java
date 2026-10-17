@@ -14,7 +14,6 @@ public class StatoPresenzaToggle extends SegmentedControl<StatoPresenza> {
     public StatoPresenzaToggle() {
         super("Stato presenza", List.of(StatoPresenza.values()),
             StatoPresenzaToggle::etichettaBreve, StatoPresenza::getDescrizione, StatoPresenzaToggle::variante);
-        addClassName("stato-presenza-toggle");
     }
 
     private static String etichettaBreve(StatoPresenza stato) {

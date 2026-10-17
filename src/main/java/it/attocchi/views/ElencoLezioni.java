@@ -101,7 +101,7 @@ public class ElencoLezioni extends VerticalLayout {
 
         // Di default solo le lezioni ancora da fare
         filtro.setValue(FiltroLezioni.DA_FARE);
-        filtro.getStyle().set("max-width", "32rem");
+        filtro.addClassNames("max-w-lg");
         filtro.addValueChangeListener(e -> applicaFiltro());
 
         Button nuova = new Button("Nuova lezione", VaadinIcon.PLUS.create(), e -> apriNuovaLezione(null));
