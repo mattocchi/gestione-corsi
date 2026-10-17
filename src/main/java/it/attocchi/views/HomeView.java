@@ -9,11 +9,9 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.DashboardService;
@@ -87,26 +85,20 @@ public class HomeView extends VerticalLayout {
                 totale.percentualeDaIncassare() + "% del totale"));
 
         Grid<RiepilogoPagamenti> grid = new Grid<>(RiepilogoPagamenti.class, false);
-        var corso = grid.addColumn(RiepilogoPagamenti::corso).setHeader("Corso");
-        // Solo su mobile: corso, conteggi e incassato su tre righe
-        var riepilogoMobile = grid.addColumn(LitRenderer.<RiepilogoPagamenti>of(
-                "<div class=\"riepilogo-righe\"><div class=\"riepilogo-righe-titolo\">${item.corso}</div>"
-                    + "<div class=\"riepilogo-righe-dettaglio\">${item.conteggi}</div>"
-                    + "<div class=\"riepilogo-righe-dettaglio\">${item.incassato}</div></div>")
-                .withProperty("corso", RiepilogoPagamenti::corso)
-                .withProperty("conteggi", r -> r.saldati() + " saldati · " + r.parziali() + " parziali · "
-                    + r.senzaPagamenti() + " senza pagamenti")
-                .withProperty("incassato", r -> "Incassato " + importo(r.incassato(), r.percentualeIncassata())
-                    + " · da incassare " + Formati.euro(r.daIncassare())))
-            .setHeader("Corso");
-        var saldati = grid.addColumn(RiepilogoPagamenti::saldati).setHeader("Saldati").setWidth("7rem").setFlexGrow(0);
-        var parziali = grid.addColumn(RiepilogoPagamenti::parziali).setHeader("Parziali").setWidth("7rem").setFlexGrow(0);
-        var senza = grid.addColumn(RiepilogoPagamenti::senzaPagamenti).setHeader("Senza pagamenti").setWidth("10rem").setFlexGrow(0);
-        var incassato = grid.addColumn(r -> importo(r.incassato(), r.percentualeIncassata())).setHeader("Incassato");
-        var daIncassare = grid.addColumn(r -> importo(r.daIncassare(), r.percentualeDaIncassare())).setHeader("Da incassare");
-        ViewSupport.hideOnMobile(grid, corso, saldati, parziali, senza, incassato, daIncassare);
-        Signal<Boolean> mobile = ViewSupport.isMobile();
-        Signal.effect(grid, () -> riepilogoMobile.setVisible(mobile.get()));
+        grid.addColumn(RiepilogoPagamenti::corso).setHeader("Corso");
+        grid.addColumn(RiepilogoPagamenti::saldati).setHeader("Saldati").setWidth("7rem").setFlexGrow(0);
+        grid.addColumn(RiepilogoPagamenti::parziali).setHeader("Parziali").setWidth("7rem").setFlexGrow(0);
+        grid.addColumn(RiepilogoPagamenti::senzaPagamenti).setHeader("Senza pagamenti").setWidth("10rem").setFlexGrow(0);
+        grid.addColumn(r -> importo(r.incassato(), r.percentualeIncassata())).setHeader("Incassato");
+        grid.addColumn(r -> importo(r.daIncassare(), r.percentualeDaIncassare())).setHeader("Da incassare");
+        CardMobile.per(grid)
+            .titolo(RiepilogoPagamenti::corso)
+            .campo("Saldati", RiepilogoPagamenti::saldati)
+            .campo("Parziali", RiepilogoPagamenti::parziali)
+            .campo("Senza pagamenti", RiepilogoPagamenti::senzaPagamenti)
+            .campo("Incassato", r -> importo(r.incassato(), r.percentualeIncassata()))
+            .campo("Da incassare", r -> importo(r.daIncassare(), r.percentualeDaIncassare()))
+            .applica();
         grid.setItems(riepilogo.subList(0, riepilogo.size() - 1));
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun corso attivo");

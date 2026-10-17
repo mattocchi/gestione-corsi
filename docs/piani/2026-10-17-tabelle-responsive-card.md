@@ -41,7 +41,7 @@ prima di fare viste personalizzate; minor complessità possibile.
 | 3 | Lezioni e presenze: `ElencoLezioni` (sostituisce il riepilogo mobile), `PresenzeAllievoDialog`, `PartecipantiDialog` | | test | [x] |
 | 4 | Pagamenti: `ElencoPagamenti`, `QuotaPagamentiDialog`, `PagamentiAllievoDialog`, `GrigliaInvii` | | test | [x] |
 | 5 | Rimborsi e bilancio: `RimborsiView`, `RimborsiDialog`, `BilancioDialog`, `MieiRimborsiView` | | test | [x] |
-| 6 | Home, allievo e genitore: `HomeView`, `MieiCorsiView`, `FigliView`, `PrezziCorso` | | test | [ ] |
+| 6 | Home, allievo e genitore: `HomeView`, `MieiCorsiView`, `FigliView`, `PrezziCorso` | | test | [x] |
 | 7 | Pulizia: rimozione di `hideOnMobile` e stili riepilogo non più usati; CLAUDE.md (layout mobile) | | test | [ ] |
 | 8 | Verifica nel browser desktop/390px delle viste principali; registro | | browser | [ ] |
 

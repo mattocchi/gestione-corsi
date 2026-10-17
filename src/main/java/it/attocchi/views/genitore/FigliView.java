@@ -14,6 +14,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.function.SerializableFunction;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Presenza;
@@ -28,6 +29,7 @@ import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
+import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.Ricevute;
 import it.attocchi.views.MainLayout;
@@ -77,15 +79,24 @@ public class FigliView extends VerticalLayout {
 
     private void configureGrid() {
         gridFigli.addColumn(Allievo::getNomeCompleto).setHeader("Nome").setSortable(true);
-        var dataNascita = gridFigli.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
+        gridFigli.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
             .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
         gridFigli.addColumn(allievo -> allievo.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
-        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(allievo -> ViewSupport.actions(
-            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openModificaDialog(allievo)),
-            ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(allievo)))));
+        ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(this::createAzioni));
 
-        ViewSupport.hideOnMobile(gridFigli, dataNascita);
+        CardMobile.per(gridFigli)
+            .titolo(Allievo::getNomeCompleto)
+            .campo("Data Nascita", allievo -> Formati.data(allievo.getDataNascita()))
+            .campo("N. Corsi", allievo -> allievo.getCorsi().size())
+            .azioni(this::createAzioni)
+            .applica();
+    }
+
+    private HorizontalLayout createAzioni(Allievo allievo) {
+        return ViewSupport.actions(
+            ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openModificaDialog(allievo)),
+            ViewSupport.iconButton(VaadinIcon.BOOK, "Visualizza Dettagli", e -> openDettagliDialog(allievo)));
     }
 
     /** Contatti e dati anagrafici del figlio; username, genitore e corsi li gestisce la segreteria. */
@@ -131,15 +142,14 @@ public class FigliView extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog("Corsi di " + allievo.getNomeCompleto(), "1000px");
 
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
-        var nome = gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
-        var insegnante = gridCorsi.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
-        var numeroLezioni = gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
+        gridCorsi.addColumn(FigliView::insegnante).setHeader("Insegnante");
+        gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
-        PrezziCorso.aggiungiColonne(gridCorsi, nome, situazioni);
-        var pagamento = gridCorsi.addComponentColumn(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
+        PrezziCorso.aggiungiColonne(gridCorsi, situazioni);
+        gridCorsi.addComponentColumn(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
-
-        ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(corso -> {
+        SerializableFunction<Corso, HorizontalLayout> azioni = corso -> {
             Button presenzeButton = ViewSupport.iconButton(VaadinIcon.CLIPBOARD_CHECK, "Presenze", e -> openPresenzeDialog(allievo, corso));
             Button pagamentiButton = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> openPagamentiDialog(allievo, corso));
             StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
@@ -147,8 +157,15 @@ public class FigliView extends VerticalLayout {
             HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
             actions.add(Ricevute.link(corso.getId(), allievo, ViewSupport.iconButton(VaadinIcon.PRINT, "Ricevuta")));
             return actions;
-        }));
-        ViewSupport.hideOnMobile(gridCorsi, insegnante, numeroLezioni, pagamento);
+        };
+        ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(azioni::apply));
+
+        CardMobile<Corso> card = CardMobile.per(gridCorsi)
+            .titolo(Corso::getNome)
+            .stato(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
+            .campo("Insegnante", FigliView::insegnante)
+            .campo("N. Lezioni", Corso::getNumeroLezioni);
+        PrezziCorso.aggiungiCampi(card, situazioni).azioni(azioni).applica();
 
         gridCorsi.setItems(corsoService.findByAllievo(allievo.getId()));
         gridCorsi.setAllRowsVisible(true);
@@ -156,6 +173,10 @@ public class FigliView extends VerticalLayout {
         dialog.add(gridCorsi);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
         dialog.open();
+    }
+
+    private static String insegnante(Corso corso) {
+        return corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "";
     }
 
     private void openPresenzeDialog(Allievo allievo, Corso corso) {

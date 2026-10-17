@@ -211,7 +211,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).single());
             assertEquals(2, grid.size());
             assertEquals("Corso di Canto", grid.getCellText(0, 0));
-            // Indici delle colonne visibili su desktop (la colonna di riepilogo mobile è nascosta)
+            // Indici delle colonne visibili su desktop (la colonna card mobile è nascosta)
             assertEquals("1", grid.getCellText(0, 2));
             assertEquals("6", grid.getCellText(0, 3));
             assertEquals("200,00 € (5%)", grid.getCellText(0, 4));
