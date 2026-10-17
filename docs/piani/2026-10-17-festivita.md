@@ -31,7 +31,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Entità `Festivita` (+ tipo), repository, `FestivitaService` (elenco, salva con validazione, attiva, elimina, `calendario()` delle attive con Pasqua calcolata) | `entity/`, `repository/`, `service/` | test unitari (Pasqua, periodi a cavallo d'anno) | [ ] |
+| 1 | Entità `Festivita` (+ tipo), repository, `FestivitaService` (elenco, salva con validazione, attiva, elimina, `calendario()` delle attive con Pasqua calcolata) | `entity/`, `repository/`, `service/` | test unitari (Pasqua, periodi a cavallo d'anno) | [x] |
 | 2 | Precaricamento festività nazionali prima di `DataInitializer` | `FestivitaIniziali.java` | test | [ ] |
 | 3 | `generaLezioni` salta le festività | `CorsoService` | test, test esistenti aggiornati se servono | [ ] |
 | 4 | Vista "Festività" con dialog e card mobile | `admin/FestivitaView.java` | `ViewAccessTest`, browser desktop/390px | [ ] |
