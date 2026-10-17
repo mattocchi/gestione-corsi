@@ -45,14 +45,14 @@ public class RimborsiView extends VerticalLayout {
         this.bilancioService = bilancioService;
         this.rimborsoService = rimborsoService;
         this.puoEliminare = securityService.hasRole("ADMIN");
-        setSizeFull();
+        addClassNames("size-full");
 
         filtroAnno = ViewSupport.filtroAnnoScolastico(
             annoScolasticoService.elenco().stream().map(AnnoScolastico::getNome).toList());
         filtroAnno.addValueChangeListener(e -> aggiorna());
         configureGrid();
         add(filtroAnno, grid);
-        expand(grid);
+        grid.addClassNames("grow");
         aggiorna();
     }
 

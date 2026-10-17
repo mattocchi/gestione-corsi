@@ -24,10 +24,10 @@ public class LezioniView extends VerticalLayout {
 
     public LezioniView(LezioneService lezioneService, PresenzaService presenzaService, CorsoService corsoService,
                        SecurityService securityService) {
-        setSizeFull();
+        addClassNames("size-full");
         ElencoLezioni elenco = new ElencoLezioni(lezioneService, presenzaService, lezioneService::findDeiCorsiAttivi,
             corsoService::findAllAttivi, securityService.getUsername().orElse(""), true);
         add(elenco);
-        expand(elenco);
+        elenco.addClassNames("grow");
     }
 }

@@ -48,7 +48,7 @@ public class InsegnantiView extends VerticalLayout {
     public InsegnantiView(InsegnanteService insegnanteService, UserService userService) {
         this.insegnanteService = insegnanteService;
         this.userService = userService;
-        setSizeFull();
+        addClassNames("size-full");
 
         grid.addColumn(Insegnante::getNomeCompleto).setHeader("Nome").setSortable(true);
         grid.addColumn(Insegnante::getSpecializzazione).setHeader("Specializzazione").setSortable(true);
@@ -69,7 +69,7 @@ public class InsegnantiView extends VerticalLayout {
 
         Button addButton = new Button("Nuovo Insegnante", e -> openDialog(new Insegnante()));
         add(addButton, grid);
-        expand(grid);
+        grid.addClassNames("grow");
         updateGrid();
     }
 
@@ -105,7 +105,7 @@ public class InsegnantiView extends VerticalLayout {
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
             ViewSupport.sezione("Insegnamento"), insegnamento,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
-        content.setPadding(false);
+        content.addClassNames("p-0");
 
         Button saveButton = new Button("Salva", e -> {
             // Valida tutto prima di salvare: niente utenti creati per un insegnante che poi non si salva

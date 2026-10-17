@@ -47,7 +47,7 @@ Branch: `feature/tabelle-responsive-card`.
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Supporto comune e shell: `ViewSupport` (azioni, filtro anno), `MainLayout`, `LoginView`, `CardMobile`; `ElencoPagamenti.filtro` riceve la classe di larghezza | | test, browser | [x] |
-| 2 | Viste di gestione: Corsi, Allievi, Genitori, Insegnanti, Utenti, Anni scolastici, Rimborsi, Email inviate, Lezioni, Gestione Pagamenti | `admin/*View.java` | test, browser | [ ] |
+| 2 | Viste di gestione: Corsi, Allievi, Genitori, Insegnanti, Utenti, Anni scolastici, Rimborsi, Email inviate, Lezioni, Gestione Pagamenti | `admin/*View.java` | test, browser | [x] |
 | 3 | Dialog: Partecipanti, Quota e pagamenti, Rimborsi, Bilancio, Invio email, Email di test, Presenze, Pagamenti dell'allievo | | test, browser | [ ] |
 | 4 | Liste condivise e viste degli altri ruoli: `ElencoLezioni`, `ElencoPagamenti`, Profilo, I miei corsi, Figli, Pagamenti figli, Le mie lezioni, I miei rimborsi | | test, browser | [ ] |
 | 5 | CLAUDE.md (regola e tabella), verifica finale desktop/390px, build di produzione, registro | | browser, `clean package` | [ ] |

@@ -38,12 +38,12 @@ public class UtentiView extends VerticalLayout {
     public UtentiView(UserService userService) {
         this.userService = userService;
 
-        setSizeFull();
+        addClassNames("size-full");
         configureGrid();
 
         Button addButton = new Button("Nuovo Utente", e -> openDialog(new User()));
         add(addButton, grid);
-        expand(grid);
+        grid.addClassNames("grow");
 
         updateGrid();
     }

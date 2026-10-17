@@ -102,7 +102,7 @@ public class CorsiView extends VerticalLayout {
         this.allievoService = allievoService;
         this.puoEliminare = securityService.hasRole("ADMIN");
 
-        setSizeFull();
+        addClassNames("size-full");
         configureGrid();
 
         Button addButton = new Button("Nuovo Corso", e -> openDialog(new Corso()));
@@ -114,15 +114,13 @@ public class CorsiView extends VerticalLayout {
         filtroAnno.setPlaceholder("Tutti gli anni");
         filtroAnno.setAriaLabel("Filtra per anno scolastico");
         filtroAnno.setClearButtonVisible(true);
-        filtroAnno.setWidth("11rem");
+        filtroAnno.addClassNames("w-44");
         filtroAnno.addValueChangeListener(e -> applicaFiltri());
 
         HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroAnno);
-        toolbar.setWrap(true);
-        toolbar.setWidthFull();
-        toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
-        expand(grid);
+        grid.addClassNames("grow");
 
         updateGrid();
     }

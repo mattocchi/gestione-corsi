@@ -56,12 +56,12 @@ public class AllieviView extends VerticalLayout {
         this.genitoreService = genitoreService;
         this.puoEliminare = securityService.hasRole("ADMIN");
 
-        setSizeFull();
+        addClassNames("size-full");
         configureGrid();
 
         Button addButton = new Button("Nuovo Allievo", e -> openDialog(new Allievo()));
         add(addButton, grid);
-        expand(grid);
+        grid.addClassNames("grow");
 
         updateGrid();
     }
@@ -105,8 +105,7 @@ public class AllieviView extends VerticalLayout {
     /** Nome con il badge "Dati mancanti" se non ci sono codice fiscale o data di nascita (servono ai documenti). */
     private static HorizontalLayout nome(Allievo allievo) {
         HorizontalLayout cella = new HorizontalLayout(new Span(allievo.getNomeCompleto()));
-        cella.setSpacing(true);
-        cella.setAlignItems(Alignment.CENTER);
+        cella.addClassNames("items-center");
         Badge badge = datiMancanti(allievo);
         if (badge != null) {
             cella.add(badge);
@@ -153,7 +152,7 @@ public class AllieviView extends VerticalLayout {
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e genitore"), utenteForm,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzoGenitore);
-        content.setPadding(false);
+        content.addClassNames("p-0");
 
         Button saveButton = new Button("Salva", e -> {
             // Valida tutto prima di salvare: niente utenti creati per un allievo che poi non si salva

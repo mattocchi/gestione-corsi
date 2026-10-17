@@ -45,7 +45,7 @@ public class AnniScolasticiView extends VerticalLayout {
     public AnniScolasticiView(AnnoScolasticoService annoScolasticoService, SecurityService securityService) {
         this.annoScolasticoService = annoScolasticoService;
         this.puoEliminare = securityService.hasRole("ADMIN");
-        setSizeFull();
+        addClassNames("size-full");
 
         grid.addColumn(AnnoScolastico::getNome).setHeader("Anno").setSortable(true);
         grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
@@ -61,7 +61,7 @@ public class AnniScolasticiView extends VerticalLayout {
 
         Button addButton = new Button("Nuovo Anno Scolastico", e -> openDialog());
         add(addButton, grid);
-        expand(grid);
+        grid.addClassNames("grow");
         updateGrid();
     }
 
@@ -98,7 +98,7 @@ public class AnniScolasticiView extends VerticalLayout {
         TextField nome = new TextField("Anno Scolastico");
         nome.setPlaceholder("2026/2027");
         nome.setHelperText("Formato AAAA/AAAA, anni consecutivi");
-        nome.setWidthFull();
+        nome.addClassNames("w-full");
         nome.setValue(prossimoAnno());
 
         Binder<AnnoScolastico> binder = new Binder<>(AnnoScolastico.class);

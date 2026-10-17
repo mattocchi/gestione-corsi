@@ -17,9 +17,9 @@ import jakarta.annotation.security.RolesAllowed;
 public class GestionePagamentiView extends VerticalLayout {
 
     public GestionePagamentiView(PagamentoService pagamentoService) {
-        setSizeFull();
+        addClassNames("size-full");
         ElencoPagamenti elenco = new ElencoPagamenti(pagamentoService, pagamentoService::righePagamenti, true);
         add(elenco);
-        expand(elenco);
+        elenco.addClassNames("grow");
     }
 }

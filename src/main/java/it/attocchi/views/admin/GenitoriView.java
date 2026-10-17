@@ -43,7 +43,7 @@ public class GenitoriView extends VerticalLayout {
     public GenitoriView(GenitoreService genitoreService, UserService userService) {
         this.genitoreService = genitoreService;
         this.userService = userService;
-        setSizeFull();
+        addClassNames("size-full");
 
         grid.addColumn(Genitore::getNomeCompleto).setHeader("Nome").setSortable(true);
         grid.addColumn(genitore -> genitore.getUser() != null ? genitore.getUser().getEmail() : "")
@@ -63,7 +63,7 @@ public class GenitoriView extends VerticalLayout {
 
         Button addButton = new Button("Nuovo Genitore", e -> openDialog(new Genitore()));
         add(addButton, grid);
-        expand(grid);
+        grid.addClassNames("grow");
         updateGrid();
     }
 
@@ -84,7 +84,7 @@ public class GenitoriView extends VerticalLayout {
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
-        content.setPadding(false);
+        content.addClassNames("p-0");
 
         Button saveButton = new Button("Salva", e -> {
             // Valida tutto prima di salvare: niente utenti creati per un genitore che poi non si salva

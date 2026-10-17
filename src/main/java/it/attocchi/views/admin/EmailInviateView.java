@@ -39,7 +39,7 @@ public class EmailInviateView extends VerticalLayout {
     private final GridListDataView<InvioEmail> invii;
 
     public EmailInviateView(EmailService emailService, SecurityService securityService) {
-        setSizeFull();
+        addClassNames("size-full");
         List<Optional<TipoDocumento>> tipi = new java.util.ArrayList<>();
         tipi.add(Optional.empty());
         Arrays.stream(TipoDocumento.values()).map(Optional::of).forEach(tipi::add);
@@ -53,11 +53,9 @@ public class EmailInviateView extends VerticalLayout {
         cerca.setClearButtonVisible(true);
         cerca.setValueChangeMode(ValueChangeMode.LAZY);
         cerca.addValueChangeListener(e -> applicaFiltri());
-        cerca.setWidth("18rem");
-        cerca.setMaxWidth("100%");
+        cerca.addClassNames("w-72 max-w-full");
         HorizontalLayout filtri = new HorizontalLayout(filtroTipo, cerca);
-        filtri.setWrap(true);
-        filtri.setAlignItems(Alignment.CENTER);
+        filtri.addClassNames("flex-wrap items-center");
         if (securityService.hasRole("ADMIN")) {
             // Prova della configurazione SMTP e dei template: solo admin, non registrata
             Button emailDiTest = new Button("Email di test", VaadinIcon.ENVELOPE.create(),
@@ -67,7 +65,7 @@ public class EmailInviateView extends VerticalLayout {
 
         invii = grid.setItems(emailService.tuttiGliInvii());
         add(filtri, grid);
-        expand(grid);
+        grid.addClassNames("grow");
     }
 
     private void applicaFiltri() {
