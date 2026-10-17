@@ -74,7 +74,8 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private void createHeader() {
         H1 title = new H1("Gestione Corsi Musica");
-        title.addClassName("app-title");
+        // Il titolo si accorcia con i puntini invece di spingere fuori il pulsante Logout
+        title.addClassNames("text-(length:--aura-font-size-l) m-0 min-w-0 truncate");
 
         Button logout = new Button("Logout", e -> securityService.logout());
         logout.addThemeVariants(ButtonVariant.TERTIARY);
@@ -83,7 +84,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.expand(title);
         header.setWidthFull();
-        header.addClassName("app-header");
+        header.addClassNames("px-4 min-w-0");
 
         addToNavbar(header);
     }
@@ -91,13 +92,13 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     /** Menu scorrevole in alto e logo fisso in fondo al drawer (desktop e mobile). */
     private Div createDrawer() {
         Scroller menu = new Scroller(createSideNav());
-        menu.addClassName("drawer-menu");
+        menu.addClassNames("flex-auto min-h-0");
 
         Image logo = new Image(LOGO, LOGO_ALT);
-        logo.addClassNames("app-logo", "drawer-logo");
+        logo.addClassNames(Stili.LOGO, "flex-none w-[calc(100%_-_2rem)] max-w-56 m-4");
 
         Div drawer = new Div(menu, logo);
-        drawer.addClassName("drawer-content");
+        drawer.addClassNames("flex flex-col h-full min-h-0");
         return drawer;
     }
 

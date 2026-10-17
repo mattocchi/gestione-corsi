@@ -1,28 +1,5 @@
 /* Stili dell'applicazione. Il tema Aura è caricato in Application con @StyleSheet(Aura.STYLESHEET). */
 
-/* Header: il titolo si accorcia con i puntini invece di spingere fuori il pulsante Logout */
-.app-header {
-    padding-inline: 1rem;
-    min-width: 0;
-}
-
-.app-title {
-    font-size: var(--aura-font-size-l, 1rem);
-    margin: 0;
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-/* Titoli di pagina (Home, Login): dimensione fluida tra smartphone e desktop */
-.page-title {
-    font-size: clamp(1.5rem, 1rem + 2.5vw, 2.25rem);
-    line-height: 1.2;
-    text-align: center;
-    margin: 0;
-}
-
 /* Pulsanti segmentati (SegmentedControl): stessa larghezza, scelta con un tocco */
 .segmented-control {
     display: flex;
@@ -34,48 +11,6 @@
     flex: 1 1 0;
     min-width: 0;
     margin: 0;
-}
-
-/* Logo: larghezza fluida, proporzioni mantenute. In tema scuro la scritta nera
-   resta leggibile grazie a uno sfondo chiaro arrotondato. */
-.app-logo {
-    display: block;
-    height: auto;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-@media (prefers-color-scheme: dark) {
-    .app-logo {
-        background: #fff;
-        border-radius: var(--vaadin-radius-m, 0.5rem);
-        padding: 0.5rem 0.75rem;
-    }
-}
-
-.login-logo {
-    width: min(22rem, 85vw);
-    margin-bottom: 0.75rem;
-}
-
-/* Drawer: menu che scorre in alto, logo sempre visibile in fondo */
-.drawer-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-}
-
-.drawer-menu {
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-.drawer-logo {
-    flex: none;
-    width: calc(100% - 2rem);
-    max-width: 14rem;
-    margin: 1rem;
 }
 
 /* Dashboard iniziale: riquadri che vanno a capo, uno per riga sugli smartphone */

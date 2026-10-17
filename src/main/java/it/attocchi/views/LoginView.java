@@ -18,7 +18,6 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
     private final LoginForm login = new LoginForm();
 
     public LoginView() {
-        addClassName("login-view");
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -26,10 +25,11 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         login.setAction("login");
 
         Image logo = new Image(MainLayout.LOGO, MainLayout.LOGO_ALT);
-        logo.addClassNames("app-logo", "login-logo");
+        logo.addClassNames(Stili.LOGO, "w-[min(22rem,85vw)] max-w-full mb-3");
 
         H1 title = new H1("Gestione Corsi Musica");
-        title.addClassName("page-title");
+        // Dimensione fluida tra smartphone e desktop
+        title.addClassNames("text-[length:clamp(1.5rem,1rem_+_2.5vw,2.25rem)] leading-[1.2] text-center m-0");
         add(logo, title, login);
     }
 

@@ -16,6 +16,14 @@ public final class Stili {
     /** Riga di valori che va a capo su schermi stretti: riepilogo quota/pagato/residuo e stato. */
     public static final String RIEPILOGO_PAGAMENTI = "flex flex-wrap items-center gap-x-5 gap-y-2 font-(--aura-font-weight-medium)";
 
+    /**
+     * Logo: proporzioni mantenute; in tema scuro uno sfondo chiaro arrotondato tiene leggibile la scritta nera.
+     * Larghezza e larghezza massima le decide chi lo usa: due utility della stessa proprietà non si sovrascrivono
+     * in base all'ordine delle classi ma a quello del CSS generato.
+     */
+    public static final String LOGO = "block h-auto box-border"
+        + " dark:bg-white dark:rounded-(--vaadin-radius-m) dark:px-3 dark:py-2";
+
     private Stili() {
     }
 }
