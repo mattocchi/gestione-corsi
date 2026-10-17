@@ -50,7 +50,7 @@ Branch: `feature/tabelle-responsive-card`.
 | 2 | Viste di gestione: Corsi, Allievi, Genitori, Insegnanti, Utenti, Anni scolastici, Rimborsi, Email inviate, Lezioni, Gestione Pagamenti | `admin/*View.java` | test, browser | [x] |
 | 3 | Dialog: Partecipanti, Quota e pagamenti, Rimborsi, Bilancio, Invio email, Email di test, Presenze, Pagamenti dell'allievo | | test, browser | [x] |
 | 4 | Liste condivise e viste degli altri ruoli: `ElencoLezioni`, `ElencoPagamenti`, Profilo, I miei corsi, Figli, Pagamenti figli, Le mie lezioni, I miei rimborsi | | test, browser | [x] |
-| 5 | CLAUDE.md (regola e tabella), verifica finale desktop/390px, build di produzione, registro | | browser, `clean package` | [ ] |
+| 5 | CLAUDE.md (regola e tabella), verifica finale desktop/390px, build di produzione, registro | | browser, `clean package` | [x] |
 
 ## Fuori ambito
 
@@ -59,3 +59,12 @@ Branch: `feature/tabelle-responsive-card`.
 
 ## Registro
 
+- Convertite ~100 chiamate in 30 file con uno script di sostituzione (tabella *Conversione*) e revisione del diff file per
+  file; unite a mano le classi dell'header e del titolo in `MainLayout`; `ElencoPagamenti.filtro` riceve ora la classe di
+  larghezza (`w-56`, `w-52`, `w-40`) scritta per intero dal chiamante. Nessuna chiamata di layout residua (grep).
+- `./mvnw test`: tutti verdi a ogni passo.
+- Browser (dev): login, Gestione Corsi con il dialog Partecipanti, Gestione Pagamenti (desktop e 390px), Lezioni, profilo
+  dell'insegnante: identici a prima (padding, spaziature, Grid che riempie l'altezza, combo che si allarga, filtri).
+- `./mvnw clean package` (dopo aver cancellato `prod.bundle`) e JAR avviato in modalità produzione: Gestione Corsi identica.
+- Non viste a schermo: le viste di allievo e genitore (modifiche meccaniche `size-full`/`grow`/`p-0`, coperte dai test).
+- Branch non unito a `develop` e non pushato.

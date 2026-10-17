@@ -90,5 +90,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-17: flag `com.vaadin.experimental.tailwindCss` attivo in tutti i profili sul branch `feature/tabelle-responsive-card`._
 * [x] Riscrivi quindi la parte di layout o css custom con taiwind css _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: approccio ibrido (in `styles.css` restano solo le regole sugli interni dei componenti Vaadin, es. `::part` della Grid); combinazioni ripetute come costanti Java in `views/Stili`; colori e tipografia dai token del tema Aura, Tailwind per layout e spaziature; convertiti anche i `getStyle().set`, restano le API di `HorizontalLayout`/`VerticalLayout`._
-* [ ] Oltre al css custom ora concerti anche il layout fatto con le api Java in taiwind css
+* [x] Oltre al css custom ora concerti anche il layout fatto con le api Java in taiwind css _(completata 2026-10-17)_
   _Chiarimento 2026-10-17: `VerticalLayout`/`HorizontalLayout` restano ma padding, spacing, allineamenti, wrap, expand e dimensioni passano a classi Tailwind; convertite anche le dimensioni di campi, filtri e viste; restano via API le larghezze delle colonne della Grid e dei Dialog; `FormLayout` invariato._
