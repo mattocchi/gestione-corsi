@@ -3,6 +3,8 @@ package it.attocchi.views;
 import com.vaadin.browserless.SpringBrowserlessTest;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.login.LoginForm;
+import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.card.Card;
@@ -1068,6 +1070,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         assertEquals(quante - 1, festivita.size());
         assertTrue(festivitaService.elenco().stream().noneMatch(f -> f.getNome().equals("Da eliminare")));
+    }
+
+    @Test
+    void login_inItaliano() {
+        navigate(LoginView.class);
+        assertTrue(find(LoginForm.class).single().isForgotPasswordButtonVisible());
+        LoginI18n i18n = LoginView.italiano();
+        assertEquals("Nome utente", i18n.getForm().getUsername());
+        assertEquals("Accedi", i18n.getForm().getSubmit());
+        assertEquals("Password dimenticata?", i18n.getForm().getForgotPassword());
+        assertEquals("Nome utente o password errati", i18n.getErrorMessage().getTitle());
     }
 
     @Test
