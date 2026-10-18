@@ -117,5 +117,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### INSEGNANTI DEL CORSO
 
 * [ ] aggiunti funzionalità per assegnare fino a due insegnanti ad un corso
+  _Chiarimento 2026-10-18: titolare obbligatorio + secondo facoltativo con gli stessi diritti (Le Mie Lezioni, lezioni, presenze); allievi, genitori e conferma PDF vedono entrambi i nomi._
 * [ ] e la possibilità di indicare nella lezione se sono presenti entrambi o uno dei due
+  _Chiarimento 2026-10-18: di default entrambi presenti; nel dialog "Gestisci Presenze" (solo corsi con due insegnanti) "Entrambi / Solo X / Solo Y"; rimborsi e bilancio: ogni insegnante matura le lezioni a cui era presente; le lezioni svolte restano a chi c'era se cambiano gli insegnanti del corso; nessun badge nell'elenco lezioni._
 * [ ] chi può indicare se erano presenti gli insegnanti è il ruolo insegnante, segreteria, o admin (non allievi o genitori).
+  _Chiarimento 2026-10-18: un insegnante del corso, segreteria e admin (stessi controlli del completamento della lezione)._
