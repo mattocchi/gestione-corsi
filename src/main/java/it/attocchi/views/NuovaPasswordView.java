@@ -18,7 +18,7 @@ import it.attocchi.service.UserService;
  * poi si passa alla pagina di conferma; con un link scaduto, già usato o inventato si può chiederne uno nuovo.
  */
 @Route("nuova-password")
-@PageTitle("Nuova password | Gestione Corsi")
+@PageTitle("Nuova password")
 @AnonymousAllowed
 public class NuovaPasswordView extends PaginaPubblica implements BeforeEnterObserver {
 

@@ -2,6 +2,7 @@ package it.attocchi.views;
 
 import com.vaadin.browserless.SpringBrowserlessTest;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.login.LoginI18n;
@@ -1151,6 +1152,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(LoginView.class);
         assertEquals("Area Corsi Mosson", find(H1.class).single().getText());
         assertTrue(find(Paragraph.class).all().stream().anyMatch(p -> p.getText().equals(PaginaPubblica.SOTTOTITOLO)));
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    void titoloScheda_conIlNomeDellApplicazione() {
+        // Il suffisso si aggiunge prima della risposta al browser
+        navigate(CorsiView.class);
+        UI.getCurrent().getInternals().getStateTree().runExecutionsBeforeClientResponse();
+        assertEquals("Gestione Corsi | Area Corsi Mosson", UI.getCurrent().getInternals().getTitle());
+        navigate(HomeView.class);
+        UI.getCurrent().getInternals().getStateTree().runExecutionsBeforeClientResponse();
+        assertEquals("Home | Area Corsi Mosson", UI.getCurrent().getInternals().getTitle());
     }
 
     @Test

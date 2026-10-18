@@ -8,7 +8,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 /** Conferma dopo la nuova password, con il pulsante per andare all'accesso. */
 @Route("password-aggiornata")
-@PageTitle("Password aggiornata | Gestione Corsi")
+@PageTitle("Password aggiornata")
 @AnonymousAllowed
 public class PasswordAggiornataView extends PaginaPubblica {
 

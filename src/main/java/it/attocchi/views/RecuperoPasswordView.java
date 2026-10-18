@@ -15,7 +15,7 @@ import it.attocchi.service.RecuperoPasswordService;
  * sempre lo stesso, che l'account esista o no.
  */
 @Route(RecuperoPasswordView.ROUTE)
-@PageTitle("Password dimenticata | Gestione Corsi")
+@PageTitle("Password dimenticata")
 @AnonymousAllowed
 public class RecuperoPasswordView extends PaginaPubblica {
 
