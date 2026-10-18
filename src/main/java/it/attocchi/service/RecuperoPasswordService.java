@@ -56,6 +56,9 @@ public class RecuperoPasswordService {
         this.documentiService = documentiService;
         this.proprieta = proprieta;
         this.environment = environment;
+        if (environment.acceptsProfiles(Profiles.of("prod")) && proprieta.url().contains("localhost")) {
+            log.warn("APP_URL non impostata: i link di recupero password punterebbero a {}", proprieta.url());
+        }
     }
 
     public int validitaOre() {

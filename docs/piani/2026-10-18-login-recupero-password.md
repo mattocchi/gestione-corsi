@@ -39,7 +39,7 @@ nuova password, pagina di conferma con il pulsante per andare al login.
 | 2 | Entità `RecuperoPassword` (hash, utente, scadenza, uso), repository, `PasswordResetService` (richiesta, verifica, reimpostazione), configurazione `app.url` e `app.password-reset.validita-ore`, template email (link e avviso) | `entity/`, `repository/`, `service/`, `config/`, `templates/email/`, `application.properties` | test di servizio | [x] |
 | 3 | Viste pubbliche: richiesta del link, nuova password, conferma con pulsante "Vai al login" | `views/RecuperoPasswordView`, `views/NuovaPasswordView` | `ViewAccessTest`, browser desktop/390px | [x] |
 | 4 | Regola minima della password anche nel profilo | `ProfiloView`, `UserService` | test | [x] |
-| 5 | CLAUDE.md, `deploy/*.env.example` (APP_URL), verifica finale, registro | | browser | [ ] |
+| 5 | CLAUDE.md, `deploy/*.env.example` (APP_URL), verifica finale, registro | | browser | [x] |
 
 ## Fuori ambito
 
@@ -47,3 +47,16 @@ nuova password, pagina di conferma con il pulsante per andare al login.
 
 ## Registro
 
+- `./mvnw test`: tutti verdi; nuovi `RecuperoPasswordServiceTest` (richiesta per username/email, un solo link valido per
+  account, account disattivato, link monouso, scaduto o inventato, password corta) e in `ViewAccessTest` login in
+  italiano, richiesta con messaggio sempre uguale, nuova password con validazione, conferma e link riusato non valido,
+  profilo con minimo 8 caratteri.
+- Browser (dev, desktop): login in italiano, "Password dimenticata?" → richiesta per `insegnante2` → link preso dal log
+  (invio simulato) → nuova password → pagina di conferma → "Vai all'accesso" → accesso con la nuova password; il link
+  riaperto mostra "Link non valido". La verifica a 390px non è riuscita (browser instabile con le pagine in iframe): le
+  pagine usano lo stesso schema del login (`w-full max-w-sm`).
+- Aggiunto (non nel piano iniziale): avviso nel log all'avvio in produzione se `APP_URL` non è impostata.
+- Produzione: impostare `APP_URL` in `deploy/gestione-corsi.env` (vedi `.env.example`); tabella `recupero_password` creata
+  da `ddl-auto=update`; serve l'SMTP configurato (`MAIL_*`), altrimenti le email sono solo simulate.
+- Rate limiting delle richieste non implementato (fuori ambito).
+- Non pushato.
