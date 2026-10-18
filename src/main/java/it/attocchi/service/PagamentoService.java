@@ -7,6 +7,7 @@ import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.repository.CorsoRepository;
+import it.attocchi.repository.GenitoreRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,12 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 /**
  * Quote e pagamenti dei partecipanti. Restano modificabili anche nei corsi non attivi
@@ -134,6 +138,41 @@ public class PagamentoService {
         }
     }
 
+    /**
+     * Riepilogo della famiglia per un anno scolastico ({@code null} = corsi senza anno): le iscrizioni dei figli
+     * del genitore, in ordine di figlio e corso, con i totali.
+     */
+    public record RiepilogoFamiglia(Genitore genitore, String anno, List<RigaPagamento> righe) {
+
+        public BigDecimal quota() {
+            return somma(righe, Situazione::quota);
+        }
+
+        public BigDecimal pagato() {
+            return somma(righe, Situazione::pagato);
+        }
+
+        public BigDecimal residuo() {
+            return somma(righe, Situazione::residuo);
+        }
+
+        /** Righe raggruppate per figlio, nell'ordine dell'elenco. */
+        public Map<Allievo, List<RigaPagamento>> perFiglio() {
+            Map<Allievo, List<RigaPagamento>> perFiglio = new LinkedHashMap<>();
+            righe.forEach(riga -> perFiglio.computeIfAbsent(riga.allievo(), a -> new ArrayList<>()).add(riga));
+            return perFiglio;
+        }
+
+        public static BigDecimal somma(List<RigaPagamento> righe, Function<Situazione, BigDecimal> importo) {
+            return righe.stream().map(r -> importo.apply(r.situazione())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+    }
+
+    private static final Comparator<RigaPagamento> PER_ALLIEVO_E_CORSO = Comparator
+        .comparing((RigaPagamento r) -> r.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(r -> r.allievo().getId())
+        .thenComparing(r -> r.corso().getNome(), String.CASE_INSENSITIVE_ORDER);
+
     private static final Comparator<RigaPagamento> PER_CORSO_E_ALLIEVO = Comparator
         .comparing((RigaPagamento r) -> r.corso().getNome(), String.CASE_INSENSITIVE_ORDER)
         .thenComparing(r -> r.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER);
@@ -141,12 +180,14 @@ public class PagamentoService {
     private final PagamentoRepository pagamentoRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final CorsoRepository corsoRepository;
+    private final GenitoreRepository genitoreRepository;
 
     public PagamentoService(PagamentoRepository pagamentoRepository, IscrizioneRepository iscrizioneRepository,
-                            CorsoRepository corsoRepository) {
+                            CorsoRepository corsoRepository, GenitoreRepository genitoreRepository) {
         this.pagamentoRepository = pagamentoRepository;
         this.iscrizioneRepository = iscrizioneRepository;
         this.corsoRepository = corsoRepository;
+        this.genitoreRepository = genitoreRepository;
     }
 
     public Iscrizione findIscrizione(Long corsoId, Long allievoId) {
@@ -227,6 +268,28 @@ public class PagamentoService {
     /** Le righe dei soli figli del genitore indicato, anche nei corsi non attivi. */
     public List<RigaPagamento> righePagamentiDeiFigli(String usernameGenitore) {
         return righe(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(usernameGenitore));
+    }
+
+    /**
+     * Anni scolastici dei corsi dei figli del genitore (attivi o no), dal più recente; {@code null} in fondo se
+     * qualche corso non ha l'anno.
+     */
+    public List<String> anniDellaFamiglia(Long genitoreId) {
+        return iscrizioneRepository.findByGenitoreIdWithCorsoAllievo(genitoreId).stream()
+            .map(i -> i.getCorso().getAnnoScolastico())
+            .distinct()
+            .sorted(Comparator.nullsLast(Comparator.<String>reverseOrder()))
+            .toList();
+    }
+
+    /** Riepilogo della famiglia per l'anno scolastico indicato ({@code null} = corsi senza anno). */
+    public RiepilogoFamiglia riepilogoFamiglia(Long genitoreId, String anno) {
+        Genitore genitore = genitoreRepository.findById(genitoreId)
+            .orElseThrow(() -> new IllegalArgumentException("Genitore non trovato: " + genitoreId));
+        List<Iscrizione> iscrizioni = iscrizioneRepository.findByGenitoreIdWithCorsoAllievo(genitoreId).stream()
+            .filter(i -> Objects.equals(i.getCorso().getAnnoScolastico(), anno))
+            .toList();
+        return new RiepilogoFamiglia(genitore, anno, righe(iscrizioni).stream().sorted(PER_ALLIEVO_E_CORSO).toList());
     }
 
     private List<RigaPagamento> righe(List<Iscrizione> iscrizioni) {

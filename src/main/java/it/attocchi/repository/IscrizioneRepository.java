@@ -31,6 +31,11 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
         + "JOIN FETCH a.genitore g JOIN FETCH g.user u WHERE u.username = :username")
     List<Iscrizione> findByGenitoreUsernameWithCorsoAllievo(@Param("username") String username);
 
+    /** Iscrizioni dei figli del genitore indicato per id, con corso, allievo e genitore. */
+    @Query("SELECT i FROM Iscrizione i JOIN FETCH i.corso JOIN FETCH i.allievo a JOIN FETCH a.user "
+        + "JOIN FETCH a.genitore g JOIN FETCH g.user WHERE g.id = :genitoreId")
+    List<Iscrizione> findByGenitoreIdWithCorsoAllievo(@Param("genitoreId") Long genitoreId);
+
     @Query("SELECT COUNT(DISTINCT i.corso.id) FROM Iscrizione i WHERE i.allievo.genitore.user.username = :username")
     long countCorsiFigliByGenitoreUsername(@Param("username") String username);
 

@@ -18,6 +18,8 @@ import it.attocchi.entity.TipoDocumento;
 import it.attocchi.entity.User;
 import it.attocchi.repository.UserRepository;
 import it.attocchi.service.PagamentoService.Ricevuta;
+import it.attocchi.service.PagamentoService.RiepilogoFamiglia;
+import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.Formati;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -114,6 +117,11 @@ public class DocumentiService {
     }
 
     private boolean puoVedere(Allievo allievo, String username) {
+        return puoVedere(allievo.getGenitore(), username);
+    }
+
+    /** Admin e segreteria sempre; altrimenti solo il genitore stesso. */
+    private boolean puoVedere(Genitore genitore, String username) {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return false;
@@ -121,9 +129,79 @@ public class DocumentiService {
         if (user.getRoles().contains("ADMIN") || user.getRoles().contains("SEGRETERIA")) {
             return true;
         }
-        Genitore genitore = allievo.getGenitore();
         return user.getRoles().contains("GENITORE") && genitore != null && genitore.getUser() != null
             && username.equals(genitore.getUser().getUsername());
+    }
+
+    /**
+     * Riepilogo della famiglia in PDF per l'utente indicato: admin e segreteria quello di ogni genitore, il
+     * genitore solo il proprio. Altrimenti (o se il genitore non esiste) {@link IllegalArgumentException}.
+     */
+    public Pdf riepilogoFamigliaPer(Long genitoreId, String anno, String username) {
+        RiepilogoFamiglia riepilogo;
+        try {
+            riepilogo = pagamentoService.riepilogoFamiglia(genitoreId, anno);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Riepilogo non trovato");
+        }
+        if (!puoVedere(riepilogo.genitore(), username)) {
+            throw new IllegalArgumentException("Riepilogo non trovato");
+        }
+        return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
+    }
+
+    /** HTML (pagina A4) del riepilogo della famiglia: corsi dei figli nell'anno con quota, pagato e residuo. */
+    public String riepilogoFamigliaHtml(Long genitoreId, String anno) {
+        return riepilogoFamigliaHtml(pagamentoService.riepilogoFamiglia(genitoreId, anno));
+    }
+
+    private String riepilogoFamigliaHtml(RiepilogoFamiglia riepilogo) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        if (logo != null) {
+            modello.put("logo", logo);
+        }
+        modello.put("emessa", Formati.dataCompleta(LocalDate.now()));
+        modello.put("genitore", riepilogo.genitore().getNomeCompleto());
+        modello.put("anno", riepilogo.anno() != null ? "Anno scolastico " + riepilogo.anno() : "Corsi senza anno scolastico");
+        List<Map<String, Object>> figli = new ArrayList<>();
+        riepilogo.perFiglio().forEach((allievo, righe) -> {
+            Map<String, Object> figlio = new HashMap<>();
+            figlio.put("nome", allievo.getNomeCompleto());
+            figlio.put("corsi", righe.stream().map(DocumentiService::rigaRiepilogo).toList());
+            figlio.put("quota", Formati.euro(RiepilogoFamiglia.somma(righe, Situazione::quota)));
+            figlio.put("pagato", Formati.euro(RiepilogoFamiglia.somma(righe, Situazione::pagato)));
+            figlio.put("residuo", Formati.euro(RiepilogoFamiglia.somma(righe, Situazione::residuo)));
+            figli.add(figlio);
+        });
+        modello.put("figli", figli);
+        modello.put("numeroCorsi", riepilogo.righe().size());
+        modello.put("totali", Map.of("quota", Formati.euro(riepilogo.quota()), "pagato", Formati.euro(riepilogo.pagato()),
+            "residuo", Formati.euro(riepilogo.residuo())));
+        return render("documenti/riepilogo-famiglia.ftlh", modello);
+    }
+
+    private static Map<String, String> rigaRiepilogo(RigaPagamento riga) {
+        Corso corso = riga.corso();
+        Iscrizione iscrizione = riga.iscrizione();
+        Map<String, String> corsoRiga = new LinkedHashMap<>();
+        corsoRiga.put("nome", corso.getNome());
+        corsoRiga.put("insegnanti", corso.getNomiInsegnanti());
+        corsoRiga.put("nota", iscrizione.getQuotaPersonalizzata() != null
+            ? "quota piena " + Formati.euro(corso.getCostoTotale())
+                + (iscrizione.getNotaQuota() != null ? ", " + iscrizione.getNotaQuota() : "")
+            : "");
+        corsoRiga.put("quota", Formati.euro(riga.situazione().quota()));
+        corsoRiga.put("pagato", Formati.euro(riga.situazione().pagato()));
+        corsoRiga.put("residuo", Formati.euro(riga.situazione().residuo()));
+        return corsoRiga;
+    }
+
+    /** Nome del file PDF del riepilogo, es. "riepilogo-famiglia-mario-rossi-2026-2027.pdf". */
+    public String nomeFile(RiepilogoFamiglia riepilogo) {
+        String base = "riepilogo-famiglia-" + riepilogo.genitore().getNomeCompleto()
+            + (riepilogo.anno() != null ? "-" + riepilogo.anno() : "");
+        return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
     }
 
     /** Corpo HTML dell'email che accompagna il documento; {@code saluto} è il nome del destinatario. */

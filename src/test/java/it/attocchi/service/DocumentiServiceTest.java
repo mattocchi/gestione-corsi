@@ -15,9 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Documenti sui dati di DataInitializer, con IBAN e codice fiscale dell'associazione di prova. */
@@ -32,6 +34,9 @@ class DocumentiServiceTest {
 
     @Autowired
     private PagamentoService pagamentoService;
+
+    @Autowired
+    private GenitoreService genitoreService;
 
     @Test
     void ricevuta_htmlEPdfConIPagamenti() throws IOException {
@@ -107,6 +112,48 @@ class DocumentiServiceTest {
         String prova = documentiService.emailProvaHtml("Prova");
         assertTrue(prova.contains("Gentile Prova"));
         assertTrue(prova.contains("email di prova"));
+    }
+
+    @Test
+    void riepilogoFamiglia_corsiDeiFigliConTotaliDellAnno() throws IOException {
+        // genitore3: Allievo Canto3 al Corso di Canto e Allievo Chitarra1 al Corso di Chitarra (600 € ciascuno, 2024/2025)
+        Long genitoreId = genitoreService.findByUsername("genitore3").orElseThrow().getId();
+        assertEquals(List.of("2024/2025"), pagamentoService.anniDellaFamiglia(genitoreId));
+        PagamentoService.RigaPagamento chitarra = pagamentoService.righePagamentiDeiFigli("genitore3").stream()
+            .filter(r -> r.corso().getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Long corsoId = chitarra.corso().getId();
+        Long allievoId = chitarra.allievo().getId();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("100"));
+        rata.setMetodo(MetodoPagamento.CASSA);
+        pagamentoService.salva(corsoId, allievoId, rata);
+        try {
+            PagamentoService.RiepilogoFamiglia riepilogo = pagamentoService.riepilogoFamiglia(genitoreId, "2024/2025");
+            assertEquals(2, riepilogo.righe().size());
+            assertEquals(0, new BigDecimal("1200").compareTo(riepilogo.quota()));
+            assertEquals(0, new BigDecimal("1100").compareTo(riepilogo.residuo()));
+            assertTrue(pagamentoService.riepilogoFamiglia(genitoreId, "2023/2024").righe().isEmpty());
+
+            DocumentiService.Pdf pdf = documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "genitore3");
+            assertEquals("riepilogo-famiglia-genitore3-cognome3-2024-2025.pdf", pdf.nomeFile());
+            String testo = testo(pdf.contenuto());
+            assertTrue(testo.contains("Riepilogo famiglia"), testo);
+            assertTrue(testo.contains("Anno scolastico 2024/2025"), testo);
+            assertTrue(testo.contains("Allievo Canto3"), testo);
+            assertTrue(testo.contains("Allievo Chitarra1"), testo);
+            assertTrue(testo.contains("1.200,00 €"), testo);
+            assertTrue(testo.contains("1.100,00 €"), testo);
+
+            // Admin e segreteria ogni famiglia, il genitore solo la propria
+            documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "segreteria");
+            documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "admin");
+            assertThrows(IllegalArgumentException.class, () -> documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "genitore1"));
+            assertThrows(IllegalArgumentException.class, () -> documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "insegnante1"));
+            assertThrows(IllegalArgumentException.class, () -> documentiService.riepilogoFamigliaPer(-1L, "2024/2025", "admin"));
+        } finally {
+            pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
+        }
     }
 
     private Iscrizione iscrizione() {
