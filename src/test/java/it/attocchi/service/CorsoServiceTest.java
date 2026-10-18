@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest
 class CorsoServiceTest {
+
+    @Autowired
+    private InsegnanteService insegnanteService;
 
     @Autowired
     private FestivitaService festivitaService;
@@ -83,6 +87,50 @@ class CorsoServiceTest {
         assertTrue(date.containsAll(List.of(LocalDate.of(2024, 12, 19), LocalDate.of(2025, 1, 2))));
         CalendarioFestivita festivita = festivitaService.calendario();
         assertTrue(date.stream().noneMatch(festivita::festivo));
+    }
+
+    @Test
+    void secondoInsegnante_aggiornaSoloLeLezioniDaFare() {
+        Corso canto = corso("Corso di Canto");
+        corsoService.generaLezioni(canto);
+        Insegnante maria = canto.getInsegnante();
+        Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        Lezione prima = lezioneService.findByCorso(canto.getId()).getFirst();
+        assertEquals(Set.of(maria), prima.getInsegnantiPresenti());
+        prima.setCompletata(true);
+        lezioneService.save(prima);
+
+        canto.setSecondoInsegnante(maria);
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto));
+        canto.setSecondoInsegnante(marco);
+        corsoService.save(canto);
+        try {
+            List<Lezione> lezioni = lezioneService.findByCorso(canto.getId());
+            assertEquals(Set.of(maria), lezioni.getFirst().getInsegnantiPresenti());
+            assertTrue(lezioni.stream().skip(1).allMatch(l -> l.getInsegnantiPresenti().equals(Set.of(maria, marco))));
+            assertEquals("Maria Verdi, Marco Rossi", corso("Corso di Canto").getNomiInsegnanti());
+        } finally {
+            Corso ripristino = corso("Corso di Canto");
+            ripristino.setSecondoInsegnante(null);
+            corsoService.save(ripristino);
+            Lezione completata = lezioneService.findById(prima.getId());
+            completata.setCompletata(false);
+            lezioneService.save(completata);
+        }
+        assertTrue(lezioneService.findByCorso(canto.getId()).stream()
+            .allMatch(l -> l.getInsegnantiPresenti().equals(Set.of(maria))));
+    }
+
+    @Test
+    void avvio_completaLeLezioniSenzaInsegnanti() {
+        Corso chitarra = corso("Corso di Chitarra");
+        Lezione lezione = lezioneService.findByCorso(chitarra.getId()).getFirst();
+        lezione.getInsegnantiPresenti().clear();
+        lezioneService.save(lezione);
+
+        assertEquals(1, lezioneService.completaInsegnantiPresenti());
+        assertEquals(Set.of(chitarra.getInsegnante()), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
+        assertEquals(0, lezioneService.completaInsegnantiPresenti());
     }
 
     private Corso corso(String nome) {

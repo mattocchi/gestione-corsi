@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,6 +42,17 @@ public class LezioneService {
 
     public List<Lezione> findAll() {
         return lezioneRepository.findAll();
+    }
+
+    /**
+     * Registra gli insegnanti del corso sulle lezioni che non ne hanno (dati creati prima dei due insegnanti per
+     * corso). Idempotente: chiamato a ogni avvio da {@code InsegnantiPresentiIniziali}. Restituisce le lezioni aggiornate.
+     */
+    @Transactional
+    public int completaInsegnantiPresenti() {
+        List<Lezione> senza = lezioneRepository.findSenzaInsegnantiPresenti();
+        senza.forEach(lezione -> lezione.setInsegnantiPresenti(new HashSet<>(lezione.getCorso().getInsegnanti())));
+        return senza.size();
     }
 
     public Lezione findById(Long id) {
@@ -142,6 +154,7 @@ public class LezioneService {
         lezione.setCorso(corso);
         lezione.setData(data);
         lezione.setAggiunta(true);
+        lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
         if (recuperoDiId != null) {
             Lezione saltata = lezioneRepository.findById(recuperoDiId)
                 .orElseThrow(() -> new IllegalArgumentException("Lezione non trovata: " + recuperoDiId));

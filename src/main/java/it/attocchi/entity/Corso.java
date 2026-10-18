@@ -8,7 +8,9 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,6 +58,11 @@ public class Corso {
     @ManyToOne
     @JoinColumn(name = "insegnante_id")
     private Insegnante insegnante;
+
+    /** Secondo insegnante facoltativo, con gli stessi diritti del titolare. */
+    @ManyToOne
+    @JoinColumn(name = "secondo_insegnante_id")
+    private Insegnante secondoInsegnante;
 
     // Solo REMOVE: salvare un corso dal dialog non deve sovrascrivere le iscrizioni,
     // che si gestiscono con i metodi dedicati di CorsoService
@@ -176,6 +183,37 @@ public class Corso {
 
     public void setInsegnante(Insegnante insegnante) {
         this.insegnante = insegnante;
+    }
+
+    public Insegnante getSecondoInsegnante() {
+        return secondoInsegnante;
+    }
+
+    public void setSecondoInsegnante(Insegnante secondoInsegnante) {
+        this.secondoInsegnante = secondoInsegnante;
+    }
+
+    /** Titolare e secondo insegnante, in quest'ordine, senza quelli non assegnati. */
+    public List<Insegnante> getInsegnanti() {
+        List<Insegnante> insegnanti = new ArrayList<>();
+        if (insegnante != null) {
+            insegnanti.add(insegnante);
+        }
+        if (secondoInsegnante != null && !secondoInsegnante.equals(insegnante)) {
+            insegnanti.add(secondoInsegnante);
+        }
+        return insegnanti;
+    }
+
+    /** Nomi degli insegnanti separati da virgola, es. "Maria Verdi, Luca Bianchi" (vuoto se nessuno). */
+    public String getNomiInsegnanti() {
+        return String.join(", ", getInsegnanti().stream().map(Insegnante::getNomeCompleto).toList());
+    }
+
+    /** {@code true} se l'utente è il titolare o il secondo insegnante del corso. */
+    public boolean haInsegnante(String username) {
+        return username != null && getInsegnanti().stream()
+            .anyMatch(i -> i.getUser() != null && username.equals(i.getUser().getUsername()));
     }
 
     public Set<Iscrizione> getIscrizioni() {

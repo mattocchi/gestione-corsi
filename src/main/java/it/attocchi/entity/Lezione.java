@@ -2,6 +2,8 @@ package it.attocchi.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.BatchSize;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashSet;
@@ -33,6 +35,16 @@ public class Lezione {
 
     @OneToMany(mappedBy = "lezione", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Presenza> presenze = new HashSet<>();
+
+    /**
+     * Insegnanti presenti alla lezione: nasce con quelli del corso; le lezioni svolte li conservano anche se il corso
+     * cambia insegnanti. Serve ai costi (ognuno matura le lezioni a cui era presente).
+     */
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "lezione_insegnanti", joinColumns = @JoinColumn(name = "lezione_id"),
+        inverseJoinColumns = @JoinColumn(name = "insegnante_id"))
+    @BatchSize(size = 50)
+    private Set<Insegnante> insegnantiPresenti = new HashSet<>();
 
     @Column(name = "completata")
     private boolean completata = false;
@@ -168,6 +180,19 @@ public class Lezione {
     }
 
     /** Ancora da svolgere: né completata né non effettuata. */
+    public Set<Insegnante> getInsegnantiPresenti() {
+        return insegnantiPresenti;
+    }
+
+    public void setInsegnantiPresenti(Set<Insegnante> insegnantiPresenti) {
+        this.insegnantiPresenti = insegnantiPresenti;
+    }
+
+    /** {@code true} se l'insegnante era presente alla lezione. */
+    public boolean conInsegnante(Long insegnanteId) {
+        return insegnantiPresenti.stream().anyMatch(i -> i.getId().equals(insegnanteId));
+    }
+
     public boolean isDaFare() {
         return !completata && !nonEffettuata;
     }

@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface LezioneRepository extends JpaRepository<Lezione, Long> {
     List<Lezione> findByCorsoIdOrderByDataAsc(Long corsoId);
+
+    /** Lezioni senza insegnanti presenti registrati (create prima dei due insegnanti per corso). */
+    @Query("SELECT l FROM Lezione l WHERE l.insegnantiPresenti IS EMPTY AND l.corso.insegnante IS NOT NULL")
+    List<Lezione> findSenzaInsegnantiPresenti();
     List<Lezione> findByCorsoInsegnanteIdAndCorsoAttivoTrueOrderByDataAsc(Long insegnanteId);
     List<Lezione> findByCorsoAttivoTrueOrderByDataAsc();
     List<Lezione> findByCorsoInsegnanteIdOrderByDataAsc(Long insegnanteId);

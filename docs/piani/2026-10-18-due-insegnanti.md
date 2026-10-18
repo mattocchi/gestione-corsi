@@ -32,7 +32,7 @@ entrambi o uno solo; lo possono indicare insegnante, segreteria e admin (non all
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Modello: `Corso.secondoInsegnante`, `Lezione.insegnantiPresenti`; generazione, aggiunta e salvataggio del corso li tengono allineati; avvio che completa le lezioni esistenti | `entity/`, `CorsoService`, `LezioneService`, `InsegnantiPresentiIniziali` | test | [ ] |
+| 1 | Modello: `Corso.secondoInsegnante`, `Lezione.insegnantiPresenti`; generazione, aggiunta e salvataggio del corso li tengono allineati; avvio che completa le lezioni esistenti | `entity/`, `CorsoService`, `LezioneService`, `InsegnantiPresentiIniziali` | test | [x] |
 | 2 | Accesso del secondo insegnante: Le Mie Lezioni, corsi, dashboard, permessi | repository, `LezioneService`, `CorsoService`, `DashboardService` | test | [ ] |
 | 3 | Costi per presenza: rimborsi, proposta di rimborso, bilancio | `BilancioService`, repository | test | [ ] |
 | 4 | Presenza degli insegnanti: servizio e controllo nel dialog Gestisci Presenze | `LezioneService`, `ElencoLezioni` | test, browser | [ ] |

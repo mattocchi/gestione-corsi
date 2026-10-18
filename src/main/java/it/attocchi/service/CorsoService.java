@@ -149,7 +149,20 @@ public class CorsoService {
                 || corso.getCostoTotale() == null || preiscrizione.compareTo(corso.getCostoTotale()) > 0)) {
             throw new IllegalArgumentException("Il prezzo con pre-iscrizione deve essere tra zero e il costo totale");
         }
-        return corsoRepository.save(corso);
+        if (corso.getSecondoInsegnante() != null && corso.getSecondoInsegnante().equals(corso.getInsegnante())) {
+            throw new IllegalArgumentException("Il secondo insegnante deve essere diverso dal primo");
+        }
+        boolean insegnantiCambiati = corso.getId() != null && corsoRepository.findById(corso.getId())
+            .map(prima -> !Set.copyOf(prima.getInsegnanti()).equals(Set.copyOf(corso.getInsegnanti())))
+            .orElse(false);
+        Corso salvato = corsoRepository.save(corso);
+        if (insegnantiCambiati) {
+            // Le lezioni svolte restano a chi c'era: si aggiornano solo quelle ancora da fare
+            lezioneRepository.findByCorsoIdOrderByDataAsc(salvato.getId()).stream()
+                .filter(Lezione::isDaFare)
+                .forEach(lezione -> lezione.setInsegnantiPresenti(new HashSet<>(salvato.getInsegnanti())));
+        }
+        return salvato;
     }
 
     @Transactional
@@ -189,6 +202,7 @@ public class CorsoService {
                 numeroLezione++;
             } else if (giornoDiLezione) {
                 Lezione lezione = new Lezione(corso, dataCorrente, numeroLezione);
+                lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
                 lezione.setOrarioInizio(corso.getOrarioInizio());
                 if (corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null) {
                     lezione.setOrarioFine(corso.getOrarioInizio().plusMinutes(corso.getDurataLezioneMinuti()));
