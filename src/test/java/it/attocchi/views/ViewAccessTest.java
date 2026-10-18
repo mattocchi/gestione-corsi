@@ -2052,9 +2052,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(0, new BigDecimal("25").compareTo(insegnante.getTariffaOraria()));
         assertTrue(insegnante.getUser().getRoles().contains("INSEGNANTE"));
 
-        // Cambio password: la conferma deve coincidere
+        // Cambio password: almeno 8 caratteri e la conferma deve coincidere
         PasswordField nuova = find(PasswordField.class).withLabel("Nuova password").single();
         PasswordField conferma = find(PasswordField.class).withLabel("Conferma password").single();
+        test(nuova).setValue("corta");
+        test(conferma).setValue("corta");
+        test(find(Button.class).withText("Cambia password").single()).click();
+        assertTrue(nuova.isInvalid());
         test(nuova).setValue("nuova-segreta");
         test(conferma).setValue("diversa");
         test(find(Button.class).withText("Cambia password").single()).click();

@@ -165,14 +165,16 @@ public class ProfiloView extends VerticalLayout {
     /** Nuova password con conferma. */
     private VerticalLayout cambioPassword() {
         PasswordField nuova = new PasswordField("Nuova password");
+        nuova.setHelperText("Almeno " + UserService.PASSWORD_MINIMA + " caratteri");
         PasswordField conferma = new PasswordField("Conferma password");
         Button cambia = new Button("Cambia password", e -> {
-            nuova.setInvalid(nuova.isEmpty());
-            nuova.setErrorMessage("Inserisci la nuova password");
+            boolean lunga = nuova.getValue().length() >= UserService.PASSWORD_MINIMA;
+            nuova.setInvalid(!lunga);
+            nuova.setErrorMessage("La password deve avere almeno " + UserService.PASSWORD_MINIMA + " caratteri");
             boolean uguali = nuova.getValue().equals(conferma.getValue());
             conferma.setInvalid(!uguali);
             conferma.setErrorMessage("Le password non coincidono");
-            if (nuova.isEmpty() || !uguali) {
+            if (!lunga || !uguali) {
                 return;
             }
             try {

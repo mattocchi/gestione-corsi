@@ -55,8 +55,8 @@ public class UserService {
     /** Cambia la password dell'utente indicato (profilo personale). */
     @Transactional
     public void cambiaPassword(String username, String nuovaPassword) {
-        if (nuovaPassword == null || nuovaPassword.isBlank()) {
-            throw new IllegalArgumentException("La nuova password è obbligatoria");
+        if (nuovaPassword == null || nuovaPassword.length() < PASSWORD_MINIMA) {
+            throw new IllegalArgumentException("La password deve avere almeno " + PASSWORD_MINIMA + " caratteri");
         }
         utente(username).setPassword(passwordEncoder.encode(nuovaPassword));
     }
