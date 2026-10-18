@@ -26,7 +26,7 @@ insegnanti, segreteria, genitori e allievi.
 |---|---|---|---|---|
 | 1 | Costante del nome e sottotitolo; intestazione condivisa da accesso e pagine pubbliche | `MainLayout`, `LoginView`, `PaginaPubblica` | test, browser | [x] |
 | 2 | Suffisso del nome nel titolo della scheda di tutte le pagine | `LocaleItaliano`, `@PageTitle` delle pagine pubbliche | test | [x] |
-| 3 | CLAUDE.md, verifica, registro | | browser desktop/390px | [ ] |
+| 3 | CLAUDE.md, verifica, registro | | browser desktop/390px | [x] |
 
 ## Fuori ambito
 
@@ -34,3 +34,10 @@ insegnanti, segreteria, genitori e allievi.
 
 ## Registro
 
+- `./mvnw test`: tutti verdi; nuovi test su nome e sottotitolo nel login, nome nell'intestazione, titolo delle schede
+  ("Gestione Corsi | Area Corsi Mosson", "Home | Area Corsi Mosson").
+- Browser (dev, desktop): login con nome e sottotitolo, scheda "Accesso | Area Corsi Mosson"; dopo l'accesso intestazione
+  "Area Corsi Mosson", scheda "Home | …" e, navigando dal menu, "Festività | Area Corsi Mosson". Non verificato a 390px
+  (screenshot del browser instabili): il nome è più corto del precedente e il titolo dell'intestazione si accorcia già
+  con i puntini.
+- Non pushato.

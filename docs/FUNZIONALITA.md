@@ -111,5 +111,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### NOME APPLICAZIONE
 
-* [ ] rinomina in login o altre sezioni il testo "Gestione Corsi Musica" in qualcosa di più efficace per insegnanti, segreteria, genitori e allievi
+* [x] rinomina in login o altre sezioni il testo "Gestione Corsi Musica" in qualcosa di più efficace per insegnanti, segreteria, genitori e allievi _(completata 2026-10-18)_
   _Chiarimento 2026-10-18: nuovo nome "Area Corsi Mosson" in intestazione, accesso e pagine del recupero password; sottotitolo "Lezioni, presenze e pagamenti per insegnanti, segreteria, famiglie e allievi" su accesso e recupero password; titolo della scheda di ogni pagina "Pagina | Area Corsi Mosson"._
