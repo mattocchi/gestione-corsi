@@ -63,9 +63,9 @@ public class LezioneService {
         return lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId);
     }
 
-    /** Lezioni dei corsi attivi dell'insegnante: i corsi non attivi non sono visibili all'insegnante. */
+    /** Lezioni dei corsi attivi dell'insegnante (titolare o secondo): i corsi non attivi non sono visibili all'insegnante. */
     public List<Lezione> findByInsegnante(Long insegnanteId) {
-        return lezioneRepository.findByCorsoInsegnanteIdAndCorsoAttivoTrueOrderByDataAsc(insegnanteId);
+        return lezioneRepository.findDeiCorsiAttiviDellInsegnante(insegnanteId);
     }
 
     /** Lezioni di tutti i corsi attivi (vista Lezioni di admin e segreteria). */
@@ -221,7 +221,6 @@ public class LezioneService {
     }
 
     private static boolean insegnanteDelCorso(Corso corso, String username) {
-        return corso.getInsegnante() != null && corso.getInsegnante().getUser() != null
-            && username.equals(corso.getInsegnante().getUser().getUsername());
+        return corso.haInsegnante(username);
     }
 }

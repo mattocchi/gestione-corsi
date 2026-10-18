@@ -61,7 +61,7 @@ public class CorsoService {
     }
 
     public List<Corso> findByInsegnante(Long insegnanteId) {
-        return corsoRepository.findByInsegnanteId(insegnanteId);
+        return corsoRepository.findDellInsegnante(insegnanteId);
     }
 
     /** Tutti i corsi dell'allievo, anche non attivi (consultazione del genitore). */

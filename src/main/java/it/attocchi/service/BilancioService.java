@@ -153,7 +153,7 @@ public class BilancioService {
             .forEach(l -> lezioniPerCorso.computeIfAbsent(l.getCorso().getId(), k -> new ArrayList<>()).add(l));
 
         List<BilancioCorso> corsi = new ArrayList<>();
-        for (Corso corso : corsoRepository.findByInsegnanteId(insegnanteId)) {
+        for (Corso corso : corsoRepository.findDellInsegnante(insegnanteId)) {
             if (!annoScolastico.equals(corso.getAnnoScolastico())) {
                 continue;
             }

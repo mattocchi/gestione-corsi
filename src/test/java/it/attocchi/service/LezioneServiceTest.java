@@ -32,6 +32,9 @@ class LezioneServiceTest {
     private PresenzaService presenzaService;
 
     @Autowired
+    private InsegnanteService insegnanteService;
+
+    @Autowired
     private DashboardService dashboardService;
 
     @Test
@@ -131,5 +134,32 @@ class LezioneServiceTest {
     private List<Lezione> lezioniDi(String nomeCorso) {
         Corso corso = corsoService.findAll().stream().filter(c -> c.getNome().equals(nomeCorso)).findFirst().orElseThrow();
         return lezioneService.findByCorso(corso.getId());
+    }
+
+    @Test
+    void secondoInsegnante_vedeEGestisceLeLezioniDelCorso() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        var marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        assertEquals(1, dashboardService.corsiInsegnante("insegnante2"));
+        canto.setSecondoInsegnante(marco);
+        corsoService.save(canto);
+        Lezione lezione = lezioneService.findByCorso(canto.getId()).getFirst();
+        try {
+            assertEquals(2, dashboardService.corsiInsegnante("insegnante2"));
+            assertTrue(lezioneService.findByInsegnante(marco.getId()).stream()
+                .anyMatch(l -> l.getCorso().getId().equals(canto.getId())));
+            assertEquals(2, corsoService.findByInsegnante(marco.getId()).size());
+
+            lezioneService.completa(lezione.getId(), "insegnante2");
+            assertTrue(lezioneService.findById(lezione.getId()).isCompletata());
+        } finally {
+            Lezione ripristino = lezioneService.findById(lezione.getId());
+            ripristino.setCompletata(false);
+            lezioneService.save(ripristino);
+            canto.setSecondoInsegnante(null);
+            corsoService.save(canto);
+        }
+        assertEquals(1, dashboardService.corsiInsegnante("insegnante2"));
+        assertThrows(IllegalStateException.class, () -> lezioneService.completa(lezione.getId(), "insegnante2"));
     }
 }
