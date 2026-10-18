@@ -108,3 +108,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-18: titolo, campi, pulsanti ed errori in italiano; "Password dimenticata?" apre la pagina di recupero._
 * [x] implementazione della procedura di recupero password che invia un link temporaneo valido per 36ore (parametro configurabile da file di configurazione applicazione) su una pagina che permette all'utente che clicca sul link ricevuto via email di impostare una nuova password. Una volta impostata la nuova password viene visualizzata una pagina di conferma e l'utente può cliccare per andare alla login. _(completata 2026-10-18)_
   _Chiarimento 2026-10-18: richiesta con username o email (un link per ogni account con quell'email); indirizzo del link dal nuovo parametro `app.url` (APP_URL), validità `app.password-reset.validita-ore` (default 36); link monouso, una nuova richiesta annulla i precedenti, token salvato solo come hash; nuova password di almeno 8 caratteri con conferma (regola estesa al profilo); account inesistenti, senza email o disattivati: nessun invio e messaggio sempre uguale; email di avviso dopo il cambio; solo dal login, non registrate in "Email inviate"._
+
+### NOME APPLICAZIONE
+
+* [ ] rinomina in login o altre sezioni il testo "Gestione Corsi Musica" in qualcosa di più efficace per insegnanti, segreteria, genitori e allievi
