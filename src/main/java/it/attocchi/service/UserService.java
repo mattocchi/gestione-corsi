@@ -14,6 +14,10 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class UserService {
 
+    /** Lunghezza minima di una nuova password (recupero password e cambio dal profilo). */
+    public static final int PASSWORD_MINIMA = 8;
+
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 

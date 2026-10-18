@@ -122,6 +122,26 @@ public class EmailService {
         }
     }
 
+    /**
+     * Email di servizio senza allegati (recupero password, avvisi all'utente), non registrata tra gli invii: con l'SMTP
+     * non configurato è simulata. Gli errori di invio vengono scritti nel log e restituiti come {@link Esito#ERRORE}.
+     */
+    public Esito inviaMessaggio(String a, String oggetto, String corpoHtml) {
+        JavaMailSender sender = mailSender.getIfAvailable();
+        if (sender == null) {
+            log.info("Email simulata (SMTP non configurato): {} a {}", oggetto, a);
+            return Esito.SIMULATA;
+        }
+        try {
+            spedisci(sender, a, oggetto, corpoHtml, null, null);
+            log.info("Email inviata: {} a {}", oggetto, a);
+            return Esito.INVIATA;
+        } catch (Exception ex) {
+            log.warn("Email non riuscita: {} a {}", oggetto, a, ex);
+            return Esito.ERRORE;
+        }
+    }
+
     /** Destinatario dell'iscrizione, vuoto se né il genitore né l'allievo hanno un'email. */
     public Optional<Destinatario> destinatario(Long corsoId, Long allievoId) {
         return destinatario(pagamentoService.findIscrizione(corsoId, allievoId).getAllievo());

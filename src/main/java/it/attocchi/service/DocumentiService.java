@@ -159,6 +159,27 @@ public class DocumentiService {
         return render("email/test.ftlh", modello);
     }
 
+    /** Email con il link per una nuova password, valido {@code ore} ore. */
+    public String emailRecuperoPasswordHtml(String saluto, String username, String link, int ore) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("username", username);
+        modello.put("link", link);
+        modello.put("ore", ore);
+        return render("email/recupero-password.ftlh", modello);
+    }
+
+    /** Avviso all'utente dopo il cambio della password. */
+    public String emailPasswordCambiataHtml(String saluto, String username) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("username", username);
+        modello.put("dataOra", Formati.dataOra(LocalDateTime.now()));
+        return render("email/password-cambiata.ftlh", modello);
+    }
+
     /** Nome del file PDF, es. "ricevuta-corso-di-canto-mario-rossi.pdf". */
     public String nomeFile(TipoDocumento tipo, Iscrizione iscrizione) {
         String base = (tipo == TipoDocumento.RICEVUTA ? "ricevuta" : "conferma-iscrizione") + "-"
