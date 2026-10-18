@@ -37,7 +37,7 @@ entrambi o uno solo; lo possono indicare insegnante, segreteria e admin (non all
 | 3 | Costi per presenza: rimborsi, proposta di rimborso, bilancio | `BilancioService`, repository | test | [x] |
 | 4 | Presenza degli insegnanti: servizio e controllo nel dialog Gestisci Presenze | `LezioneService`, `ElencoLezioni` | test, browser | [x] |
 | 5 | Interfaccia: secondo insegnante nel dialog del corso, nomi di entrambi in Corsi, Lezioni, I miei corsi, Figli, Insegnanti, conferma PDF | viste, `DocumentiService` | test, browser desktop/390px | [x] |
-| 6 | CLAUDE.md, verifica finale, registro | | browser | [ ] |
+| 6 | CLAUDE.md, verifica finale, registro | | browser | [x] |
 
 ## Fuori ambito
 
@@ -45,3 +45,16 @@ entrambi o uno solo; lo possono indicare insegnante, segreteria e admin (non all
 
 ## Registro
 
+- `./mvnw test`: tutti verdi; nuovi test in `CorsoServiceTest` (insegnanti presenti alla generazione, secondo insegnante
+  diverso dal primo, aggiornamento solo delle lezioni da fare, completamento all'avvio), `LezioneServiceTest` (il secondo
+  insegnante vede e completa le lezioni; presenza degli insegnanti: insegnante, segreteria e admin sì, genitore e allievo
+  no, almeno uno), `BilancioServiceTest` (ognuno matura solo le lezioni a cui era presente), `ViewAccessTest` (dialog
+  del corso, scelta "Solo Rossi" in Gestisci Presenze, nessuna scelta con un solo insegnante).
+- Browser (dev, admin): dialog del corso con "Secondo insegnante" facoltativo; colonna "Maria Verdi, Marco Rossi";
+  Gestisci Presenze con "Entrambi / Solo Verdi / Solo Rossi" su desktop e a 390px (card).
+- Produzione: nuove colonna `corsi.secondo_insegnante_id` e tabella `lezione_insegnanti` create da `ddl-auto=update`;
+  al primo avvio `InsegnantiPresentiIniziali` registra l'insegnante del corso su tutte le lezioni esistenti (nessuno
+  script manuale). Rimborsi e bilancio esistenti non cambiano (con un solo insegnante il calcolo è lo stesso).
+- Incidente di processo: il commit del passo 5 conteneva all'inizio un solo file (percorso errato in `git add`),
+  corretto con un amend prima di proseguire.
+- Non pushato.
