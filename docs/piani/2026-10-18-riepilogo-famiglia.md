@@ -25,7 +25,7 @@ Una stampa di riepilogo per famiglia (per genitore) con tutti i corsi a cui sono
 |---|---|---|---|---|
 | 1 | Dati e PDF del riepilogo: anni della famiglia, righe per anno con totali, permessi, template | `IscrizioneRepository`, `PagamentoService`, `DocumentiService`, `templates/documenti/riepilogo-famiglia.ftlh`, test | `./mvnw test` | [x] |
 | 2 | Dialog "Riepilogo famiglia" (scelta anno + Scarica PDF) da Genitori e da Pagamenti del genitore | `views/RiepilogoFamigliaDialog`, `admin/GenitoriView`, `genitore/PagamentiFigliView`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
-| 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -34,3 +34,7 @@ Una stampa di riepilogo per famiglia (per genitore) con tutti i corsi a cui sono
 
 ## Registro
 
+- Passo 1: `PagamentoService.anniDellaFamiglia/riepilogoFamiglia`, `DocumentiService.riepilogoFamigliaPer` e template; test in `DocumentiServiceTest` (totali, PDF, permessi di admin, segreteria, genitore stesso, altro genitore, insegnante, genitore inesistente).
+- Passo 2: `RiepilogoFamigliaDialog` (anno proposto con `ViewSupport.filtroAnnoScolastico`: l'anno corrente se c'è, altrimenti il più recente), azione in Genitori e pulsante nei Pagamenti del genitore; test browserless per segreteria (anche genitore senza figli iscritti) e genitore. Dopo la verifica visiva del PDF le colonne degli importi sono a larghezza fissa, così restano allineate tra le tabelle dei figli.
+- Verifica finale: `./mvnw test` 163 test verdi; browser desktop (segreteria, Genitori → dialog, scarico PDF 200 application/pdf) e 390px (genitore3, Pagamenti → dialog, scarico PDF); PDF controllato a vista con quota personalizzata, pagamento e subtotale per figlio.
+- Nessuna modifica allo schema del database: in produzione basta il nuovo JAR.
