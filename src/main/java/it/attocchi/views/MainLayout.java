@@ -32,6 +32,8 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     /** Logo dell'associazione (risorsa statica, accessibile anche senza login). */
     public static final String LOGO = "images/logo-mosson.png";
     public static final String LOGO_ALT = "MOSSON Drum & Bugle Corps";
+    /** Nome dell'applicazione: intestazione, pagina di accesso e titolo delle schede del browser. */
+    public static final String NOME_APP = "Area Corsi Mosson";
 
     /** Attributo di sessione: la prima navigazione dopo il login è già avvenuta. */
     private static final String PAGINA_INIZIALE_DECISA = MainLayout.class.getName() + ".paginaInizialeDecisa";
@@ -72,7 +74,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     private void createHeader() {
-        H1 title = new H1("Gestione Corsi Musica");
+        H1 title = new H1(NOME_APP);
         // Il titolo si accorcia con i puntini invece di spingere fuori il pulsante Logout
         title.addClassNames("grow text-(length:--aura-font-size-l) m-0 min-w-0 truncate");
 

@@ -24,7 +24,7 @@ insegnanti, segreteria, genitori e allievi.
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Costante del nome e sottotitolo; intestazione condivisa da accesso e pagine pubbliche | `MainLayout`, `LoginView`, `PaginaPubblica` | test, browser | [ ] |
+| 1 | Costante del nome e sottotitolo; intestazione condivisa da accesso e pagine pubbliche | `MainLayout`, `LoginView`, `PaginaPubblica` | test, browser | [x] |
 | 2 | Suffisso del nome nel titolo della scheda di tutte le pagine | `LocaleItaliano`, `@PageTitle` delle pagine pubbliche | test | [ ] |
 | 3 | CLAUDE.md, verifica, registro | | browser desktop/390px | [ ] |
 

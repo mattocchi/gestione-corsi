@@ -1,7 +1,5 @@
 package it.attocchi.views;
 
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -25,13 +23,8 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         login.setI18n(italiano());
         login.addForgotPasswordListener(e -> getUI().ifPresent(ui -> ui.navigate(RecuperoPasswordView.class)));
 
-        Image logo = new Image(MainLayout.LOGO, MainLayout.LOGO_ALT);
-        logo.addClassNames(Stili.LOGO, "w-[min(22rem,85vw)] max-w-full mb-3");
-
-        H1 title = new H1("Gestione Corsi Musica");
-        // Dimensione fluida tra smartphone e desktop
-        title.addClassNames("text-[length:clamp(1.5rem,1rem_+_2.5vw,2.25rem)] leading-[1.2] text-center m-0");
-        add(logo, title, login);
+        add(PaginaPubblica.intestazione());
+        add(login);
     }
 
     /** Testi del form di accesso in italiano (i default del componente sono in inglese). */

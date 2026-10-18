@@ -15,7 +15,9 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
@@ -1141,6 +1143,21 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         assertEquals(quante - 1, festivita.size());
         assertTrue(festivitaService.elenco().stream().noneMatch(f -> f.getNome().equals("Da eliminare")));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void login_mostraNomeESottotitolo() {
+        navigate(LoginView.class);
+        assertEquals("Area Corsi Mosson", find(H1.class).single().getText());
+        assertTrue(find(Paragraph.class).all().stream().anyMatch(p -> p.getText().equals(PaginaPubblica.SOTTOTITOLO)));
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    void intestazione_mostraIlNomeDellApplicazione() {
+        navigate(HomeView.class);
+        assertTrue(find(H1.class).all().stream().anyMatch(h -> h.getText().equals("Area Corsi Mosson")));
     }
 
     @Test
