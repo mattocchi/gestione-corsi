@@ -126,3 +126,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### RIEPILOGO FAMIGLIA
 
 * [ ] Puoi preparare una stampa di riepilogo per famiglia, quindi per genitore in cui riepilogo tutti i corsi a cui i figli sono iscritti e il totale della spesa.
+  _Chiarimento 2026-10-18: PDF per anno scolastico (scelto tra quelli dei corsi dei figli, attivi o no) con figlio, corso, quota, pagato e residuo, subtotale per figlio e totali della famiglia; lo scaricano admin e segreteria da "Genitori" e il genitore il proprio da "Pagamenti"; niente invio email._
