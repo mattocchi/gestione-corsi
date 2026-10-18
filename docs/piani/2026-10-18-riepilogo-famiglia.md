@@ -24,7 +24,7 @@ Una stampa di riepilogo per famiglia (per genitore) con tutti i corsi a cui sono
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Dati e PDF del riepilogo: anni della famiglia, righe per anno con totali, permessi, template | `IscrizioneRepository`, `PagamentoService`, `DocumentiService`, `templates/documenti/riepilogo-famiglia.ftlh`, test | `./mvnw test` | [x] |
-| 2 | Dialog "Riepilogo famiglia" (scelta anno + Scarica PDF) da Genitori e da Pagamenti del genitore | `views/RiepilogoFamigliaDialog`, `admin/GenitoriView`, `genitore/PagamentiFigliView`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [ ] |
+| 2 | Dialog "Riepilogo famiglia" (scelta anno + Scarica PDF) da Genitori e da Pagamenti del genitore | `views/RiepilogoFamigliaDialog`, `admin/GenitoriView`, `genitore/PagamentiFigliView`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
 | 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

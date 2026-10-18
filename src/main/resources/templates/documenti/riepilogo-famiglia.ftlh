@@ -6,13 +6,17 @@
 <title>Riepilogo famiglia</title>
 <@c.stile/>
 <style>
+  table.dati.famiglia { margin-top: 4mm; }
+  table.elenco { table-layout: fixed; }
+  table.elenco th.importo, table.elenco td.importo { width: 28mm; }
   table.elenco td.corso small { color: #555; }
   table.elenco tr.subtotale td { font-weight: bold; border-bottom: none; }
+  .riquadro .totali { margin-top: 0; }
 </style>
 </head>
 <body>
 <@c.intestazione titolo="Riepilogo famiglia"/>
-<table class="dati">
+<table class="dati famiglia">
   <tr><td class="etichetta">Genitore</td><td>${genitore}</td></tr>
   <tr><td class="etichetta">Periodo</td><td>${anno}</td></tr>
 </table>

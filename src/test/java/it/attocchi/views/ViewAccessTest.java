@@ -1712,6 +1712,43 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(genitore.getUser().getRoles().contains("GENITORE"));
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_scaricaIlRiepilogoDellaFamiglia() {
+        navigate(GenitoriView.class);
+        var grid = test((Grid<Genitore>) find(Grid.class).single());
+        int genitore3 = IntStream.range(0, grid.size())
+            .filter(r -> grid.getRow(r).getUser().getUsername().equals("genitore3")).findFirst().orElseThrow();
+        test(pulsante(grid.getCellComponent(genitore3, 5), "Riepilogo famiglia")).click();
+
+        Dialog dialog = find(Dialog.class).single();
+        assertEquals("2024/2025", find(ComboBox.class).from(dialog).withLabel("Anno scolastico").single().getValue());
+        com.vaadin.flow.component.html.Anchor link = find(com.vaadin.flow.component.html.Anchor.class).from(dialog).single();
+        assertFalse(link.getHref().isBlank());
+        assertTrue(find(Button.class).from(dialog).withText("Scarica PDF").exists());
+        test(find(Button.class).from(dialog).withText("Chiudi").single()).click();
+
+        // Genitore senza figli iscritti: solo il messaggio
+        int genitore9 = IntStream.range(0, grid.size())
+            .filter(r -> grid.getRow(r).getUser().getUsername().equals("genitore9")).findFirst().orElseThrow();
+        test(pulsante(grid.getCellComponent(genitore9, 5), "Riepilogo famiglia")).click();
+        Dialog vuoto = find(Dialog.class).single();
+        assertTrue(find(Paragraph.class).from(vuoto).all().stream().anyMatch(p -> p.getText().contains("è iscritto a un corso")));
+        assertFalse(find(Button.class).from(vuoto).withText("Scarica PDF").exists());
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_scaricaIlProprioRiepilogoDallaPaginaPagamenti() {
+        navigate(PagamentiFigliView.class);
+        test(find(Button.class).withText("Riepilogo famiglia").single()).click();
+        Dialog dialog = find(Dialog.class).single();
+        assertEquals("2024/2025", find(ComboBox.class).from(dialog).withLabel("Anno scolastico").single().getValue());
+        assertTrue(find(Paragraph.class).from(dialog).all().stream().anyMatch(p -> p.getText().contains("Genitore3 Cognome3")));
+        assertFalse(find(com.vaadin.flow.component.html.Anchor.class).from(dialog).single().getHref().isBlank());
+    }
+
     private static void assertAzioni(Component azioni, String... etichette) {
         assertEquals(List.of(etichette), azioni.getChildren()
             .map(c -> c.getElement().getAttribute("aria-label")).toList());

@@ -21,6 +21,7 @@ import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RiepilogoFamigliaDialog;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -68,7 +69,8 @@ public class GenitoriView extends VerticalLayout {
     }
 
     private HorizontalLayout createActions(Genitore genitore) {
-        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)));
+        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)),
+            ViewSupport.iconButton(VaadinIcon.FILE_TEXT_O, "Riepilogo famiglia", e -> RiepilogoFamigliaDialog.apri(genitore)));
     }
 
     private void openDialog(Genitore genitore) {
