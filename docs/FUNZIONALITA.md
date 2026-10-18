@@ -113,3 +113,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] rinomina in login o altre sezioni il testo "Gestione Corsi Musica" in qualcosa di più efficace per insegnanti, segreteria, genitori e allievi _(completata 2026-10-18)_
   _Chiarimento 2026-10-18: nuovo nome "Area Corsi Mosson" in intestazione, accesso e pagine del recupero password; sottotitolo "Lezioni, presenze e pagamenti per insegnanti, segreteria, famiglie e allievi" su accesso e recupero password; titolo della scheda di ogni pagina "Pagina | Area Corsi Mosson"._
+
+### INSEGNANTI DEL CORSO
+
+* [ ] aggiunti funzionalità per assegnare fino a due insegnanti ad un corso
+* [ ] e la possibilità di indicare nella lezione se sono presenti entrambi o uno dei due
+* [ ] chi può indicare se erano presenti gli insegnanti è il ruolo insegnante, segreteria, o admin (non allievi o genitori).
