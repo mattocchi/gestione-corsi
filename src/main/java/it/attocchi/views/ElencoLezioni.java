@@ -132,7 +132,7 @@ public class ElencoLezioni extends VerticalLayout {
 
     private void configureGrid() {
         gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
-        var insegnante = gridLezioni.addColumn(ElencoLezioni::insegnante).setHeader("Insegnante").setSortable(true);
+        var insegnante = gridLezioni.addColumn(ElencoLezioni::insegnante).setHeader("Insegnanti").setSortable(true);
         insegnante.setVisible(tuttiICorsi);
         // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
         gridLezioni.addComponentColumn(this::createData).setHeader("Data")
@@ -151,7 +151,7 @@ public class ElencoLezioni extends VerticalLayout {
             .titolo(l -> l.getCorso().getNome())
             .stato(this::createStatoBadge)
             .campo("Data", this::createData)
-            .campo("Insegnante", l -> tuttiICorsi ? insegnante(l) : null)
+            .campo("Insegnanti", l -> tuttiICorsi ? insegnante(l) : null)
             .campo("N. Lezione", ElencoLezioni::numero)
             .campo("Orario", Lezione::getOrarioInizio)
             .azioni(this::createAzioni)
@@ -164,7 +164,7 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     private static String insegnante(Lezione lezione) {
-        return lezione.getCorso().getInsegnante() != null ? lezione.getCorso().getInsegnante().getNomeCompleto() : "";
+        return lezione.getCorso().getNomiInsegnanti();
     }
 
     private Div createData(Lezione lezione) {

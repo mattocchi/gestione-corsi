@@ -144,7 +144,7 @@ public class FigliView extends VerticalLayout {
 
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
-        gridCorsi.addColumn(FigliView::insegnante).setHeader("Insegnante");
+        gridCorsi.addColumn(FigliView::insegnante).setHeader("Insegnanti");
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
         PrezziCorso.aggiungiColonne(gridCorsi, situazioni);
@@ -164,7 +164,7 @@ public class FigliView extends VerticalLayout {
         CardMobile<Corso> card = CardMobile.per(gridCorsi)
             .titolo(Corso::getNome)
             .stato(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
-            .campo("Insegnante", FigliView::insegnante)
+            .campo("Insegnanti", FigliView::insegnante)
             .campo("N. Lezioni", Corso::getNumeroLezioni);
         PrezziCorso.aggiungiCampi(card, situazioni).azioni(azioni).applica();
 
@@ -177,7 +177,7 @@ public class FigliView extends VerticalLayout {
     }
 
     private static String insegnante(Corso corso) {
-        return corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "";
+        return corso.getNomiInsegnanti();
     }
 
     private void openPresenzeDialog(Allievo allievo, Corso corso) {

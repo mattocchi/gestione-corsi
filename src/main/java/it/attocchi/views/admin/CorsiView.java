@@ -128,7 +128,7 @@ public class CorsiView extends VerticalLayout {
     private void configureGrid() {
         grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
         grid.addColumn(Corso::getAnnoScolastico).setHeader("Anno").setSortable(true).setWidth("7rem").setFlexGrow(0);
-        grid.addColumn(corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "").setHeader("Insegnante");
+        grid.addColumn(Corso::getNomiInsegnanti).setHeader("Insegnanti");
         grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
@@ -141,7 +141,7 @@ public class CorsiView extends VerticalLayout {
             .titolo(Corso::getNome)
             .stato(this::createStatoBadge)
             .campo("Anno", Corso::getAnnoScolastico)
-            .campo("Insegnante", corso -> corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : null)
+            .campo("Insegnanti", Corso::getNomiInsegnanti)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti)
@@ -226,6 +226,11 @@ public class CorsiView extends VerticalLayout {
         ComboBox<Insegnante> insegnante = new ComboBox<>("Insegnante");
         insegnante.setItems(insegnanteService.findAll());
         insegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
+        ComboBox<Insegnante> secondoInsegnante = new ComboBox<>("Secondo insegnante");
+        secondoInsegnante.setItems(insegnanteService.findAll());
+        secondoInsegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
+        secondoInsegnante.setClearButtonVisible(true);
+        secondoInsegnante.setHelperText("Facoltativo: stessi diritti sul corso");
 
         binder.forField(nome).asRequired("Inserisci il nome del corso").bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
@@ -253,12 +258,16 @@ public class CorsiView extends VerticalLayout {
         });
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
+        binder.forField(secondoInsegnante)
+            .withValidator(secondo -> secondo == null || !secondo.equals(insegnante.getValue()),
+                "Il secondo insegnante deve essere diverso dal primo")
+            .bind(Corso::getSecondoInsegnante, Corso::setSecondoInsegnante);
         binder.forField(annoScolastico).asRequired("Scegli l'anno scolastico").bind(Corso::getAnnoScolastico, Corso::setAnnoScolastico);
         binder.forField(attivo).bind(Corso::isAttivo, Corso::setAttivo);
 
         binder.readBean(corso);
 
-        formLayout.add(nome, insegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, descrizione);
+        formLayout.add(nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi

@@ -36,7 +36,7 @@ entrambi o uno solo; lo possono indicare insegnante, segreteria e admin (non all
 | 2 | Accesso del secondo insegnante: Le Mie Lezioni, corsi, dashboard, permessi | repository, `LezioneService`, `CorsoService`, `DashboardService` | test | [x] |
 | 3 | Costi per presenza: rimborsi, proposta di rimborso, bilancio | `BilancioService`, repository | test | [x] |
 | 4 | Presenza degli insegnanti: servizio e controllo nel dialog Gestisci Presenze | `LezioneService`, `ElencoLezioni` | test, browser | [x] |
-| 5 | Interfaccia: secondo insegnante nel dialog del corso, nomi di entrambi in Corsi, Lezioni, I miei corsi, Figli, Insegnanti, conferma PDF | viste, `DocumentiService` | test, browser desktop/390px | [ ] |
+| 5 | Interfaccia: secondo insegnante nel dialog del corso, nomi di entrambi in Corsi, Lezioni, I miei corsi, Figli, Insegnanti, conferma PDF | viste, `DocumentiService` | test, browser desktop/390px | [x] |
 | 6 | CLAUDE.md, verifica finale, registro | | browser | [ ] |
 
 ## Fuori ambito

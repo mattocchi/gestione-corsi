@@ -56,14 +56,14 @@ public class InsegnantiView extends VerticalLayout {
             .setHeader("Email");
         grid.addColumn(insegnante -> Formati.euro(insegnante.getTariffaOraria())).setHeader("Tariffa oraria")
             .setWidth("8rem").setFlexGrow(0);
-        grid.addColumn(insegnante -> insegnante.getCorsi().size()).setHeader("N. Corsi").setWidth("6.5rem").setFlexGrow(0);
+        grid.addColumn(insegnante -> insegnante.getNumeroCorsi()).setHeader("N. Corsi").setWidth("6.5rem").setFlexGrow(0);
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
         CardMobile.per(grid)
             .titolo(Insegnante::getNomeCompleto)
             .sottotitolo(Insegnante::getSpecializzazione)
             .campo("Email", insegnante -> insegnante.getUser() != null ? insegnante.getUser().getEmail() : null)
             .campo("Tariffa oraria", insegnante -> Formati.euro(insegnante.getTariffaOraria()))
-            .campo("N. Corsi", insegnante -> insegnante.getCorsi().size())
+            .campo("N. Corsi", insegnante -> insegnante.getNumeroCorsi())
             .azioni(this::createActions)
             .applica();
 

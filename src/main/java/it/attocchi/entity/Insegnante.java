@@ -39,6 +39,10 @@ public class Insegnante implements Anagrafica {
     @OneToMany(mappedBy = "insegnante")
     private Set<Corso> corsi = new HashSet<>();
 
+    /** Corsi in cui è il secondo insegnante. */
+    @OneToMany(mappedBy = "secondoInsegnante")
+    private Set<Corso> corsiComeSecondo = new HashSet<>();
+
     // Costruttori
     public Insegnante() {
     }
@@ -126,6 +130,13 @@ public class Insegnante implements Anagrafica {
 
     public void setCorsi(Set<Corso> corsi) {
         this.corsi = corsi;
+    }
+
+    /** Corsi in cui è titolare o secondo insegnante (le collezioni vanno caricate, es. {@code findAllWithCorsi}). */
+    public int getNumeroCorsi() {
+        Set<Corso> tutti = new HashSet<>(corsi);
+        tutti.addAll(corsiComeSecondo);
+        return tutti.size();
     }
 
     public String getNomeCompleto() {

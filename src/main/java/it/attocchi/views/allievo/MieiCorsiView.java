@@ -57,7 +57,7 @@ public class MieiCorsiView extends VerticalLayout {
 
     private void configureGrid() {
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
-        gridCorsi.addColumn(MieiCorsiView::insegnante).setHeader("Insegnante");
+        gridCorsi.addColumn(MieiCorsiView::insegnante).setHeader("Insegnanti");
         gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
@@ -69,7 +69,7 @@ public class MieiCorsiView extends VerticalLayout {
 
         CardMobile<Corso> card = CardMobile.per(gridCorsi)
             .titolo(Corso::getNome)
-            .campo("Insegnante", MieiCorsiView::insegnante)
+            .campo("Insegnanti", MieiCorsiView::insegnante)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti);
@@ -82,7 +82,7 @@ public class MieiCorsiView extends VerticalLayout {
     }
 
     private static String insegnante(Corso corso) {
-        return corso.getInsegnante() != null ? corso.getInsegnante().getNomeCompleto() : "";
+        return corso.getNomiInsegnanti();
     }
 
     private void openPresenzeDialog(Corso corso) {

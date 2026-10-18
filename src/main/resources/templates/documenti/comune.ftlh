@@ -58,7 +58,7 @@
 <table class="dati">
   <tr><td class="etichetta">Corso</td><td>${corso.nome}</td></tr>
   <tr><td class="etichetta">Anno scolastico</td><td>${corso.anno}</td></tr>
-  <tr><td class="etichetta">Insegnante</td><td>${corso.insegnante}</td></tr>
+  <tr><td class="etichetta">${corso.etichettaInsegnante}</td><td>${corso.insegnante}</td></tr>
   <tr><td class="etichetta">Quota</td><td>${corso.quota}</td></tr>
 </table>
 </#macro>

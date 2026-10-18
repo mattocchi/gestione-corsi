@@ -453,6 +453,32 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_assegnaUnSecondoInsegnanteAlCorso() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+        try {
+            test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
+            ComboBox<Insegnante> secondo = find(ComboBox.class).withLabel("Secondo insegnante").single();
+            test(secondo).selectItem("Maria Verdi");
+            test(find(Button.class).withText("Salva").single()).click();
+            assertTrue(secondo.isInvalid());
+
+            test(secondo).selectItem("Marco Rossi");
+            test(find(Button.class).withText("Salva").single()).click();
+            assertEquals("Maria Verdi, Marco Rossi", corsoService.findById(corsoId).getNomiInsegnanti());
+            assertEquals("Maria Verdi, Marco Rossi", corsi.getCellText(riga(corsi, "Corso di Canto"), 2));
+        } finally {
+            Corso ripristino = corsoService.findById(corsoId);
+            ripristino.setSecondoInsegnante(null);
+            corsoService.save(ripristino);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_modificaCorsoSenzaPerdereIPartecipanti() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
