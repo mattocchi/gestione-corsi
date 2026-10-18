@@ -23,7 +23,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
         login.setAction("login");
         login.setI18n(italiano());
-        login.addForgotPasswordListener(e -> getUI().ifPresent(ui -> ui.navigate("recupero-password")));
+        login.addForgotPasswordListener(e -> getUI().ifPresent(ui -> ui.navigate(RecuperoPasswordView.class)));
 
         Image logo = new Image(MainLayout.LOGO, MainLayout.LOGO_ALT);
         logo.addClassNames(Stili.LOGO, "w-[min(22rem,85vw)] max-w-full mb-3");

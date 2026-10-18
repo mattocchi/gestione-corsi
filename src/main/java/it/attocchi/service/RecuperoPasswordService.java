@@ -144,7 +144,8 @@ public class RecuperoPasswordService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(byteCasuali);
     }
 
-    static String hash(String token) {
+    /** Hash SHA-256 (esadecimale) del token, come è salvato in database. */
+    public static String hash(String token) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);

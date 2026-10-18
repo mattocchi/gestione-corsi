@@ -37,7 +37,7 @@ nuova password, pagina di conferma con il pulsante per andare al login.
 |---|---|---|---|---|
 | 1 | Login in italiano e "Password dimenticata?" verso la pagina di recupero | `LoginView` | test, browser | [x] |
 | 2 | Entità `RecuperoPassword` (hash, utente, scadenza, uso), repository, `PasswordResetService` (richiesta, verifica, reimpostazione), configurazione `app.url` e `app.password-reset.validita-ore`, template email (link e avviso) | `entity/`, `repository/`, `service/`, `config/`, `templates/email/`, `application.properties` | test di servizio | [x] |
-| 3 | Viste pubbliche: richiesta del link, nuova password, conferma con pulsante "Vai al login" | `views/RecuperoPasswordView`, `views/NuovaPasswordView` | `ViewAccessTest`, browser desktop/390px | [ ] |
+| 3 | Viste pubbliche: richiesta del link, nuova password, conferma con pulsante "Vai al login" | `views/RecuperoPasswordView`, `views/NuovaPasswordView` | `ViewAccessTest`, browser desktop/390px | [x] |
 | 4 | Regola minima della password anche nel profilo | `ProfiloView`, `UserService` | test | [ ] |
 | 5 | CLAUDE.md, `deploy/*.env.example` (APP_URL), verifica finale, registro | | browser | [ ] |
 

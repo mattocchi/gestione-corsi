@@ -15,6 +15,7 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
@@ -36,6 +37,7 @@ import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Festivita;
+import it.attocchi.entity.RecuperoPassword;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.repository.InsegnanteRepository;
@@ -50,9 +52,11 @@ import it.attocchi.service.PresenzaService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.service.FestivitaService;
+import it.attocchi.service.RecuperoPasswordService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
 import it.attocchi.repository.InvioEmailRepository;
+import it.attocchi.repository.RecuperoPasswordRepository;
 import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.service.BilancioService;
@@ -93,6 +97,7 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -165,10 +170,76 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Autowired
     private InvioEmailRepository invioEmailRepository;
 
+    @Autowired
+    private RecuperoPasswordRepository recuperoPasswordRepository;
+
     @Test
     @WithAnonymousUser
     void anonimo_vieneRediretto_alLogin() {
         navigate("", LoginView.class);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonimo_chiedeIlLinkEVedeSempreLoStessoMessaggio() {
+        try {
+            navigate(RecuperoPasswordView.class);
+            TextField account = find(TextField.class).withLabel("Nome utente o email").single();
+            test(find(Button.class).withText("Invia link").single()).click();
+            assertTrue(account.isInvalid());
+
+            test(account).setValue("nessuno");
+            test(find(Button.class).withText("Invia link").single()).click();
+            assertEquals("Controlla la tua email", find(H2.class).single().getText());
+            assertEquals(0, recuperoPasswordRepository.count());
+
+            // Stessa route: la vista si ricrea passando da un'altra pagina
+            navigate(LoginView.class);
+            navigate(RecuperoPasswordView.class);
+            test(find(TextField.class).withLabel("Nome utente o email").single()).setValue("insegnante2");
+            test(find(Button.class).withText("Invia link").single()).click();
+            assertEquals("Controlla la tua email", find(H2.class).single().getText());
+            assertEquals(1, recuperoPasswordRepository.count());
+        } finally {
+            recuperoPasswordRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonimo_reimpostaLaPasswordDalLinkUnaSolaVolta() {
+        User user = userService.findByUsername("insegnante2");
+        String originale = user.getPassword();
+        String token = "token-vista-di-prova";
+        recuperoPasswordRepository.save(new RecuperoPassword(user, RecuperoPasswordService.hash(token),
+            LocalDateTime.now().plusHours(1)));
+        try {
+            navigate("nuova-password?token=" + token, NuovaPasswordView.class);
+            PasswordField nuova = find(PasswordField.class).withLabel("Nuova password").single();
+            PasswordField conferma = find(PasswordField.class).withLabel("Conferma password").single();
+            test(nuova).setValue("corta");
+            test(conferma).setValue("corta");
+            test(find(Button.class).withText("Salva password").single()).click();
+            assertTrue(nuova.isInvalid());
+
+            test(nuova).setValue("nuovaPassword1");
+            test(conferma).setValue("diversa12");
+            test(find(Button.class).withText("Salva password").single()).click();
+            assertTrue(conferma.isInvalid());
+
+            test(conferma).setValue("nuovaPassword1");
+            test(find(Button.class).withText("Salva password").single()).click();
+            assertInstanceOf(PasswordAggiornataView.class, getCurrentView());
+            assertTrue(passwordEncoder.matches("nuovaPassword1", userService.findByUsername("insegnante2").getPassword()));
+
+            navigate("nuova-password?token=" + token, NuovaPasswordView.class);
+            assertEquals("Link non valido", find(H2.class).single().getText());
+        } finally {
+            User ripristino = userService.findByUsername("insegnante2");
+            ripristino.setPassword(originale);
+            userService.save(ripristino, null);
+            recuperoPasswordRepository.deleteAll();
+        }
     }
 
     @Test
