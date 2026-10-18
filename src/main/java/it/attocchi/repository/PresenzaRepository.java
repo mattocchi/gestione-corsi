@@ -13,8 +13,9 @@ import java.util.Optional;
 public interface PresenzaRepository extends JpaRepository<Presenza, Long> {
     List<Presenza> findByLezioneId(Long lezioneId);
 
-    /** Numero di presenze (allievi iscritti) per lezione, per tutte le lezioni dei corsi dell'insegnante. */
-    @Query("SELECT p.lezione.id, COUNT(p) FROM Presenza p WHERE p.lezione.corso.insegnante.id = :insegnanteId GROUP BY p.lezione.id")
+    /** Numero di presenze (allievi iscritti) per lezione, per le lezioni a cui l'insegnante era presente. */
+    @Query("SELECT p.lezione.id, COUNT(p) FROM Presenza p JOIN p.lezione.insegnantiPresenti i"
+        + " WHERE i.id = :insegnanteId GROUP BY p.lezione.id")
     List<Object[]> contaPerLezione(@Param("insegnanteId") Long insegnanteId);
     List<Presenza> findByAllievoId(Long allievoId);
     Optional<Presenza> findByLezioneIdAndAllievoId(Long lezioneId, Long allievoId);

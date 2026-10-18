@@ -21,7 +21,9 @@ public interface LezioneRepository extends JpaRepository<Lezione, Long> {
         + " WHERE c.attivo = true AND (i1.id = :insegnanteId OR i2.id = :insegnanteId) ORDER BY l.data")
     List<Lezione> findDeiCorsiAttiviDellInsegnante(@Param("insegnanteId") Long insegnanteId);
     List<Lezione> findByCorsoAttivoTrueOrderByDataAsc();
-    List<Lezione> findByCorsoInsegnanteIdOrderByDataAsc(Long insegnanteId);
+    /** Lezioni a cui l'insegnante era (o sarà) presente: base dei suoi costi. */
+    @Query("SELECT l FROM Lezione l JOIN l.insegnantiPresenti i WHERE i.id = :insegnanteId ORDER BY l.data")
+    List<Lezione> findConInsegnantePresente(@Param("insegnanteId") Long insegnanteId);
     /** Lezioni dei corsi attivi dell'insegnante (titolare o secondo) con lo stato indicato. */
     @Query("SELECT COUNT(l) FROM Lezione l JOIN l.corso c LEFT JOIN c.insegnante i1 LEFT JOIN i1.user u1"
         + " LEFT JOIN c.secondoInsegnante i2 LEFT JOIN i2.user u2 WHERE c.attivo = true"

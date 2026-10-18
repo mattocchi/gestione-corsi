@@ -21,6 +21,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -28,7 +29,9 @@ import java.util.function.Predicate;
 /**
  * Costi delle lezioni degli insegnanti e mini bilancio per anno scolastico. Le lezioni sono individuali: le ore di
  * una lezione sono gli allievi iscritti alla lezione (le sue presenze, assenti compresi) × la durata del corso;
- * il costo è ore × tariffa oraria attuale. Le lezioni non effettuate non costano.
+ * il costo è ore × tariffa oraria attuale. Ogni insegnante matura solo le lezioni a cui era presente
+ * ({@code Lezione.insegnantiPresenti}): con due insegnanti presenti la lezione costa per entrambi. Le lezioni non
+ * effettuate non costano.
  */
 @Service
 @Transactional(readOnly = true)
@@ -149,11 +152,16 @@ public class BilancioService {
         Insegnante insegnante = insegnante(insegnanteId);
         Map<Long, Long> presenze = presenzePerLezione(insegnanteId);
         Map<Long, List<Lezione>> lezioniPerCorso = new HashMap<>();
-        lezioneRepository.findByCorsoInsegnanteIdOrderByDataAsc(insegnanteId)
+        lezioneRepository.findConInsegnantePresente(insegnanteId)
             .forEach(l -> lezioniPerCorso.computeIfAbsent(l.getCorso().getId(), k -> new ArrayList<>()).add(l));
 
+        // I corsi dell'insegnante e quelli di cui non lo è più ma in cui ha lezioni svolte
+        Map<Long, Corso> corsiDaConsiderare = new LinkedHashMap<>();
+        corsoRepository.findDellInsegnante(insegnanteId).forEach(c -> corsiDaConsiderare.put(c.getId(), c));
+        lezioniPerCorso.values().forEach(lezioni -> corsiDaConsiderare.putIfAbsent(lezioni.getFirst().getCorso().getId(),
+            lezioni.getFirst().getCorso()));
         List<BilancioCorso> corsi = new ArrayList<>();
-        for (Corso corso : corsoRepository.findDellInsegnante(insegnanteId)) {
+        for (Corso corso : corsiDaConsiderare.values()) {
             if (!annoScolastico.equals(corso.getAnnoScolastico())) {
                 continue;
             }
@@ -179,7 +187,7 @@ public class BilancioService {
 
     /** Minuti di insegnamento delle lezioni dell'insegnante che soddisfano il filtro (mai le non effettuate). */
     private long minutiLezioni(Long insegnanteId, Predicate<Lezione> filtro) {
-        return minuti(lezioneRepository.findByCorsoInsegnanteIdOrderByDataAsc(insegnanteId), presenzePerLezione(insegnanteId), filtro);
+        return minuti(lezioneRepository.findConInsegnantePresente(insegnanteId), presenzePerLezione(insegnanteId), filtro);
     }
 
     private static long minuti(List<Lezione> lezioni, Map<Long, Long> presenze, Predicate<Lezione> filtro) {

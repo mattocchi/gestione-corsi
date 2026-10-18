@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -113,5 +114,45 @@ class BilancioServiceTest {
             daRiaprire.setCompletata(false);
             lezioneService.save(daRiaprire);
         }
+    }
+
+    @Test
+    void dueInsegnanti_ognunoMaturaLeLezioniACuiEraPresente() {
+        Insegnante maria = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        var canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        canto.setSecondoInsegnante(marco);
+        corsoService.save(canto);
+        Lezione lezione = lezioneService.findByCorso(canto.getId()).getFirst();
+        BigDecimal marcoPrima = maturato(marco);
+        BigDecimal mariaPrima = maturato(maria);
+        // 7 allievi × 40 minuti con la tariffa di ciascuno
+        BigDecimal costoMarco = BilancioService.costo(280, marco.getTariffaOraria());
+        BigDecimal costoMaria = BilancioService.costo(280, maria.getTariffaOraria());
+        try {
+            lezioneService.completa(lezione.getId(), "admin");
+            assertEquals(marcoPrima.add(costoMarco), maturato(marco));
+            assertEquals(mariaPrima.add(costoMaria), maturato(maria));
+            assertEquals(2, bilancioService.bilancio(marco.getId(), "2024/2025").corsi().size());
+
+            // Solo Maria presente: Marco non matura la lezione
+            Lezione soloMaria = lezioneService.findById(lezione.getId());
+            soloMaria.setInsegnantiPresenti(new HashSet<>(List.of(maria)));
+            lezioneService.save(soloMaria);
+            assertEquals(marcoPrima, maturato(marco));
+            assertEquals(mariaPrima.add(costoMaria), maturato(maria));
+        } finally {
+            Lezione ripristino = lezioneService.findById(lezione.getId());
+            ripristino.setCompletata(false);
+            lezioneService.save(ripristino);
+            canto.setSecondoInsegnante(null);
+            corsoService.save(canto);
+        }
+    }
+
+    private BigDecimal maturato(Insegnante insegnante) {
+        return bilancioService.prospetto("2024/2025").stream()
+            .filter(r -> r.insegnante().getId().equals(insegnante.getId()))
+            .findFirst().orElseThrow().maturato();
     }
 }
