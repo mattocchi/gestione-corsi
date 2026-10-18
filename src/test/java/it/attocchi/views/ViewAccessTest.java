@@ -1996,6 +1996,39 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_indicaSeEranoPresentiEntrambiGliInsegnanti() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        canto.setSecondoInsegnante(marco);
+        corsoService.save(canto);
+        try {
+            apriLezioni();
+            var lezioni = test((Grid<Lezione>) find(Grid.class).single());
+            Lezione lezione = lezioni.getRow(0);
+            test((Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow()).click();
+
+            assertTrue(find(Button.class).withText("Entrambi").exists());
+            test(find(Button.class).withText("Solo Rossi").single()).click();
+            assertEquals(Set.of(marco), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
+        } finally {
+            canto.setSecondoInsegnante(null);
+            corsoService.save(canto);
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_conUnSoloInsegnanteNonVedeLaSceltaDegliInsegnanti() {
+        apriLezioni();
+        var lezioni = test((Grid<Lezione>) find(Grid.class).single());
+        test((Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow()).click();
+        assertFalse(find(Button.class).withText("Entrambi").exists());
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
     void insegnante_segnaAssenzaGiustificataConUnTocco() {
         apriLezioni();
         var lezioni = test(find(Grid.class).single());

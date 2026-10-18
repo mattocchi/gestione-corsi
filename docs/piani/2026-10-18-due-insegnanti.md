@@ -35,7 +35,7 @@ entrambi o uno solo; lo possono indicare insegnante, segreteria e admin (non all
 | 1 | Modello: `Corso.secondoInsegnante`, `Lezione.insegnantiPresenti`; generazione, aggiunta e salvataggio del corso li tengono allineati; avvio che completa le lezioni esistenti | `entity/`, `CorsoService`, `LezioneService`, `InsegnantiPresentiIniziali` | test | [x] |
 | 2 | Accesso del secondo insegnante: Le Mie Lezioni, corsi, dashboard, permessi | repository, `LezioneService`, `CorsoService`, `DashboardService` | test | [x] |
 | 3 | Costi per presenza: rimborsi, proposta di rimborso, bilancio | `BilancioService`, repository | test | [x] |
-| 4 | Presenza degli insegnanti: servizio e controllo nel dialog Gestisci Presenze | `LezioneService`, `ElencoLezioni` | test, browser | [ ] |
+| 4 | Presenza degli insegnanti: servizio e controllo nel dialog Gestisci Presenze | `LezioneService`, `ElencoLezioni` | test, browser | [x] |
 | 5 | Interfaccia: secondo insegnante nel dialog del corso, nomi di entrambi in Corsi, Lezioni, I miei corsi, Figli, Insegnanti, conferma PDF | viste, `DocumentiService` | test, browser desktop/390px | [ ] |
 | 6 | CLAUDE.md, verifica finale, registro | | browser | [ ] |
 

@@ -24,6 +24,7 @@ import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.VaadinService;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.service.CalendarioFestivita;
@@ -36,7 +37,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Lista delle lezioni con filtro per stato, badge sulla data, dialog delle presenze, lezioni non effettuate e
@@ -237,6 +240,12 @@ public class ElencoLezioni extends VerticalLayout {
             return;
         }
 
+        List<Insegnante> insegnanti = lezione.getCorso().getInsegnanti();
+        if (insegnanti.size() == 2) {
+            dialog.add(ViewSupport.sezione("Insegnanti presenti"), createInsegnantiPresenti(lezione, insegnanti),
+                ViewSupport.sezione("Allievi"));
+        }
+
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         gridPresenze.addColumn(p -> p.getAllievo().getNomeCompleto()).setHeader("Allievo");
         gridPresenze.addComponentColumn(this::createStatoPresenza).setHeader("Stato").setWidth("20rem").setFlexGrow(0);
@@ -391,6 +400,43 @@ public class ElencoLezioni extends VerticalLayout {
         dialog.close();
         updateGrid();
         Notification.show(conferma);
+    }
+
+    /** Scelta degli insegnanti presenti a una lezione di un corso con due insegnanti. */
+    private record SceltaInsegnanti(String etichetta, String descrizione, Set<Long> ids) {
+    }
+
+    /** "Entrambi / Solo X / Solo Y", salvato subito; in caso di errore torna al valore precedente. */
+    private SegmentedControl<SceltaInsegnanti> createInsegnantiPresenti(Lezione lezione, List<Insegnante> insegnanti) {
+        Insegnante primo = insegnanti.get(0);
+        Insegnante secondo = insegnanti.get(1);
+        List<SceltaInsegnanti> scelte = List.of(
+            new SceltaInsegnanti("Entrambi", "Presenti entrambi gli insegnanti", Set.of(primo.getId(), secondo.getId())),
+            new SceltaInsegnanti("Solo " + breve(primo), "Presente solo " + primo.getNomeCompleto(), Set.of(primo.getId())),
+            new SceltaInsegnanti("Solo " + breve(secondo), "Presente solo " + secondo.getNomeCompleto(), Set.of(secondo.getId())));
+        SegmentedControl<SceltaInsegnanti> controllo = new SegmentedControl<>("Insegnanti presenti", scelte,
+            SceltaInsegnanti::etichetta, SceltaInsegnanti::descrizione, null);
+        Set<Long> presenti = lezione.getInsegnantiPresenti().stream().map(Insegnante::getId).collect(Collectors.toSet());
+        scelte.stream().filter(scelta -> scelta.ids().equals(presenti)).findFirst().ifPresent(controllo::setValue);
+        controllo.addValueChangeListener(e -> {
+            if (!e.isFromClient() || e.getValue() == null) {
+                return;
+            }
+            try {
+                lezioneService.impostaInsegnantiPresenti(lezione.getId(), e.getValue().ids(), username);
+                updateGrid();
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio degli insegnanti presenti: " + ex.getMessage());
+                controllo.setValue(e.getOldValue());
+            }
+        });
+        return controllo;
+    }
+
+    /** Cognome dell'insegnante per le etichette brevi (il nome completo se manca). */
+    private static String breve(Insegnante insegnante) {
+        return insegnante.getUser() != null && insegnante.getUser().getCognome() != null
+            ? insegnante.getUser().getCognome() : insegnante.getNomeCompleto();
     }
 
     private StatoPresenzaToggle createStatoPresenza(Presenza presenza) {

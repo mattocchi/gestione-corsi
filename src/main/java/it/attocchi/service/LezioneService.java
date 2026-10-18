@@ -2,6 +2,7 @@ package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.User;
@@ -93,6 +94,29 @@ public class LezioneService {
     @Transactional
     public void delete(Lezione lezione) {
         lezioneRepository.delete(lezione);
+    }
+
+    /**
+     * Insegnanti presenti alla lezione (almeno uno, tra quelli del corso): un insegnante del corso, la segreteria o
+     * l'admin, anche dopo il completamento; non per le lezioni non effettuate né per i corsi non attivi.
+     */
+    @Transactional
+    public void impostaInsegnantiPresenti(Long lezioneId, Set<Long> insegnantiIds, String username) {
+        Lezione lezione = gestibile(lezioneId, username, false);
+        if (lezione.isNonEffettuata()) {
+            throw new IllegalStateException("La lezione non è stata effettuata");
+        }
+        List<Insegnante> delCorso = lezione.getCorso().getInsegnanti();
+        Set<Insegnante> presenti = new HashSet<>();
+        for (Insegnante insegnante : delCorso) {
+            if (insegnantiIds.contains(insegnante.getId())) {
+                presenti.add(insegnante);
+            }
+        }
+        if (presenti.isEmpty() || presenti.size() != insegnantiIds.size()) {
+            throw new IllegalArgumentException("Indica almeno uno degli insegnanti del corso");
+        }
+        lezione.setInsegnantiPresenti(presenti);
     }
 
     /** Segna svolta una lezione da fare. */

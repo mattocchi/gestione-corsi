@@ -162,4 +162,34 @@ class LezioneServiceTest {
         assertEquals(1, dashboardService.corsiInsegnante("insegnante2"));
         assertThrows(IllegalStateException.class, () -> lezioneService.completa(lezione.getId(), "insegnante2"));
     }
+
+    @Test
+    void insegnantiPresenti_soloInsegnantiDelCorsoSegreteriaEAdmin() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        var maria = canto.getInsegnante();
+        var marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        Lezione lezione = lezioneService.findByCorso(canto.getId()).getFirst();
+        // Corso con un solo insegnante: Marco non è del corso
+        assertThrows(IllegalArgumentException.class,
+            () -> lezioneService.impostaInsegnantiPresenti(lezione.getId(), Set.of(marco.getId()), "admin"));
+        canto.setSecondoInsegnante(marco);
+        corsoService.save(canto);
+        try {
+            assertThrows(IllegalStateException.class,
+                () -> lezioneService.impostaInsegnantiPresenti(lezione.getId(), Set.of(maria.getId()), "genitore1"));
+            assertThrows(IllegalStateException.class,
+                () -> lezioneService.impostaInsegnantiPresenti(lezione.getId(), Set.of(maria.getId()), "allievo_canto1"));
+            assertThrows(IllegalArgumentException.class,
+                () -> lezioneService.impostaInsegnantiPresenti(lezione.getId(), Set.of(), "admin"));
+
+            lezioneService.impostaInsegnantiPresenti(lezione.getId(), Set.of(marco.getId()), "segreteria");
+            assertEquals(Set.of(marco), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
+            lezioneService.impostaInsegnantiPresenti(lezione.getId(), Set.of(maria.getId(), marco.getId()), "insegnante1");
+            assertEquals(Set.of(maria, marco), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
+        } finally {
+            canto.setSecondoInsegnante(null);
+            corsoService.save(canto);
+        }
+        assertEquals(Set.of(maria), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
+    }
 }
