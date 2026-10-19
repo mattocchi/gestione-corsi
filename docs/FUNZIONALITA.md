@@ -136,6 +136,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-19: nuova voce di menu "Riepilogo Iscritti" per admin e segreteria, in sola lettura (Gestione Pagamenti resta com'è); filtri stato del corso (default Attivi) e anno scolastico (default corrente); compaiono anche i corsi senza iscritti; su mobile card del corso con i totali e pulsante per mostrare gli iscritti come card._
 * [x] Potrebbe essere utile utilizzare sempre una griglia con un livello di raggruppamento? _(completata 2026-10-19)_
   _Chiarimento 2026-10-19: sì, griglia ad albero (TreeGrid) con un livello: riga del corso con n. iscritti e totali di da pagare, pagato e residuo, sotto gli iscritti con allievo, genitore, da pagare, pagato, residuo e stato; corsi aperti all'avvio con "Espandi tutti / Comprimi tutti" e totale generale in fondo._
+* [ ] Nella visualizzazione di riepilogo dei corsi vorrei vedere anche il costo stimato totale per l'insegnante in modo da fare in mini bilancio preventivo tra quanto dobbiamo incassare e quanto dovremmo spendere. Per quelli in cui ho assegnato un pezzo orario all'insegnante
 
 ### ALLIEVI
 
