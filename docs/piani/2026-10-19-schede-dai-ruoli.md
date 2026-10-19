@@ -22,7 +22,7 @@ Un utente (creato con l'inserimento rapido come allievo) a cui sono stati assegn
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `SchedeRuoliService` (crea le schede mancanti con l'anagrafica copiata), salvataggio da Gestione Utenti, avvio `SchedeRuoliIniziali`, test | `service/SchedeRuoliService`, `UtentiView`, `SchedeRuoliIniziali`, test | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,7 @@ Un utente (creato con l'inserimento rapido come allievo) a cui sono stati assegn
 
 ## Registro
 
+- Passo 1: `SchedeRuoliService` (`salvaUtente`, `completaTutte`), `UtentiView` salva tramite il servizio, runner `SchedeRuoliIniziali` (`@Order(LOWEST_PRECEDENCE)`). Test: allievo dell'inserimento rapido con ruoli Insegnante e Genitore → due schede con codice fiscale e indirizzo copiati, nessun doppione, scheda conservata togliendo il ruolo; ruolo già assegnato senza scheda → creata da `completaTutte`; da Gestione Utenti il ruolo Genitore fa comparire la persona in Genitori (10 genitori). Nei test l'utente va ricaricato prima di un secondo salvataggio (come fa la UI dopo `updateGrid`).
+- Verifica finale: `./mvnw test` 183 test verdi. Nessuna modifica visibile oltre agli elenchi popolati, nessuna verifica nel browser necessaria.
+- Produzione: nessuno script SQL; al primo avvio della nuova versione l'utente segnalato riceve le schede di insegnante e genitore (il log riporta quante ne crea). Tariffa e figli vanno poi completati negli elenchi.
+- Nota: il chiarimento è stato registrato nel commit "Funzionalità" invece che nel commit del piano.
