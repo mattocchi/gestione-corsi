@@ -158,6 +158,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private GenitoreService genitoreService;
 
     @Autowired
+    private it.attocchi.repository.GenitoreRepository genitoreRepository;
+
+    @Autowired
     private AnnoScolasticoService annoScolasticoService;
 
     @Autowired
@@ -1995,6 +1998,33 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(0, utenti.size());
         cerca("");
         assertEquals(tutti, utenti.size());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_ruoloGenitoreAssegnatoCreaLaSchedaNellElencoGenitori() {
+        Allievo allievo = allievoService.creaRapido("Lia", "Ruolo", null, null);
+        try {
+            navigate(UtentiView.class);
+            var utenti = test((Grid<User>) find(Grid.class).single());
+            cerca("lia ruolo");
+            assertEquals(1, utenti.size());
+            test(pulsante(utenti.getCellComponent(0, 5), "Modifica")).click();
+            test((CheckboxGroup<String>) find(CheckboxGroup.class).withLabel("Ruoli").single()).selectItem("GENITORE");
+            test(find(Button.class).withText("Salva").single()).click();
+
+            navigate(GenitoriView.class);
+            var genitori = test((Grid<Genitore>) find(Grid.class).single());
+            assertEquals(10, genitori.size());
+            cerca("lia ruolo");
+            assertEquals(1, genitori.size());
+        } finally {
+            genitoreRepository.findByUserId(allievo.getUser().getId()).ifPresent(genitoreRepository::delete);
+            Allievo daEliminare = allievoService.findById(allievo.getId());
+            allievoService.delete(daEliminare);
+            userService.delete(daEliminare.getUser());
+        }
     }
 
     @Test

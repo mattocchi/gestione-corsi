@@ -21,7 +21,7 @@ Un utente (creato con l'inserimento rapido come allievo) a cui sono stati assegn
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `SchedeRuoliService` (crea le schede mancanti con l'anagrafica copiata), salvataggio da Gestione Utenti, avvio `SchedeRuoliIniziali`, test | `service/SchedeRuoliService`, `UtentiView`, `SchedeRuoliIniziali`, test | `./mvnw test` | [ ] |
+| 1 | `SchedeRuoliService` (crea le schede mancanti con l'anagrafica copiata), salvataggio da Gestione Utenti, avvio `SchedeRuoliIniziali`, test | `service/SchedeRuoliService`, `UtentiView`, `SchedeRuoliIniziali`, test | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

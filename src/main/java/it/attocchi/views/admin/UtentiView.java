@@ -18,6 +18,7 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.User;
+import it.attocchi.service.SchedeRuoliService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
@@ -34,11 +35,13 @@ import java.util.Arrays;
 public class UtentiView extends VerticalLayout {
 
     private final UserService userService;
+    private final SchedeRuoliService schedeRuoliService;
     private final Grid<User> grid = new Grid<>(User.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
 
-    public UtentiView(UserService userService) {
+    public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService) {
         this.userService = userService;
+        this.schedeRuoliService = schedeRuoliService;
 
         addClassNames("size-full");
         configureGrid();
@@ -117,7 +120,8 @@ public class UtentiView extends VerticalLayout {
         Button saveButton = new Button("Salva", e -> {
             try {
                 binder.writeBean(user);
-                userService.save(user, password.getValue());
+                // Con i ruoli Insegnante o Genitore crea anche la scheda che manca, così compare in quegli elenchi
+                schedeRuoliService.salvaUtente(user, password.getValue());
                 updateGrid();
                 dialog.close();
                 Notification.show("Utente salvato con successo");
