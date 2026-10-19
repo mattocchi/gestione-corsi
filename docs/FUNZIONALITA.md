@@ -152,3 +152,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### RICERCA RAPIDA
 
 * [ ] in admin e segreteria aggiungi una ricerca rapida per utenti, insegnanti, genitori, allievi, nelle liste in modo da cercare velocemente un nome, inserendo un testo cerca nei campi dell'oggetto dell'elenco
+  _Chiarimento 2026-10-19: campo "Cerca" sopra la tabella che filtra mentre si scrive ("N di M"), in tutti i dati della persona e nei collegamenti mostrati, senza distinguere maiuscole e accenti, con più parole tutte richieste; anche in Gestione Corsi e Riepilogo Iscritti._
