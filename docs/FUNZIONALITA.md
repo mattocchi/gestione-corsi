@@ -143,3 +143,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-19: il genitore diventa solo facoltativo (nessun flag "adulto"); senza genitore ricevute, conferme ed email vanno all'allievo._
 * [x] INSERIMENTO RAPIDO ALLIEVO SE NON ESISTE (NOME E COGNOME), in modo da insere direttamente sul corso le persone e poi completare le informazioni _(completata 2026-10-19)_
   _Chiarimento 2026-10-19: in Partecipanti si scrive il nome nel campo "Aggiungi un allievo"; se non esiste si apre un mini-form con nome e cognome (obbligatori), email e telefono (facoltativi); Salva crea l'allievo (utente disattivato, senza genitore) e lo iscrive al corso; se esiste un omonimo lo segnala e permette di iscrivere quello esistente o crearne comunque uno nuovo; il resto si completa da Gestione Allievi._
+
+### GIORNI DEGLI ALLIEVI
+
+* [ ] ho un caso di corso con due giorni a settimana e due allievi, ma un giorno fa un allievo e un giorno fa l'altro allievo. puoi implementare questa funzioanlità per gestirlo?
