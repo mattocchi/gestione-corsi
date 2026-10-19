@@ -153,3 +153,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] in admin e segreteria aggiungi una ricerca rapida per utenti, insegnanti, genitori, allievi, nelle liste in modo da cercare velocemente un nome, inserendo un testo cerca nei campi dell'oggetto dell'elenco _(completata 2026-10-19)_
   _Chiarimento 2026-10-19: campo "Cerca" sopra la tabella che filtra mentre si scrive ("N di M"), in tutti i dati della persona e nei collegamenti mostrati, senza distinguere maiuscole e accenti, con più parole tutte richieste; anche in Gestione Corsi e Riepilogo Iscritti._
+
+### SCHEDE DAI RUOLI
+
+* [ ] ad un utente, che era inserito come allievo rapido, ho aasegnato il ruolo insegnante e genitore, ma non lo trovo negli elenco insegnante e genitori, sia che sia attivo che non
+  _Chiarimento 2026-10-19: salvando l'utente in Gestione Utenti con il ruolo INSEGNANTE o GENITORE, se manca la scheda viene creata in automatico (togliere il ruolo non la cancella); i dati anagrafici sono copiati da una scheda già esistente dello stesso utente (allievo, insegnante o genitore); all'avvio si creano le schede mancanti per chi ha già il ruolo._
