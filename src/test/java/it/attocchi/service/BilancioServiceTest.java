@@ -150,6 +150,35 @@ class BilancioServiceTest {
         }
     }
 
+    @Test
+    void costiPrevistiPerCorso_comeNelBilancioSoloConTariffa() {
+        Insegnante maria = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        var canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        var costi = bilancioService.costiPrevistiPerCorso();
+        assertEquals(new BigDecimal("3500.00"), costi.get(canto.getId()));
+        // Ogni corso ha la somma dei costi previsti dei suoi insegnanti con tariffa, come nei loro bilanci
+        for (var corso : corsoService.findAll().stream().filter(c -> c.getAnnoScolastico() != null).toList()) {
+            BigDecimal atteso = insegnanteService.findAll().stream()
+                .filter(BilancioService::haTariffa)
+                .flatMap(i -> bilancioService.bilancio(i.getId(), corso.getAnnoScolastico()).corsi().stream())
+                .filter(b -> b.corso().getId().equals(corso.getId()))
+                .map(BilancioCorso::costoPrevisto)
+                .reduce(null, (a, b) -> a == null ? b : a.add(b));
+            assertEquals(atteso, costi.get(corso.getId()), corso.getNome());
+        }
+
+        BigDecimal tariffa = maria.getTariffaOraria();
+        maria.setTariffaOraria(null);
+        insegnanteService.save(maria);
+        try {
+            assertFalse(bilancioService.costiPrevistiPerCorso().containsKey(canto.getId()));
+        } finally {
+            Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
+            ripristino.setTariffaOraria(tariffa);
+            insegnanteService.save(ripristino);
+        }
+    }
+
     private BigDecimal maturato(Insegnante insegnante) {
         return bilancioService.prospetto("2024/2025").stream()
             .filter(r -> r.insegnante().getId().equals(insegnante.getId()))

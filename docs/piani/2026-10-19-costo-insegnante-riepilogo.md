@@ -21,7 +21,7 @@ Nel Riepilogo Iscritti vedere anche il costo stimato dell'insegnante per ogni co
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `BilancioService.costiPrevistiPerCorso()` (calcolo del costo previsto estratto e condiviso con `bilancio`), conteggio iscritti per corso, test | `service/BilancioService`, `repository/IscrizioneRepository`, `BilancioServiceTest` | `./mvnw test` | [ ] |
+| 1 | `BilancioService.costiPrevistiPerCorso()` (calcolo del costo previsto estratto e condiviso con `bilancio`), conteggio iscritti per corso, test | `service/BilancioService`, `repository/IscrizioneRepository`, `BilancioServiceTest` | `./mvnw test` | [x] |
 | 2 | Riepilogo Iscritti: colonne Costo insegnante e Margine previsto, totali, card mobile, test | `views/admin/RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test`, browser | [ ] |
 | 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 

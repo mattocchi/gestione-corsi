@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -53,7 +54,7 @@ public class BilancioService {
     public record Bilancio(Insegnante insegnante, String annoScolastico, List<BilancioCorso> corsi, BigDecimal rimborsato) {
 
         public boolean senzaTariffa() {
-            return insegnante.getTariffaOraria() == null || insegnante.getTariffaOraria().signum() == 0;
+            return !haTariffa(insegnante);
         }
 
         public BigDecimal incassato() {
@@ -119,6 +120,36 @@ public class BilancioService {
         return tariffaOraria.multiply(BigDecimal.valueOf(minuti)).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
     }
 
+    /** {@code true} se l'insegnante ha una tariffa oraria maggiore di zero. */
+    public static boolean haTariffa(Insegnante insegnante) {
+        return insegnante.getTariffaOraria() != null && insegnante.getTariffaOraria().signum() > 0;
+    }
+
+    /**
+     * Costo previsto degli insegnanti per corso (id del corso → costo), come nel {@link #bilancio}: somma i costi
+     * previsti di ogni insegnante con tariffa sui corsi di cui è insegnante o in cui ha lezioni. I corsi senza
+     * nessun insegnante con tariffa non compaiono.
+     */
+    public Map<Long, BigDecimal> costiPrevistiPerCorso() {
+        Map<Long, Long> iscritti = new HashMap<>();
+        for (Object[] riga : iscrizioneRepository.contaPerCorso()) {
+            iscritti.put((Long) riga[0], (Long) riga[1]);
+        }
+        Map<Long, BigDecimal> costi = new HashMap<>();
+        for (Insegnante insegnante : insegnanteRepository.findAll()) {
+            if (!haTariffa(insegnante)) {
+                continue;
+            }
+            Map<Long, Long> presenze = presenzePerLezione(insegnante.getId());
+            Map<Long, List<Lezione>> lezioniPerCorso = lezioniPerCorso(insegnante.getId());
+            for (Corso corso : corsiDaConsiderare(insegnante.getId(), lezioniPerCorso)) {
+                costi.merge(corso.getId(), costoPrevisto(corso, lezioniPerCorso.getOrDefault(corso.getId(), List.of()),
+                    presenze, iscritti.getOrDefault(corso.getId(), 0L), insegnante.getTariffaOraria()), BigDecimal::add);
+            }
+        }
+        return costi;
+    }
+
     /** Prospetto per anno scolastico: una riga per insegnante, in ordine di nome. */
     public List<RigaRimborsi> prospetto(String annoScolastico) {
         Map<Long, BigDecimal> rimborsato = new HashMap<>();
@@ -151,17 +182,9 @@ public class BilancioService {
     public Bilancio bilancio(Long insegnanteId, String annoScolastico) {
         Insegnante insegnante = insegnante(insegnanteId);
         Map<Long, Long> presenze = presenzePerLezione(insegnanteId);
-        Map<Long, List<Lezione>> lezioniPerCorso = new HashMap<>();
-        lezioneRepository.findConInsegnantePresente(insegnanteId)
-            .forEach(l -> lezioniPerCorso.computeIfAbsent(l.getCorso().getId(), k -> new ArrayList<>()).add(l));
-
-        // I corsi dell'insegnante e quelli di cui non lo è più ma in cui ha lezioni svolte
-        Map<Long, Corso> corsiDaConsiderare = new LinkedHashMap<>();
-        corsoRepository.findDellInsegnante(insegnanteId).forEach(c -> corsiDaConsiderare.put(c.getId(), c));
-        lezioniPerCorso.values().forEach(lezioni -> corsiDaConsiderare.putIfAbsent(lezioni.getFirst().getCorso().getId(),
-            lezioni.getFirst().getCorso()));
+        Map<Long, List<Lezione>> lezioniPerCorso = lezioniPerCorso(insegnanteId);
         List<BilancioCorso> corsi = new ArrayList<>();
-        for (Corso corso : corsiDaConsiderare.values()) {
+        for (Corso corso : corsiDaConsiderare(insegnanteId, lezioniPerCorso)) {
             if (!annoScolastico.equals(corso.getAnnoScolastico())) {
                 continue;
             }
@@ -171,18 +194,44 @@ public class BilancioService {
                 .map(riga -> (BigDecimal) riga[1]).reduce(BigDecimal.ZERO, BigDecimal::add);
             List<Lezione> lezioni = lezioniPerCorso.getOrDefault(corso.getId(), List.of());
             long minutiMaturati = minuti(lezioni, presenze, Lezione::isCompletata);
-            // Senza lezioni generate il costo previsto si stima sul numero di lezioni del corso
-            long minutiPrevisti = lezioni.isEmpty()
-                ? (long) valore(corso.getNumeroLezioni()) * iscrizioni.size() * valore(corso.getDurataLezioneMinuti())
-                : minuti(lezioni, presenze, l -> !l.isNonEffettuata());
             corsi.add(new BilancioCorso(corso, iscrizioni.size(), incassato, incassoPrevisto,
-                costo(minutiMaturati, insegnante.getTariffaOraria()), costo(minutiPrevisti, insegnante.getTariffaOraria())));
+                costo(minutiMaturati, insegnante.getTariffaOraria()),
+                costoPrevisto(corso, lezioni, presenze, iscrizioni.size(), insegnante.getTariffaOraria())));
         }
         corsi.sort(Comparator.comparing(b -> b.corso().getNome()));
         BigDecimal rimborsato = rimborsoRepository.findByInsegnanteAndPeriodo(insegnanteId,
                 RimborsoService.inizioAnno(annoScolastico), RimborsoService.fineAnno(annoScolastico))
             .stream().map(Rimborso::getImporto).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new Bilancio(insegnante, annoScolastico, corsi, rimborsato);
+    }
+
+    /**
+     * Costo previsto di un insegnante su un corso: le sue lezioni non annullate; senza lezioni generate si stima
+     * sul numero di lezioni del corso per ogni iscritto.
+     */
+    private static BigDecimal costoPrevisto(Corso corso, List<Lezione> lezioni, Map<Long, Long> presenze, long iscritti,
+                                            BigDecimal tariffaOraria) {
+        long minutiPrevisti = lezioni.isEmpty()
+            ? valore(corso.getNumeroLezioni()) * iscritti * valore(corso.getDurataLezioneMinuti())
+            : minuti(lezioni, presenze, l -> !l.isNonEffettuata());
+        return costo(minutiPrevisti, tariffaOraria);
+    }
+
+    /** Lezioni a cui l'insegnante è presente, per id del corso. */
+    private Map<Long, List<Lezione>> lezioniPerCorso(Long insegnanteId) {
+        Map<Long, List<Lezione>> lezioniPerCorso = new HashMap<>();
+        lezioneRepository.findConInsegnantePresente(insegnanteId)
+            .forEach(l -> lezioniPerCorso.computeIfAbsent(l.getCorso().getId(), k -> new ArrayList<>()).add(l));
+        return lezioniPerCorso;
+    }
+
+    /** I corsi dell'insegnante e quelli di cui non lo è più ma in cui ha lezioni svolte. */
+    private Collection<Corso> corsiDaConsiderare(Long insegnanteId, Map<Long, List<Lezione>> lezioniPerCorso) {
+        Map<Long, Corso> corsi = new LinkedHashMap<>();
+        corsoRepository.findDellInsegnante(insegnanteId).forEach(c -> corsi.put(c.getId(), c));
+        lezioniPerCorso.values().forEach(lezioni -> corsi.putIfAbsent(lezioni.getFirst().getCorso().getId(),
+            lezioni.getFirst().getCorso()));
+        return corsi.values();
     }
 
     /** Minuti di insegnamento delle lezioni dell'insegnante che soddisfano il filtro (mai le non effettuate). */
