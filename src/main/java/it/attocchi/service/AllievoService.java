@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -86,6 +87,34 @@ public class AllievoService {
         userService.aggiornaContatti(allievo.getUser().getUsername(), datiUtente);
         Anagrafica.copia(dati, allievo);
         return allievo;
+    }
+
+    /**
+     * Nuovo allievo con i soli dati essenziali (inserimento rapido dai partecipanti di un corso): nome e cognome
+     * obbligatori, email e telefono facoltativi, nessun genitore; come ogni allievo creato senza username ha un
+     * utente generato e disattivato. Il resto si completa da Gestione Allievi.
+     */
+    @Transactional
+    public Allievo creaRapido(String nome, String cognome, String email, String telefono) {
+        if (nome == null || nome.isBlank() || cognome == null || cognome.isBlank()) {
+            throw new IllegalArgumentException("Nome e cognome sono obbligatori");
+        }
+        User user = new User();
+        user.setNome(nome.strip());
+        user.setCognome(cognome.strip());
+        user.setEmail(email != null && !email.isBlank() ? email.strip() : null);
+        user.setTelefono(telefono != null && !telefono.isBlank() ? telefono.strip() : null);
+        return salva(new Allievo(), user, null);
+    }
+
+    /** Allievi con lo stesso nome e cognome (senza distinguere maiuscole e spazi ai lati), per evitare doppioni. */
+    public List<Allievo> omonimi(String nome, String cognome) {
+        String n = nome != null ? nome.strip() : "";
+        String c = cognome != null ? cognome.strip() : "";
+        return allievoRepository.findAllWithCorsi().stream()
+            .filter(a -> a.getUser() != null && n.equalsIgnoreCase(Objects.toString(a.getUser().getNome(), "").strip())
+                && c.equalsIgnoreCase(Objects.toString(a.getUser().getCognome(), "").strip()))
+            .toList();
     }
 
     @Transactional
