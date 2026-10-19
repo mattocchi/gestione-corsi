@@ -176,6 +176,51 @@ class CorsoServiceTest {
         }
     }
 
+    @Test
+    void generaLezioni_numeroLezioniPerOgniAllievoNeiSuoiGiorni() {
+        // Chitarra (martedì e sabato, 30 lezioni): Chitarra1..3 solo il martedì, Chitarra4..6 solo il sabato
+        Corso chitarra = corso("Corso di Chitarra");
+        List<Allievo> allievi = java.util.stream.IntStream.rangeClosed(1, 6)
+            .mapToObj(n -> allievoService.findByUsername("allievo_chitarra" + n).orElseThrow()).toList();
+        try {
+            for (int n = 0; n < 6; n++) {
+                corsoService.impostaGiorni(chitarra.getId(), allievi.get(n).getId(),
+                    Set.of(n < 3 ? DayOfWeek.TUESDAY : DayOfWeek.SATURDAY));
+            }
+            corsoService.generaLezioni(chitarra);
+
+            List<Lezione> lezioni = lezioneService.findByCorso(chitarra.getId());
+            assertEquals(60, lezioni.size());
+            assertEquals(java.util.stream.IntStream.rangeClosed(1, 60).boxed().toList(),
+                lezioni.stream().map(Lezione::getNumeroLezione).sorted().toList());
+            lezioni.forEach(l -> assertEquals(3, presenzaService.findByLezione(l.getId()).size()));
+            for (int n = 0; n < 6; n++) {
+                Allievo allievo = allievi.get(n);
+                assertEquals(30, presenzaService.findByCorsoAndAllievo(chitarra.getId(), allievo.getId()).size());
+                assertEquals(Set.of(n < 3 ? DayOfWeek.TUESDAY : DayOfWeek.SATURDAY), giorniConPresenza(chitarra, allievo));
+            }
+
+            // Lezioni svolte conservate: contano e non si ripetono
+            Lezione prima = lezioni.getFirst();
+            prima.setCompletata(true);
+            lezioneService.save(prima);
+            corsoService.generaLezioni(chitarra);
+            List<Lezione> rigenerate = lezioneService.findByCorso(chitarra.getId());
+            assertEquals(60, rigenerate.size());
+            assertEquals(1, rigenerate.stream().filter(l -> l.getData().equals(prima.getData())).count());
+        } finally {
+            Lezione prima = lezioneService.findByCorso(chitarra.getId()).getFirst();
+            prima.setCompletata(false);
+            lezioneService.save(prima);
+            allievi.forEach(a -> corsoService.impostaGiorni(chitarra.getId(), a.getId(), Set.of()));
+            corsoService.generaLezioni(chitarra);
+        }
+        // Tutti i giorni a tutti: come prima, 30 date con tutti gli iscritti
+        List<Lezione> lezioni = lezioneService.findByCorso(chitarra.getId());
+        assertEquals(30, lezioni.size());
+        lezioni.forEach(l -> assertEquals(6, presenzaService.findByLezione(l.getId()).size()));
+    }
+
     private Set<DayOfWeek> giorniConPresenza(Corso corso, Allievo allievo) {
         return presenzaService.findByCorsoAndAllievo(corso.getId(), allievo.getId()).stream()
             .map(p -> p.getLezione().getData().getDayOfWeek()).collect(Collectors.toSet());

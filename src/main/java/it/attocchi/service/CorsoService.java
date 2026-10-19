@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -212,51 +213,80 @@ public class CorsoService {
         corsoRepository.delete(corso);
     }
 
+    /**
+     * Genera il calendario: "Numero lezioni" è il numero di lezioni di <b>ogni</b> partecipante nei suoi giorni
+     * ({@link Iscrizione#giorniEffettivi()}). Si scorrono le date dei giorni del corso, saltando le festività: una
+     * data diventa lezione se almeno un partecipante che frequenta quel giorno non ha ancora le sue lezioni, e ha
+     * le presenze solo di quei partecipanti. Senza iscritti si generano {@code numeroLezioni} date. Se tutti
+     * frequentano tutti i giorni il risultato è quello di sempre: {@code numeroLezioni} date per tutti.
+     * <p>
+     * Ricrea solo le lezioni programmate ancora da fare: restano completate, non effettuate e aggiunte a mano; le
+     * programmate conservate contano per chi frequenta quel giorno, e la loro data e il loro numero non si ripetono.
+     */
     @Transactional
     public void generaLezioni(Corso corsoDaUi) {
         Corso corso = corsoAttivo(corsoDaUi.getId());
 
-        // Ricrea solo le lezioni programmate ancora da fare: restano completate, non effettuate e aggiunte a mano,
-        // e i numeri delle programmate conservate non vengono ricreati
         List<Lezione> lezioniEsistenti = lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId());
-        Set<Integer> numeriConservati = new HashSet<>();
+        List<Lezione> conservate = new ArrayList<>();
         for (Lezione esistente : lezioniEsistenti) {
             if (esistente.isDaFare() && !esistente.isAggiunta()) {
                 lezioneRepository.delete(esistente);
             } else if (!esistente.isAggiunta()) {
-                numeriConservati.add(esistente.getNumeroLezione());
+                conservate.add(esistente);
             }
         }
+        Set<Integer> numeriConservati = new HashSet<>();
+        Set<LocalDate> dateConservate = new HashSet<>();
+        conservate.forEach(l -> {
+            numeriConservati.add(l.getNumeroLezione());
+            dateConservate.add(l.getData());
+        });
+
+        List<Iscrizione> iscrizioni = iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId());
+        int lezioniPerAllievo = corso.getNumeroLezioni() != null ? corso.getNumeroLezioni() : 0;
+        Map<Iscrizione, Integer> contate = new HashMap<>();
+        iscrizioni.forEach(i -> contate.put(i, (int) conservate.stream().filter(l -> i.frequenta(l.getData())).count()));
 
         // I giorni festivi si saltano senza consumare un numero: la fine del corso slitta
         CalendarioFestivita festivita = festivitaService.calendario();
         LocalDate dataCorrente = corso.getDataInizio();
+        LocalDate limite = corso.getDataInizio().plusYears(10);
         int numeroLezione = 1;
+        int generateSenzaIscritti = conservate.size();
 
-        while (numeroLezione <= corso.getNumeroLezioni()) {
-            boolean giornoDiLezione = corso.getGiorniSettimana().contains(dataCorrente.getDayOfWeek())
-                && !festivita.festivo(dataCorrente);
-
-            if (giornoDiLezione && numeriConservati.contains(numeroLezione)) {
-                numeroLezione++;
-            } else if (giornoDiLezione) {
-                Lezione lezione = new Lezione(corso, dataCorrente, numeroLezione);
-                lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
-                lezione.setOrarioInizio(corso.getOrarioInizio());
-                if (corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null) {
-                    lezione.setOrarioFine(corso.getOrarioInizio().plusMinutes(corso.getDurataLezioneMinuti()));
-                }
-                lezioneRepository.save(lezione);
-
-                // Crea presenze per tutti gli allievi iscritti
-                for (Allievo allievo : corso.getAllievi()) {
-                    Presenza presenza = new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE);
-                    presenzaRepository.save(presenza);
-                }
-
+        while (!dataCorrente.isAfter(limite) && !corso.getGiorniSettimana().isEmpty()) {
+            if (iscrizioni.isEmpty() ? generateSenzaIscritti >= lezioniPerAllievo
+                : contate.values().stream().allMatch(n -> n >= lezioniPerAllievo)) {
+                break;
+            }
+            LocalDate data = dataCorrente;
+            dataCorrente = dataCorrente.plusDays(1);
+            if (!corso.getGiorniSettimana().contains(data.getDayOfWeek()) || festivita.festivo(data)
+                    || dateConservate.contains(data)) {
+                continue;
+            }
+            List<Iscrizione> partecipanti = iscrizioni.stream()
+                .filter(i -> i.frequenta(data) && contate.get(i) < lezioniPerAllievo)
+                .toList();
+            if (!iscrizioni.isEmpty() && partecipanti.isEmpty()) {
+                continue;
+            }
+            while (numeriConservati.contains(numeroLezione)) {
                 numeroLezione++;
             }
-            dataCorrente = dataCorrente.plusDays(1);
+            Lezione lezione = new Lezione(corso, data, numeroLezione++);
+            lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
+            lezione.setOrarioInizio(corso.getOrarioInizio());
+            if (corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null) {
+                lezione.setOrarioFine(corso.getOrarioInizio().plusMinutes(corso.getDurataLezioneMinuti()));
+            }
+            lezioneRepository.save(lezione);
+            generateSenzaIscritti++;
+            for (Iscrizione iscrizione : partecipanti) {
+                presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+                contate.merge(iscrizione, 1, Integer::sum);
+            }
         }
     }
 }

@@ -185,6 +185,7 @@ public class CorsiView extends VerticalLayout {
         TextArea descrizione = new TextArea("Descrizione");
         DatePicker dataInizio = ViewSupport.datePicker("Data Inizio");
         IntegerField numeroLezioni = new IntegerField("Numero Lezioni");
+        numeroLezioni.setHelperText("Per ogni allievo, nei giorni che frequenta");
         IntegerField durataLezioni = new IntegerField("Durata Lezione (minuti)");
         TimePicker orarioInizio = ViewSupport.timePicker("Orario Inizio");
         BigDecimalField costoTotale = new BigDecimalField("Costo Totale");
