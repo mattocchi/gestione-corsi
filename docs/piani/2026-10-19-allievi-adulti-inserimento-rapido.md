@@ -25,7 +25,7 @@ Genitore non obbligatorio, perché alcuni allievi sono adulti ([F-2026-10-19/ALL
 | 1 | Genitore facoltativo nel form dell'allievo | `admin/AllieviView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | Servizio: creazione rapida (nome, cognome, email, telefono) e ricerca omonimi | `AllievoService`, test | `./mvnw test` | [x] |
 | 3 | Partecipanti: nome non trovato → mini-form "Nuovo allievo" (omonimi, crea e iscrive) | `admin/PartecipantiDialog`, `admin/NuovoAllievoRapidoDialog`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
-| 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -34,3 +34,8 @@ Genitore non obbligatorio, perché alcuni allievi sono adulti ([F-2026-10-19/ALL
 
 ## Registro
 
+- Passo 1: genitore facoltativo in `AllieviView` (pulsante per svuotarlo, aiuto "Lascia vuoto per gli allievi adulti"); test aggiornato e nuovo test di creazione dell'allievo adulto.
+- Passo 2: `AllievoService.creaRapido` e `omonimi`, test in `AllievoServiceTest`.
+- Passo 3: `NuovoAllievoRapidoDialog` e valore personalizzato nella ComboBox di `PartecipantiDialog`; test browserless (creazione con email non valida rifiutata, poi creata e iscritta; omonimo proposto e iscritto; omonimo già iscritto non proposto). Nel test, l'allievo va ricaricato prima di eliminarlo: la copia letta prima ha ancora l'iscrizione appena rimossa.
+- Verifica finale: `./mvnw test` 171 test verdi; browser desktop (Partecipanti di Canto: "Paolo Adulto" + Invio → mini-form → Crea e iscrivi → nell'elenco; in Gestione Allievi con badge "Dati mancanti"; un nome già presente nell'elenco con Invio viene selezionato, non creato) e 390px (mini-form senza scorrimento orizzontale).
+- Produzione: nessuno script SQL; `allievi.genitore_id` è già nullable (mai dichiarato `nullable = false`).
