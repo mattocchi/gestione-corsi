@@ -155,15 +155,16 @@ public class LezioneService {
         Set<Long> conPresenza = presenzaRepository.findByLezioneId(lezioneId).stream()
             .map(p -> p.getAllievo().getId()).collect(Collectors.toSet());
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(lezione.getCorso().getId())) {
-            if (!conPresenza.contains(iscrizione.getAllievo().getId())) {
+            if (!conPresenza.contains(iscrizione.getAllievo().getId()) && iscrizione.frequenta(lezione.getData())) {
                 presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
             }
         }
     }
 
     /**
-     * Aggiunge una lezione al corso con le presenze dei partecipanti attuali (Presente). Con {@code recuperoDiId}
-     * è il recupero di quella lezione non effettuata e ne prende il numero, altrimenti il successivo all'ultimo.
+     * Aggiunge una lezione al corso con le presenze (Presente) dei partecipanti che frequentano quel giorno (tutti se
+     * non è un giorno del corso). Con {@code recuperoDiId} è il recupero di quella lezione non effettuata, ne prende
+     * il numero e le presenze vanno a chi aveva la lezione saltata; altrimenti il numero è il successivo all'ultimo.
      * Senza orario usa quello del corso.
      */
     @Transactional
@@ -179,6 +180,7 @@ public class LezioneService {
         lezione.setData(data);
         lezione.setAggiunta(true);
         lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
+        Set<Long> diChiRecupera = null;
         if (recuperoDiId != null) {
             Lezione saltata = lezioneRepository.findById(recuperoDiId)
                 .orElseThrow(() -> new IllegalArgumentException("Lezione non trovata: " + recuperoDiId));
@@ -190,6 +192,8 @@ public class LezioneService {
             }
             lezione.setRecuperoDi(saltata);
             lezione.setNumeroLezione(saltata.getNumeroLezione());
+            diChiRecupera = presenzaRepository.findByLezioneId(recuperoDiId).stream()
+                .map(p -> p.getAllievo().getId()).collect(Collectors.toSet());
         } else {
             Integer massimo = lezioneRepository.findMaxNumeroLezione(corsoId);
             lezione.setNumeroLezione(massimo == null ? 1 : massimo + 1);
@@ -200,8 +204,14 @@ public class LezioneService {
             lezione.setOrarioFine(inizio.plusMinutes(corso.getDurataLezioneMinuti()));
         }
         Lezione salvata = lezioneRepository.save(lezione);
+        // Un recupero è di chi aveva la lezione saltata; le altre di chi frequenta quel giorno (tutti se non è un giorno del corso)
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(corsoId)) {
-            presenzaRepository.save(new Presenza(salvata, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+            boolean partecipa = diChiRecupera != null
+                ? diChiRecupera.contains(iscrizione.getAllievo().getId())
+                : iscrizione.frequenta(data);
+            if (partecipa) {
+                presenzaRepository.save(new Presenza(salvata, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+            }
         }
         return salvata;
     }

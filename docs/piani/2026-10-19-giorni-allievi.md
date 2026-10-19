@@ -27,7 +27,7 @@ Corso con due giorni a settimana e due allievi, dove ognuno frequenta un giorno 
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Giorni del partecipante: `Iscrizione.giorni`, giorni effettivi, `CorsoService.impostaGiorni` con aggiornamento delle presenze da fare; presenze per giorno in iscrizione, lezione aggiunta e ripristinata | `Iscrizione`, `CorsoService`, `LezioneService`, test | `./mvnw test` | [ ] |
+| 1 | Giorni del partecipante: `Iscrizione.giorni`, giorni effettivi, `CorsoService.impostaGiorni` con aggiornamento delle presenze da fare; presenze per giorno in iscrizione, lezione aggiunta e ripristinata | `Iscrizione`, `CorsoService`, `LezioneService`, test | `./mvnw test` | [x] |
 | 2 | Generazione: numero lezioni per ogni allievo, presenze solo nei suoi giorni, giorni senza iscritti saltati | `CorsoService.generaLezioni`, `CorsiView` (aiuto del campo), test | `./mvnw test` | [ ] |
 | 3 | Partecipanti: scelta dei giorni per allievo (desktop e card mobile) | `admin/PartecipantiDialog`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [ ] |
 | 4 | Giorni dell'allievo in I Miei Corsi, I Miei Figli, conferma di iscrizione e Riepilogo Iscritti | viste, `DocumentiService`, template, `PagamentoService`, test | `./mvnw test`, browser | [ ] |

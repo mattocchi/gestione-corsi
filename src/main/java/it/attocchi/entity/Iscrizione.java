@@ -1,10 +1,16 @@
 package it.attocchi.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Iscrizione di un allievo (partecipante) a un corso, con l'orario di inizio della sua lezione.
@@ -44,6 +50,19 @@ public class Iscrizione {
 
     /** Motivo della quota personalizzata (es. "fratelli"). */
     private String notaQuota;
+
+    /**
+     * Giorni del corso che il partecipante frequenta; vuoto = tutti i giorni del corso. Si cambiano con
+     * {@code CorsoService.impostaGiorni}, che aggiorna le presenze delle lezioni da fare.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "iscrizione_giorni", joinColumns = {
+        @JoinColumn(name = "corso_id", referencedColumnName = "corso_id"),
+        @JoinColumn(name = "allievo_id", referencedColumnName = "allievo_id")})
+    @Column(name = "giorno_settimana")
+    @Enumerated(EnumType.STRING)
+    @BatchSize(size = 50)
+    private Set<DayOfWeek> giorni = new HashSet<>();
 
     // Costruttori
     public Iscrizione() {
@@ -91,6 +110,47 @@ public class Iscrizione {
 
     public void setNotaQuota(String notaQuota) {
         this.notaQuota = notaQuota;
+    }
+
+    public Set<DayOfWeek> getGiorni() {
+        return giorni;
+    }
+
+    public void setGiorni(Set<DayOfWeek> giorni) {
+        this.giorni = giorni;
+    }
+
+    /**
+     * Giorni che il partecipante frequenta tra quelli indicati del corso: i suoi giorni ancora del corso o, se non
+     * ne ha (o nessuno è più del corso), tutti quelli del corso.
+     */
+    public Set<DayOfWeek> giorniEffettivi(Set<DayOfWeek> giorniCorso) {
+        Set<DayOfWeek> suoi = giorniCorso.isEmpty() ? EnumSet.noneOf(DayOfWeek.class) : EnumSet.copyOf(giorniCorso);
+        suoi.retainAll(giorni);
+        if (suoi.isEmpty()) {
+            return giorniCorso.isEmpty() ? EnumSet.noneOf(DayOfWeek.class) : EnumSet.copyOf(giorniCorso);
+        }
+        return suoi;
+    }
+
+    /** Giorni effettivi rispetto ai giorni del suo corso (collezione da caricare nella transazione). */
+    public Set<DayOfWeek> giorniEffettivi() {
+        return giorniEffettivi(corso.getGiorniSettimana());
+    }
+
+    /**
+     * {@code true} se il partecipante frequenta la lezione di quella data: è uno dei suoi giorni, oppure la data non
+     * cade in nessun giorno del corso (lezione straordinaria, per tutti).
+     */
+    public boolean frequenta(LocalDate data) {
+        DayOfWeek giorno = data.getDayOfWeek();
+        return !corso.getGiorniSettimana().contains(giorno) || giorniEffettivi().contains(giorno);
+    }
+
+    /** {@code true} se frequenta solo alcuni dei giorni del corso. */
+    public boolean haGiorniPropri() {
+        return !giorniEffettivi().equals(corso.getGiorniSettimana().isEmpty()
+            ? EnumSet.noneOf(DayOfWeek.class) : EnumSet.copyOf(corso.getGiorniSettimana()));
     }
 
     /** Quota da pagare: quella personalizzata se impostata, altrimenti il costo totale del corso. */

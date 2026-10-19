@@ -19,8 +19,10 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -110,11 +112,48 @@ public class CorsoService {
         }
         Allievo allievo = allievoRepository.findById(allievoId)
             .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));
-        iscrizioneRepository.save(new Iscrizione(corso, allievo));
+        Iscrizione iscrizione = iscrizioneRepository.save(new Iscrizione(corso, allievo));
 
         lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId).stream()
             .filter(Lezione::isDaFare)
+            .filter(lezione -> iscrizione.frequenta(lezione.getData()))
             .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE)));
+    }
+
+    /**
+     * Imposta i giorni del corso che il partecipante frequenta (vuoto o tutti = tutti i giorni) e aggiorna le sue
+     * presenze nelle lezioni ancora da fare: tolte nei giorni non più suoi, aggiunte nei nuovi. Le lezioni svolte
+     * restano come storico.
+     */
+    @Transactional
+    public void impostaGiorni(Long corsoId, Long allievoId, Set<DayOfWeek> giorni) {
+        Corso corso = corsoAttivo(corsoId);
+        Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
+            .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
+        Set<DayOfWeek> scelti = giorni != null ? giorni : Set.of();
+        if (!corso.getGiorniSettimana().containsAll(scelti)) {
+            throw new IllegalArgumentException("Scegli solo giorni del corso");
+        }
+        iscrizione.getGiorni().clear();
+        if (!scelti.containsAll(corso.getGiorniSettimana())) {
+            iscrizione.getGiorni().addAll(scelti);
+        }
+
+        Map<Long, Presenza> presenze = new HashMap<>();
+        presenzaRepository.findByCorsoIdAndAllievoId(corsoId, allievoId)
+            .forEach(presenza -> presenze.put(presenza.getLezione().getId(), presenza));
+        for (Lezione lezione : lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId)) {
+            if (!lezione.isDaFare()) {
+                continue;
+            }
+            Presenza presenza = presenze.get(lezione.getId());
+            boolean frequenta = iscrizione.frequenta(lezione.getData());
+            if (frequenta && presenza == null) {
+                presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+            } else if (!frequenta && presenza != null) {
+                presenzaRepository.delete(presenza);
+            }
+        }
     }
 
     /**
