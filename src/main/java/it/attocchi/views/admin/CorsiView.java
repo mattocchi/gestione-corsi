@@ -39,6 +39,7 @@ import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -90,7 +91,9 @@ public class CorsiView extends VerticalLayout {
     private final SegmentedControl<FiltroStato> filtroStato = new SegmentedControl<>("Filtra i corsi per stato",
         List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Mostra corsi: " + f.getEtichetta(), null);
     private final ComboBox<String> filtroAnno = new ComboBox<>();
+    private final RicercaRapida ricerca = new RicercaRapida();
     private GridListDataView<Corso> corsi;
+    private List<Corso> tutti = List.of();
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, AllievoService allievoService,
                      PagamentoService pagamentoService, AnnoScolasticoService annoScolasticoService,
@@ -116,8 +119,9 @@ public class CorsiView extends VerticalLayout {
         filtroAnno.setClearButtonVisible(true);
         filtroAnno.addClassNames("w-44");
         filtroAnno.addValueChangeListener(e -> applicaFiltri());
+        ricerca.addRicercaListener(this::applicaFiltri);
 
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroAnno);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroAnno, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -325,7 +329,7 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        List<Corso> tutti = corsoService.findAll();
+        tutti = corsoService.findAll();
         String annoScelto = filtroAnno.getValue();
         filtroAnno.setItems(tutti.stream().map(Corso::getAnnoScolastico).filter(a -> a != null).distinct().sorted().toList());
         filtroAnno.setValue(annoScelto);
@@ -333,11 +337,15 @@ public class CorsiView extends VerticalLayout {
         applicaFiltri();
     }
 
+    /** Stato, anno e ricerca rapida (nome, anno, insegnanti, descrizione); "N di M" sui corsi di stato e anno scelti. */
     private void applicaFiltri() {
         if (corsi != null) {
             String anno = filtroAnno.getValue();
-            corsi.setFilter(corso -> filtroStato.getValue().ammette(corso)
-                && (anno == null || anno.equals(corso.getAnnoScolastico())));
+            SerializablePredicate<Corso> statoEAnno = corso -> filtroStato.getValue().ammette(corso)
+                && (anno == null || anno.equals(corso.getAnnoScolastico()));
+            corsi.setFilter(corso -> statoEAnno.test(corso) && ricerca.corrisponde(RicercaRapida.testo(corso.getNome(),
+                corso.getAnnoScolastico(), corso.getNomiInsegnanti(), corso.getDescrizione())));
+            ricerca.mostraConteggio(corsi.getItemCount(), (int) tutti.stream().filter(statoEAnno).count());
         }
     }
 }

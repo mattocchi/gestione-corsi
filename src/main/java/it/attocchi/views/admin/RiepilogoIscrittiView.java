@@ -23,6 +23,7 @@ import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.Stili;
@@ -33,7 +34,9 @@ import jakarta.annotation.security.RolesAllowed;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -69,7 +72,10 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     private final SegmentedControl<FiltroStato> filtroCorsi = new SegmentedControl<>("Filtra per stato del corso",
         List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Corsi: " + f.getEtichetta(), null);
     private final ComboBox<String> filtroAnno;
+    private final RicercaRapida ricerca = new RicercaRapida();
     private final List<Voce> corsiMostrati = new ArrayList<>();
+    /** Iscritti mostrati sotto ogni corso: tutti, o con la ricerca solo quelli che corrispondono. */
+    private final Map<IscrittiCorso, List<RigaPagamento>> iscrittiMostrati = new HashMap<>();
     private final FooterRow totale;
     private Grid.Column<Voce> colonnaNome;
     private Grid.Column<Voce> colonnaIscritti;
@@ -95,12 +101,13 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         filtroCorsi.setValue(FiltroStato.ATTIVI);
         filtroCorsi.addValueChangeListener(e -> applicaFiltri());
         filtroAnno.addValueChangeListener(e -> applicaFiltri());
+        ricerca.addRicercaListener(this::applicaFiltri);
 
         Button espandi = new Button("Espandi tutti", VaadinIcon.PLUS_SQUARE_O.create(), e -> grid.expand(corsiMostrati));
         Button comprimi = new Button("Comprimi tutti", VaadinIcon.MINUS_SQUARE_O.create(), e -> grid.collapse(corsiMostrati));
         espandi.addThemeVariants(ButtonVariant.TERTIARY);
         comprimi.addThemeVariants(ButtonVariant.TERTIARY);
-        HorizontalLayout filtri = new HorizontalLayout(filtroCorsi, filtroAnno, espandi, comprimi);
+        HorizontalLayout filtri = new HorizontalLayout(filtroCorsi, filtroAnno, ricerca, espandi, comprimi);
         filtri.addClassNames("flex-wrap w-full items-center");
 
         add(filtri, grid);
@@ -187,14 +194,28 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         FiltroStato stato = filtroCorsi.getValue();
         String anno = filtroAnno.getValue();
         corsiMostrati.clear();
+        iscrittiMostrati.clear();
+        int conStatoEAnno = 0;
         for (IscrittiCorso corso : corsi) {
             Corso c = corso.corso();
             if ((stato == null || stato.ammette(c)) && (anno == null || anno.equals(c.getAnnoScolastico()))) {
-                corsiMostrati.add(new Voce(corso, null));
+                conStatoEAnno++;
+                // Il corso che corrisponde mostra tutti gli iscritti, altrimenti solo quelli che corrispondono
+                boolean corsoTrovato = ricerca.corrisponde(RicercaRapida.testo(c.getNome(), c.getAnnoScolastico(), c.getNomiInsegnanti()));
+                List<RigaPagamento> iscritti = corsoTrovato ? corso.iscritti() : corso.iscritti().stream()
+                    .filter(r -> ricerca.corrisponde(RicercaRapida.testo(r.allievo().getNomeCompleto(),
+                        r.allievo().getUser() != null ? r.allievo().getUser().getEmail() : null,
+                        r.genitore() != null ? r.genitore().getNomeCompleto() : null)))
+                    .toList();
+                if (corsoTrovato || !iscritti.isEmpty()) {
+                    corsiMostrati.add(new Voce(corso, null));
+                    iscrittiMostrati.put(corso, iscritti);
+                }
             }
         }
+        ricerca.mostraConteggio(corsiMostrati.size(), conStatoEAnno);
         grid.setItems(corsiMostrati, v -> v.isCorso()
-            ? v.corso().iscritti().stream().map(r -> new Voce(v.corso(), r)).toList()
+            ? iscrittiMostrati.getOrDefault(v.corso(), List.of()).stream().map(r -> new Voce(v.corso(), r)).toList()
             : List.of());
         grid.expand(corsiMostrati);
         aggiornaTotale();

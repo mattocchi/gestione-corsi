@@ -23,7 +23,7 @@ Per admin e segreteria, una ricerca rapida negli elenchi di utenti, insegnanti, 
 |---|---|---|---|---|
 | 1 | Componente `RicercaRapida` (campo, confronto senza maiuscole/accenti, parole multiple, conteggio "N di M") | `views/RicercaRapida`, test | `./mvnw test` | [x] |
 | 2 | Ricerca in Gestione Utenti, Insegnanti, Genitori e Gestione Allievi | le quattro viste, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | Ricerca in Gestione Corsi e Riepilogo Iscritti | `CorsiView`, `RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [ ] |
+| 3 | Ricerca in Gestione Corsi e Riepilogo Iscritti | `CorsiView`, `RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
 | 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

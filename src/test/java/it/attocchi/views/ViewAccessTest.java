@@ -1997,6 +1997,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(tutti, utenti.size());
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_ricercaRapidaInCorsiERiepilogoIscritti() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        assertEquals(2, corsi.size());
+        // Negli insegnanti del corso
+        cerca("rossi");
+        assertEquals(1, corsi.size());
+        assertEquals("Corso di Chitarra", corsi.getRow(0).getNome());
+        assertTrue(find(Span.class).withText("1 di 2").exists());
+
+        navigate(RiepilogoIscrittiView.class);
+        var riepilogo = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
+            (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
+        // Un iscritto: solo il suo corso con lui
+        cerca("canto3");
+        assertEquals(2, riepilogo.size());
+        assertEquals("Corso di Canto", riepilogo.getCellText(0, 0));
+        assertEquals("Allievo Canto3", riepilogo.getCellText(1, 0));
+        // Il genitore: i corsi dei suoi figli
+        cerca("genitore3");
+        assertEquals(4, riepilogo.size());
+        // Il corso: con tutti i suoi iscritti
+        cerca("chitarra");
+        assertEquals(7, riepilogo.size());
+        assertTrue(find(Span.class).withText("1 di 2").exists());
+    }
+
     private void cerca(String testo) {
         test(find(TextField.class).all().stream().filter(t -> t.getAriaLabel().filter("Cerca nell'elenco"::equals).isPresent())
             .findFirst().orElseThrow()).setValue(testo);
