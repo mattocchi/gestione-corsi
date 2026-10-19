@@ -21,6 +21,7 @@ import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.RiepilogoFamigliaDialog;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
@@ -40,6 +41,7 @@ public class GenitoriView extends VerticalLayout {
     private final GenitoreService genitoreService;
     private final UserService userService;
     private final Grid<Genitore> grid = new Grid<>(Genitore.class, false);
+    private final RicercaRapida ricerca = new RicercaRapida();
 
     public GenitoriView(GenitoreService genitoreService, UserService userService) {
         this.genitoreService = genitoreService;
@@ -63,7 +65,9 @@ public class GenitoriView extends VerticalLayout {
             .applica();
 
         Button addButton = new Button("Nuovo Genitore", e -> openDialog(new Genitore()));
-        add(addButton, grid);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, ricerca);
+        toolbar.addClassNames("flex-wrap w-full items-center");
+        add(toolbar, grid);
         grid.addClassNames("grow");
         updateGrid();
     }
@@ -111,7 +115,8 @@ public class GenitoriView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        grid.setItems(genitoreService.findAllWithFigli());
+        ricerca.collega(grid.setItems(genitoreService.findAllWithFigli()), genitore -> RicercaRapida.testo(
+            RicercaRapida.testo(genitore.getUser()), RicercaRapida.testo(genitore), nomiFigli(genitore)));
     }
 
     private static String nomiFigli(Genitore genitore) {

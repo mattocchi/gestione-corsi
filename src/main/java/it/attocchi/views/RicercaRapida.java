@@ -8,6 +8,8 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.function.SerializableRunnable;
+import it.attocchi.entity.Anagrafica;
+import it.attocchi.entity.User;
 
 import java.text.Normalizer;
 import java.util.Arrays;
@@ -98,6 +100,17 @@ public class RicercaRapida extends Div {
     /** Unisce i valori di una riga in un unico testo da cercare (i {@code null} sono ignorati). */
     public static String testo(Object... valori) {
         return Arrays.stream(valori).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining(" "));
+    }
+
+    /** Dati dell'utente da cercare: username, nome, cognome, email, telefono e ruoli ({@code null} = nessuno). */
+    public static String testo(User user) {
+        return user == null ? "" : testo(user.getUsername(), user.getNome(), user.getCognome(), user.getEmail(),
+            user.getTelefono(), String.join(" ", user.getRoles()));
+    }
+
+    /** Codice fiscale e indirizzo della persona. */
+    public static String testo(Anagrafica persona) {
+        return testo(persona.getCodiceFiscale(), persona.getIndirizzo().getFormattato());
     }
 
     private static String normalizza(String testo) {

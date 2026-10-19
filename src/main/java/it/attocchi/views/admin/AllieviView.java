@@ -20,6 +20,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
@@ -30,10 +31,12 @@ import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.Stili;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
+import java.util.stream.Collectors;
 
 @Route(value = "allievi", layout = MainLayout.class)
 @PageTitle("Gestione Allievi")
@@ -48,6 +51,7 @@ public class AllieviView extends VerticalLayout {
     private final boolean puoEliminare;
 
     private final Grid<Allievo> grid = new Grid<>(Allievo.class, false);
+    private final RicercaRapida ricerca = new RicercaRapida();
 
     public AllieviView(AllievoService allievoService, UserService userService, GenitoreService genitoreService,
                         SecurityService securityService) {
@@ -60,7 +64,9 @@ public class AllieviView extends VerticalLayout {
         configureGrid();
 
         Button addButton = new Button("Nuovo Allievo", e -> openDialog(new Allievo()));
-        add(addButton, grid);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, ricerca);
+        toolbar.addClassNames("flex-wrap w-full items-center");
+        add(toolbar, grid);
         grid.addClassNames("grow");
 
         updateGrid();
@@ -196,6 +202,9 @@ public class AllieviView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        grid.setItems(allievoService.findAll());
+        ricerca.collega(grid.setItems(allievoService.findAll()), allievo -> RicercaRapida.testo(
+            RicercaRapida.testo(allievo.getUser()), RicercaRapida.testo(allievo), Formati.indirizzo(allievo),
+            allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : null,
+            allievo.getCorsi().stream().map(Corso::getNome).collect(Collectors.joining(" "))));
     }
 }

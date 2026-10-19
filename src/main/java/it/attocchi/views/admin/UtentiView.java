@@ -21,6 +21,7 @@ import it.attocchi.entity.User;
 import it.attocchi.service.UserService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -34,6 +35,7 @@ public class UtentiView extends VerticalLayout {
 
     private final UserService userService;
     private final Grid<User> grid = new Grid<>(User.class, false);
+    private final RicercaRapida ricerca = new RicercaRapida();
 
     public UtentiView(UserService userService) {
         this.userService = userService;
@@ -42,7 +44,9 @@ public class UtentiView extends VerticalLayout {
         configureGrid();
 
         Button addButton = new Button("Nuovo Utente", e -> openDialog(new User()));
-        add(addButton, grid);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, ricerca);
+        toolbar.addClassNames("flex-wrap w-full items-center");
+        add(toolbar, grid);
         grid.addClassNames("grow");
 
         updateGrid();
@@ -135,6 +139,6 @@ public class UtentiView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        grid.setItems(userService.findAll());
+        ricerca.collega(grid.setItems(userService.findAll()), RicercaRapida::testo);
     }
 }

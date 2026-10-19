@@ -1949,6 +1949,59 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertFalse(find(com.vaadin.flow.component.html.Anchor.class).from(dialog).single().getHref().isBlank());
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_ricercaRapidaInAllieviGenitoriEInsegnanti() {
+        navigate(AllieviView.class);
+        var allievi = test((Grid<Allievo>) find(Grid.class).single());
+        assertEquals(13, allievi.size());
+        // Nel genitore collegato: i due figli di genitore3
+        cerca("cognome3 GENITORE3");
+        assertEquals(2, allievi.size());
+        assertTrue(find(Span.class).withText("2 di 13").exists());
+        // Nel codice fiscale e nei corsi
+        cerca("chitarra1 chitarra");
+        assertEquals(1, allievi.size());
+        assertEquals("Allievo Chitarra1", allievi.getRow(0).getNomeCompleto());
+        cerca("");
+        assertEquals(13, allievi.size());
+
+        navigate(GenitoriView.class);
+        var genitori = test((Grid<Genitore>) find(Grid.class).single());
+        cerca("canto3");
+        assertEquals(1, genitori.size());
+        assertEquals("genitore3", genitori.getRow(0).getUser().getUsername());
+
+        navigate(InsegnantiView.class);
+        var insegnanti = test((Grid<Insegnante>) find(Grid.class).single());
+        cerca("chitarra");
+        assertEquals(1, insegnanti.size());
+        assertEquals("insegnante2", insegnanti.getRow(0).getUser().getUsername());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_ricercaRapidaNegliUtenti() {
+        navigate(UtentiView.class);
+        var utenti = test((Grid<User>) find(Grid.class).single());
+        int tutti = utenti.size();
+        cerca("segreteria");
+        assertEquals(1, utenti.size());
+        cerca("example.com genitore9");
+        assertEquals(1, utenti.size());
+        cerca("nessuno-così");
+        assertEquals(0, utenti.size());
+        cerca("");
+        assertEquals(tutti, utenti.size());
+    }
+
+    private void cerca(String testo) {
+        test(find(TextField.class).all().stream().filter(t -> t.getAriaLabel().filter("Cerca nell'elenco"::equals).isPresent())
+            .findFirst().orElseThrow()).setValue(testo);
+    }
+
     private static void assertAzioni(Component azioni, String... etichette) {
         assertEquals(List.of(etichette), azioni.getChildren()
             .map(c -> c.getElement().getAttribute("aria-label")).toList());

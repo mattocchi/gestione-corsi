@@ -18,6 +18,7 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.User;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.UserService;
@@ -25,11 +26,13 @@ import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
+import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Insegnanti con il numero di corsi assegnati: admin e segreteria li creano e ne modificano
@@ -44,6 +47,7 @@ public class InsegnantiView extends VerticalLayout {
     private final InsegnanteService insegnanteService;
     private final UserService userService;
     private final Grid<Insegnante> grid = new Grid<>(Insegnante.class, false);
+    private final RicercaRapida ricerca = new RicercaRapida();
 
     public InsegnantiView(InsegnanteService insegnanteService, UserService userService) {
         this.insegnanteService = insegnanteService;
@@ -68,7 +72,9 @@ public class InsegnantiView extends VerticalLayout {
             .applica();
 
         Button addButton = new Button("Nuovo Insegnante", e -> openDialog(new Insegnante()));
-        add(addButton, grid);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, ricerca);
+        toolbar.addClassNames("flex-wrap w-full items-center");
+        add(toolbar, grid);
         grid.addClassNames("grow");
         updateGrid();
     }
@@ -130,6 +136,8 @@ public class InsegnantiView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        grid.setItems(insegnanteService.findAllWithCorsi());
+        ricerca.collega(grid.setItems(insegnanteService.findAllWithCorsi()), insegnante -> RicercaRapida.testo(
+            RicercaRapida.testo(insegnante.getUser()), RicercaRapida.testo(insegnante), insegnante.getSpecializzazione(),
+            insegnante.getTuttiICorsi().stream().map(Corso::getNome).collect(Collectors.joining(" "))));
     }
 }

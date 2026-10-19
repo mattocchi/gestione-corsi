@@ -133,10 +133,14 @@ public class Insegnante implements Anagrafica {
     }
 
     /** Corsi in cui è titolare o secondo insegnante (le collezioni vanno caricate, es. {@code findAllWithCorsi}). */
-    public int getNumeroCorsi() {
+    public Set<Corso> getTuttiICorsi() {
         Set<Corso> tutti = new HashSet<>(corsi);
         tutti.addAll(corsiComeSecondo);
-        return tutti.size();
+        return tutti;
+    }
+
+    public int getNumeroCorsi() {
+        return getTuttiICorsi().size();
     }
 
     public String getNomeCompleto() {
