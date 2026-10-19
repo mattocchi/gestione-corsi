@@ -23,7 +23,7 @@ Nel Riepilogo Iscritti vedere anche il costo stimato dell'insegnante per ogni co
 |---|---|---|---|---|
 | 1 | `BilancioService.costiPrevistiPerCorso()` (calcolo del costo previsto estratto e condiviso con `bilancio`), conteggio iscritti per corso, test | `service/BilancioService`, `repository/IscrizioneRepository`, `BilancioServiceTest` | `./mvnw test` | [x] |
 | 2 | Riepilogo Iscritti: colonne Costo insegnante e Margine previsto, totali, card mobile, test | `views/admin/RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test`, browser | [x] |
-| 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,7 @@ Nel Riepilogo Iscritti vedere anche il costo stimato dell'insegnante per ogni co
 - Margine sull'incassato (Pagato − costo maturato): resta nel Bilancio dei Rimborsi.
 
 ## Registro
+
+- Passo 1: `costiPrevistiPerCorso()` con il calcolo del costo previsto estratto da `bilancio` (stessi numeri); test sul confronto con i bilanci di ogni insegnante e sul corso senza tariffa.
+- Passo 2: colonne "Costo insegnante" e "Margine previsto" dopo Stato (indici delle colonne esistenti invariati), totali solo dei corsi con tariffa, campi e footer nella card mobile.
+- Verifica: `./mvnw test` 184 test verdi; browser (dev, segreteria): Canto 3.500,00 € / 700,00 €, Chitarra 3.600,00 € / 0,00 €, totale costo 7.100,00 €. Vista mobile non controllata nel browser (finestra non ridimensionabile): usa i campi standard di `CardMobile`.
