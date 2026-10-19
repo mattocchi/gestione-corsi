@@ -137,8 +137,10 @@ public class AllieviView extends VerticalLayout {
         ComboBox<Genitore> genitore = new ComboBox<>("Genitore");
         genitore.setItems(genitoreService.findAll());
         genitore.setItemLabelGenerator(Genitore::getNomeCompleto);
-        binder.forField(genitore).asRequired("Scegli il genitore dell'allievo")
-            .bind(Allievo::getGenitore, Allievo::setGenitore);
+        // Facoltativo: gli allievi adulti non hanno genitore (documenti ed email vanno all'allievo)
+        genitore.setClearButtonVisible(true);
+        genitore.setHelperText("Lascia vuoto per gli allievi adulti");
+        binder.forField(genitore).bind(Allievo::getGenitore, Allievo::setGenitore);
         AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
         binder.readBean(allievo);
 

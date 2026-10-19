@@ -22,7 +22,7 @@ Genitore non obbligatorio, perché alcuni allievi sono adulti ([F-2026-10-19/ALL
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Genitore facoltativo nel form dell'allievo | `admin/AllieviView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | Genitore facoltativo nel form dell'allievo | `admin/AllieviView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | Servizio: creazione rapida (nome, cognome, email, telefono) e ricerca omonimi | `AllievoService`, test | `./mvnw test` | [ ] |
 | 3 | Partecipanti: nome non trovato → mini-form "Nuovo allievo" (omonimi, crea e iscrive) | `admin/PartecipantiDialog`, `admin/NuovoAllievoRapidoDialog`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [ ] |
 | 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |

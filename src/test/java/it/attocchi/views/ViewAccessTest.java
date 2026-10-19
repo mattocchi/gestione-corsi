@@ -643,6 +643,26 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    void segreteria_creaAllievoAdultoSenzaGenitore() {
+        navigate(AllieviView.class);
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Anna");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("Adulta");
+        assertEquals("Lascia vuoto per gli allievi adulti", find(ComboBox.class).withLabel("Genitore").single().getHelperText());
+        test(find(Button.class).withText("Salva").single()).click();
+        assertFalse(find(Dialog.class).exists());
+        Allievo adulta = allievoService.findAll().stream()
+            .filter(a -> a.getNomeCompleto().equals("Anna Adulta")).findFirst().orElseThrow();
+        try {
+            assertNull(adulta.getGenitore());
+        } finally {
+            allievoService.delete(adulta);
+            userService.delete(adulta.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
     void segreteria_creaAllievoAssegnatoAUnGenitore() {
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());
@@ -655,10 +675,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(codiceFiscale).setValue("GLLLCU12A01H501Z");
         test(find(DatePicker.class).withLabel("Data di nascita").single()).setValue(LocalDate.of(2012, 1, 1));
 
-        // Senza genitore l'allievo (e il suo utente) non viene creato
+        // Carattere di controllo del codice fiscale sbagliato: l'allievo (e il suo utente) non viene creato
         test(find(Button.class).withText("Salva").single()).click();
-        assertTrue(find(ComboBox.class).withLabel("Genitore").single().isInvalid());
-        // Carattere di controllo del codice fiscale sbagliato
+        assertFalse(find(ComboBox.class).withLabel("Genitore").single().isInvalid());
         assertTrue(codiceFiscale.isInvalid());
         assertFalse(userService.existsByUsername("allievo_nuovo"));
 
