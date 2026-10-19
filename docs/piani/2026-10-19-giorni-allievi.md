@@ -31,7 +31,7 @@ Corso con due giorni a settimana e due allievi, dove ognuno frequenta un giorno 
 | 2 | Generazione: numero lezioni per ogni allievo, presenze solo nei suoi giorni, giorni senza iscritti saltati | `CorsoService.generaLezioni`, `CorsiView` (aiuto del campo), test | `./mvnw test` | [x] |
 | 3 | Partecipanti: scelta dei giorni per allievo (desktop e card mobile) | `admin/PartecipantiDialog`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
 | 4 | Giorni dell'allievo in I Miei Corsi, I Miei Figli, conferma di iscrizione e Riepilogo Iscritti | `Corso` (giorni caricati sempre), `CorsoService.giorniDellAllievo`, `MieiCorsiView`, `FigliView`, `DocumentiService`, template `conferma`, `RiepilogoIscrittiView`, test | `./mvnw test`, browser | [x] |
-| 5 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 5 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -40,3 +40,9 @@ Corso con due giorni a settimana e due allievi, dove ognuno frequenta un giorno 
 
 ## Registro
 
+- Passo 1: `Iscrizione.giorni` (`@ElementCollection` EAGER, tabella `iscrizione_giorni` con chiave corso/allievo), `giorniEffettivi`, `frequenta`; `CorsoService.impostaGiorni` con allineamento delle presenze da fare; presenze per giorno in iscrizione, lezione aggiunta/recupero e ripristinata. Test in `CorsoServiceTest`.
+- Passo 2: nuova `generaLezioni` (numero lezioni per allievo; programmate conservate contate per chi frequenta quel giorno, date e numeri non ripetuti; limite di 10 anni). Test: Chitarra con tre allievi il martedì e tre il sabato → 60 lezioni, 3 presenze ciascuna, 30 lezioni per allievo; con tutti i giorni a tutti di nuovo 30 date con 6 presenze. Aiuto "Per ogni allievo, nei giorni che frequenta" sul campo Numero Lezioni.
+- Passo 3: colonna/campo "Giorni" (caselle orizzontali, variante `AURA_HORIZONTAL`) in Partecipanti, dialog a 720px con la colonna. Togliere tutti i giorni = tutti. Aggiornati gli indici di colonna nei test di Partecipanti.
+- Passo 4: `Corso.giorniSettimana` EAGER per usare i giorni effettivi nelle viste; colonna Giorni in I Miei Corsi, nei corsi di I Miei Figli e nel Riepilogo Iscritti (colonna nome con larghezza minima 14rem); frase nella conferma PDF ed email. Aggiornati gli indici di colonna nei test di allievo e genitore.
+- Verifica finale: `./mvnw test` 176 test verdi; browser desktop (Partecipanti di Chitarra: tolto "sab" ad Allievo Chitarra1, salvato subito; Riepilogo Iscritti con "mar" per lui e "mar, sab" per gli altri) e 390px (card dei partecipanti con le caselle dei giorni, senza scorrimento orizzontale).
+- Produzione: nessuno script SQL (`ddl-auto=update` crea `iscrizione_giorni`; senza righe tutti frequentano tutti i giorni, come oggi). Le lezioni già generate non cambiano finché non si impostano i giorni (che aggiornano le lezioni da fare) o si rigenera il calendario.
