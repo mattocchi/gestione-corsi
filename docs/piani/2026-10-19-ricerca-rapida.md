@@ -24,7 +24,7 @@ Per admin e segreteria, una ricerca rapida negli elenchi di utenti, insegnanti, 
 | 1 | Componente `RicercaRapida` (campo, confronto senza maiuscole/accenti, parole multiple, conteggio "N di M") | `views/RicercaRapida`, test | `./mvnw test` | [x] |
 | 2 | Ricerca in Gestione Utenti, Insegnanti, Genitori e Gestione Allievi | le quattro viste, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | Ricerca in Gestione Corsi e Riepilogo Iscritti | `CorsiView`, `RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
-| 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -33,3 +33,8 @@ Per admin e segreteria, una ricerca rapida negli elenchi di utenti, insegnanti, 
 
 ## Registro
 
+- Passo 1: `RicercaRapida` (campo con lente e svuota, `ValueChangeMode.LAZY`, normalizzazione NFD senza accenti, parole multiple, "N di M") e `RicercaRapidaTest`.
+- Passo 2: le quattro viste di persone (`Insegnante.getTuttiICorsi()` per cercare anche nei corsi come secondo insegnante); test browserless (genitore collegato, corsi, specializzazione, utenti per ruolo ed email).
+- Passo 3: Gestione Corsi (combinata con stato e anno) e Riepilogo Iscritti (corso o iscritti corrispondenti); test browserless.
+- Verifica finale: `./mvnw test` 180 test verdi; browser desktop (Gestione Allievi "genitore3" → 2 di 13) e 390px (Riepilogo Iscritti "canto3": campo a tutta larghezza, 1 di 2, nessuno scorrimento orizzontale).
+- Nota: Gestione Utenti resta solo per l'admin (come prima); la segreteria ha la ricerca nelle altre cinque viste. Nessuna modifica al database.
