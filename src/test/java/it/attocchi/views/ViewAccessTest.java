@@ -77,6 +77,7 @@ import it.attocchi.views.admin.GrigliaInvii;
 import it.attocchi.views.admin.RimborsiDialog;
 import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.GenitoriView;
+import it.attocchi.views.admin.NuovoAllievoRapidoDialog;
 import it.attocchi.views.admin.RiepilogoIscrittiView;
 import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
@@ -367,6 +368,90 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(modifica).click();
         CheckboxGroup<?> giorni = find(CheckboxGroup.class).single();
         assertFalse(giorni.getValue().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_inserisceRapidamenteUnNuovoAllievoNelCorso() {
+        PartecipantiDialog dialog = apriPartecipanti("Corso di Canto");
+        var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+        assertEquals(7, righe.size());
+
+        scriviNuovoPartecipante(dialog, "Marta Verdi Neri");
+        NuovoAllievoRapidoDialog rapido = find(NuovoAllievoRapidoDialog.class).single();
+        assertEquals("Marta", find(TextField.class).from(rapido).withLabel("Nome").single().getValue());
+        assertEquals("Verdi Neri", find(TextField.class).from(rapido).withLabel("Cognome").single().getValue());
+        assertFalse(find(Button.class).from(rapido).withText("Iscrivi questo").exists());
+        // Email non valida: non si crea nulla
+        test(find(EmailField.class).from(rapido).withLabel("Email").single()).setValue("non-una-email");
+        test(find(Button.class).from(rapido).withText("Crea e iscrivi").single()).click();
+        assertTrue(rapido.isOpened());
+        assertTrue(allievoService.omonimi("Marta", "Verdi Neri").isEmpty());
+
+        test(find(EmailField.class).from(rapido).withLabel("Email").single()).setValue("marta@example.com");
+        test(find(Button.class).from(rapido).withText("Crea e iscrivi").single()).click();
+        assertFalse(rapido.isOpened());
+        Allievo marta = allievoService.omonimi("Marta", "Verdi Neri").getFirst();
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        try {
+            assertEquals(8, righe.size());
+            assertTrue(IntStream.range(0, righe.size()).anyMatch(r -> righe.getRow(r).getAllievo().equals(marta)));
+            assertNull(marta.getGenitore());
+            assertEquals("marta@example.com", marta.getUser().getEmail());
+            assertFalse(marta.getUser().isEnabled());
+        } finally {
+            corsoService.rimuoviIscrizione(canto.getId(), marta.getId());
+            // Ricaricato: la copia letta prima ha ancora l'iscrizione appena rimossa
+            Allievo daEliminare = allievoService.findById(marta.getId());
+            allievoService.delete(daEliminare);
+            userService.delete(daEliminare.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_inserimentoRapidoProponeLOmonimoEsistente() {
+        PartecipantiDialog dialog = apriPartecipanti("Corso di Canto");
+        var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+        Allievo chitarra1 = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+
+        scriviNuovoPartecipante(dialog, "allievo chitarra1");
+        NuovoAllievoRapidoDialog rapido = find(NuovoAllievoRapidoDialog.class).single();
+        assertTrue(find(Span.class).from(rapido).all().stream()
+            .anyMatch(s -> s.getText().startsWith("Esiste già un allievo Allievo Chitarra1 (genitore Genitore3 Cognome3)")));
+        test(find(Button.class).from(rapido).withText("Iscrivi questo").single()).click();
+        try {
+            assertFalse(rapido.isOpened());
+            assertEquals(8, righe.size());
+            assertEquals(1, allievoService.omonimi("Allievo", "Chitarra1").size());
+        } finally {
+            corsoService.rimuoviIscrizione(canto.getId(), chitarra1.getId());
+        }
+
+        // Un omonimo già iscritto al corso non si propone
+        scriviNuovoPartecipante(dialog, "Allievo Canto1");
+        NuovoAllievoRapidoDialog secondo = find(NuovoAllievoRapidoDialog.class).single();
+        assertTrue(find(Span.class).from(secondo).withText("già iscritto al corso").exists());
+        assertFalse(find(Button.class).from(secondo).withText("Iscrivi questo").exists());
+    }
+
+    @SuppressWarnings("unchecked")
+    private PartecipantiDialog apriPartecipanti(String corso) {
+        navigate(CorsiView.class);
+        var grid = test((Grid<Corso>) find(Grid.class).single());
+        test(pulsante(grid.getCellComponent(riga(grid, corso), AZIONI_CORSO), "Partecipanti")).click();
+        return find(PartecipantiDialog.class).single();
+    }
+
+    /** Testo non presente tra gli allievi scritto nel campo "Aggiungi un allievo" e confermato (Invio). */
+    private void scriviNuovoPartecipante(PartecipantiDialog dialog, String testo) {
+        ComboBox<Allievo> campo = find(ComboBox.class).from(dialog).all().stream()
+            .filter(c -> c.getAriaLabel().filter("Allievo da aggiungere"::equals).isPresent()).findFirst().orElseThrow();
+        com.vaadin.flow.component.ComponentUtil.fireEvent(campo,
+            new com.vaadin.flow.component.combobox.ComboBoxBase.CustomValueSetEvent<>(campo, true, testo));
     }
 
     @Test

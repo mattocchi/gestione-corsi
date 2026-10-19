@@ -62,6 +62,10 @@ public class PartecipantiDialog extends Dialog {
         nuovoPartecipante.setAriaLabel("Allievo da aggiungere");
         nuovoPartecipante.setItemLabelGenerator(Allievo::getNomeCompleto);
         nuovoPartecipante.setClearButtonVisible(true);
+        // Un nome che non corrisponde a nessun allievo apre l'inserimento rapido
+        nuovoPartecipante.setAllowCustomValue(true);
+        nuovoPartecipante.setHelperText("Non c'è? Scrivi nome e cognome e premi Invio per crearlo");
+        nuovoPartecipante.addCustomValueSetListener(e -> nuovoAllievo(e.getDetail()));
         Button aggiungi = new Button("Aggiungi", VaadinIcon.PLUS.create(), e -> aggiungi());
         aggiungi.addThemeVariants(ButtonVariant.PRIMARY);
         aggiungi.setEnabled(false);
@@ -152,7 +156,10 @@ public class PartecipantiDialog extends Dialog {
     }
 
     private void aggiungi() {
-        Allievo allievo = nuovoPartecipante.getValue();
+        iscrivi(nuovoPartecipante.getValue());
+    }
+
+    private void iscrivi(Allievo allievo) {
         try {
             corsoService.iscrivi(corso.getId(), allievo.getId());
             nuovoPartecipante.clear();
@@ -160,6 +167,17 @@ public class PartecipantiDialog extends Dialog {
         } catch (RuntimeException ex) {
             Notification.show("Errore nell'aggiunta di " + allievo.getNomeCompleto() + ": " + ex.getMessage());
         }
+    }
+
+    /** Inserimento rapido di un allievo che non esiste, con nome e cognome proposti dal testo scritto. */
+    private void nuovoAllievo(String testo) {
+        nuovoPartecipante.clear();
+        if (testo == null || testo.isBlank()) {
+            return;
+        }
+        Set<Long> iscritti = corsoService.findPartecipanti(corso.getId()).stream()
+            .map(i -> i.getAllievo().getId()).collect(Collectors.toSet());
+        new NuovoAllievoRapidoDialog(allievoService, testo, iscritti, this::iscrivi).open();
     }
 
     private void rimuovi(Iscrizione iscrizione) {
