@@ -322,7 +322,8 @@ public class DocumentiService {
         }
         modello.put("corso", Map.of("nome", corso.getNome(), "anno", testo(corso.getAnnoScolastico()),
             "insegnante", corso.getNomiInsegnanti(),
-            "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante", "quota", quota));
+            "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante", "quota", quota,
+            "giorni", Formati.giorniEstesi(iscrizione.giorniEffettivi())));
         List<Map<String, String>> pagamenti = ricevuta.pagamenti().stream().map(DocumentiService::pagamento).toList();
         modello.put("pagamenti", pagamenti);
         modello.put("totali", Map.of("quota", Formati.euro(situazione.quota()), "pagato", Formati.euro(situazione.pagato()),

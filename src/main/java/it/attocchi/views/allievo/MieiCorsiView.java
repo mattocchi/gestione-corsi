@@ -4,6 +4,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -24,8 +25,10 @@ import it.attocchi.views.PrezziCorso;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Route(value = "miei-corsi", layout = MainLayout.class)
 @PageTitle("I Miei Corsi")
@@ -58,6 +61,11 @@ public class MieiCorsiView extends VerticalLayout {
     private void configureGrid() {
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
         gridCorsi.addColumn(MieiCorsiView::insegnante).setHeader("Insegnanti");
+        // I giorni dell'allievo (nei corsi con più giorni può frequentarne solo alcuni)
+        Map<Long, Set<DayOfWeek>> giorni = allievoCorrente != null
+            ? corsoService.giorniDellAllievo(allievoCorrente.getId()) : Map.of();
+        SerializableFunction<Corso, String> giorniDi = corso -> Formati.giorni(giorni.getOrDefault(corso.getId(), corso.getGiorniSettimana()));
+        gridCorsi.addColumn(giorniDi::apply).setHeader("Giorni");
         gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
@@ -70,6 +78,7 @@ public class MieiCorsiView extends VerticalLayout {
         CardMobile<Corso> card = CardMobile.per(gridCorsi)
             .titolo(Corso::getNome)
             .campo("Insegnanti", MieiCorsiView::insegnante)
+            .campo("Giorni", giorniDi)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti);

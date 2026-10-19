@@ -173,6 +173,14 @@ public class CorsoService {
         iscrizioneRepository.deleteById(new IscrizioneId(corsoId, allievoId));
     }
 
+    /** Giorni frequentati dall'allievo in ognuno dei suoi corsi, per id del corso. */
+    public Map<Long, Set<DayOfWeek>> giorniDellAllievo(Long allievoId) {
+        Map<Long, Set<DayOfWeek>> giorni = new HashMap<>();
+        iscrizioneRepository.findByAllievoIdWithCorso(allievoId)
+            .forEach(i -> giorni.put(i.getCorso().getId(), i.giorniEffettivi()));
+        return giorni;
+    }
+
     /** Imposta (o con {@code null} toglie) l'orario di inizio lezione di un partecipante. */
     @Transactional
     public void impostaOrario(Long corsoId, Long allievoId, LocalTime orario) {

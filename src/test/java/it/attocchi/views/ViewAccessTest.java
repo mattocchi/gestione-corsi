@@ -1203,13 +1203,14 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(grid.getRow(0).isCorso());
             assertTrue(grid.isExpanded(0));
             assertEquals("Corso di Canto", grid.getCellText(0, 0));
-            assertEquals("7", grid.getCellText(0, 3));
-            assertEquals("4.200,00 €", grid.getCellText(0, 4));
-            assertEquals("600,00 €", grid.getCellText(0, 5));
-            assertEquals("3.600,00 €", grid.getCellText(0, 6));
+            assertEquals("gio", grid.getCellText(0, 3));
+            assertEquals("7", grid.getCellText(0, 4));
+            assertEquals("4.200,00 €", grid.getCellText(0, 5));
+            assertEquals("600,00 €", grid.getCellText(0, 6));
+            assertEquals("3.600,00 €", grid.getCellText(0, 7));
             int riga = IntStream.range(1, 8).filter(r -> grid.getRow(r).iscritto().allievo().equals(allievo)).findFirst().orElseThrow();
-            assertEquals("600,00 €", grid.getCellText(riga, 5));
-            assertEquals("0,00 €", grid.getCellText(riga, 6));
+            assertEquals("600,00 €", grid.getCellText(riga, 6));
+            assertEquals("0,00 €", grid.getCellText(riga, 7));
             assertTrue(grid.getRow(8).isCorso());
             assertEquals("Corso di Chitarra", grid.getCellText(8, 0));
 
@@ -2246,7 +2247,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(MieiCorsiView.class);
             var corsi = test(find(Grid.class).single());
-            test(pulsante(corsi.getCellComponent(0, 8), "Visualizza Presenze")).click();
+            test(pulsante(corsi.getCellComponent(0, 9), "Visualizza Presenze")).click();
             Dialog dialog = find(Dialog.class).single();
             assertTrue(find(Span.class).from(dialog).withText("Totale lezioni: 29").exists());
             var presenze = test((Grid<Presenza>) find(Grid.class).from(dialog).single());
@@ -2432,9 +2433,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
             // Costo totale, pre-iscrizione e prezzo applicato (quota dovuta)
             assertEquals(List.of("600,00 €", "510,00 €", "600,00 €"),
-                List.of(corsi.getCellText(0, 3), corsi.getCellText(0, 4), corsi.getCellText(0, 5)));
-            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 6)).getText());
-            test(pulsante(corsi.getCellComponent(0, 7), "Pagamenti")).click();
+                List.of(corsi.getCellText(0, 4), corsi.getCellText(0, 5), corsi.getCellText(0, 6)));
+            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 7)).getText());
+            test(pulsante(corsi.getCellComponent(0, 8), "Pagamenti")).click();
 
             PagamentiAllievoDialog dialog = find(PagamentiAllievoDialog.class).single();
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 600,00 €").exists());
@@ -2467,7 +2468,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var corsi = test(find(Grid.class).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
             assertEquals(List.of("600,00 €", "510,00 €", "510,00 €"),
-                List.of(corsi.getCellText(0, 5), corsi.getCellText(0, 6), corsi.getCellText(0, 7)));
+                List.of(corsi.getCellText(0, 6), corsi.getCellText(0, 7), corsi.getCellText(0, 8)));
         } finally {
             pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
             Corso corso = corsoService.findById(canto.getId());
@@ -2537,7 +2538,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
             // Il pulsante Ricevuta è dentro un link di download
-            com.vaadin.flow.component.html.Anchor link = (com.vaadin.flow.component.html.Anchor) corsi.getCellComponent(0, 7)
+            com.vaadin.flow.component.html.Anchor link = (com.vaadin.flow.component.html.Anchor) corsi.getCellComponent(0, 8)
                 .getChildren().filter(com.vaadin.flow.component.html.Anchor.class::isInstance).findFirst().orElseThrow();
             assertFalse(link.getHref().isBlank());
 
@@ -2576,6 +2577,22 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(Span.class).withText("Indirizzo: Via Roma 1, 00184 Roma (RM) (del genitore)").exists());
         assertFalse(find(Button.class).withText("Salva").exists());
         assertFalse(find(Button.class).withText("Cambia password").exists());
+    }
+
+    @Test
+    @WithUserDetails("allievo_chitarra1")
+    void allievo_vedeSoloISuoiGiorniDiLezione() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of(DayOfWeek.TUESDAY));
+        try {
+            navigate(MieiCorsiView.class);
+            var corsi = test(find(Grid.class).single());
+            assertEquals("Giorni", ((Grid<?>) find(Grid.class).single()).getColumns().get(2).getHeaderText());
+            assertEquals("mar", corsi.getCellText(0, 2));
+        } finally {
+            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of());
+        }
     }
 
     @Test

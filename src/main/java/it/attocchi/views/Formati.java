@@ -12,6 +12,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,15 @@ public final class Formati {
     /** Giorni della settimana abbreviati, da lunedì, es. "mar, sab"; stringa vuota se nessuno. */
     public static String giorni(Collection<DayOfWeek> giorni) {
         return giorni.stream().sorted().map(Formati::giorno).collect(Collectors.joining(", "));
+    }
+
+    /** Giorni della settimana per esteso, da lunedì, es. "martedì e sabato" (per documenti ed email). */
+    public static String giorniEstesi(Collection<DayOfWeek> giorni) {
+        List<String> nomi = giorni.stream().sorted().map(g -> g.getDisplayName(TextStyle.FULL, ITALIANO)).toList();
+        if (nomi.size() <= 1) {
+            return String.join("", nomi);
+        }
+        return String.join(", ", nomi.subList(0, nomi.size() - 1)) + " e " + nomi.getLast();
     }
 
     /**

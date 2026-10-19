@@ -110,11 +110,12 @@ public class RiepilogoIscrittiView extends VerticalLayout {
 
     private void configureGrid() {
         colonnaNome = grid.addHierarchyColumn(v -> v.isCorso() ? v.corso().corso().getNome() : v.iscritto().allievo().getNomeCompleto())
-            .setHeader("Corso / Iscritto").setSortable(false).setFlexGrow(2);
+            .setHeader("Corso / Iscritto").setSortable(false).setWidth("14rem").setFlexGrow(2);
         grid.addColumn(v -> v.isCorso() ? Objects.toString(v.corso().corso().getAnnoScolastico(), "") : "")
             .setHeader("Anno").setWidth("7rem").setFlexGrow(0);
         grid.addColumn(v -> !v.isCorso() && v.iscritto().genitore() != null ? v.iscritto().genitore().getNomeCompleto() : "")
             .setHeader("Genitore");
+        grid.addColumn(this::giorni).setHeader("Giorni").setAutoWidth(true).setFlexGrow(0);
         colonnaIscritti = grid.addColumn(v -> v.isCorso() ? String.valueOf(v.corso().iscritti().size()) : "")
             .setHeader("Iscritti").setWidth("6rem").setFlexGrow(0);
         colonnaQuota = euro("Da pagare", Situazione::quota, IscrittiCorso::quota);
@@ -128,6 +129,7 @@ public class RiepilogoIscrittiView extends VerticalLayout {
             .sottotitolo(v -> v.isCorso() ? Objects.toString(v.corso().corso().getAnnoScolastico(), "")
                 : v.iscritto().genitore() != null ? "Genitore: " + v.iscritto().genitore().getNomeCompleto() : null)
             .stato(v -> v.isCorso() ? null : StatoPagamentoUI.badge(v.situazione()))
+            .campo("Giorni", this::giorni)
             .campo("Iscritti", v -> v.isCorso() ? v.corso().iscritti().size() + " (" + saldati(v.corso()) + ")" : null)
             .campo("Da pagare", v -> Formati.euro(v.importo(Situazione::quota, IscrittiCorso::quota)))
             .campo("Pagato", v -> Formati.euro(v.importo(Situazione::pagato, IscrittiCorso::pagato)))
@@ -155,6 +157,12 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         Span saldati = new Span(voce.corso().iscritti().isEmpty() ? "Nessun iscritto" : saldati(voce.corso()));
         saldati.addClassNames(Stili.TESTO_SECONDARIO);
         return saldati;
+    }
+
+    /** Giorni del corso sulla riga del corso, quelli frequentati sulla riga dell'iscritto. */
+    private String giorni(Voce voce) {
+        return Formati.giorni(voce.isCorso() ? voce.corso().corso().getGiorniSettimana()
+            : voce.iscritto().iscrizione().giorniEffettivi());
     }
 
     private static String saldati(IscrittiCorso corso) {

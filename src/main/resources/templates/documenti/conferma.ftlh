@@ -9,7 +9,7 @@
 <body>
 <@c.intestazione titolo="Conferma di iscrizione"/>
 <p>Confermiamo l'iscrizione di <strong>${allievo.nome}</strong> al corso <strong>${corso.nome}</strong>
-  per l'anno scolastico ${corso.anno}.</p>
+  per l'anno scolastico ${corso.anno}<#if corso.giorni?has_content>, con lezione il ${corso.giorni}</#if>.</p>
 <@c.datiIscrizione/>
 <h2>Importo</h2>
 <table class="totali">

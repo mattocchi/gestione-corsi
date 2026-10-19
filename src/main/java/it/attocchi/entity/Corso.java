@@ -1,6 +1,7 @@
 package it.attocchi.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -36,7 +37,9 @@ public class Corso {
     @NotNull
     private Integer durataLezioneMinuti;
 
-    @ElementCollection
+    /** Caricati sempre: servono a viste e documenti per i giorni dei partecipanti ({@link Iscrizione#giorniEffettivi()}). */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @BatchSize(size = 50)
     @CollectionTable(name = "corso_giorni_settimana", joinColumns = @JoinColumn(name = "corso_id"))
     @Column(name = "giorno_settimana")
     @Enumerated(EnumType.STRING)

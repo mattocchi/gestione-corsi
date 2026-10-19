@@ -42,8 +42,10 @@ import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Route(value = "figli", layout = MainLayout.class)
 @PageTitle("I Miei Figli")
@@ -145,6 +147,9 @@ public class FigliView extends VerticalLayout {
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
         gridCorsi.addColumn(FigliView::insegnante).setHeader("Insegnanti");
+        Map<Long, Set<DayOfWeek>> giorni = corsoService.giorniDellAllievo(allievo.getId());
+        SerializableFunction<Corso, String> giorniDi = corso -> Formati.giorni(giorni.getOrDefault(corso.getId(), corso.getGiorniSettimana()));
+        gridCorsi.addColumn(giorniDi::apply).setHeader("Giorni");
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
         PrezziCorso.aggiungiColonne(gridCorsi, situazioni);
@@ -165,6 +170,7 @@ public class FigliView extends VerticalLayout {
             .titolo(Corso::getNome)
             .stato(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
             .campo("Insegnanti", FigliView::insegnante)
+            .campo("Giorni", giorniDi)
             .campo("N. Lezioni", Corso::getNumeroLezioni);
         PrezziCorso.aggiungiCampi(card, situazioni).azioni(azioni).applica();
 

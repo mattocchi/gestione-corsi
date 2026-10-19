@@ -79,6 +79,7 @@ class DocumentiServiceTest {
 
         String testo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId));
         assertTrue(testo.contains("Conferma di iscrizione"), testo);
+        assertTrue(testo.replaceAll("\\s+", " ").contains("con lezione il giovedì"), testo);
         assertTrue(testo.contains("Da pagare"), testo);
         assertTrue(testo.contains("600,00 €"), testo);
         assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
@@ -153,6 +154,23 @@ class DocumentiServiceTest {
             assertThrows(IllegalArgumentException.class, () -> documentiService.riepilogoFamigliaPer(-1L, "2024/2025", "admin"));
         } finally {
             pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
+        }
+    }
+
+    @Test
+    void conferma_conIGiorniDelPartecipante() {
+        PagamentoService.RigaPagamento chitarra = pagamentoService.righePagamentiDeiFigli("genitore3").stream()
+            .filter(r -> r.corso().getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Long corsoId = chitarra.corso().getId();
+        Long allievoId = chitarra.allievo().getId();
+        assertTrue(documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Prova")
+            .contains("con lezione il martedì e sabato"));
+        corsoService.impostaGiorni(corsoId, allievoId, java.util.Set.of(java.time.DayOfWeek.SATURDAY));
+        try {
+            assertTrue(documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Prova")
+                .contains("con lezione il sabato."));
+        } finally {
+            corsoService.impostaGiorni(corsoId, allievoId, java.util.Set.of());
         }
     }
 
