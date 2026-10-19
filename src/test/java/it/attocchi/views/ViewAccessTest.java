@@ -1211,6 +1211,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("4.200,00 €", grid.getCellText(0, 5));
             assertEquals("600,00 €", grid.getCellText(0, 6));
             assertEquals("3.600,00 €", grid.getCellText(0, 7));
+            // Preventivo: costo stimato dell'insegnante (30 lezioni × 7 allievi × 40 min a 25 €/h) e margine
+            assertEquals("3.500,00 €", grid.getCellText(0, 9));
+            assertEquals("700,00 €", grid.getCellText(0, 10));
+            assertEquals("", grid.getCellText(1, 9));
             int riga = IntStream.range(1, 8).filter(r -> grid.getRow(r).iscritto().allievo().equals(allievo)).findFirst().orElseThrow();
             assertEquals("600,00 €", grid.getCellText(riga, 6));
             assertEquals("0,00 €", grid.getCellText(riga, 7));

@@ -16,6 +16,7 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
+import it.attocchi.service.BilancioService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.IscrittiCorso;
 import it.attocchi.service.PagamentoService.RigaPagamento;
@@ -43,7 +44,9 @@ import java.util.function.Function;
 /**
  * Iscritti corso per corso con quanto devono pagare e quanto hanno pagato finora, in sola lettura: una
  * {@link TreeGrid} con un livello di raggruppamento (riga del corso con i totali, sotto i suoi iscritti) e il totale
- * generale in fondo. I pagamenti si registrano in Gestione Pagamenti.
+ * generale in fondo. I pagamenti si registrano in Gestione Pagamenti. Per il preventivo la riga del corso ha anche
+ * il costo stimato degli insegnanti ({@link BilancioService#costiPrevistiPerCorso()}, solo con la tariffa oraria) e
+ * il margine previsto (da pagare meno costo).
  */
 @Route(value = "riepilogo-iscritti", layout = MainLayout.class)
 @PageTitle("Riepilogo Iscritti")
@@ -82,10 +85,14 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     private Grid.Column<Voce> colonnaQuota;
     private Grid.Column<Voce> colonnaPagato;
     private Grid.Column<Voce> colonnaResiduo;
+    private Grid.Column<Voce> colonnaCosto;
+    private Grid.Column<Voce> colonnaMargine;
     private Grid.Column<Voce> colonnaCard;
     private List<IscrittiCorso> corsi = List.of();
+    /** Costo stimato degli insegnanti per id del corso; manca per i corsi senza tariffa. */
+    private Map<Long, BigDecimal> costi = Map.of();
 
-    public RiepilogoIscrittiView(PagamentoService pagamentoService) {
+    public RiepilogoIscrittiView(PagamentoService pagamentoService, BilancioService bilancioService) {
         this.pagamentoService = pagamentoService;
         addClassNames("size-full");
 
@@ -93,6 +100,7 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         totale = grid.appendFooterRow();
 
         corsi = pagamentoService.iscrittiPerCorso();
+        costi = bilancioService.costiPrevistiPerCorso();
         List<String> anni = corsi.stream().map(c -> c.corso().getAnnoScolastico()).filter(Objects::nonNull).distinct()
             .sorted(Comparator.reverseOrder()).toList();
         filtroAnno = ViewSupport.filtroAnnoScolastico(anni);
@@ -129,6 +137,10 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         colonnaPagato = euro("Pagato", Situazione::pagato, IscrittiCorso::pagato);
         colonnaResiduo = euro("Residuo", Situazione::residuo, IscrittiCorso::residuo);
         grid.addComponentColumn(this::stato).setHeader("Stato").setWidth("9rem").setFlexGrow(0);
+        colonnaCosto = grid.addColumn(this::costo).setHeader("Costo insegnante").setWidth("9rem").setFlexGrow(0)
+            .setTextAlign(ColumnTextAlign.END);
+        colonnaMargine = grid.addColumn(this::margine).setHeader("Margine previsto").setWidth("9rem").setFlexGrow(0)
+            .setTextAlign(ColumnTextAlign.END);
         grid.setPartNameGenerator(v -> v.isCorso() ? "riga-corso" : null);
 
         colonnaCard = CardMobile.per(grid)
@@ -141,6 +153,8 @@ public class RiepilogoIscrittiView extends VerticalLayout {
             .campo("Da pagare", v -> Formati.euro(v.importo(Situazione::quota, IscrittiCorso::quota)))
             .campo("Pagato", v -> Formati.euro(v.importo(Situazione::pagato, IscrittiCorso::pagato)))
             .campo("Residuo", v -> Formati.euro(v.importo(Situazione::residuo, IscrittiCorso::residuo)))
+            .campo("Costo insegnante", this::costo)
+            .campo("Margine previsto", this::margine)
             .azioni(v -> v.isCorso() && !v.corso().iscritti().isEmpty() ? apriChiudi(v) : null)
             .classi(v -> v.isCorso() ? null : "ms-6 w-[calc(100%-1.5rem)]")
             .applica();
@@ -170,6 +184,26 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     private String giorni(Voce voce) {
         return Formati.giorni(voce.isCorso() ? voce.corso().corso().getGiorniSettimana()
             : voce.iscritto().iscrizione().giorniEffettivi());
+    }
+
+    /** Costo stimato degli insegnanti, solo sulla riga del corso; "Senza tariffa" se nessuno ha la tariffa. */
+    private String costo(Voce voce) {
+        if (!voce.isCorso()) {
+            return null;
+        }
+        BigDecimal costo = costi.get(voce.corso().corso().getId());
+        return costo != null ? Formati.euro(costo) : "Senza tariffa";
+    }
+
+    /** Da pagare meno il costo stimato, solo sulla riga di un corso con tariffa. */
+    private String margine(Voce voce) {
+        BigDecimal margine = voce.isCorso() ? margine(voce.corso()) : null;
+        return margine != null ? Formati.euro(margine) : null;
+    }
+
+    private BigDecimal margine(IscrittiCorso corso) {
+        BigDecimal costo = costi.get(corso.corso().getId());
+        return costo != null ? corso.quota().subtract(costo) : null;
     }
 
     private static String saldati(IscrittiCorso corso) {
@@ -228,13 +262,20 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         BigDecimal quota = somma(mostrati, IscrittiCorso::quota);
         BigDecimal pagato = somma(mostrati, IscrittiCorso::pagato);
         BigDecimal residuo = somma(mostrati, IscrittiCorso::residuo);
+        // Costo e margine solo dei corsi con tariffa
+        List<IscrittiCorso> conTariffa = mostrati.stream().filter(c -> costi.containsKey(c.corso().getId())).toList();
+        BigDecimal costo = somma(conTariffa, c -> costi.get(c.corso().getId()));
+        BigDecimal margine = somma(conTariffa, this::margine);
         totale.getCell(colonnaNome).setText("Totale (" + mostrati.size() + (mostrati.size() == 1 ? " corso)" : " corsi)"));
         totale.getCell(colonnaIscritti).setText(String.valueOf(iscritti));
         totale.getCell(colonnaQuota).setText(Formati.euro(quota));
         totale.getCell(colonnaPagato).setText(Formati.euro(pagato));
         totale.getCell(colonnaResiduo).setText(Formati.euro(residuo));
+        totale.getCell(colonnaCosto).setText(Formati.euro(costo));
+        totale.getCell(colonnaMargine).setText(Formati.euro(margine));
         totale.getCell(colonnaCard).setText("Totale: " + iscritti + " iscritti · da pagare " + Formati.euro(quota)
-            + " · pagato " + Formati.euro(pagato) + " · residuo " + Formati.euro(residuo));
+            + " · pagato " + Formati.euro(pagato) + " · residuo " + Formati.euro(residuo)
+            + " · costo insegnanti " + Formati.euro(costo) + " · margine previsto " + Formati.euro(margine));
     }
 
     private static BigDecimal somma(List<IscrittiCorso> corsi, Function<IscrittiCorso, BigDecimal> importo) {
