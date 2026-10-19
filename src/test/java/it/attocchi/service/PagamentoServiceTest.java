@@ -102,4 +102,29 @@ class PagamentoServiceTest {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }
+
+    @Test
+    void iscrittiPerCorso_conIPagamentiFinoAOggi() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Long allievo = allievoService.findByUsername("allievo_canto2").orElseThrow().getId();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("600"));
+        pagamentoService.salva(canto.getId(), allievo, rata);
+        try {
+            var corsi = pagamentoService.iscrittiPerCorso();
+            assertEquals(java.util.List.of("Corso di Canto", "Corso di Chitarra"), corsi.stream().map(c -> c.corso().getNome()).toList());
+            var iscrittiCanto = corsi.getFirst();
+            assertEquals(7, iscrittiCanto.iscritti().size());
+            assertEquals(0, new BigDecimal("4200").compareTo(iscrittiCanto.quota()));
+            assertEquals(0, new BigDecimal("600").compareTo(iscrittiCanto.pagato()));
+            assertEquals(0, new BigDecimal("3600").compareTo(iscrittiCanto.residuo()));
+            assertEquals(1, iscrittiCanto.saldati());
+            // Iscritti in ordine di allievo
+            var nomi = iscrittiCanto.iscritti().stream().map(r -> r.allievo().getNomeCompleto()).toList();
+            assertEquals(nomi.stream().sorted(String.CASE_INSENSITIVE_ORDER).toList(), nomi);
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), allievo).forEach(pagamentoService::elimina);
+        }
+    }
 }

@@ -168,6 +168,26 @@ public class PagamentoService {
         }
     }
 
+    /** Un corso con i suoi iscritti (in ordine di allievo, anche nessuno) e i totali di quota, pagato e residuo. */
+    public record IscrittiCorso(Corso corso, List<RigaPagamento> iscritti) {
+
+        public BigDecimal quota() {
+            return RiepilogoFamiglia.somma(iscritti, Situazione::quota);
+        }
+
+        public BigDecimal pagato() {
+            return RiepilogoFamiglia.somma(iscritti, Situazione::pagato);
+        }
+
+        public BigDecimal residuo() {
+            return RiepilogoFamiglia.somma(iscritti, Situazione::residuo);
+        }
+
+        public long saldati() {
+            return iscritti.stream().filter(r -> r.situazione().stato() == StatoPagamento.SALDATO).count();
+        }
+    }
+
     private static final Comparator<RigaPagamento> PER_ALLIEVO_E_CORSO = Comparator
         .comparing((RigaPagamento r) -> r.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER)
         .thenComparing(r -> r.allievo().getId())
@@ -300,6 +320,24 @@ public class PagamentoService {
         return iscrizioni.stream()
             .map(i -> new RigaPagamento(i, new Situazione(i.getQuotaDovuta(), pagato.getOrDefault(i.getId(), BigDecimal.ZERO))))
             .sorted(PER_CORSO_E_ALLIEVO)
+            .toList();
+    }
+
+    /**
+     * Ogni corso (attivo o no, anche senza iscritti) con i suoi iscritti e quanto hanno pagato finora, in ordine
+     * di nome e anno scolastico del corso.
+     */
+    public List<IscrittiCorso> iscrittiPerCorso() {
+        Map<Long, List<RigaPagamento>> perCorso = new HashMap<>();
+        for (RigaPagamento riga : righePagamenti()) {
+            perCorso.computeIfAbsent(riga.corso().getId(), id -> new ArrayList<>()).add(riga);
+        }
+        return corsoRepository.findAll().stream()
+            .sorted(Comparator.comparing(Corso::getNome, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(Corso::getAnnoScolastico, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(Corso::getId))
+            .map(corso -> new IscrittiCorso(corso, perCorso.getOrDefault(corso.getId(), List.of()).stream()
+                .sorted(PER_ALLIEVO_E_CORSO).toList()))
             .toList();
     }
 

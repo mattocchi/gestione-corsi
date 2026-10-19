@@ -23,7 +23,7 @@ Per la segreteria, una vista chiara e semplice di tutti gli iscritti corso per c
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Dati: iscritti raggruppati per corso (anche corsi senza iscritti) con totali | `PagamentoService`, `PagamentoServiceTest` | `./mvnw test` | [ ] |
+| 1 | Dati: iscritti raggruppati per corso (anche corsi senza iscritti) con totali | `PagamentoService`, `PagamentoServiceTest` | `./mvnw test` | [x] |
 | 2 | Vista "Riepilogo Iscritti": TreeGrid corsi → iscritti, filtri, totale generale, espandi/comprimi, card su mobile | `views/admin/RiepilogoIscrittiView`, `CardMobile`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [ ] |
 | 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
