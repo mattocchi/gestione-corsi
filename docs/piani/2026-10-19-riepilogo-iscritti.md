@@ -25,7 +25,7 @@ Per la segreteria, una vista chiara e semplice di tutti gli iscritti corso per c
 |---|---|---|---|---|
 | 1 | Dati: iscritti raggruppati per corso (anche corsi senza iscritti) con totali | `PagamentoService`, `PagamentoServiceTest` | `./mvnw test` | [x] |
 | 2 | Vista "Riepilogo Iscritti": TreeGrid corsi → iscritti, filtri, totale generale, espandi/comprimi, card su mobile | `views/admin/RiepilogoIscrittiView`, `CardMobile`, `ViewAccessTest` | `./mvnw test`, browser desktop e 390px | [x] |
-| 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -34,3 +34,7 @@ Per la segreteria, una vista chiara e semplice di tutti gli iscritti corso per c
 
 ## Registro
 
+- Passo 1: `PagamentoService.iscrittiPerCorso()` (`IscrittiCorso`): ogni corso, anche senza iscritti, in ordine di nome e anno, con gli iscritti in ordine di allievo; test in `PagamentoServiceTest`.
+- Passo 2: `RiepilogoIscrittiView` con `TreeGrid` (colonna gerarchica "Corso / Iscritto" non ordinabile), filtri, Espandi/Comprimi tutti, totale nel footer; righe dei corsi evidenziate (`::part(riga-corso)` in styles.css). `CardMobile`: classi per riga e azioni facoltative. Durante la verifica a 390px le card rientrate uscivano a destra (`w-full` e `w-auto` insieme: vince l'ordine del CSS generato), corretto lasciando che una classe `w-…` della riga sostituisca `w-full`. Test browserless con `TreeGridTester` (righe, totali del corso, comprimi/espandi, filtro Non attivi) e accesso negato al genitore.
+- Verifica finale: `./mvnw test` 166 test verdi; browser desktop (segreteria: due corsi aperti con iscritti, totali per corso e totale generale) e 390px (card del corso, Mostra/Nascondi iscritti, card degli iscritti rientrate senza scorrimento orizzontale).
+- `TreeGrid` è un componente nuovo per il bundle di produzione: prima del prossimo `./build.sh` cancellare `src/main/bundles/prod.bundle`. Nessuna modifica allo schema del database.
