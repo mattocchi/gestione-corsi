@@ -11,6 +11,7 @@ import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.signals.Signal;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class CardMobile<T> implements Serializable {
     private SerializableFunction<T, String> sottotitolo;
     private SerializableFunction<T, ? extends Component> stato;
     private SerializableFunction<T, ? extends Component> azioni;
+    private SerializableFunction<T, String> classi;
     private Grid.Column<T> colonna;
     private Signal<Boolean> mobile;
 
@@ -83,9 +85,19 @@ public class CardMobile<T> implements Serializable {
         return this;
     }
 
-    /** Azioni nel footer della card, di solito gli stessi pulsanti della colonna "Azioni". */
+    /** Azioni nel footer della card, di solito gli stessi pulsanti della colonna "Azioni" ({@code null} = nessuna). */
     public CardMobile<T> azioni(SerializableFunction<T, ? extends Component> azioni) {
         this.azioni = azioni;
+        return this;
+    }
+
+    /**
+     * Classi Tailwind aggiunte alla card della riga (es. rientro dei figli in una {@code TreeGrid}); scritte per
+     * intero nel sorgente, {@code null} = nessuna. Una classe di larghezza ({@code w-…}) sostituisce il {@code w-full}
+     * predefinito.
+     */
+    public CardMobile<T> classi(SerializableFunction<T, String> classi) {
+        this.classi = classi;
         return this;
     }
 
@@ -115,7 +127,14 @@ public class CardMobile<T> implements Serializable {
     private Card creaCard(T item) {
         Card card = new Card();
         card.addThemeVariants(CardVariant.OUTLINED);
-        card.addClassNames("w-full");
+        String extra = classi != null ? classi.apply(item) : null;
+        if (extra != null && !extra.isBlank()) {
+            card.addClassNames(extra.split(" "));
+        }
+        // Due utility sulla larghezza non si sovrascrivono: w-full solo se le classi della riga non ne danno una
+        if (extra == null || Arrays.stream(extra.split(" ")).noneMatch(c -> c.startsWith("w-"))) {
+            card.addClassNames("w-full");
+        }
         if (titolo != null) {
             card.setTitle(titolo.apply(item));
         }
@@ -139,8 +158,9 @@ public class CardMobile<T> implements Serializable {
                 card.add(riga);
             }
         }
-        if (azioni != null) {
-            card.addToFooter(azioni.apply(item));
+        Component footer = azioni != null ? azioni.apply(item) : null;
+        if (footer != null) {
+            card.addToFooter(footer);
         }
         return card;
     }

@@ -77,6 +77,7 @@ import it.attocchi.views.admin.GrigliaInvii;
 import it.attocchi.views.admin.RimborsiDialog;
 import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.GenitoriView;
+import it.attocchi.views.admin.RiepilogoIscrittiView;
 import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.InvioEmailDialog;
@@ -1033,6 +1034,59 @@ class ViewAccessTest extends SpringBrowserlessTest {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
             riattiva(canto);
         }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_riepilogoIscrittiCorsoPerCorso() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("600"));
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        try {
+            navigate(HomeView.class);
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(i -> "Riepilogo Iscritti".equals(i.getLabel())));
+            navigate(RiepilogoIscrittiView.class);
+            var grid = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
+                (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
+
+            // Corsi attivi dell'anno più recente, aperti: Canto (7 iscritti) e Chitarra (6)
+            assertEquals(15, grid.size());
+            assertTrue(grid.getRow(0).isCorso());
+            assertTrue(grid.isExpanded(0));
+            assertEquals("Corso di Canto", grid.getCellText(0, 0));
+            assertEquals("7", grid.getCellText(0, 3));
+            assertEquals("4.200,00 €", grid.getCellText(0, 4));
+            assertEquals("600,00 €", grid.getCellText(0, 5));
+            assertEquals("3.600,00 €", grid.getCellText(0, 6));
+            int riga = IntStream.range(1, 8).filter(r -> grid.getRow(r).iscritto().allievo().equals(allievo)).findFirst().orElseThrow();
+            assertEquals("600,00 €", grid.getCellText(riga, 5));
+            assertEquals("0,00 €", grid.getCellText(riga, 6));
+            assertTrue(grid.getRow(8).isCorso());
+            assertEquals("Corso di Chitarra", grid.getCellText(8, 0));
+
+            // Comprimi tutti: restano le righe dei corsi
+            test(find(Button.class).withText("Comprimi tutti").single()).click();
+            assertEquals(2, grid.size());
+            grid.expand(1);
+            assertEquals(8, grid.size());
+
+            // Corsi non attivi dell'anno: nessuno
+            SegmentedControl<CorsiView.FiltroStato> stato = find(SegmentedControl.class).single();
+            test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            assertEquals(0, grid.size());
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+        }
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_nonAccedeAlRiepilogoIscritti() {
+        navigate("riepilogo-iscritti", RouteNotFoundError.class);
     }
 
     @Test

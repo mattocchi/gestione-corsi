@@ -20,3 +20,9 @@ vaadin-grid.grid-card-mobile > vaadin-grid-cell-content {
     padding: 0.25rem 0;
     white-space: normal;
 }
+
+/* Riepilogo iscritti: righe dei corsi (gruppi della TreeGrid) in evidenza */
+vaadin-grid::part(riga-corso) {
+    font-weight: var(--aura-font-weight-semibold, 600);
+    background: var(--vaadin-background-container, rgba(0, 0, 0, 0.03));
+}

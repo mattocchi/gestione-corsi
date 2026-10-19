@@ -132,7 +132,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### RIEPILOGO ISCRITTI
 
-* [ ] Per la segreteria prepara una visualizzazione chiara e semplice di tutti gli iscritti corso per corso, con importo assegnato (da pagare) e importo pagato fino al momento in cui si visualizza la schermata. Una specie di riepilogo.
+* [x] Per la segreteria prepara una visualizzazione chiara e semplice di tutti gli iscritti corso per corso, con importo assegnato (da pagare) e importo pagato fino al momento in cui si visualizza la schermata. Una specie di riepilogo. _(completata 2026-10-19)_
   _Chiarimento 2026-10-19: nuova voce di menu "Riepilogo Iscritti" per admin e segreteria, in sola lettura (Gestione Pagamenti resta com'è); filtri stato del corso (default Attivi) e anno scolastico (default corrente); compaiono anche i corsi senza iscritti; su mobile card del corso con i totali e pulsante per mostrare gli iscritti come card._
-* [ ] Potrebbe essere utile utilizzare sempre una griglia con un livello di raggruppamento?
+* [x] Potrebbe essere utile utilizzare sempre una griglia con un livello di raggruppamento? _(completata 2026-10-19)_
   _Chiarimento 2026-10-19: sì, griglia ad albero (TreeGrid) con un livello: riga del corso con n. iscritti e totali di da pagare, pagato e residuo, sotto gli iscritti con allievo, genitore, da pagare, pagato, residuo e stato; corsi aperti all'avvio con "Espandi tutti / Comprimi tutti" e totale generale in fondo._
