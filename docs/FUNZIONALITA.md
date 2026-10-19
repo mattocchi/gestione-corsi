@@ -140,4 +140,6 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### ALLIEVI
 
 * [ ] GENITORE NON OBBLIGAORIO, alcuni allievi sono adulti.
+  _Chiarimento 2026-10-19: il genitore diventa solo facoltativo (nessun flag "adulto"); senza genitore ricevute, conferme ed email vanno all'allievo._
 * [ ] INSERIMENTO RAPIDO ALLIEVO SE NON ESISTE (NOME E COGNOME), in modo da insere direttamente sul corso le persone e poi completare le informazioni
+  _Chiarimento 2026-10-19: in Partecipanti si scrive il nome nel campo "Aggiungi un allievo"; se non esiste si apre un mini-form con nome e cognome (obbligatori), email e telefono (facoltativi); Salva crea l'allievo (utente disattivato, senza genitore) e lo iscrive al corso; se esiste un omonimo lo segnala e permette di iscrivere quello esistente o crearne comunque uno nuovo; il resto si completa da Gestione Allievi._
