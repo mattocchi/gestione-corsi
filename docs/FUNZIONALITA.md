@@ -147,3 +147,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### GIORNI DEGLI ALLIEVI
 
 * [ ] ho un caso di corso con due giorni a settimana e due allievi, ma un giorno fa un allievo e un giorno fa l'altro allievo. puoi implementare questa funzioanlità per gestirlo?
+  _Chiarimento 2026-10-19: per ogni partecipante si scelgono i giorni tra quelli del corso (default tutti) in Partecipanti; ogni lezione ha le presenze solo di chi frequenta quel giorno (rimborsi e bilancio seguono); "Numero lezioni" diventa il numero di lezioni per ogni allievo; cambiando i giorni si aggiornano solo le lezioni da fare; i giorni dell'allievo si vedono in I Miei Corsi, I Miei Figli, conferma di iscrizione e Riepilogo Iscritti._
