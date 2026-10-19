@@ -438,6 +438,47 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertFalse(find(Button.class).from(secondo).withText("Iscrivi questo").exists());
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_sceglieIGiorniDelPartecipante() {
+        // Canto ha un solo giorno: nessuna scelta dei giorni
+        PartecipantiDialog canto = apriPartecipanti("Corso di Canto");
+        assertFalse(((Grid<Iscrizione>) find(Grid.class).from(canto).single()).getColumns().get(2).isVisible());
+        canto.close();
+
+        PartecipantiDialog dialog = apriPartecipanti("Corso di Chitarra");
+        Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        try {
+            CheckboxGroup<DayOfWeek> giorni = giorniDi(dialog, allievo);
+            assertEquals(Set.of(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY), giorni.getValue());
+            test(giorni).deselectItem("sab");
+            assertEquals(Set.of(DayOfWeek.TUESDAY), iscrizione(chitarra, allievo).getGiorni());
+            assertEquals(Set.of(DayOfWeek.TUESDAY), giorniDi(dialog, allievo).getValue());
+
+            // Togliere tutti i giorni = tutti i giorni del corso
+            test(giorniDi(dialog, allievo)).deselectItem("mar");
+            assertTrue(iscrizione(chitarra, allievo).getGiorni().isEmpty());
+            assertEquals(Set.of(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY), giorniDi(dialog, allievo).getValue());
+        } finally {
+            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of());
+        }
+    }
+
+    /** Scelta dei giorni (terza colonna) del partecipante nella griglia dei partecipanti. */
+    @SuppressWarnings("unchecked")
+    private CheckboxGroup<DayOfWeek> giorniDi(PartecipantiDialog dialog, Allievo allievo) {
+        var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+        int riga = IntStream.range(0, righe.size()).filter(r -> righe.getRow(r).getAllievo().equals(allievo)).findFirst().orElseThrow();
+        return (CheckboxGroup<DayOfWeek>) righe.getCellComponent(riga, 2);
+    }
+
+    private Iscrizione iscrizione(Corso corso, Allievo allievo) {
+        return corsoService.findPartecipanti(corso.getId()).stream()
+            .filter(i -> i.getAllievo().equals(allievo)).findFirst().orElseThrow();
+    }
+
     @SuppressWarnings("unchecked")
     private PartecipantiDialog apriPartecipanti(String corso) {
         navigate(CorsiView.class);
@@ -1702,7 +1743,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 riga = row;
             }
         }
-        test(pulsante(partecipanti.getCellComponent(riga, 3), "Rimuovi Allievo Canto1")).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 4), "Rimuovi Allievo Canto1")).click();
         assertEquals(6, partecipanti.size());
         assertTrue(presenzaService.findByCorsoAndAllievo(corso.getId(), allievoId).isEmpty());
     }

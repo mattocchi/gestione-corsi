@@ -4,12 +4,16 @@ import it.attocchi.entity.Allievo;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.Collection;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Formati di visualizzazione usati nell'interfaccia.
@@ -23,6 +27,16 @@ public final class Formati {
     private static final DateTimeFormatter MESE = DateTimeFormatter.ofPattern("LLLL yyyy", ITALIANO);
 
     private Formati() {
+    }
+
+    /** Giorno della settimana abbreviato, es. "mar". */
+    public static String giorno(DayOfWeek giorno) {
+        return giorno.getDisplayName(TextStyle.SHORT, ITALIANO);
+    }
+
+    /** Giorni della settimana abbreviati, da lunedì, es. "mar, sab"; stringa vuota se nessuno. */
+    public static String giorni(Collection<DayOfWeek> giorni) {
+        return giorni.stream().sorted().map(Formati::giorno).collect(Collectors.joining(", "));
     }
 
     /**

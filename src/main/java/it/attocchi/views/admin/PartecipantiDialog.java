@@ -2,6 +2,8 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -19,11 +21,13 @@ import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.AllievoService;
 import it.attocchi.views.CardMobile;
+import it.attocchi.views.Formati;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -55,7 +59,8 @@ public class PartecipantiDialog extends Dialog {
         this.corso = corso;
 
         setHeaderTitle("Partecipanti – " + corso.getNome());
-        setWidth("600px");
+        // Più largo quando c'è la colonna dei giorni
+        setWidth(corso.getGiorniSettimana().size() > 1 ? "720px" : "600px");
         setMaxWidth("100%");
 
         nuovoPartecipante.setPlaceholder("Aggiungi un allievo");
@@ -77,6 +82,10 @@ public class PartecipantiDialog extends Dialog {
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getAllievo().getNomeCompleto()).setHeader("Partecipante");
+        // Con più giorni a settimana ogni partecipante può frequentarne solo alcuni
+        boolean piuGiorni = corso.getGiorniSettimana().size() > 1;
+        grid.addComponentColumn(this::createGiorni).setHeader("Giorni").setAutoWidth(true).setFlexGrow(0)
+            .setVisible(piuGiorni);
         grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = corso.isAttivo();
@@ -90,6 +99,7 @@ public class PartecipantiDialog extends Dialog {
             .titolo(iscrizione -> iscrizione.getAllievo().getNomeCompleto())
             .stato(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .campo("Orario", this::createOrario)
+            .campo("Giorni", iscrizione -> piuGiorni ? createGiorni(iscrizione) : null)
             .azioni(iscrizione -> createAzioni(iscrizione, modificabile))
             .applica();
         grid.setAllRowsVisible(true);
@@ -143,6 +153,33 @@ public class PartecipantiDialog extends Dialog {
             }
         });
         return orario;
+    }
+
+    /**
+     * Giorni del corso frequentati dal partecipante, salvati subito: togliere tutti equivale a tutti i giorni.
+     */
+    private CheckboxGroup<DayOfWeek> createGiorni(Iscrizione iscrizione) {
+        String nome = iscrizione.getAllievo().getNomeCompleto();
+        CheckboxGroup<DayOfWeek> giorni = new CheckboxGroup<>();
+        giorni.setAriaLabel("Giorni di " + nome);
+        giorni.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
+        giorni.setItems(corso.getGiorniSettimana().stream().sorted().toList());
+        giorni.setItemLabelGenerator(Formati::giorno);
+        giorni.setValue(iscrizione.giorniEffettivi(corso.getGiorniSettimana()));
+        giorni.setReadOnly(!corso.isAttivo());
+        giorni.addValueChangeListener(e -> {
+            if (!e.isFromClient()) {
+                return;
+            }
+            try {
+                corsoService.impostaGiorni(corso.getId(), iscrizione.getAllievo().getId(), e.getValue());
+                aggiorna();
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio dei giorni di " + nome + ": " + ex.getMessage());
+                aggiorna();
+            }
+        });
+        return giorni;
     }
 
     private void openQuotaPagamenti(Iscrizione iscrizione) {
