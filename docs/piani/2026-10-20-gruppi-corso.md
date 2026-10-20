@@ -31,7 +31,7 @@ Alcuni corsi hanno gruppi per giorno della settimana, altri no. Sostituire l'ass
 | 1 | Entità `GruppoCorso` e repository; `Iscrizione.gruppo` al posto di `giorni` (`giorniEffettivi` dal gruppo); `CorsoService`: gruppi del corso, salva/elimina gruppo, assegna gruppo (orario proposto, presenze sincronizzate), blocco dei giorni usati, eliminazione del corso; Partecipanti: sezione Gruppi e colonna Gruppo; test | `entity/GruppoCorso`, `entity/Iscrizione`, `repository/GruppoCorsoRepository`, `service/CorsoService`, `views/admin/PartecipantiDialog`, `views/admin/GruppoDialog`, `views/Formati`, test | `./mvnw test` | [x] |
 | 2 | Conversione all'avvio dei giorni per allievo in gruppi (`GruppiIniziali`), test | `GruppiIniziali`, `service/CorsoService`, test | `./mvnw test` | [x] |
 | 3 | Gruppo in Gestisci Presenze, Riepilogo Iscritti, I Miei Corsi / I Miei Figli e conferma; test | `views/ElencoLezioni`, `service/LezioneService`, `views/admin/RiepilogoIscrittiView`, `views/allievo/MieiCorsiView`, `views/genitore/FigliView`, `service/DocumentiService`, test | `./mvnw test`, browser | [x] |
-| 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -40,3 +40,9 @@ Alcuni corsi hanno gruppi per giorno della settimana, altri no. Sostituire l'ass
 - Eliminazione della tabella `iscrizione_giorni` in produzione (resta vuota dopo la conversione; si può eliminare a mano).
 
 ## Registro
+
+- Passo 1: `GruppoCorso` e `Iscrizione.gruppo`; `giorniEffettivi()` / `frequenta()` restano l'unico punto usato da generazione, iscrizione e lezioni aggiunte, quindi calendario, presenze e costi non sono cambiati. Partecipanti: sezione Gruppi, colonna Gruppo visibile solo con gruppi (gli indici delle colonne nei test dei corsi senza gruppi si spostano di uno).
+- Passo 2: `GruppiIniziali` legge `iscrizione_giorni` con SQL e la svuota; testato creando la tabella in H2. Nella conversione l'orario dell'allievo non viene toccato.
+- Passo 3: gruppo in Gestisci Presenze (colonna e sottotitolo della card), Riepilogo Iscritti (anche nella ricerca), I Miei Corsi / I Miei Figli e conferma.
+- Verifica: `./mvnw test` 187 test verdi; browser (dev, segreteria, finestra stretta): sezione Gruppi, nuovo gruppo, card con il campo Gruppo; la scelta del giorno nel dialog del gruppo ora è senza etichetta laterale, come il metodo di pagamento.
+- Produzione: al primo avvio `ddl-auto=update` crea `corso_gruppi` e `corso_allievi.gruppo_id`, poi `GruppiIniziali` converte i giorni già assegnati. Nessuno script SQL da eseguire.
