@@ -20,7 +20,7 @@ Nel Riepilogo Iscritti rendere chiari i gruppi di ogni corso ([F-2026-10-20/GRUP
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Gruppi del corso in `IscrittiCorso`; livello gruppo nella TreeGrid (righe, espansione, ricerca, card mobile, stile della riga), test | `service/PagamentoService`, `views/admin/RiepilogoIscrittiView`, `styles.css`, `ViewAccessTest` | `./mvnw test`, browser | [ ] |
+| 1 | Gruppi del corso in `IscrittiCorso`; livello gruppo nella TreeGrid (righe, espansione, ricerca, card mobile, stile della riga), test | `service/PagamentoService`, `views/admin/RiepilogoIscrittiView`, `styles.css`, `ViewAccessTest` | `./mvnw test`, browser | [x] |
 | 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

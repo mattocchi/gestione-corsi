@@ -3,11 +3,13 @@ package it.attocchi.service;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.GenitoreRepository;
+import it.attocchi.repository.GruppoCorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import org.springframework.stereotype.Service;
@@ -168,8 +170,16 @@ public class PagamentoService {
         }
     }
 
-    /** Un corso con i suoi iscritti (in ordine di allievo, anche nessuno) e i totali di quota, pagato e residuo. */
-    public record IscrittiCorso(Corso corso, List<RigaPagamento> iscritti) {
+    /**
+     * Un corso con i suoi iscritti (in ordine di allievo, anche nessuno), i suoi gruppi (per giorno e orario, anche
+     * nessuno) e i totali di quota, pagato e residuo.
+     */
+    public record IscrittiCorso(Corso corso, List<RigaPagamento> iscritti, List<GruppoCorso> gruppi) {
+
+        /** Iscritti del gruppo indicato ({@code null} = quelli senza gruppo), tra quelli dati. */
+        public static List<RigaPagamento> delGruppo(List<RigaPagamento> iscritti, GruppoCorso gruppo) {
+            return iscritti.stream().filter(r -> Objects.equals(r.iscrizione().getGruppo(), gruppo)).toList();
+        }
 
         public BigDecimal quota() {
             return RiepilogoFamiglia.somma(iscritti, Situazione::quota);
@@ -201,9 +211,12 @@ public class PagamentoService {
     private final IscrizioneRepository iscrizioneRepository;
     private final CorsoRepository corsoRepository;
     private final GenitoreRepository genitoreRepository;
+    private final GruppoCorsoRepository gruppoRepository;
 
     public PagamentoService(PagamentoRepository pagamentoRepository, IscrizioneRepository iscrizioneRepository,
-                            CorsoRepository corsoRepository, GenitoreRepository genitoreRepository) {
+                            CorsoRepository corsoRepository, GenitoreRepository genitoreRepository,
+                            GruppoCorsoRepository gruppoRepository) {
+        this.gruppoRepository = gruppoRepository;
         this.pagamentoRepository = pagamentoRepository;
         this.iscrizioneRepository = iscrizioneRepository;
         this.corsoRepository = corsoRepository;
@@ -324,20 +337,23 @@ public class PagamentoService {
     }
 
     /**
-     * Ogni corso (attivo o no, anche senza iscritti) con i suoi iscritti e quanto hanno pagato finora, in ordine
-     * di nome e anno scolastico del corso.
+     * Ogni corso (attivo o no, anche senza iscritti) con i suoi iscritti, quanto hanno pagato finora e i suoi
+     * gruppi, in ordine di nome e anno scolastico del corso.
      */
     public List<IscrittiCorso> iscrittiPerCorso() {
         Map<Long, List<RigaPagamento>> perCorso = new HashMap<>();
         for (RigaPagamento riga : righePagamenti()) {
             perCorso.computeIfAbsent(riga.corso().getId(), id -> new ArrayList<>()).add(riga);
         }
+        Map<Long, List<GruppoCorso>> gruppi = new HashMap<>();
+        gruppoRepository.findAll().stream().sorted(GruppoCorso.PER_GIORNO)
+            .forEach(g -> gruppi.computeIfAbsent(g.getCorso().getId(), id -> new ArrayList<>()).add(g));
         return corsoRepository.findAll().stream()
             .sorted(Comparator.comparing(Corso::getNome, String.CASE_INSENSITIVE_ORDER)
                 .thenComparing(Corso::getAnnoScolastico, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(Corso::getId))
             .map(corso -> new IscrittiCorso(corso, perCorso.getOrDefault(corso.getId(), List.of()).stream()
-                .sorted(PER_ALLIEVO_E_CORSO).toList()))
+                .sorted(PER_ALLIEVO_E_CORSO).toList(), gruppi.getOrDefault(corso.getId(), List.of())))
             .toList();
     }
 

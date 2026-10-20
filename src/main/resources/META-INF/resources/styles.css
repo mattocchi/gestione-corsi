@@ -26,3 +26,8 @@ vaadin-grid::part(riga-corso) {
     font-weight: var(--aura-font-weight-semibold, 600);
     background: var(--vaadin-background-container, rgba(0, 0, 0, 0.03));
 }
+
+/* Riepilogo Iscritti: riga del gruppo sotto il corso */
+vaadin-grid::part(riga-gruppo) {
+    font-weight: var(--aura-font-weight-medium, 500);
+}

@@ -476,15 +476,30 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(Set.of(DayOfWeek.SATURDAY), iscrizione(chitarra, allievo).giorniEffettivi());
             assertTrue(find(Span.class).from(dialog).withText("Principianti – sab 10:00 · 1 allievo").exists());
 
-            // Nel Riepilogo Iscritti il gruppo è sulla riga dell'iscritto
+            // Nel Riepilogo Iscritti il corso con gruppi ha un livello in più: corso → gruppi → iscritti
             dialog.close();
             navigate(RiepilogoIscrittiView.class);
             var riepilogo = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
                 (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
-            int riga = IntStream.range(0, riepilogo.size())
-                .filter(r -> !riepilogo.getRow(r).isCorso() && riepilogo.getRow(r).iscritto().allievo().equals(allievo))
+            // Canto (1 + 7 iscritti) senza gruppi; Chitarra: corso, 2 gruppi e 6 iscritti
+            assertEquals(17, riepilogo.size());
+            int corso = IntStream.range(0, riepilogo.size())
+                .filter(r -> riepilogo.getRow(r).isCorso() && riepilogo.getCellText(r, 0).equals("Corso di Chitarra"))
                 .findFirst().orElseThrow();
-            assertEquals("Principianti – sab 10:00", riepilogo.getCellText(riga, 3));
+            assertTrue(riepilogo.getRow(corso + 1).isGruppo());
+            assertEquals("Principianti – sab 10:00", riepilogo.getCellText(corso + 1, 0));
+            assertEquals("1", riepilogo.getCellText(corso + 1, 4));
+            assertEquals("", riepilogo.getCellText(corso + 1, 5));
+            assertEquals(allievo, riepilogo.getRow(corso + 2).iscritto().allievo());
+            assertEquals("Principianti – sab 10:00", riepilogo.getCellText(corso + 2, 3));
+            assertEquals("Senza gruppo (tutti i giorni)", riepilogo.getCellText(corso + 3, 0));
+            assertEquals("5", riepilogo.getCellText(corso + 3, 4));
+
+            // Comprimi tutti: restano i corsi; Espandi tutti riapre corsi e gruppi
+            test(find(Button.class).withText("Comprimi tutti").single()).click();
+            assertEquals(2, riepilogo.size());
+            test(find(Button.class).withText("Espandi tutti").single()).click();
+            assertEquals(17, riepilogo.size());
         } finally {
             corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
             corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);

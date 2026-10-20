@@ -16,6 +16,7 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.IscrittiCorso;
@@ -54,19 +55,35 @@ import java.util.function.Function;
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class RiepilogoIscrittiView extends VerticalLayout {
 
-    /** Riga della griglia: un corso (gruppo) o un suo iscritto. */
-    public record Voce(IscrittiCorso corso, RigaPagamento iscritto) {
+    /** Gruppo del corso con i suoi iscritti mostrati; {@code gruppo} null = gli iscritti senza gruppo. */
+    public record Gruppo(GruppoCorso gruppo, List<RigaPagamento> iscritti) {
+    }
+
+    /**
+     * Riga della griglia: un corso, un suo gruppo (solo nei corsi con gruppi) o un iscritto; l'iscritto tiene il
+     * gruppo sotto cui è mostrato ({@code null} nei corsi senza gruppi).
+     */
+    public record Voce(IscrittiCorso corso, Gruppo gruppo, RigaPagamento iscritto) {
 
         public boolean isCorso() {
-            return iscritto == null;
+            return gruppo == null && iscritto == null;
+        }
+
+        public boolean isGruppo() {
+            return gruppo != null && iscritto == null;
+        }
+
+        public boolean isIscritto() {
+            return iscritto != null;
         }
 
         Situazione situazione() {
             return iscritto.situazione();
         }
 
+        /** Importo dell'iscritto o totale del corso; nessuno sulla riga del gruppo. */
         BigDecimal importo(Function<Situazione, BigDecimal> importo, Function<IscrittiCorso, BigDecimal> totale) {
-            return isCorso() ? totale.apply(corso) : importo.apply(situazione());
+            return isCorso() ? totale.apply(corso) : isIscritto() ? importo.apply(situazione()) : null;
         }
     }
 
@@ -77,8 +94,8 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     private final ComboBox<String> filtroAnno;
     private final RicercaRapida ricerca = new RicercaRapida();
     private final List<Voce> corsiMostrati = new ArrayList<>();
-    /** Iscritti mostrati sotto ogni corso: tutti, o con la ricerca solo quelli che corrispondono. */
-    private final Map<IscrittiCorso, List<RigaPagamento>> iscrittiMostrati = new HashMap<>();
+    /** Righe sotto ogni corso e gruppo: tutte, o con la ricerca solo quelle che corrispondono. */
+    private final Map<Voce, List<Voce>> figli = new HashMap<>();
     private final FooterRow totale;
     private Grid.Column<Voce> colonnaNome;
     private Grid.Column<Voce> colonnaIscritti;
@@ -111,7 +128,7 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         filtroAnno.addValueChangeListener(e -> applicaFiltri());
         ricerca.addRicercaListener(this::applicaFiltri);
 
-        Button espandi = new Button("Espandi tutti", VaadinIcon.PLUS_SQUARE_O.create(), e -> grid.expand(corsiMostrati));
+        Button espandi = new Button("Espandi tutti", VaadinIcon.PLUS_SQUARE_O.create(), e -> grid.expandRecursively(corsiMostrati, 1));
         Button comprimi = new Button("Comprimi tutti", VaadinIcon.MINUS_SQUARE_O.create(), e -> grid.collapse(corsiMostrati));
         espandi.addThemeVariants(ButtonVariant.TERTIARY);
         comprimi.addThemeVariants(ButtonVariant.TERTIARY);
@@ -124,14 +141,15 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        colonnaNome = grid.addHierarchyColumn(v -> v.isCorso() ? v.corso().corso().getNome() : v.iscritto().allievo().getNomeCompleto())
+        colonnaNome = grid.addHierarchyColumn(RiepilogoIscrittiView::nome)
             .setHeader("Corso / Iscritto").setSortable(false).setWidth("14rem").setFlexGrow(2);
         grid.addColumn(v -> v.isCorso() ? Objects.toString(v.corso().corso().getAnnoScolastico(), "") : "")
             .setHeader("Anno").setWidth("7rem").setFlexGrow(0);
-        grid.addColumn(v -> !v.isCorso() && v.iscritto().genitore() != null ? v.iscritto().genitore().getNomeCompleto() : "")
+        grid.addColumn(v -> v.isIscritto() && v.iscritto().genitore() != null ? v.iscritto().genitore().getNomeCompleto() : "")
             .setHeader("Genitore");
         grid.addColumn(this::giorni).setHeader("Giorni / Gruppo").setAutoWidth(true).setFlexGrow(0);
-        colonnaIscritti = grid.addColumn(v -> v.isCorso() ? String.valueOf(v.corso().iscritti().size()) : "")
+        colonnaIscritti = grid.addColumn(v -> v.isCorso() ? String.valueOf(v.corso().iscritti().size())
+                : v.isGruppo() ? String.valueOf(v.gruppo().iscritti().size()) : "")
             .setHeader("Iscritti").setWidth("6rem").setFlexGrow(0);
         colonnaQuota = euro("Da pagare", Situazione::quota, IscrittiCorso::quota);
         colonnaPagato = euro("Pagato", Situazione::pagato, IscrittiCorso::pagato);
@@ -141,23 +159,25 @@ public class RiepilogoIscrittiView extends VerticalLayout {
             .setTextAlign(ColumnTextAlign.END);
         colonnaMargine = grid.addColumn(this::margine).setHeader("Margine previsto").setWidth("9rem").setFlexGrow(0)
             .setTextAlign(ColumnTextAlign.END);
-        grid.setPartNameGenerator(v -> v.isCorso() ? "riga-corso" : null);
+        grid.setPartNameGenerator(v -> v.isCorso() ? "riga-corso" : v.isGruppo() ? "riga-gruppo" : null);
 
         colonnaCard = CardMobile.per(grid)
-            .titolo(v -> v.isCorso() ? v.corso().corso().getNome() : v.iscritto().allievo().getNomeCompleto())
+            .titolo(RiepilogoIscrittiView::nome)
             .sottotitolo(v -> v.isCorso() ? Objects.toString(v.corso().corso().getAnnoScolastico(), "")
-                : v.iscritto().genitore() != null ? "Genitore: " + v.iscritto().genitore().getNomeCompleto() : null)
-            .stato(v -> v.isCorso() ? null : StatoPagamentoUI.badge(v.situazione()))
+                : v.isIscritto() && v.iscritto().genitore() != null ? "Genitore: " + v.iscritto().genitore().getNomeCompleto() : null)
+            .stato(v -> v.isIscritto() ? StatoPagamentoUI.badge(v.situazione()) : null)
             .campo("Giorni", v -> v.isCorso() ? giorni(v) : null)
-            .campo("Gruppo", v -> v.isCorso() ? null : giorni(v))
-            .campo("Iscritti", v -> v.isCorso() ? v.corso().iscritti().size() + " (" + saldati(v.corso()) + ")" : null)
+            .campo("Gruppo", v -> v.isIscritto() && v.gruppo() == null ? giorni(v) : null)
+            .campo("Iscritti", v -> v.isCorso() ? v.corso().iscritti().size() + " (" + saldati(v.corso()) + ")"
+                : v.isGruppo() ? v.gruppo().iscritti().size() : null)
             .campo("Da pagare", v -> Formati.euro(v.importo(Situazione::quota, IscrittiCorso::quota)))
             .campo("Pagato", v -> Formati.euro(v.importo(Situazione::pagato, IscrittiCorso::pagato)))
             .campo("Residuo", v -> Formati.euro(v.importo(Situazione::residuo, IscrittiCorso::residuo)))
             .campo("Costo insegnante", this::costo)
             .campo("Margine previsto", this::margine)
-            .azioni(v -> v.isCorso() && !v.corso().iscritti().isEmpty() ? apriChiudi(v) : null)
-            .classi(v -> v.isCorso() ? null : "ms-6 w-[calc(100%-1.5rem)]")
+            .azioni(v -> !figli.getOrDefault(v, List.of()).isEmpty() ? apriChiudi(v) : null)
+            .classi(v -> v.isCorso() ? null
+                : v.isIscritto() && v.gruppo() != null ? "ms-12 w-[calc(100%-3rem)]" : "ms-6 w-[calc(100%-1.5rem)]")
             .applica();
 
         // Il pulsante della card del corso cambia testo quando il corso si apre o si chiude
@@ -172,9 +192,23 @@ public class RiepilogoIscrittiView extends VerticalLayout {
             .setWidth("8rem").setFlexGrow(0).setTextAlign(ColumnTextAlign.END);
     }
 
+    /** Nome del corso, del gruppo ("Senza gruppo (tutti i giorni)" per chi non ne ha) o dell'iscritto. */
+    private static String nome(Voce voce) {
+        if (voce.isCorso()) {
+            return voce.corso().corso().getNome();
+        }
+        if (voce.isGruppo()) {
+            return voce.gruppo().gruppo() != null ? Formati.gruppo(voce.gruppo().gruppo()) : "Senza gruppo (tutti i giorni)";
+        }
+        return voce.iscritto().allievo().getNomeCompleto();
+    }
+
     private Component stato(Voce voce) {
-        if (!voce.isCorso()) {
+        if (voce.isIscritto()) {
             return StatoPagamentoUI.badge(voce.situazione());
+        }
+        if (voce.isGruppo()) {
+            return new Span();
         }
         Span saldati = new Span(voce.corso().iscritti().isEmpty() ? "Nessun iscritto" : saldati(voce.corso()));
         saldati.addClassNames(Stili.TESTO_SECONDARIO);
@@ -184,7 +218,7 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     /** Giorni del corso sulla riga del corso, il gruppo (vuoto = tutti i giorni) sulla riga dell'iscritto. */
     private String giorni(Voce voce) {
         return voce.isCorso() ? Formati.giorni(voce.corso().corso().getGiorniSettimana())
-            : Formati.gruppo(voce.iscritto().iscrizione().getGruppo());
+            : voce.isIscritto() ? Formati.gruppo(voce.iscritto().iscrizione().getGruppo()) : "";
     }
 
     /** Costo stimato degli insegnanti, solo sulla riga del corso; "Senza tariffa" se nessuno ha la tariffa. */
@@ -229,7 +263,7 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         FiltroStato stato = filtroCorsi.getValue();
         String anno = filtroAnno.getValue();
         corsiMostrati.clear();
-        iscrittiMostrati.clear();
+        figli.clear();
         int conStatoEAnno = 0;
         for (IscrittiCorso corso : corsi) {
             Corso c = corso.corso();
@@ -244,17 +278,38 @@ public class RiepilogoIscrittiView extends VerticalLayout {
                         Formati.gruppo(r.iscrizione().getGruppo()))))
                     .toList();
                 if (corsoTrovato || !iscritti.isEmpty()) {
-                    corsiMostrati.add(new Voce(corso, null));
-                    iscrittiMostrati.put(corso, iscritti);
+                    Voce voceCorso = new Voce(corso, null, null);
+                    corsiMostrati.add(voceCorso);
+                    figli.put(voceCorso, righeSotto(corso, iscritti, corsoTrovato));
                 }
             }
         }
         ricerca.mostraConteggio(corsiMostrati.size(), conStatoEAnno);
-        grid.setItems(corsiMostrati, v -> v.isCorso()
-            ? iscrittiMostrati.getOrDefault(v.corso(), List.of()).stream().map(r -> new Voce(v.corso(), r)).toList()
-            : List.of());
-        grid.expand(corsiMostrati);
+        grid.setItems(corsiMostrati, v -> figli.getOrDefault(v, List.of()));
+        grid.expandRecursively(corsiMostrati, 1);
         aggiornaTotale();
+    }
+
+    /**
+     * Righe sotto il corso: gli iscritti, o nei corsi con gruppi i gruppi (tutti se il corso corrisponde alla
+     * ricerca, altrimenti quelli con iscritti trovati) e "Senza gruppo" se qualcuno non ne ha, con i loro iscritti.
+     */
+    private List<Voce> righeSotto(IscrittiCorso corso, List<RigaPagamento> iscritti, boolean tuttiIGruppi) {
+        if (corso.gruppi().isEmpty()) {
+            return iscritti.stream().map(r -> new Voce(corso, null, r)).toList();
+        }
+        List<Gruppo> gruppi = new ArrayList<>();
+        corso.gruppi().forEach(g -> gruppi.add(new Gruppo(g, IscrittiCorso.delGruppo(iscritti, g))));
+        gruppi.add(new Gruppo(null, IscrittiCorso.delGruppo(iscritti, null)));
+        List<Voce> righe = new ArrayList<>();
+        for (Gruppo gruppo : gruppi) {
+            if (!gruppo.iscritti().isEmpty() || (tuttiIGruppi && gruppo.gruppo() != null)) {
+                Voce voceGruppo = new Voce(corso, gruppo, null);
+                righe.add(voceGruppo);
+                figli.put(voceGruppo, gruppo.iscritti().stream().map(r -> new Voce(corso, gruppo, r)).toList());
+            }
+        }
+        return righe;
     }
 
     /** Totale generale dei corsi mostrati, nel footer (su mobile nel footer della colonna card). */
