@@ -170,7 +170,7 @@ class DocumentiServiceTest {
         corsoService.assegnaGruppo(corsoId, allievoId, gruppo.getId());
         try {
             assertTrue(documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Prova")
-                .contains("con lezione il sabato."));
+                .contains("con lezione il sabato alle 10:00."));
         } finally {
             corsoService.assegnaGruppo(corsoId, allievoId, null);
             corsoService.impostaOrario(corsoId, allievoId, null);

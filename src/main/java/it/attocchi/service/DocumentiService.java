@@ -11,6 +11,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Indirizzo;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Ricevute e conferme di iscrizione da template FreeMarker ({@code templates/documenti}, {@code templates/email}):
@@ -323,7 +325,7 @@ public class DocumentiService {
         modello.put("corso", Map.of("nome", corso.getNome(), "anno", testo(corso.getAnnoScolastico()),
             "insegnante", corso.getNomiInsegnanti(),
             "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante", "quota", quota,
-            "giorni", Formati.giorniEstesi(iscrizione.giorniEffettivi())));
+            "giorni", giorni(iscrizione)));
         List<Map<String, String>> pagamenti = ricevuta.pagamenti().stream().map(DocumentiService::pagamento).toList();
         modello.put("pagamenti", pagamenti);
         modello.put("totali", Map.of("quota", Formati.euro(situazione.quota()), "pagato", Formati.euro(situazione.pagato()),
@@ -403,5 +405,13 @@ public class DocumentiService {
         } catch (IOException ex) {
             return null;
         }
+    }
+
+    /** Giorni di lezione per la conferma: "sabato alle 10:00" dal gruppo, altrimenti i giorni del corso. */
+    private static String giorni(Iscrizione iscrizione) {
+        GruppoCorso gruppo = iscrizione.getGruppo();
+        String giorni = Formati.giorniEstesi(iscrizione.giorniEffettivi());
+        return gruppo != null && gruppo.getOrario() != null && giorni.equals(Formati.giorniEstesi(Set.of(gruppo.getGiorno())))
+            ? giorni + " alle " + Formati.ora(gruppo.getOrario()) : giorni;
     }
 }

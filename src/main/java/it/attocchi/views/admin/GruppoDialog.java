@@ -49,10 +49,7 @@ public class GruppoDialog extends Dialog {
         binder.forField(orario).asRequired("Indica l'orario").bind(GruppoCorso::getOrario, GruppoCorso::setOrario);
         binder.readBean(gruppo);
 
-        FormLayout form = new FormLayout();
-        form.add(nome);
-        form.addFormItem(giorno, "Giorno");
-        form.add(orario);
+        FormLayout form = new FormLayout(nome, giorno, orario);
         add(form);
 
         Button salva = new Button("Salva", e -> {

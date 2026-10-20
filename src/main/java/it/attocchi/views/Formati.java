@@ -1,6 +1,7 @@
 package it.attocchi.views;
 
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 
 import java.math.BigDecimal;
@@ -8,6 +9,7 @@ import java.text.NumberFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -57,12 +59,22 @@ public final class Formati {
         if (gruppo == null) {
             return "";
         }
-        String orario = gruppo.getOrario() != null ? " " + gruppo.getOrario().format(ORA) : "";
+        String orario = gruppo.getOrario() != null ? " " + ora(gruppo.getOrario()) : "";
         if (gruppo.getNome() != null && !gruppo.getNome().isBlank()) {
             return gruppo.getNome() + " – " + giorno(gruppo.getGiorno()) + orario;
         }
         String giorno = gruppo.getGiorno().getDisplayName(TextStyle.FULL, ITALIANO);
         return Character.toUpperCase(giorno.charAt(0)) + giorno.substring(1) + orario;
+    }
+
+    /** Orario "17:00"; stringa vuota se {@code null}. */
+    public static String ora(LocalTime ora) {
+        return ora != null ? ora.format(ORA) : "";
+    }
+
+    /** Il gruppo del partecipante o, senza gruppo, i giorni del corso (es. "mar, sab"). */
+    public static String gruppoOGiorni(Corso corso, GruppoCorso gruppo) {
+        return gruppo != null ? gruppo(gruppo) : giorni(corso.getGiorniSettimana());
     }
 
     /**

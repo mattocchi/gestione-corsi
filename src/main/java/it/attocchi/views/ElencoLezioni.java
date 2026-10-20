@@ -27,6 +27,9 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
+import java.util.Map;
+import it.attocchi.entity.GruppoCorso;
+import com.vaadin.flow.function.SerializableFunction;
 import it.attocchi.service.CalendarioFestivita;
 import it.attocchi.service.FestivitaService;
 import it.attocchi.service.LezioneService;
@@ -248,10 +251,16 @@ public class ElencoLezioni extends VerticalLayout {
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         gridPresenze.addColumn(p -> p.getAllievo().getNomeCompleto()).setHeader("Allievo");
+        // Il gruppo dell'allievo, solo nei corsi che hanno gruppi
+        Map<Long, GruppoCorso> gruppi = lezioneService.gruppiDeiPartecipanti(lezione.getCorso().getId());
+        SerializableFunction<Presenza, String> gruppo = p -> Formati.gruppo(gruppi.get(p.getAllievo().getId()));
+        gridPresenze.addColumn(gruppo::apply).setHeader("Gruppo").setAutoWidth(true).setFlexGrow(0)
+            .setVisible(!gruppi.isEmpty());
         gridPresenze.addComponentColumn(this::createStatoPresenza).setHeader("Stato").setWidth("20rem").setFlexGrow(0);
         gridPresenze.addComponentColumn(this::createNotePresenza).setHeader("Note");
         CardMobile.per(gridPresenze)
             .titolo(p -> p.getAllievo().getNomeCompleto())
+            .sottotitolo(p -> gruppi.containsKey(p.getAllievo().getId()) ? "Gruppo " + gruppo.apply(p) : null)
             .campo("Stato", this::createStatoPresenza)
             .campo("Note", this::createNotePresenza)
             .applica();

@@ -475,6 +475,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(LocalTime.of(10, 0), iscrizione(chitarra, allievo).getOrarioLezione());
             assertEquals(Set.of(DayOfWeek.SATURDAY), iscrizione(chitarra, allievo).giorniEffettivi());
             assertTrue(find(Span.class).from(dialog).withText("Principianti – sab 10:00 · 1 allievo").exists());
+
+            // Nel Riepilogo Iscritti il gruppo è sulla riga dell'iscritto
+            dialog.close();
+            navigate(RiepilogoIscrittiView.class);
+            var riepilogo = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
+                (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
+            int riga = IntStream.range(0, riepilogo.size())
+                .filter(r -> !riepilogo.getRow(r).isCorso() && riepilogo.getRow(r).iscritto().allievo().equals(allievo))
+                .findFirst().orElseThrow();
+            assertEquals("Principianti – sab 10:00", riepilogo.getCellText(riga, 3));
         } finally {
             corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
             corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
@@ -2203,6 +2213,30 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("insegnante1")
     @SuppressWarnings("unchecked")
+    void insegnante_vedeIlGruppoDegliAllieviNellePresenze() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        GruppoCorso gruppo = corsoService.salvaGruppo(canto.getId(), new GruppoCorso(null, "Avanzati", DayOfWeek.THURSDAY, LocalTime.of(19, 0)));
+        corsoService.assegnaGruppo(canto.getId(), allievo.getId(), gruppo.getId());
+        try {
+            apriLezioni();
+            var grid = test((Grid<Lezione>) find(Grid.class).single());
+            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            Grid<Presenza> presenze = (Grid<Presenza>) find(Grid.class).from(find(Dialog.class).single()).single();
+            assertEquals("Gruppo", presenze.getColumns().get(1).getHeaderText());
+            assertTrue(presenze.getColumns().get(1).isVisible());
+            var righe = test(presenze);
+            int riga = IntStream.range(0, righe.size()).filter(r -> righe.getRow(r).getAllievo().equals(allievo)).findFirst().orElseThrow();
+            assertEquals("Avanzati – gio 19:00", righe.getCellText(riga, 1));
+        } finally {
+            corsoService.assegnaGruppo(canto.getId(), allievo.getId(), null);
+            corsoService.eliminaGruppo(gruppo.getId());
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
     void insegnante_segnaLezioneNonEffettuataELaRipristina() {
         apriLezioni();
         var grid = test((Grid<Lezione>) find(Grid.class).single());
@@ -2744,7 +2778,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(MieiCorsiView.class);
             var corsi = test(find(Grid.class).single());
             assertEquals("Giorni", ((Grid<?>) find(Grid.class).single()).getColumns().get(2).getHeaderText());
-            assertEquals("mar", corsi.getCellText(0, 2));
+            assertEquals("Martedì 17:00", corsi.getCellText(0, 2));
         } finally {
             corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
             corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);

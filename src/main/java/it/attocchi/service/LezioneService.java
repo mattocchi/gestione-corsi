@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
@@ -16,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -256,5 +259,14 @@ public class LezioneService {
 
     private static boolean insegnanteDelCorso(Corso corso, String username) {
         return corso.haInsegnante(username);
+    }
+
+    /** Gruppo dei partecipanti del corso che ne hanno uno, per id dell'allievo (vuota se il corso non ha gruppi). */
+    public Map<Long, GruppoCorso> gruppiDeiPartecipanti(Long corsoId) {
+        Map<Long, GruppoCorso> gruppi = new HashMap<>();
+        iscrizioneRepository.findByCorsoIdWithAllievo(corsoId).stream()
+            .filter(i -> i.getGruppo() != null)
+            .forEach(i -> gruppi.put(i.getAllievo().getId(), i.getGruppo()));
+        return gruppi;
     }
 }

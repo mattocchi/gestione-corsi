@@ -130,7 +130,7 @@ public class RiepilogoIscrittiView extends VerticalLayout {
             .setHeader("Anno").setWidth("7rem").setFlexGrow(0);
         grid.addColumn(v -> !v.isCorso() && v.iscritto().genitore() != null ? v.iscritto().genitore().getNomeCompleto() : "")
             .setHeader("Genitore");
-        grid.addColumn(this::giorni).setHeader("Giorni").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(this::giorni).setHeader("Giorni / Gruppo").setAutoWidth(true).setFlexGrow(0);
         colonnaIscritti = grid.addColumn(v -> v.isCorso() ? String.valueOf(v.corso().iscritti().size()) : "")
             .setHeader("Iscritti").setWidth("6rem").setFlexGrow(0);
         colonnaQuota = euro("Da pagare", Situazione::quota, IscrittiCorso::quota);
@@ -148,7 +148,8 @@ public class RiepilogoIscrittiView extends VerticalLayout {
             .sottotitolo(v -> v.isCorso() ? Objects.toString(v.corso().corso().getAnnoScolastico(), "")
                 : v.iscritto().genitore() != null ? "Genitore: " + v.iscritto().genitore().getNomeCompleto() : null)
             .stato(v -> v.isCorso() ? null : StatoPagamentoUI.badge(v.situazione()))
-            .campo("Giorni", this::giorni)
+            .campo("Giorni", v -> v.isCorso() ? giorni(v) : null)
+            .campo("Gruppo", v -> v.isCorso() ? null : giorni(v))
             .campo("Iscritti", v -> v.isCorso() ? v.corso().iscritti().size() + " (" + saldati(v.corso()) + ")" : null)
             .campo("Da pagare", v -> Formati.euro(v.importo(Situazione::quota, IscrittiCorso::quota)))
             .campo("Pagato", v -> Formati.euro(v.importo(Situazione::pagato, IscrittiCorso::pagato)))
@@ -180,10 +181,10 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         return saldati;
     }
 
-    /** Giorni del corso sulla riga del corso, quelli frequentati sulla riga dell'iscritto. */
+    /** Giorni del corso sulla riga del corso, il gruppo (vuoto = tutti i giorni) sulla riga dell'iscritto. */
     private String giorni(Voce voce) {
-        return Formati.giorni(voce.isCorso() ? voce.corso().corso().getGiorniSettimana()
-            : voce.iscritto().iscrizione().giorniEffettivi());
+        return voce.isCorso() ? Formati.giorni(voce.corso().corso().getGiorniSettimana())
+            : Formati.gruppo(voce.iscritto().iscrizione().getGruppo());
     }
 
     /** Costo stimato degli insegnanti, solo sulla riga del corso; "Senza tariffa" se nessuno ha la tariffa. */
@@ -239,7 +240,8 @@ public class RiepilogoIscrittiView extends VerticalLayout {
                 List<RigaPagamento> iscritti = corsoTrovato ? corso.iscritti() : corso.iscritti().stream()
                     .filter(r -> ricerca.corrisponde(RicercaRapida.testo(r.allievo().getNomeCompleto(),
                         r.allievo().getUser() != null ? r.allievo().getUser().getEmail() : null,
-                        r.genitore() != null ? r.genitore().getNomeCompleto() : null)))
+                        r.genitore() != null ? r.genitore().getNomeCompleto() : null,
+                        Formati.gruppo(r.iscrizione().getGruppo()))))
                     .toList();
                 if (corsoTrovato || !iscritti.isEmpty()) {
                     corsiMostrati.add(new Voce(corso, null));

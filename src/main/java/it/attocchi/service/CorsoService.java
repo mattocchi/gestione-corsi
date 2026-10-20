@@ -267,12 +267,13 @@ public class CorsoService {
         iscrizioneRepository.deleteById(new IscrizioneId(corsoId, allievoId));
     }
 
-    /** Giorni frequentati dall'allievo in ognuno dei suoi corsi, per id del corso. */
-    public Map<Long, Set<DayOfWeek>> giorniDellAllievo(Long allievoId) {
-        Map<Long, Set<DayOfWeek>> giorni = new HashMap<>();
-        iscrizioneRepository.findByAllievoIdWithCorso(allievoId)
-            .forEach(i -> giorni.put(i.getCorso().getId(), i.giorniEffettivi()));
-        return giorni;
+    /** Gruppo dell'allievo nei suoi corsi, per id del corso (solo i corsi in cui è in un gruppo). */
+    public Map<Long, GruppoCorso> gruppiDellAllievo(Long allievoId) {
+        Map<Long, GruppoCorso> gruppi = new HashMap<>();
+        iscrizioneRepository.findByAllievoIdWithCorso(allievoId).stream()
+            .filter(i -> i.getGruppo() != null)
+            .forEach(i -> gruppi.put(i.getCorso().getId(), i.getGruppo()));
+        return gruppi;
     }
 
     /** Imposta (o con {@code null} toglie) l'orario di inizio lezione di un partecipante. */

@@ -16,6 +16,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.function.SerializableFunction;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
@@ -42,10 +43,8 @@ import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
-import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Route(value = "figli", layout = MainLayout.class)
 @PageTitle("I Miei Figli")
@@ -147,8 +146,9 @@ public class FigliView extends VerticalLayout {
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
         gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
         gridCorsi.addColumn(FigliView::insegnante).setHeader("Insegnanti");
-        Map<Long, Set<DayOfWeek>> giorni = corsoService.giorniDellAllievo(allievo.getId());
-        SerializableFunction<Corso, String> giorniDi = corso -> Formati.giorni(giorni.getOrDefault(corso.getId(), corso.getGiorniSettimana()));
+        // Il gruppo dell'allievo (solo il suo giorno) o tutti i giorni del corso
+        Map<Long, GruppoCorso> gruppi = corsoService.gruppiDellAllievo(allievo.getId());
+        SerializableFunction<Corso, String> giorniDi = corso -> Formati.gruppoOGiorni(corso, gruppi.get(corso.getId()));
         gridCorsi.addColumn(giorniDi::apply).setHeader("Giorni");
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
