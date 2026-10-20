@@ -21,10 +21,13 @@ Nel Riepilogo Iscritti rendere chiari i gruppi di ogni corso ([F-2026-10-20/GRUP
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Gruppi del corso in `IscrittiCorso`; livello gruppo nella TreeGrid (righe, espansione, ricerca, card mobile, stile della riga), test | `service/PagamentoService`, `views/admin/RiepilogoIscrittiView`, `styles.css`, `ViewAccessTest` | `./mvnw test`, browser | [x] |
-| 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Importi per gruppo.
 
 ## Registro
+
+- Passo 1: `IscrittiCorso` porta i gruppi del corso; `Voce` ha tre tipi di riga (corso, gruppo, iscritto) e le righe figlie sono calcolate in `applicaFiltri` (mappa `figli`). I corsi senza gruppi sono invariati (stesso numero di righe nei test esistenti).
+- Verifica: `./mvnw test` 187 test verdi; browser (dev, segreteria, finestra stretta): gruppo "Martedì 18:00" con 1 iscritto e "Senza gruppo (tutti i giorni)" sotto Chitarra, card rientrate su due livelli. Tolto il corsivo della riga del gruppo, che nella card tagliava "Nascondi iscritti".
