@@ -29,7 +29,7 @@ Alcuni corsi hanno gruppi per giorno della settimana, altri no. Sostituire l'ass
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Entità `GruppoCorso` e repository; `Iscrizione.gruppo` al posto di `giorni` (`giorniEffettivi` dal gruppo); `CorsoService`: gruppi del corso, salva/elimina gruppo, assegna gruppo (orario proposto, presenze sincronizzate), blocco dei giorni usati, eliminazione del corso; Partecipanti: sezione Gruppi e colonna Gruppo; test | `entity/GruppoCorso`, `entity/Iscrizione`, `repository/GruppoCorsoRepository`, `service/CorsoService`, `views/admin/PartecipantiDialog`, `views/admin/GruppoDialog`, `views/Formati`, test | `./mvnw test` | [x] |
-| 2 | Conversione all'avvio dei giorni per allievo in gruppi (`GruppiIniziali`), test | `GruppiIniziali`, `service/CorsoService`, test | `./mvnw test` | [ ] |
+| 2 | Conversione all'avvio dei giorni per allievo in gruppi (`GruppiIniziali`), test | `GruppiIniziali`, `service/CorsoService`, test | `./mvnw test` | [x] |
 | 3 | Gruppo in Gestisci Presenze, Riepilogo Iscritti, I Miei Corsi / I Miei Figli e conferma; test | `views/ElencoLezioni`, `service/LezioneService`, `views/admin/RiepilogoIscrittiView`, `views/allievo/MieiCorsiView`, `views/genitore/FigliView`, `service/DocumentiService`, test | `./mvnw test`, browser | [ ] |
 | 4 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 

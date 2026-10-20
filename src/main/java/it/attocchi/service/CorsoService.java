@@ -189,6 +189,39 @@ public class CorsoService {
         sincronizzaPresenze(iscrizione);
     }
 
+    /**
+     * Converte i giorni per allievo della versione precedente (id dell'iscrizione → giorni scelti): chi ne aveva
+     * uno solo tra quelli del corso passa al gruppo di quel giorno (creato se manca, senza nome, con l'orario del
+     * corso); gli altri restano senza gruppo e frequentano tutti i giorni. Le presenze delle lezioni da fare si
+     * allineano. Vale anche per i corsi non attivi; le iscrizioni che hanno già un gruppo non si toccano.
+     *
+     * @return numero di partecipanti assegnati a un gruppo
+     */
+    @Transactional
+    public int convertiGiorniInGruppi(Map<IscrizioneId, Set<DayOfWeek>> giorniPerIscrizione) {
+        int assegnati = 0;
+        for (Map.Entry<IscrizioneId, Set<DayOfWeek>> voce : giorniPerIscrizione.entrySet()) {
+            Iscrizione iscrizione = iscrizioneRepository.findById(voce.getKey()).orElse(null);
+            if (iscrizione == null || iscrizione.getGruppo() != null) {
+                continue;
+            }
+            Corso corso = iscrizione.getCorso();
+            Set<DayOfWeek> giorni = new HashSet<>(voce.getValue());
+            giorni.retainAll(corso.getGiorniSettimana());
+            if (giorni.size() == 1 && corso.getGiorniSettimana().size() > 1) {
+                DayOfWeek giorno = giorni.iterator().next();
+                GruppoCorso gruppo = gruppoRepository.findByCorsoId(corso.getId()).stream()
+                    .filter(g -> g.getGiorno() == giorno && g.getNome() == null)
+                    .findFirst()
+                    .orElseGet(() -> gruppoRepository.save(new GruppoCorso(corso, null, giorno, corso.getOrarioInizio())));
+                iscrizione.setGruppo(gruppo);
+                assegnati++;
+            }
+            sincronizzaPresenze(iscrizione);
+        }
+        return assegnati;
+    }
+
     private List<Iscrizione> partecipantiDelGruppo(GruppoCorso gruppo) {
         return iscrizioneRepository.findByCorsoIdWithAllievo(gruppo.getCorso().getId()).stream()
             .filter(i -> gruppo.equals(i.getGruppo()))
