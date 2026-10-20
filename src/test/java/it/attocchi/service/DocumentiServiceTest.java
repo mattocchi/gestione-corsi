@@ -165,12 +165,16 @@ class DocumentiServiceTest {
         Long allievoId = chitarra.allievo().getId();
         assertTrue(documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Prova")
             .contains("con lezione il martedì e sabato"));
-        corsoService.impostaGiorni(corsoId, allievoId, java.util.Set.of(java.time.DayOfWeek.SATURDAY));
+        var gruppo = corsoService.salvaGruppo(corsoId, new it.attocchi.entity.GruppoCorso(null, null,
+            java.time.DayOfWeek.SATURDAY, java.time.LocalTime.of(10, 0)));
+        corsoService.assegnaGruppo(corsoId, allievoId, gruppo.getId());
         try {
             assertTrue(documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Prova")
                 .contains("con lezione il sabato."));
         } finally {
-            corsoService.impostaGiorni(corsoId, allievoId, java.util.Set.of());
+            corsoService.assegnaGruppo(corsoId, allievoId, null);
+            corsoService.impostaOrario(corsoId, allievoId, null);
+            corsoService.eliminaGruppo(gruppo.getId());
         }
     }
 

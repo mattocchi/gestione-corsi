@@ -2,11 +2,10 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.checkbox.CheckboxGroup;
-import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -14,6 +13,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Allievo;
 import it.attocchi.service.CorsoService;
@@ -27,7 +27,6 @@ import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -38,8 +37,9 @@ import java.util.stream.Collectors;
 /**
  * Partecipanti di un corso in ordine di orario di inizio lezione (chi non ha ancora un orario
  * è in fondo), con aggiunta, rimozione e orario modificabile. Le modifiche sono salvate subito
- * e l'elenco si riordina; la notifica compare solo in caso di errore. Per un corso non attivo
- * partecipanti e orari sono in sola lettura.
+ * e l'elenco si riordina; la notifica compare solo in caso di errore. Sopra l'elenco i gruppi del corso (giorno e
+ * orario): ogni partecipante può appartenere a uno e frequenta solo quel giorno, senza gruppo tutti i giorni.
+ * Eliminare un gruppo è solo per l'admin. Per un corso non attivo partecipanti, orari e gruppi sono in sola lettura.
  */
 public class PartecipantiDialog extends Dialog {
 
@@ -49,18 +49,24 @@ public class PartecipantiDialog extends Dialog {
     private final Corso corso;
     private final Grid<Iscrizione> grid = new Grid<>(Iscrizione.class, false);
     private final ComboBox<Allievo> nuovoPartecipante = new ComboBox<>();
+    private final Div gruppiDelCorso = new Div();
+    private final boolean puoEliminareGruppi;
+    private final Grid.Column<Iscrizione> colonnaGruppo;
+    private final CardMobile<Iscrizione> card;
     private Map<Long, Situazione> situazioni = Map.of();
+    private List<GruppoCorso> gruppi = List.of();
 
+    /** @param puoEliminareGruppi {@code true} per l'admin, che può eliminare i gruppi */
     public PartecipantiDialog(CorsoService corsoService, AllievoService allievoService,
-                              PagamentoService pagamentoService, Corso corso) {
+                              PagamentoService pagamentoService, Corso corso, boolean puoEliminareGruppi) {
         this.corsoService = corsoService;
+        this.puoEliminareGruppi = puoEliminareGruppi;
         this.allievoService = allievoService;
         this.pagamentoService = pagamentoService;
         this.corso = corso;
 
         setHeaderTitle("Partecipanti – " + corso.getNome());
-        // Più largo quando c'è la colonna dei giorni
-        setWidth(corso.getGiorniSettimana().size() > 1 ? "720px" : "600px");
+        setWidth("720px");
         setMaxWidth("100%");
 
         nuovoPartecipante.setPlaceholder("Aggiungi un allievo");
@@ -82,10 +88,8 @@ public class PartecipantiDialog extends Dialog {
 
         grid.addComponentColumn(this::createOrario).setHeader("Orario").setWidth("9.5rem").setFlexGrow(0);
         grid.addColumn(iscrizione -> iscrizione.getAllievo().getNomeCompleto()).setHeader("Partecipante");
-        // Con più giorni a settimana ogni partecipante può frequentarne solo alcuni
-        boolean piuGiorni = corso.getGiorniSettimana().size() > 1;
-        grid.addComponentColumn(this::createGiorni).setHeader("Giorni").setAutoWidth(true).setFlexGrow(0)
-            .setVisible(piuGiorni);
+        // Solo se il corso ha dei gruppi
+        colonnaGruppo = grid.addComponentColumn(this::createGruppo).setHeader("Gruppo").setWidth("12rem").setFlexGrow(0);
         grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = corso.isAttivo();
@@ -95,17 +99,18 @@ public class PartecipantiDialog extends Dialog {
         azioni.setHeader("").setAutoWidth(false).setWidth(modificabile ? "6rem" : "3.5rem");
         // Su schermi stretti il nome va a capo invece di essere troncato
         grid.addClassName("partecipanti-grid");
-        CardMobile.per(grid)
+        card = CardMobile.per(grid)
             .titolo(iscrizione -> iscrizione.getAllievo().getNomeCompleto())
             .stato(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .campo("Orario", this::createOrario)
-            .campo("Giorni", iscrizione -> piuGiorni ? createGiorni(iscrizione) : null)
-            .azioni(iscrizione -> createAzioni(iscrizione, modificabile))
-            .applica();
+            .campo("Gruppo", iscrizione -> gruppi.isEmpty() ? null : createGruppo(iscrizione))
+            .azioni(iscrizione -> createAzioni(iscrizione, modificabile));
+        card.applica();
         grid.setAllRowsVisible(true);
+        gruppiDelCorso.addClassNames("flex flex-col gap-1 w-full");
         aggiorna();
 
-        VerticalLayout content = new VerticalLayout(aggiunta, grid);
+        VerticalLayout content = new VerticalLayout(aggiunta, gruppiDelCorso, grid);
         if (!modificabile) {
             aggiunta.setVisible(false);
             Span avviso = new Span("Corso non attivo: partecipanti e orari non sono modificabili.");
@@ -155,31 +160,86 @@ public class PartecipantiDialog extends Dialog {
         return orario;
     }
 
-    /**
-     * Giorni del corso frequentati dal partecipante, salvati subito: togliere tutti equivale a tutti i giorni.
-     */
-    private CheckboxGroup<DayOfWeek> createGiorni(Iscrizione iscrizione) {
+    /** Gruppo del partecipante, salvato subito; vuoto = nessun gruppo (tutti i giorni del corso). */
+    private ComboBox<GruppoCorso> createGruppo(Iscrizione iscrizione) {
         String nome = iscrizione.getAllievo().getNomeCompleto();
-        CheckboxGroup<DayOfWeek> giorni = new CheckboxGroup<>();
-        giorni.setAriaLabel("Giorni di " + nome);
-        giorni.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
-        giorni.setItems(corso.getGiorniSettimana().stream().sorted().toList());
-        giorni.setItemLabelGenerator(Formati::giorno);
-        giorni.setValue(iscrizione.giorniEffettivi(corso.getGiorniSettimana()));
-        giorni.setReadOnly(!corso.isAttivo());
-        giorni.addValueChangeListener(e -> {
+        ComboBox<GruppoCorso> gruppo = new ComboBox<>();
+        gruppo.setAriaLabel("Gruppo di " + nome);
+        gruppo.setItems(gruppi);
+        gruppo.setItemLabelGenerator(Formati::gruppo);
+        gruppo.setPlaceholder("Tutti i giorni");
+        gruppo.setClearButtonVisible(true);
+        gruppo.addClassNames("w-full");
+        gruppo.setValue(iscrizione.getGruppo());
+        gruppo.setReadOnly(!corso.isAttivo());
+        gruppo.addValueChangeListener(e -> {
             if (!e.isFromClient()) {
                 return;
             }
             try {
-                corsoService.impostaGiorni(corso.getId(), iscrizione.getAllievo().getId(), e.getValue());
-                aggiorna();
+                corsoService.assegnaGruppo(corso.getId(), iscrizione.getAllievo().getId(),
+                    e.getValue() != null ? e.getValue().getId() : null);
             } catch (RuntimeException ex) {
-                Notification.show("Errore nel salvataggio dei giorni di " + nome + ": " + ex.getMessage());
-                aggiorna();
+                Notification.show("Errore nell'assegnazione del gruppo di " + nome + ": " + ex.getMessage());
             }
+            aggiorna();
         });
-        return giorni;
+        return gruppo;
+    }
+
+    /** Sezione dei gruppi: uno per riga con il numero di allievi, modifica ed eliminazione; "Nuovo gruppo". */
+    private void mostraGruppi(List<Iscrizione> partecipanti) {
+        gruppiDelCorso.removeAll();
+        boolean modificabile = corso.isAttivo();
+        gruppiDelCorso.setVisible(modificabile || !gruppi.isEmpty());
+        Span spiegazione = new Span(gruppi.isEmpty()
+            ? "Nessun gruppo: tutti frequentano tutti i giorni del corso."
+            : "Chi è in un gruppo frequenta solo il suo giorno; senza gruppo tutti i giorni del corso.");
+        spiegazione.addClassNames(Stili.TESTO_SECONDARIO);
+        gruppiDelCorso.add(ViewSupport.sezione("Gruppi"), spiegazione);
+        for (GruppoCorso gruppo : gruppi) {
+            long allievi = partecipanti.stream().filter(i -> gruppo.equals(i.getGruppo())).count();
+            Span descrizione = new Span(Formati.gruppo(gruppo) + " · " + allievi + (allievi == 1 ? " allievo" : " allievi"));
+            HorizontalLayout riga = new HorizontalLayout(descrizione);
+            riga.addClassNames("items-center gap-2");
+            if (modificabile) {
+                riga.add(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica il gruppo " + Formati.gruppo(gruppo),
+                    e -> new GruppoDialog(corsoService, corso, gruppo, this::aggiorna).open()));
+                if (puoEliminareGruppi) {
+                    Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina il gruppo " + Formati.gruppo(gruppo),
+                        e -> confermaEliminazione(gruppo, allievi));
+                    elimina.addThemeVariants(ButtonVariant.ERROR);
+                    riga.add(elimina);
+                }
+            }
+            gruppiDelCorso.add(riga);
+        }
+        if (modificabile) {
+            Button nuovo = new Button("Nuovo gruppo", VaadinIcon.PLUS.create(),
+                e -> new GruppoDialog(corsoService, corso, new GruppoCorso(), this::aggiorna).open());
+            nuovo.addThemeVariants(ButtonVariant.TERTIARY);
+            nuovo.addClassNames("self-start");
+            gruppiDelCorso.add(nuovo);
+        }
+    }
+
+    private void confermaEliminazione(GruppoCorso gruppo, long allievi) {
+        Dialog conferma = ViewSupport.dialog("Eliminare il gruppo?", "420px");
+        conferma.add(new Span(Formati.gruppo(gruppo) + (allievi > 0
+            ? ": i suoi " + allievi + " allievi restano senza gruppo e frequentano tutti i giorni del corso."
+            : ".")));
+        Button elimina = new Button("Elimina", e -> {
+            conferma.close();
+            try {
+                corsoService.eliminaGruppo(gruppo.getId());
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nell'eliminazione del gruppo: " + ex.getMessage());
+            }
+            aggiorna();
+        });
+        elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
+        conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);
+        conferma.open();
     }
 
     private void openQuotaPagamenti(Iscrizione iscrizione) {
@@ -235,6 +295,9 @@ public class PartecipantiDialog extends Dialog {
     private void aggiorna() {
         situazioni = pagamentoService.situazioniDelCorso(corso.getId());
         List<Iscrizione> partecipanti = corsoService.findPartecipanti(corso.getId());
+        gruppi = corsoService.gruppi(corso.getId());
+        card.setVisibileSuDesktop(colonnaGruppo, !gruppi.isEmpty());
+        mostraGruppi(partecipanti);
         grid.setItems(partecipanti);
         Set<Long> iscritti = partecipanti.stream().map(i -> i.getAllievo().getId()).collect(Collectors.toSet());
         nuovoPartecipante.setItems(allievoService.findAll().stream()

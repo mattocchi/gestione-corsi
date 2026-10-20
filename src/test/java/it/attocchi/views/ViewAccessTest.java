@@ -30,6 +30,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
@@ -83,6 +84,7 @@ import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.InvioEmailDialog;
 import it.attocchi.views.admin.PartecipantiDialog;
+import it.attocchi.views.admin.GruppoDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.AllieviView;
 import it.attocchi.views.admin.UtentiView;
@@ -444,37 +446,72 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_sceglieIGiorniDelPartecipante() {
-        // Canto ha un solo giorno: nessuna scelta dei giorni
-        PartecipantiDialog canto = apriPartecipanti("Corso di Canto");
-        assertFalse(((Grid<Iscrizione>) find(Grid.class).from(canto).single()).getColumns().get(2).isVisible());
-        canto.close();
-
+    void segreteria_creaGruppiEAssegnaIPartecipanti() {
+        // Senza gruppi la colonna Gruppo non c'è
         PartecipantiDialog dialog = apriPartecipanti("Corso di Chitarra");
+        assertFalse(((Grid<Iscrizione>) find(Grid.class).from(dialog).single()).getColumns().get(2).isVisible());
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
         try {
-            CheckboxGroup<DayOfWeek> giorni = giorniDi(dialog, allievo);
-            assertEquals(Set.of(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY), giorni.getValue());
-            test(giorni).deselectItem("sab");
-            assertEquals(Set.of(DayOfWeek.TUESDAY), iscrizione(chitarra, allievo).getGiorni());
-            assertEquals(Set.of(DayOfWeek.TUESDAY), giorniDi(dialog, allievo).getValue());
+            test(find(Button.class).from(dialog).withText("Nuovo gruppo").single()).click();
+            GruppoDialog nuovo = find(GruppoDialog.class).single();
+            test(find(TextField.class).from(nuovo).withLabel("Nome").single()).setValue("Principianti");
+            SegmentedControl<DayOfWeek> giorno = find(SegmentedControl.class).from(nuovo).single();
+            test(giorno.getPulsante(DayOfWeek.SATURDAY)).click();
+            test(find(TimePicker.class).from(nuovo).withLabel("Orario").single()).setValue(LocalTime.of(10, 0));
+            test(find(Button.class).from(nuovo).withText("Salva").single()).click();
+            assertFalse(nuovo.isOpened());
+            assertTrue(find(Span.class).from(dialog).withText("Principianti – sab 10:00 · 0 allievi").exists());
+            // La segreteria modifica ma non elimina i gruppi
+            assertTrue(find(Button.class).from(dialog).all().stream()
+                .anyMatch(b -> "Modifica il gruppo Principianti – sab 10:00".equals(b.getElement().getAttribute("aria-label"))));
+            assertFalse(find(Button.class).from(dialog).all().stream()
+                .anyMatch(b -> "Elimina il gruppo Principianti – sab 10:00".equals(b.getElement().getAttribute("aria-label"))));
 
-            // Togliere tutti i giorni = tutti i giorni del corso
-            test(giorniDi(dialog, allievo)).deselectItem("mar");
-            assertTrue(iscrizione(chitarra, allievo).getGiorni().isEmpty());
-            assertEquals(Set.of(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY), giorniDi(dialog, allievo).getValue());
+            // Assegnato al gruppo: frequenta solo il sabato e prende l'orario del gruppo
+            assertTrue(((Grid<Iscrizione>) find(Grid.class).from(dialog).single()).getColumns().get(2).isVisible());
+            test(gruppoDi(dialog, allievo)).selectItem("Principianti – sab 10:00");
+            assertEquals("Principianti", iscrizione(chitarra, allievo).getGruppo().getNome());
+            assertEquals(LocalTime.of(10, 0), iscrizione(chitarra, allievo).getOrarioLezione());
+            assertEquals(Set.of(DayOfWeek.SATURDAY), iscrizione(chitarra, allievo).giorniEffettivi());
+            assertTrue(find(Span.class).from(dialog).withText("Principianti – sab 10:00 · 1 allievo").exists());
         } finally {
-            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of());
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
         }
     }
 
-    /** Scelta dei giorni (terza colonna) del partecipante nella griglia dei partecipanti. */
+    @Test
+    @WithUserDetails("admin")
+    void admin_eliminaUnGruppo() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        GruppoCorso gruppo = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
+        corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), gruppo.getId());
+        try {
+            PartecipantiDialog dialog = apriPartecipanti("Corso di Chitarra");
+            Button elimina = find(Button.class).from(dialog).all().stream()
+                .filter(b -> "Elimina il gruppo Martedì 17:00".equals(b.getElement().getAttribute("aria-label")))
+                .findFirst().orElseThrow();
+            test(elimina).click();
+            test(find(Button.class).withText("Elimina").last()).click();
+            assertTrue(corsoService.gruppi(chitarra.getId()).isEmpty());
+            assertNull(iscrizione(chitarra, allievo).getGruppo());
+            assertTrue(find(Span.class).from(dialog).withText("Nessun gruppo: tutti frequentano tutti i giorni del corso.").exists());
+        } finally {
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
+        }
+    }
+
+    /** Scelta del gruppo (terza colonna) del partecipante nella griglia dei partecipanti. */
     @SuppressWarnings("unchecked")
-    private CheckboxGroup<DayOfWeek> giorniDi(PartecipantiDialog dialog, Allievo allievo) {
+    private ComboBox<GruppoCorso> gruppoDi(PartecipantiDialog dialog, Allievo allievo) {
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
         int riga = IntStream.range(0, righe.size()).filter(r -> righe.getRow(r).getAllievo().equals(allievo)).findFirst().orElseThrow();
-        return (CheckboxGroup<DayOfWeek>) righe.getCellComponent(riga, 2);
+        return (ComboBox<GruppoCorso>) righe.getCellComponent(riga, 2);
     }
 
     private Iscrizione iscrizione(Corso corso, Allievo allievo) {
@@ -1751,7 +1788,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 riga = row;
             }
         }
-        test(pulsante(partecipanti.getCellComponent(riga, 4), "Rimuovi Allievo Canto1")).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 3), "Rimuovi Allievo Canto1")).click();
         assertEquals(6, partecipanti.size());
         assertTrue(presenzaService.findByCorsoAndAllievo(corso.getId(), allievoId).isEmpty());
     }
@@ -2701,14 +2738,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void allievo_vedeSoloISuoiGiorniDiLezione() {
         Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
-        corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of(DayOfWeek.TUESDAY));
+        GruppoCorso gruppo = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
+        corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), gruppo.getId());
         try {
             navigate(MieiCorsiView.class);
             var corsi = test(find(Grid.class).single());
             assertEquals("Giorni", ((Grid<?>) find(Grid.class).single()).getColumns().get(2).getHeaderText());
             assertEquals("mar", corsi.getCellText(0, 2));
         } finally {
-            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of());
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+            corsoService.eliminaGruppo(gruppo.getId());
         }
     }
 

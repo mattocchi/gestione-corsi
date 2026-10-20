@@ -2,7 +2,9 @@ package it.attocchi.service;
 
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +12,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -138,21 +142,32 @@ class CorsoServiceTest {
     }
 
     @Test
-    void giorniDelPartecipante_presenzeSoloNeiSuoiGiorni() {
-        // Chitarra: martedì e sabato, 6 iscritti
+    void gruppoDelPartecipante_presenzeSoloNelSuoGiorno() {
+        // Chitarra: martedì e sabato, 6 iscritti senza orario
         Corso chitarra = corso("Corso di Chitarra");
         corsoService.generaLezioni(chitarra);
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        GruppoCorso gruppo = corsoService.salvaGruppo(chitarra.getId(),
+            new GruppoCorso(null, "  ", DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
         Long nuovaSabato = null;
         Long nuovaLunedi = null;
         try {
-            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of(DayOfWeek.TUESDAY));
-            assertTrue(giorniConPresenza(chitarra, allievo).equals(Set.of(DayOfWeek.TUESDAY)));
-            assertEquals(Set.of(DayOfWeek.TUESDAY), corsoService.findPartecipanti(chitarra.getId()).stream()
-                .filter(i -> i.getAllievo().equals(allievo)).findFirst().orElseThrow().getGiorni());
-            // Solo giorni del corso
-            assertThrows(IllegalArgumentException.class,
-                () -> corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of(DayOfWeek.MONDAY)));
+            assertNull(gruppo.getNome());
+            assertEquals(List.of(gruppo), corsoService.gruppi(chitarra.getId()));
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), gruppo.getId());
+            assertEquals(Set.of(DayOfWeek.TUESDAY), giorniConPresenza(chitarra, allievo));
+            assertEquals(gruppo, iscrizione(chitarra, allievo).getGruppo());
+            // Senza orario prende quello del gruppo
+            assertEquals(LocalTime.of(17, 0), iscrizione(chitarra, allievo).getOrarioLezione());
+
+            // Solo giorni del corso, orario obbligatorio; un giorno usato da un gruppo non si toglie dal corso
+            assertThrows(IllegalArgumentException.class, () -> corsoService.salvaGruppo(chitarra.getId(),
+                new GruppoCorso(null, null, DayOfWeek.MONDAY, LocalTime.of(17, 0))));
+            assertThrows(IllegalArgumentException.class, () -> corsoService.salvaGruppo(chitarra.getId(),
+                new GruppoCorso(null, null, DayOfWeek.SATURDAY, null)));
+            Corso senzaMartedi = corsoService.findById(chitarra.getId());
+            senzaMartedi.getGiorniSettimana().remove(DayOfWeek.TUESDAY);
+            assertThrows(IllegalArgumentException.class, () -> corsoService.save(senzaMartedi));
 
             // Lezione aggiunta di sabato: non è sua; di lunedì (non è un giorno del corso): di tutti
             nuovaSabato = lezioneService.aggiungi(chitarra.getId(), LocalDate.of(2025, 8, 2), null, null, "admin").getId();
@@ -160,13 +175,20 @@ class CorsoServiceTest {
             assertEquals(5, presenzaService.findByLezione(nuovaSabato).size());
             assertEquals(6, presenzaService.findByLezione(nuovaLunedi).size());
 
-            // Tutti i giorni = di nuovo in ogni lezione da fare
-            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY));
-            assertTrue(corsoService.findPartecipanti(chitarra.getId()).stream()
-                .filter(i -> i.getAllievo().equals(allievo)).findFirst().orElseThrow().getGiorni().isEmpty());
+            // Il gruppo passa al sabato: le presenze da fare lo seguono
+            gruppo.setGiorno(DayOfWeek.SATURDAY);
+            gruppo = corsoService.salvaGruppo(chitarra.getId(), gruppo);
+            assertEquals(Set.of(DayOfWeek.SATURDAY, DayOfWeek.MONDAY), giorniConPresenza(chitarra, allievo));
+
+            // Gruppo eliminato: di nuovo tutti i giorni
+            corsoService.eliminaGruppo(gruppo.getId());
+            assertNull(iscrizione(chitarra, allievo).getGruppo());
+            assertTrue(corsoService.gruppi(chitarra.getId()).isEmpty());
             assertEquals(Set.of(DayOfWeek.TUESDAY, DayOfWeek.SATURDAY, DayOfWeek.MONDAY), giorniConPresenza(chitarra, allievo));
         } finally {
-            corsoService.impostaGiorni(chitarra.getId(), allievo.getId(), Set.of());
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
             if (nuovaSabato != null) {
                 lezioneService.eliminaAggiunta(nuovaSabato, "admin");
             }
@@ -177,15 +199,18 @@ class CorsoServiceTest {
     }
 
     @Test
-    void generaLezioni_numeroLezioniPerOgniAllievoNeiSuoiGiorni() {
-        // Chitarra (martedì e sabato, 30 lezioni): Chitarra1..3 solo il martedì, Chitarra4..6 solo il sabato
+    void generaLezioni_numeroLezioniPerOgniAllievoNelGiornoDelSuoGruppo() {
+        // Chitarra (martedì e sabato, 30 lezioni): Chitarra1..3 nel gruppo del martedì, Chitarra4..6 in quello del sabato
         Corso chitarra = corso("Corso di Chitarra");
         List<Allievo> allievi = java.util.stream.IntStream.rangeClosed(1, 6)
             .mapToObj(n -> allievoService.findByUsername("allievo_chitarra" + n).orElseThrow()).toList();
+        GruppoCorso martedi = corsoService.salvaGruppo(chitarra.getId(),
+            new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
+        GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(),
+            new GruppoCorso(null, "Principianti", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
         try {
             for (int n = 0; n < 6; n++) {
-                corsoService.impostaGiorni(chitarra.getId(), allievi.get(n).getId(),
-                    Set.of(n < 3 ? DayOfWeek.TUESDAY : DayOfWeek.SATURDAY));
+                corsoService.assegnaGruppo(chitarra.getId(), allievi.get(n).getId(), (n < 3 ? martedi : sabato).getId());
             }
             corsoService.generaLezioni(chitarra);
 
@@ -212,13 +237,23 @@ class CorsoServiceTest {
             Lezione prima = lezioneService.findByCorso(chitarra.getId()).getFirst();
             prima.setCompletata(false);
             lezioneService.save(prima);
-            allievi.forEach(a -> corsoService.impostaGiorni(chitarra.getId(), a.getId(), Set.of()));
+            allievi.forEach(a -> {
+                corsoService.assegnaGruppo(chitarra.getId(), a.getId(), null);
+                corsoService.impostaOrario(chitarra.getId(), a.getId(), null);
+            });
+            corsoService.eliminaGruppo(martedi.getId());
+            corsoService.eliminaGruppo(sabato.getId());
             corsoService.generaLezioni(chitarra);
         }
-        // Tutti i giorni a tutti: come prima, 30 date con tutti gli iscritti
+        // Senza gruppi: come prima, 30 date con tutti gli iscritti
         List<Lezione> lezioni = lezioneService.findByCorso(chitarra.getId());
         assertEquals(30, lezioni.size());
         lezioni.forEach(l -> assertEquals(6, presenzaService.findByLezione(l.getId()).size()));
+    }
+
+    private Iscrizione iscrizione(Corso corso, Allievo allievo) {
+        return corsoService.findPartecipanti(corso.getId()).stream()
+            .filter(i -> i.getAllievo().equals(allievo)).findFirst().orElseThrow();
     }
 
     private Set<DayOfWeek> giorniConPresenza(Corso corso, Allievo allievo) {

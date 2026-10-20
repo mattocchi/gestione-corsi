@@ -1,17 +1,20 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
 import it.attocchi.repository.CorsoRepository;
+import it.attocchi.repository.GruppoCorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.AllievoRepository;
+import it.attocchi.views.Formati;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,11 +40,13 @@ public class CorsoService {
     private final AllievoRepository allievoRepository;
     private final PagamentoRepository pagamentoRepository;
     private final FestivitaService festivitaService;
+    private final GruppoCorsoRepository gruppoRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
                        AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository,
-                       FestivitaService festivitaService) {
+                       FestivitaService festivitaService, GruppoCorsoRepository gruppoRepository) {
+        this.gruppoRepository = gruppoRepository;
         this.pagamentoRepository = pagamentoRepository;
         this.festivitaService = festivitaService;
         this.corsoRepository = corsoRepository;
@@ -121,27 +126,83 @@ public class CorsoService {
             .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE)));
     }
 
+    /** Gruppi del corso, per giorno e orario. */
+    public List<GruppoCorso> gruppi(Long corsoId) {
+        return gruppoRepository.findByCorsoId(corsoId).stream().sorted(GruppoCorso.PER_GIORNO).toList();
+    }
+
     /**
-     * Imposta i giorni del corso che il partecipante frequenta (vuoto o tutti = tutti i giorni) e aggiorna le sue
-     * presenze nelle lezioni ancora da fare: tolte nei giorni non più suoi, aggiunte nei nuovi. Le lezioni svolte
-     * restano come storico.
+     * Crea o modifica un gruppo del corso: il giorno deve essere uno di quelli del corso e l'orario è obbligatorio.
+     * Se cambia il giorno si aggiornano le presenze dei suoi partecipanti nelle lezioni da fare.
      */
     @Transactional
-    public void impostaGiorni(Long corsoId, Long allievoId, Set<DayOfWeek> giorni) {
+    public GruppoCorso salvaGruppo(Long corsoId, GruppoCorso gruppo) {
         Corso corso = corsoAttivo(corsoId);
+        if (gruppo.getGiorno() == null || !corso.getGiorniSettimana().contains(gruppo.getGiorno())) {
+            throw new IllegalArgumentException("Scegli uno dei giorni del corso");
+        }
+        if (gruppo.getOrario() == null) {
+            throw new IllegalArgumentException("Indica l'orario del gruppo");
+        }
+        if (gruppo.getId() != null && gruppoRepository.findById(gruppo.getId())
+                .filter(prima -> prima.getCorso().getId().equals(corsoId)).isEmpty()) {
+            throw new IllegalArgumentException("Il gruppo non è di questo corso");
+        }
+        gruppo.setNome(gruppo.getNome() != null && !gruppo.getNome().isBlank() ? gruppo.getNome().strip() : null);
+        gruppo.setCorso(corso);
+        GruppoCorso salvato = gruppoRepository.save(gruppo);
+        // Il gruppo caricato nelle iscrizioni è quello aggiornato: le presenze seguono il nuovo giorno
+        partecipantiDelGruppo(salvato).forEach(this::sincronizzaPresenze);
+        return salvato;
+    }
+
+    /** Elimina il gruppo: i suoi partecipanti restano senza gruppo (tutti i giorni del corso). */
+    @Transactional
+    public void eliminaGruppo(Long gruppoId) {
+        GruppoCorso gruppo = gruppoRepository.findById(gruppoId)
+            .orElseThrow(() -> new IllegalArgumentException("Gruppo non trovato: " + gruppoId));
+        verificaAttivo(gruppo.getCorso());
+        for (Iscrizione iscrizione : partecipantiDelGruppo(gruppo)) {
+            iscrizione.setGruppo(null);
+            sincronizzaPresenze(iscrizione);
+        }
+        gruppoRepository.delete(gruppo);
+    }
+
+    /**
+     * Assegna il partecipante a un gruppo del corso ({@code null} = nessun gruppo, tutti i giorni) e aggiorna le sue
+     * presenze nelle lezioni ancora da fare: tolte nei giorni non più suoi, aggiunte nei nuovi. Le lezioni svolte
+     * restano come storico. Se il partecipante non ha ancora un orario prende quello del gruppo.
+     */
+    @Transactional
+    public void assegnaGruppo(Long corsoId, Long allievoId, Long gruppoId) {
+        corsoAttivo(corsoId);
         Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
             .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
-        Set<DayOfWeek> scelti = giorni != null ? giorni : Set.of();
-        if (!corso.getGiorniSettimana().containsAll(scelti)) {
-            throw new IllegalArgumentException("Scegli solo giorni del corso");
+        GruppoCorso gruppo = gruppoId == null ? null : gruppoRepository.findById(gruppoId)
+            .filter(g -> g.getCorso().getId().equals(corsoId))
+            .orElseThrow(() -> new IllegalArgumentException("Il gruppo non è di questo corso"));
+        iscrizione.setGruppo(gruppo);
+        if (gruppo != null && iscrizione.getOrarioLezione() == null) {
+            iscrizione.setOrarioLezione(gruppo.getOrario());
         }
-        iscrizione.getGiorni().clear();
-        if (!scelti.containsAll(corso.getGiorniSettimana())) {
-            iscrizione.getGiorni().addAll(scelti);
-        }
+        sincronizzaPresenze(iscrizione);
+    }
 
+    private List<Iscrizione> partecipantiDelGruppo(GruppoCorso gruppo) {
+        return iscrizioneRepository.findByCorsoIdWithAllievo(gruppo.getCorso().getId()).stream()
+            .filter(i -> gruppo.equals(i.getGruppo()))
+            .toList();
+    }
+
+    /**
+     * Presenze del partecipante nelle lezioni ancora da fare secondo i giorni che frequenta: aggiunte dove manca,
+     * tolte dove non frequenta più. Le lezioni svolte, non effettuate o completate restano com'erano.
+     */
+    void sincronizzaPresenze(Iscrizione iscrizione) {
+        Long corsoId = iscrizione.getCorso().getId();
         Map<Long, Presenza> presenze = new HashMap<>();
-        presenzaRepository.findByCorsoIdAndAllievoId(corsoId, allievoId)
+        presenzaRepository.findByCorsoIdAndAllievoId(corsoId, iscrizione.getAllievo().getId())
             .forEach(presenza -> presenze.put(presenza.getLezione().getId(), presenza));
         for (Lezione lezione : lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId)) {
             if (!lezione.isDaFare()) {
@@ -200,6 +261,14 @@ public class CorsoService {
         if (corso.getSecondoInsegnante() != null && corso.getSecondoInsegnante().equals(corso.getInsegnante())) {
             throw new IllegalArgumentException("Il secondo insegnante deve essere diverso dal primo");
         }
+        if (corso.getId() != null) {
+            for (GruppoCorso gruppo : gruppoRepository.findByCorsoId(corso.getId())) {
+                if (!corso.getGiorniSettimana().contains(gruppo.getGiorno())) {
+                    throw new IllegalArgumentException("Il " + Formati.giorniEstesi(Set.of(gruppo.getGiorno()))
+                        + " è il giorno del gruppo \"" + Formati.gruppo(gruppo) + "\": cambia o elimina prima il gruppo");
+                }
+            }
+        }
         boolean insegnantiCambiati = corso.getId() != null && corsoRepository.findById(corso.getId())
             .map(prima -> !Set.copyOf(prima.getInsegnanti()).equals(Set.copyOf(corso.getInsegnanti())))
             .orElse(false);
@@ -218,6 +287,11 @@ public class CorsoService {
         if (pagamentoRepository.existsByCorso(corso.getId())) {
             throw new IllegalStateException("Il corso ha pagamenti registrati: eliminali prima di eliminare il corso");
         }
+        // Prima si staccano le iscrizioni dai gruppi, poi si eliminano i gruppi e il corso (con le iscrizioni)
+        iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId()).forEach(i -> i.setGruppo(null));
+        iscrizioneRepository.flush();
+        gruppoRepository.deleteAll(gruppoRepository.findByCorsoId(corso.getId()));
+        gruppoRepository.flush();
         corsoRepository.delete(corso);
     }
 

@@ -299,7 +299,7 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void openPartecipanti(Corso corso) {
-        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, allievoService, pagamentoService, corso);
+        PartecipantiDialog dialog = new PartecipantiDialog(corsoService, allievoService, pagamentoService, corso, puoEliminare);
         // Alla chiusura ricarica la griglia: numero di allievi e iscrizioni dei corsi aggiornati
         dialog.addOpenedChangeListener(e -> {
             if (!e.isOpened()) {

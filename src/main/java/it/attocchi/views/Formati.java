@@ -1,6 +1,7 @@
 package it.attocchi.views;
 
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.GruppoCorso;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -47,6 +48,21 @@ public final class Formati {
             return String.join("", nomi);
         }
         return String.join(", ", nomi.subList(0, nomi.size() - 1)) + " e " + nomi.getLast();
+    }
+
+    /**
+     * Gruppo del corso: "Martedì 17:00" o, con il nome, "Principianti – mar 17:00"; stringa vuota se {@code null}.
+     */
+    public static String gruppo(GruppoCorso gruppo) {
+        if (gruppo == null) {
+            return "";
+        }
+        String orario = gruppo.getOrario() != null ? " " + gruppo.getOrario().format(ORA) : "";
+        if (gruppo.getNome() != null && !gruppo.getNome().isBlank()) {
+            return gruppo.getNome() + " – " + giorno(gruppo.getGiorno()) + orario;
+        }
+        String giorno = gruppo.getGiorno().getDisplayName(TextStyle.FULL, ITALIANO);
+        return Character.toUpperCase(giorno.charAt(0)) + giorno.substring(1) + orario;
     }
 
     /**
