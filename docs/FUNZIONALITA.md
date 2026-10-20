@@ -160,3 +160,11 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] ad un utente, che era inserito come allievo rapido, ho aasegnato il ruolo insegnante e genitore, ma non lo trovo negli elenco insegnante e genitori, sia che sia attivo che non _(completata 2026-10-19)_
   _Chiarimento 2026-10-19: salvando l'utente in Gestione Utenti con il ruolo INSEGNANTE o GENITORE, se manca la scheda viene creata in automatico (togliere il ruolo non la cancella); i dati anagrafici sono copiati da una scheda già esistente dello stesso utente (allievo, insegnante o genitore); all'avvio si creano le schede mancanti per chi ha già il ruolo._
+
+## FUNZIONALITA del 20-10-2026
+
+### GRUPPI
+
+* [ ] Il punto più critico é che ci sono corsi con gruppi per giorno della settimana di altri no. Quindi servirebbe modificare l'assegnazione di un giorno all'allievo con assegnazione ad un gruppo se c'è nel corso allora é assegnato ad un giorno. Non é obbligatorio quindi posso assegnare allevi ad un gruppo solo se ci sono gruppi nel corso. Secondo me vale la pena sostituire la funzionalità di assegnare un giorno ad un allievo con assegnare un gruppo ad un allievo se il corso lo prevede.
+* [ ] Un gruppo ha quindi un possibile giorno tra quello del gruppo ed un orario di riferimento.
+* [ ] É possibile creare gruppi nel corso che vedono admin segreteria e anche insegnanti, anche se per gli insegnanti é irrilevante perché si trovano l'allievo nel giorno in cui deve fare il corso.
