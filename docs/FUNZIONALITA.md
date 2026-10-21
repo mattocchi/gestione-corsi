@@ -173,3 +173,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-20: i gruppi si gestiscono nel dialog Partecipanti da admin e segreteria (eliminazione solo admin, gli allievi restano senza gruppo); gli insegnanti vedono il gruppo dell'allievo in Gestisci Presenze, in sola lettura._
 * [x] Aggiungi la visualizzazione del gruppo nel riepilogo iscritti in modo che siano chiari per ogni corso o gruppi. _(completata 2026-10-20)_
   _Chiarimento 2026-10-20: nei corsi con gruppi un livello in più corso → gruppi → iscritti (più "Senza gruppo (tutti i giorni)" se serve), i corsi senza gruppi restano come sono; la riga del gruppo mostra solo nome e numero di iscritti; all'avvio e con "Espandi tutti" sono aperti corsi e gruppi._
+
+## FUNZIONALITA del 21-10-2026
+
+### LOGIN
+
+* [ ] verifica che un utente possa effettivamente fare login con username o email
