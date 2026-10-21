@@ -180,3 +180,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] verifica che un utente possa effettivamente fare login con username o email _(completata 2026-10-21)_
   _Chiarimento 2026-10-21: oggi il login accetta solo lo username; si aggiunge l'email (senza distinguere maiuscole): se non è uno username si cerca tra gli account attivi con quell'email e si entra solo se è uno solo, altrimenti errore generico che suggerisce di usare il nome utente; campo "Nome utente o email"; lo username resta com'è._
+
+### GRUPPI
+
+* [ ] Nei gruppi di di allievi di corso vorrei poter assegnare un nome oltre al giorno. Un caso d'uso potrebbe essere nel corso propedeutica che è i sabati ogni 15gg vorrei poter inserire due gruppi "piccoli" e "grandi" semplicemente i piccoli sono alle 10, i grandi alle 11
