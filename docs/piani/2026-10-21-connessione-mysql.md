@@ -20,7 +20,7 @@ Dopo una giornata di non utilizzo l'applicazione in produzione ha problemi di co
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `allowPublicKeyRetrieval=true` nell'URL di default e nell'esempio di env; nota nel README di deploy | `application-prod.properties`, `deploy/gestione-corsi.env.example`, `deploy/README.md` | `./mvnw -q compile` | [ ] |
+| 1 | `allowPublicKeyRetrieval=true` nell'URL di default e nell'esempio di env; nota nel README di deploy | `application-prod.properties`, `deploy/gestione-corsi.env.example`, `deploy/README.md` | `./mvnw -q compile` | [x] |
 | 2 | Registro | questo piano | — | [ ] |
 
 ## Fuori ambito

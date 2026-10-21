@@ -54,6 +54,8 @@ Variabili di `gestione-corsi.env`:
 | `JAVA_BIN` | no | `java` | eseguibile Java 21 |
 | `JAVA_OPTS` | no | `-Xms256m -Xmx512m ...` | opzioni della JVM |
 
+`DB_URL` deve contenere `allowPublicKeyRetrieval=true` (con `useSSL=false`): MySQL 8 usa `caching_sha2_password` e dopo ogni suo riavvio (anche per gli aggiornamenti automatici notturni) il primo accesso richiede la chiave pubblica del server. Senza, l'app non riesce più ad aprire connessioni (`Public Key Retrieval is not allowed`) finché non viene riavviata.
+
 Il profilo `prod` è fissato in `ecosystem.config.js` e `start.sh`: senza, Spring partirebbe con il profilo
 `dev` (H2 in memoria e utenti di prova).
 
