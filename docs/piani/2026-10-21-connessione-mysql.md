@@ -21,7 +21,7 @@ Dopo una giornata di non utilizzo l'applicazione in produzione ha problemi di co
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `allowPublicKeyRetrieval=true` nell'URL di default e nell'esempio di env; nota nel README di deploy | `application-prod.properties`, `deploy/gestione-corsi.env.example`, `deploy/README.md` | `./mvnw -q compile` | [x] |
-| 2 | Registro | questo piano | — | [ ] |
+| 2 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -29,3 +29,7 @@ Dopo una giornata di non utilizzo l'applicazione in produzione ha problemi di co
 - Escludere MySQL dagli aggiornamenti automatici o riavviare l'app dopo l'aggiornamento: non serve più con questa correzione.
 
 ## Registro
+
+- Produzione: `DB_URL` corretto nel `gestione-corsi.env` del server e app ricaricata con pm2 alle 20:31 del 2026-10-21; `HikariPool-1 - Start completed`, `Started Application`, `/login` risponde 200.
+- Passo 1: `./mvnw -q compile` ok; cambia solo configurazione e documentazione, nessun test da eseguire.
+- Da verificare al prossimo riavvio di MySQL (aggiornamento automatico): nel log non deve più comparire `Public Key Retrieval is not allowed`.
