@@ -1,10 +1,13 @@
 package it.attocchi.views;
 
+import it.attocchi.entity.Corso;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Year;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -33,5 +36,16 @@ class FormatiTest {
         assertEquals("1.250,50 €", Formati.euro(new BigDecimal("1250.5")));
         assertEquals("0,00 €", Formati.euro(BigDecimal.ZERO));
         assertEquals("", Formati.euro(null));
+    }
+
+    @Test
+    void giorniECadenza_cadenzaSoloSeNonSettimanale() {
+        Corso corso = new Corso();
+        corso.setGiorniSettimana(Set.of(DayOfWeek.SATURDAY, DayOfWeek.TUESDAY));
+        assertEquals("mar, sab", Formati.giorniECadenza(corso));
+        corso.setCadenzaSettimane(2);
+        assertEquals("mar, sab, ogni 2 settimane", Formati.giorniECadenza(corso));
+        corso.setGiorniSettimana(Set.of());
+        assertEquals("ogni 2 settimane", Formati.giorniECadenza(corso));
     }
 }

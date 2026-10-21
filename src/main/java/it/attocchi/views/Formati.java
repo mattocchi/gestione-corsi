@@ -43,6 +43,16 @@ public final class Formati {
         return giorni.stream().sorted().map(Formati::giorno).collect(Collectors.joining(", "));
     }
 
+    /** Giorni del corso con la cadenza se non è settimanale, es. "sab, ogni 2 settimane". */
+    public static String giorniECadenza(Corso corso) {
+        String giorni = giorni(corso.getGiorniSettimana());
+        if (corso.getCadenzaSettimane() == 1) {
+            return giorni;
+        }
+        String cadenza = "ogni " + corso.getCadenzaSettimane() + " settimane";
+        return giorni.isEmpty() ? cadenza : giorni + ", " + cadenza;
+    }
+
     /** Giorni della settimana per esteso, da lunedì, es. "martedì e sabato" (per documenti ed email). */
     public static String giorniEstesi(Collection<DayOfWeek> giorni) {
         List<String> nomi = giorni.stream().sorted().map(g -> g.getDisplayName(TextStyle.FULL, ITALIANO)).toList();

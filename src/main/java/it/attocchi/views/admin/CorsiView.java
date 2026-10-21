@@ -16,6 +16,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -41,6 +42,7 @@ import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.SegmentedControl;
+import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -135,6 +137,7 @@ public class CorsiView extends VerticalLayout {
         grid.addColumn(Corso::getNomiInsegnanti).setHeader("Insegnanti");
         grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(Formati::giorniECadenza).setHeader("Giorni");
         grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
@@ -147,6 +150,7 @@ public class CorsiView extends VerticalLayout {
             .campo("Anno", Corso::getAnnoScolastico)
             .campo("Insegnanti", Corso::getNomiInsegnanti)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
+            .campo("Giorni", Formati::giorniECadenza)
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti)
             .campo("N. Allievi", corso -> corso.getAllievi().size())
@@ -216,6 +220,16 @@ public class CorsiView extends VerticalLayout {
             }
         });
 
+        SegmentedControl<Integer> cadenza = new SegmentedControl<>("Cadenza delle lezioni", List.of(1, 2),
+            settimane -> settimane == 1 ? "Ogni settimana" : "Ogni 2 settimane",
+            settimane -> settimane == 1 ? "Lezione ogni settimana" : "Lezione ogni 2 settimane, dalla data di inizio",
+            null);
+        Span aiutoCadenza = new Span("Ogni 2 settimane: le settimane alterne partono dalla data di inizio e una "
+            + "festività sposta la lezione alla settimana dopo. Vale da \"Genera Lezioni\".");
+        aiutoCadenza.addClassNames(Stili.TESTO_SECONDARIO);
+        Div bloccoCadenza = new Div(cadenza, aiutoCadenza);
+        bloccoCadenza.addClassNames("flex flex-col gap-1");
+
         ComboBox<String> annoScolastico = new ComboBox<>("Anno Scolastico");
         List<String> anni = annoScolasticoService.scelteCorso(corso.getAnnoScolastico());
         annoScolastico.setItems(anni);
@@ -262,6 +276,7 @@ public class CorsiView extends VerticalLayout {
             }
         });
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
+        binder.forField(cadenza).asRequired("Scegli la cadenza").bind(Corso::getCadenzaSettimane, Corso::setCadenzaSettimane);
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
         binder.forField(secondoInsegnante)
             .withValidator(secondo -> secondo == null || !secondo.equals(insegnante.getValue()),
@@ -272,7 +287,7 @@ public class CorsiView extends VerticalLayout {
 
         binder.readBean(corso);
 
-        formLayout.add(nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, descrizione);
+        formLayout.add(nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi
@@ -291,6 +306,7 @@ public class CorsiView extends VerticalLayout {
         saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         formLayout.setColspan(giorniSettimana, 2);
+        formLayout.setColspan(bloccoCadenza, 2);
         formLayout.setColspan(descrizione, 2);
 
         dialog.add(formLayout);

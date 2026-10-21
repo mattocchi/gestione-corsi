@@ -128,7 +128,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ViewAccessTest extends SpringBrowserlessTest {
 
     /** Colonna delle azioni in Gestione Corsi (desktop). */
-    private static final int AZIONI_CORSO = 8;
+    private static final int AZIONI_CORSO = 9;
 
     @Autowired
     private PresenzaService presenzaService;
@@ -939,13 +939,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_impostaCadenzaDelCorso() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        int canto = riga(corsi, "Corso di Canto");
+        Long corsoId = corsi.getRow(canto).getId();
+        assertEquals("gio", corsi.getCellText(canto, 4));
+
+        test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
+        SegmentedControl<Integer> cadenza = find(SegmentedControl.class).all().stream()
+            .filter(c -> c.getElement().getAttribute("aria-label").equals("Cadenza delle lezioni"))
+            .findFirst().orElseThrow();
+        assertEquals(1, cadenza.getValue());
+        test(cadenza.getPulsante(2)).click();
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            assertEquals(2, corsoService.findById(corsoId).getCadenzaSettimane());
+            assertEquals("gio, ogni 2 settimane", corsi.getCellText(riga(corsi, "Corso di Canto"), 4));
+        } finally {
+            Corso corso = corsoService.findById(corsoId);
+            corso.setCadenzaSettimane(1);
+            corsoService.save(corso);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_impostaAnnoScolasticoEStatoDelCorso() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
         assertEquals("2024/2025", corsi.getCellText(canto, 1));
-        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 7)).getText());
+        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 8)).getText());
 
         test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
         test(find(ComboBox.class).withLabel("Anno Scolastico").single()).selectItem("2025/2026");
@@ -982,7 +1009,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
             assertEquals(1, corsi.size());
-            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 7)).getText());
+            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 8)).getText());
 
             test(stato.getPulsante(CorsiView.FiltroStato.TUTTI)).click();
             assertEquals(2, corsi.size());
