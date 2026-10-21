@@ -50,6 +50,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PagamentoService;
+import it.attocchi.service.DashboardService.RigaGruppo;
 import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
 import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PresenzaService;
@@ -297,7 +298,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                     "Incassato: 200,00 € (3% del totale)", "Da incassare: 7.600,00 € (97% del totale)"),
                 indicatori().subList(4, 9));
 
-            var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).single());
+            var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).all().getFirst());
             assertEquals(2, grid.size());
             assertEquals("Corso di Canto", grid.getCellText(0, 0));
             // Indici delle colonne visibili su desktop (la colonna card mobile è nascosta)
@@ -308,6 +309,62 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("3.600,00 € (100%)", grid.getCellText(1, 5));
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_dashboardConRiepilogoGruppi() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        navigate(CorsiView.class);
+        navigate(HomeView.class);
+        assertEquals(List.of("Corsi con gruppi: 0", "Gruppi: 0", "Allievi senza gruppo: 0"), indicatori().subList(9, 12));
+        var vuota = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
+        assertEquals(0, vuota.size());
+
+        GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(),
+            new GruppoCorso(null, "Principianti", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
+        corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), sabato.getId());
+        try {
+            navigate(CorsiView.class);
+            navigate(HomeView.class);
+            // Chitarra ha 6 iscritti: 1 nel gruppo del sabato, 5 senza gruppo
+            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(9, 12));
+            var gruppi = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
+            assertEquals(2, gruppi.size());
+            assertEquals("Corso di Chitarra", gruppi.getCellText(0, 0));
+            assertEquals("Martedì 17:00", gruppi.getCellText(0, 1));
+            assertEquals("0", gruppi.getCellText(0, 2));
+            assertEquals("Principianti – sab 10:00", gruppi.getCellText(1, 1));
+            assertEquals("1", gruppi.getCellText(1, 2));
+        } finally {
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante2")
+    @SuppressWarnings("unchecked")
+    void insegnante_dashboardConIGruppiDeiSuoiCorsi() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        apriLezioni();
+        navigate(HomeView.class);
+        assertFalse(find(Grid.class).exists());
+
+        corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Avanzati", DayOfWeek.TUESDAY, LocalTime.of(18, 0)));
+        try {
+            apriLezioni();
+            navigate(HomeView.class);
+            var gruppi = test((Grid<RigaGruppo>) find(Grid.class).single());
+            assertEquals(1, gruppi.size());
+            assertEquals("Avanzati – mar 18:00", gruppi.getCellText(0, 1));
+        } finally {
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
         }
     }
 

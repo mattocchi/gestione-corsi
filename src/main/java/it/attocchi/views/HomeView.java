@@ -16,6 +16,8 @@ import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.DashboardService;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
+import it.attocchi.service.DashboardService.RiepilogoGruppi;
+import it.attocchi.service.DashboardService.RigaGruppo;
 import it.attocchi.service.DashboardService.RiepilogoInsegnante;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
@@ -54,14 +56,21 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
                 indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
             add(pagamenti(pagamentoService.riepilogoCorsiAttivi()));
+            add(gruppi(dashboardService.riepilogoGruppi()));
         }
         if (securityService.hasRole("INSEGNANTE")) {
             RiepilogoInsegnante riepilogo = dashboardService.riepilogoInsegnante(username);
-            add(sezione("I miei corsi",
+            Div sezione = sezione("I miei corsi",
                 indicatore(VaadinIcon.MUSIC, "Corsi assegnati", riepilogo.corsi()),
                 indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
                 indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare()),
-                indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate())));
+                indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate()));
+            // I gruppi dei suoi corsi, solo se ce ne sono
+            List<RigaGruppo> gruppi = dashboardService.gruppiDellInsegnante(username);
+            if (!gruppi.isEmpty()) {
+                sezione.add(tabellaGruppi(gruppi));
+            }
+            add(sezione);
         }
         if (securityService.hasRole("ALLIEVO")) {
             add(sezione("I miei corsi",
@@ -106,6 +115,34 @@ public class HomeView extends VerticalLayout {
         grid.addClassNames("mt-4");
         sezione.add(grid);
         return sezione;
+    }
+
+    /** Gruppi dei corsi attivi: riquadri con i conteggi e una riga per gruppo. */
+    private static Div gruppi(RiepilogoGruppi riepilogo) {
+        Div sezione = sezione("Gruppi dei corsi attivi",
+            indicatore(VaadinIcon.MUSIC, "Corsi con gruppi", riepilogo.corsiConGruppi()),
+            indicatore(VaadinIcon.GROUP, "Gruppi", riepilogo.gruppi()),
+            indicatore(VaadinIcon.USER, "Allievi senza gruppo", riepilogo.allieviSenzaGruppo()));
+        sezione.add(tabellaGruppi(riepilogo.righe()));
+        return sezione;
+    }
+
+    /** Una riga per gruppo: corso, gruppo e numero di iscritti. */
+    private static Grid<RigaGruppo> tabellaGruppi(List<RigaGruppo> righe) {
+        Grid<RigaGruppo> grid = new Grid<>(RigaGruppo.class, false);
+        grid.addColumn(RigaGruppo::corso).setHeader("Corso");
+        grid.addColumn(r -> Formati.gruppo(r.gruppo())).setHeader("Gruppo");
+        grid.addColumn(RigaGruppo::iscritti).setHeader("Iscritti").setWidth("7rem").setFlexGrow(0);
+        CardMobile.per(grid)
+            .titolo(r -> Formati.gruppo(r.gruppo()))
+            .sottotitolo(RigaGruppo::corso)
+            .campo("Iscritti", RigaGruppo::iscritti)
+            .applica();
+        grid.setItems(righe);
+        grid.setAllRowsVisible(true);
+        grid.setEmptyStateText("Nessun corso attivo con gruppi");
+        grid.addClassNames("mt-4");
+        return grid;
     }
 
     private static String importo(BigDecimal importo, int percentuale) {

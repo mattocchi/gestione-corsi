@@ -24,7 +24,7 @@ Mostrare quanti gruppi ha un corso dove serve ([F-2026-10-21/GRUPPI.2]) e aggiun
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `CorsoService.numeroGruppi()`; colonna/campo "Gruppi" in Gestione Corsi; "· N gruppi" sulla riga del corso in Riepilogo Iscritti; test | [F-2026-10-21/GRUPPI.2] | `service/CorsoService`, `repository/GruppoCorsoRepository`, `views/admin/CorsiView`, `views/admin/RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | `DashboardService.riepilogoGruppi()` / `gruppiDellInsegnante(username)`; sezione in `HomeView` per admin/segreteria e tabella per l'insegnante; test | [F-2026-10-21/GRUPPI.3] | `service/DashboardService`, `views/HomeView`, test | `./mvnw test` | [ ] |
+| 2 | `DashboardService.riepilogoGruppi()` / `gruppiDellInsegnante(username)`; sezione in `HomeView` per admin/segreteria e tabella per l'insegnante; test | [F-2026-10-21/GRUPPI.3] | `service/DashboardService`, `views/HomeView`, test | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
