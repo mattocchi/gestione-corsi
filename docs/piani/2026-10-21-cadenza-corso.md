@@ -25,7 +25,7 @@ Gruppi del corso con un nome oltre al giorno; caso d'uso: propedeutica il sabato
 |---|---|---|---|---|---|
 | 1 | `Corso.cadenzaSettimane`; `generaLezioni` con cadenza e festività che spostano di una settimana; test | — | `entity/Corso`, `service/CorsoService`, `CorsoServiceTest` | `./mvnw test` | [x] |
 | 2 | Gestione Corsi: "Cadenza" nel dialog, colonna/campo "Giorni"; `Formati.giorniECadenza`; test | [F-2026-10-21/GRUPPI.1] | `views/admin/CorsiView`, `views/Formati`, `ViewAccessTest`, `FormatiTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -33,3 +33,8 @@ Gruppi del corso con un nome oltre al giorno; caso d'uso: propedeutica il sabato
 - Cadenza mostrata ad allievi, genitori, insegnanti e nella conferma di iscrizione.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 190 test verdi; nuovo `generaLezioni_ogniDueSettimane_festivitaSpostaAllaSettimanaDopo` (Canto il giovedì ogni 2 settimane: 30 lezioni a 14 giorni, Santo Stefano 26/12/2024 spostato al 2/1/2025 e ritmo ripartito da lì); cadenza 3 rifiutata da `CorsoService.save`. Con la cadenza settimanale i test esistenti sulla generazione restano invariati.
+- Passo 2: `./mvnw test` 192 test verdi (`segreteria_impostaCadenzaDelCorso`, `giorniECadenza_cadenzaSoloSeNonSettimanale`); indici delle colonne di Gestione Corsi aggiornati nei test (nuova colonna "Giorni").
+- Non verificato nel browser (dialog del corso a 390px con il nuovo blocco "Cadenza").
+- Produzione: `ddl-auto=update` aggiunge la colonna `cadenza_settimane` (nullable): nessuno script; i corsi esistenti restano settimanali. Per propedeutica: impostare "Ogni 2 settimane", creare i gruppi "Piccoli" (sabato 10:00) e "Grandi" (sabato 11:00) in Partecipanti, assegnare gli allievi e premere "Genera Lezioni".
