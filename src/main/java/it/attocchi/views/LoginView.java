@@ -31,15 +31,16 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
     static LoginI18n italiano() {
         LoginI18n.Form form = new LoginI18n.Form();
         form.setTitle("Accedi");
-        form.setUsername("Nome utente");
+        form.setUsername("Nome utente o email");
         form.setPassword("Password");
         form.setSubmit("Accedi");
         form.setForgotPassword("Password dimenticata?");
 
         LoginI18n.ErrorMessage errore = new LoginI18n.ErrorMessage();
-        errore.setTitle("Nome utente o password errati");
-        errore.setMessage("Controlla di aver inserito nome utente e password corretti e riprova.");
-        errore.setUsername("Inserisci il nome utente");
+        errore.setTitle("Credenziali errate");
+        errore.setMessage("Controlla di aver inserito nome utente (o email) e password corretti e riprova. "
+            + "Se la tua email è usata da più account, accedi con il nome utente.");
+        errore.setUsername("Inserisci il nome utente o l'email");
         errore.setPassword("Inserisci la password");
 
         LoginI18n i18n = new LoginI18n();

@@ -1473,10 +1473,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(LoginView.class);
         assertTrue(find(LoginForm.class).single().isForgotPasswordButtonVisible());
         LoginI18n i18n = LoginView.italiano();
-        assertEquals("Nome utente", i18n.getForm().getUsername());
+        assertEquals("Nome utente o email", i18n.getForm().getUsername());
         assertEquals("Accedi", i18n.getForm().getSubmit());
         assertEquals("Password dimenticata?", i18n.getForm().getForgotPassword());
-        assertEquals("Nome utente o password errati", i18n.getErrorMessage().getTitle());
+        assertEquals("Credenziali errate", i18n.getErrorMessage().getTitle());
     }
 
     @Test

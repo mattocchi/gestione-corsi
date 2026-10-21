@@ -22,7 +22,7 @@ Un utente deve poter accedere con lo username oppure con l'email ([F-2026-10-21/
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Ricerca per email (solo attivi, una sola) in `UserDetailsServiceImpl` e `UserRepository`; testi del login; test | [F-2026-10-21/LOGIN.1] | `security/UserDetailsServiceImpl`, `repository/UserRepository`, `views/LoginView`, test | `./mvnw test` | [ ] |
+| 1 | Ricerca per email (solo attivi, una sola) in `UserDetailsServiceImpl` e `UserRepository`; testi del login; test | [F-2026-10-21/LOGIN.1] | `security/UserDetailsServiceImpl`, `repository/UserRepository`, `views/LoginView`, test | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
