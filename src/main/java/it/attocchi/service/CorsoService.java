@@ -23,6 +23,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -292,6 +293,9 @@ public class CorsoService {
                 || corso.getCostoTotale() == null || preiscrizione.compareTo(corso.getCostoTotale()) > 0)) {
             throw new IllegalArgumentException("Il prezzo con pre-iscrizione deve essere tra zero e il costo totale");
         }
+        if (corso.getCadenzaSettimane() != 1 && corso.getCadenzaSettimane() != 2) {
+            throw new IllegalArgumentException("La cadenza è ogni settimana o ogni 2 settimane");
+        }
         if (corso.getSecondoInsegnante() != null && corso.getSecondoInsegnante().equals(corso.getInsegnante())) {
             throw new IllegalArgumentException("Il secondo insegnante deve essere diverso dal primo");
         }
@@ -336,6 +340,10 @@ public class CorsoService {
      * le presenze solo di quei partecipanti. Senza iscritti si generano {@code numeroLezioni} date. Se tutti
      * frequentano tutti i giorni il risultato è quello di sempre: {@code numeroLezioni} date per tutti.
      * <p>
+     * Con la cadenza ogni 2 settimane ({@link Corso#getCadenzaSettimane()}) ogni giorno del corso ha lezione una
+     * settimana sì e una no, a partire dalla data di inizio; una lezione che cade in una festività si sposta alla
+     * settimana dopo e il ritmo riparte da lì.
+     * <p>
      * Ricrea solo le lezioni programmate ancora da fare: restano completate, non effettuate e aggiunte a mano; le
      * programmate conservate contano per chi frequenta quel giorno, e la loro data e il loro numero non si ripetono.
      */
@@ -370,6 +378,10 @@ public class CorsoService {
         LocalDate limite = corso.getDataInizio().plusYears(10);
         int numeroLezione = 1;
         int generateSenzaIscritti = conservate.size();
+        // Cadenza: per ogni giorno del corso la prima data utile da cui cercare la prossima lezione. Dopo una
+        // lezione si salta di "cadenza" settimane; una festività sposta la lezione alla settimana dopo
+        int giorniTraLezioni = 7 * corso.getCadenzaSettimane();
+        Map<DayOfWeek, LocalDate> prossima = new EnumMap<>(DayOfWeek.class);
 
         while (!dataCorrente.isAfter(limite) && !corso.getGiorniSettimana().isEmpty()) {
             if (iscrizioni.isEmpty() ? generateSenzaIscritti >= lezioniPerAllievo
@@ -378,8 +390,16 @@ public class CorsoService {
             }
             LocalDate data = dataCorrente;
             dataCorrente = dataCorrente.plusDays(1);
-            if (!corso.getGiorniSettimana().contains(data.getDayOfWeek()) || festivita.festivo(data)
-                    || dateConservate.contains(data)) {
+            DayOfWeek giorno = data.getDayOfWeek();
+            if (!corso.getGiorniSettimana().contains(giorno) || data.isBefore(prossima.getOrDefault(giorno, data))) {
+                continue;
+            }
+            if (festivita.festivo(data)) {
+                prossima.put(giorno, data.plusWeeks(1));
+                continue;
+            }
+            prossima.put(giorno, data.plusDays(giorniTraLezioni));
+            if (dateConservate.contains(data)) {
                 continue;
             }
             List<Iscrizione> partecipanti = iscrizioni.stream()

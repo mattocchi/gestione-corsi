@@ -23,7 +23,7 @@ Gruppi del corso con un nome oltre al giorno; caso d'uso: propedeutica il sabato
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `Corso.cadenzaSettimane`; `generaLezioni` con cadenza e festività che spostano di una settimana; test | — | `entity/Corso`, `service/CorsoService`, `CorsoServiceTest` | `./mvnw test` | [ ] |
+| 1 | `Corso.cadenzaSettimane`; `generaLezioni` con cadenza e festività che spostano di una settimana; test | — | `entity/Corso`, `service/CorsoService`, `CorsoServiceTest` | `./mvnw test` | [x] |
 | 2 | Gestione Corsi: "Cadenza" nel dialog, colonna/campo "Giorni"; `Formati.giorniECadenza`; test | [F-2026-10-21/GRUPPI.1] | `views/admin/CorsiView`, `views/Formati`, `ViewAccessTest`, `FormatiTest` | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 

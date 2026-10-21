@@ -47,6 +47,10 @@ public class Corso {
 
     private LocalTime orarioInizio;
 
+    /** Settimane tra una lezione e la successiva nello stesso giorno: 1 (ogni settimana) o 2; null = ogni settimana. */
+    @Column(name = "cadenza_settimane")
+    private Integer cadenzaSettimane;
+
     private BigDecimal costoTotale;
 
     /**
@@ -125,6 +129,14 @@ public class Corso {
 
     public void setNumeroLezioni(Integer numeroLezioni) {
         this.numeroLezioni = numeroLezioni;
+    }
+
+    public int getCadenzaSettimane() {
+        return cadenzaSettimane != null ? cadenzaSettimane : 1;
+    }
+
+    public void setCadenzaSettimane(int cadenzaSettimane) {
+        this.cadenzaSettimane = cadenzaSettimane;
     }
 
     public Integer getDurataLezioneMinuti() {

@@ -98,6 +98,36 @@ class CorsoServiceTest {
     }
 
     @Test
+    void generaLezioni_ogniDueSettimane_festivitaSpostaAllaSettimanaDopo() {
+        // Canto: il giovedì dal 3/10/2024 a settimane alterne; Santo Stefano (26/12/2024) slitta al 2/1/2025
+        Corso canto = corso("Corso di Canto");
+        canto.setCadenzaSettimane(3);
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto));
+        canto.setCadenzaSettimane(2);
+        corsoService.save(canto);
+        try {
+            corsoService.generaLezioni(canto);
+
+            List<LocalDate> date = lezioneService.findByCorso(canto.getId()).stream().map(Lezione::getData).toList();
+            assertEquals(30, date.size());
+            assertEquals(LocalDate.of(2024, 10, 3), date.getFirst());
+            assertTrue(date.containsAll(List.of(LocalDate.of(2024, 12, 12), LocalDate.of(2025, 1, 2),
+                LocalDate.of(2025, 1, 16))));
+            assertFalse(date.contains(LocalDate.of(2024, 12, 26)));
+            for (int i = 1; i < date.size(); i++) {
+                long giorni = date.get(i - 1).until(date.get(i), java.time.temporal.ChronoUnit.DAYS);
+                assertEquals(date.get(i).equals(LocalDate.of(2025, 1, 2)) ? 21 : 14, giorni, "dopo " + date.get(i - 1));
+            }
+        } finally {
+            Corso ripristino = corso("Corso di Canto");
+            ripristino.setCadenzaSettimane(1);
+            corsoService.save(ripristino);
+            corsoService.generaLezioni(ripristino);
+        }
+        assertEquals(1, corso("Corso di Canto").getCadenzaSettimane());
+    }
+
+    @Test
     void secondoInsegnante_aggiornaSoloLeLezioniDaFare() {
         Corso canto = corso("Corso di Canto");
         corsoService.generaLezioni(canto);
