@@ -23,7 +23,7 @@ Un utente deve poter accedere con lo username oppure con l'email ([F-2026-10-21/
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Ricerca per email (solo attivi, una sola) in `UserDetailsServiceImpl` e `UserRepository`; testi del login; test | [F-2026-10-21/LOGIN.1] | `security/UserDetailsServiceImpl`, `repository/UserRepository`, `views/LoginView`, test | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,7 @@ Un utente deve poter accedere con lo username oppure con l'email ([F-2026-10-21/
 - Username senza distinzione di maiuscole.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 189 test, tutti verdi. Nuovo `security/LoginTest` che usa lo stesso `AuthenticationManager` del form: accesso con username, con email (anche maiuscole e spazi), password errata ed email sconosciuta rifiutate, email condivisa rifiutata finché l'altro account è attivo; il nome autenticato è sempre lo username.
+- Non provato nel browser: il form invia gli stessi dati allo stesso `AuthenticationManager`.
+- Restano aperti: email univoca per account e username senza distinzione di maiuscole (vedi Fuori ambito).
