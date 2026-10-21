@@ -128,7 +128,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ViewAccessTest extends SpringBrowserlessTest {
 
     /** Colonna delle azioni in Gestione Corsi (desktop). */
-    private static final int AZIONI_CORSO = 9;
+    private static final int AZIONI_CORSO = 10;
 
     @Autowired
     private PresenzaService presenzaService;
@@ -476,8 +476,14 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(Set.of(DayOfWeek.SATURDAY), iscrizione(chitarra, allievo).giorniEffettivi());
             assertTrue(find(Span.class).from(dialog).withText("Principianti – sab 10:00 · 1 allievo").exists());
 
-            // Nel Riepilogo Iscritti il corso con gruppi ha un livello in più: corso → gruppi → iscritti
+            // Gestione Corsi mostra il numero di gruppi, vuoto per i corsi senza
             dialog.close();
+            navigate(CorsiView.class);
+            var corsi = test((Grid<Corso>) find(Grid.class).single());
+            assertEquals("1", corsi.getCellText(riga(corsi, "Corso di Chitarra"), 8));
+            assertEquals("", corsi.getCellText(riga(corsi, "Corso di Canto"), 8));
+
+            // Nel Riepilogo Iscritti il corso con gruppi ha un livello in più: corso → gruppi → iscritti
             navigate(RiepilogoIscrittiView.class);
             var riepilogo = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
                 (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
@@ -486,6 +492,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             int corso = IntStream.range(0, riepilogo.size())
                 .filter(r -> riepilogo.getRow(r).isCorso() && riepilogo.getCellText(r, 0).equals("Corso di Chitarra"))
                 .findFirst().orElseThrow();
+            assertEquals("mar, sab · 1 gruppo", riepilogo.getCellText(corso, 3));
             assertTrue(riepilogo.getRow(corso + 1).isGruppo());
             assertEquals("Principianti – sab 10:00", riepilogo.getCellText(corso + 1, 0));
             assertEquals("1", riepilogo.getCellText(corso + 1, 4));
@@ -972,7 +979,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
         assertEquals("2024/2025", corsi.getCellText(canto, 1));
-        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 8)).getText());
+        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 9)).getText());
 
         test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
         test(find(ComboBox.class).withLabel("Anno Scolastico").single()).selectItem("2025/2026");
@@ -1009,7 +1016,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
             assertEquals(1, corsi.size());
-            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 8)).getText());
+            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 9)).getText());
 
             test(stato.getPulsante(CorsiView.FiltroStato.TUTTI)).click();
             assertEquals(2, corsi.size());

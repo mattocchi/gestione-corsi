@@ -215,10 +215,17 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         return saldati;
     }
 
-    /** Giorni del corso sulla riga del corso, il gruppo (vuoto = tutti i giorni) sulla riga dell'iscritto. */
+    /**
+     * Giorni del corso, con il numero di gruppi se ne ha (es. "sab · 2 gruppi"), sulla riga del corso; il gruppo
+     * (vuoto = tutti i giorni) sulla riga dell'iscritto.
+     */
     private String giorni(Voce voce) {
-        return voce.isCorso() ? Formati.giorni(voce.corso().corso().getGiorniSettimana())
-            : voce.isIscritto() ? Formati.gruppo(voce.iscritto().iscrizione().getGruppo()) : "";
+        if (voce.isCorso()) {
+            String giorni = Formati.giorni(voce.corso().corso().getGiorniSettimana());
+            int gruppi = voce.corso().gruppi().size();
+            return gruppi == 0 ? giorni : giorni + " · " + gruppi + (gruppi == 1 ? " gruppo" : " gruppi");
+        }
+        return voce.isIscritto() ? Formati.gruppo(voce.iscritto().iscrizione().getGruppo()) : "";
     }
 
     /** Costo stimato degli insegnanti, solo sulla riga del corso; "Senza tariffa" se nessuno ha la tariffa. */

@@ -61,6 +61,13 @@ public class CorsoService {
         return corsoRepository.findAllWithAllievi();
     }
 
+    /** Numero di gruppi per id del corso; i corsi senza gruppi non ci sono. */
+    public Map<Long, Long> numeroGruppi() {
+        Map<Long, Long> numero = new HashMap<>();
+        gruppoRepository.contaPerCorso().forEach(riga -> numero.put((Long) riga[0], (Long) riga[1]));
+        return numero;
+    }
+
     public List<Corso> findAllAttivi() {
         return corsoRepository.findByAttivoTrue();
     }

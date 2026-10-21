@@ -185,7 +185,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] Nei gruppi di di allievi di corso vorrei poter assegnare un nome oltre al giorno. Un caso d'uso potrebbe essere nel corso propedeutica che è i sabati ogni 15gg vorrei poter inserire due gruppi "piccoli" e "grandi" semplicemente i piccoli sono alle 10, i grandi alle 11 _(completata 2026-10-21)_
   _Chiarimento 2026-10-21: il nome del gruppo esiste già (campo "Nome" del gruppo, in Partecipanti; due gruppi possono avere lo stesso giorno): si aggiunge al corso la cadenza "Ogni settimana" (default) / "Ogni 2 settimane", con le settimane alterne contate dalla data di inizio; una lezione che cade in una festività si sposta alla settimana dopo e il ritmo riparte da lì; la cadenza si vede in Gestione Corsi._
-* [ ] Aggiungi la visualizzazione di quanti gruppi ha un corso dove necessario.
+* [x] Aggiungi la visualizzazione di quanti gruppi ha un corso dove necessario. _(completata 2026-10-21)_
   _Chiarimento 2026-10-21: numero di gruppi in Gestione Corsi (colonna "Gruppi", anche nella card) e in Riepilogo Iscritti sulla riga del corso._
 * [ ] Aggiungi anche un recap in dashboard
   _Chiarimento 2026-10-21: riepilogo dei gruppi dei soli corsi attivi; admin e segreteria: sezione "Gruppi dei corsi attivi" con riquadri (corsi con gruppi, gruppi, allievi senza gruppo nei corsi con gruppi) e tabella con una riga per gruppo (corso, gruppo, iscritti); l'insegnante vede la stessa tabella per i suoi corsi._

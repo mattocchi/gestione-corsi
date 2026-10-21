@@ -51,6 +51,7 @@ import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Route(value = "corsi", layout = MainLayout.class)
 @PageTitle("Gestione Corsi")
@@ -96,6 +97,7 @@ public class CorsiView extends VerticalLayout {
     private final RicercaRapida ricerca = new RicercaRapida();
     private GridListDataView<Corso> corsi;
     private List<Corso> tutti = List.of();
+    private Map<Long, Long> gruppiPerCorso = Map.of();
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, AllievoService allievoService,
                      PagamentoService pagamentoService, AnnoScolasticoService annoScolasticoService,
@@ -141,6 +143,7 @@ public class CorsiView extends VerticalLayout {
         grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
+        grid.addColumn(this::numeroGruppi).setHeader("Gruppi");
         grid.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
 
@@ -154,6 +157,7 @@ public class CorsiView extends VerticalLayout {
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti)
             .campo("N. Allievi", corso -> corso.getAllievi().size())
+            .campo("Gruppi", this::numeroGruppi)
             .azioni(this::createActions)
             .applica();
     }
@@ -171,6 +175,12 @@ public class CorsiView extends VerticalLayout {
             actions.add(deleteButton);
         }
         return actions;
+    }
+
+    /** Numero di gruppi del corso; vuoto se non ne ha. */
+    private String numeroGruppi(Corso corso) {
+        Long numero = gruppiPerCorso.get(corso.getId());
+        return numero != null ? numero.toString() : "";
     }
 
     private Badge createStatoBadge(Corso corso) {
@@ -346,6 +356,7 @@ public class CorsiView extends VerticalLayout {
 
     private void updateGrid() {
         tutti = corsoService.findAll();
+        gruppiPerCorso = corsoService.numeroGruppi();
         String annoScelto = filtroAnno.getValue();
         filtroAnno.setItems(tutti.stream().map(Corso::getAnnoScolastico).filter(a -> a != null).distinct().sorted().toList());
         filtroAnno.setValue(annoScelto);
