@@ -212,7 +212,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### RIMBORSI
 
 * [ ] all'insegnante aggiungi un possibile rimborso una tantum che si aggiunge al costo orario se specificato, se sono specificati entrambi si sommano, se solo uno dei due si applica quello
+  _Chiarimento 2026-10-22: "una tantum" = rimborso forfettario annuo: un importo nella scheda dell'insegnante (impostato da admin e segreteria, in sola lettura nel Profilo dell'insegnante), valido per ogni anno scolastico in cui l'insegnante ha corsi; si somma al costo delle lezioni (tariffa oraria) ed è maturato per intero dall'inizio dell'anno (prospetto Rimborsi e Bilancio: maturato, da rimborsare, costo previsto); la proposta del rimborso mensile resta solo oraria (il forfait si registra a mano); non entra nel costo insegnante dei singoli corsi del Riepilogo Iscritti; se cambia vale anche per gli anni passati._
 
 ### DASHBOARD
 
 * [ ] in dashboard admin e segreteria aggiungi una card simile ad allievi per il conteggio non degli allievi ma degli iscritti, un allievo può fare piu corsi, qundi vorrei vedere sia il numero degli allievi sia il totale degli iscritti
+  _Chiarimento 2026-10-22: card "Iscritti" nel Riepilogo generale accanto ad "Allievi", con il numero di iscrizioni ai soli corsi attivi._
