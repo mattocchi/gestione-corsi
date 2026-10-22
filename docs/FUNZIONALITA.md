@@ -234,3 +234,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-22: un utente disattivato già oggi non può entrare; con il recupero password (username o email) può riattivarsi da solo solo chi non ha mai fatto un accesso (ultimo accesso vuoto): impostata la nuova password l'utente diventa attivo; chi è stato disattivato dopo aver usato l'app resta bloccato. Gli utenti già esistenti non hanno ancora l'ultimo accesso registrato e all'inizio contano come "mai entrati"._
 * [x] inoltre sarebbe utile registrare ultimo login per ogni utente in modo da sapere quando è entrato l'ultima volta _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: si registra data e ora dell'ultimo accesso riuscito (non i tentativi falliti), mostrato in Gestione Utenti (colonna "Ultimo accesso", "Mai" se vuoto, ordinabile, anche nella card)._
+
+### RUOLI E SCHEDE
+
+* [ ] ad un utente ho aggiunto il ruolo Allievo ma apparentemente non mi ha creato la scheda allievo. Puoi controllare nella gestione utenti che se aggiungo o rimuovo ruoli venga creata la relativa scheda?
+* [ ] c'e' modo di evidenziare incogruenze?
