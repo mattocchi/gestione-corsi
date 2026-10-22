@@ -43,6 +43,7 @@ class RecuperoPasswordServiceTest {
         User user = utente();
         user.setPassword(passwordOriginale);
         user.setEnabled(true);
+        user.setUltimoAccesso(null);
         userRepository.save(user);
         recuperoPasswordRepository.deleteAll();
     }
@@ -59,14 +60,31 @@ class RecuperoPasswordServiceTest {
     }
 
     @Test
-    void accountDisattivato_nessunLinkENessunLinkValido() {
+    void accountDisattivatoDopoLUso_nessunLinkENessunLinkValido() {
         String token = link(LocalDateTime.now().plusHours(1));
         User user = utente();
         user.setEnabled(false);
+        user.setUltimoAccesso(LocalDateTime.now().minusDays(3));
         userRepository.save(user);
 
         assertEquals(0, recuperoPasswordService.richiedi("insegnante2"));
         assertEquals(Optional.empty(), recuperoPasswordService.verifica(token));
+    }
+
+    @Test
+    void accountDisattivatoMaiEntrato_siAttivaConLaNuovaPassword() {
+        User user = utente();
+        user.setEnabled(false);
+        user.setUltimoAccesso(null);
+        userRepository.save(user);
+
+        // Con l'email riceve il link e impostando la password si attiva
+        assertEquals(1, recuperoPasswordService.richiedi("insegnante2@example.com"));
+        String token = link(LocalDateTime.now().plusHours(1));
+        assertEquals(Optional.of("insegnante2"), recuperoPasswordService.verifica(token));
+        recuperoPasswordService.reimposta(token, "nuovaPassword1");
+        assertTrue(utente().isEnabled());
+        assertTrue(passwordEncoder.matches("nuovaPassword1", utente().getPassword()));
     }
 
     @Test

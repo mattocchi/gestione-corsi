@@ -28,7 +28,9 @@ import java.util.Optional;
  * Recupero password via email. Il link contiene un token casuale di 256 bit; in database c'è solo il suo hash SHA-256.
  * Il link vale {@link RecuperoPasswordProperties#validitaOre()} ore e una sola volta; una nuova richiesta annulla i link
  * precedenti dello stesso account. Per non rivelare quali account esistono, {@link #richiedi} non dice mai se ha inviato
- * qualcosa: account inesistenti, disattivati o senza email non ricevono nulla.
+ * qualcosa: account inesistenti o senza email non ricevono nulla, e nemmeno quelli disattivati dopo aver usato l'app.
+ * Un account disattivato che non è mai entrato (es. creato con username generato e password casuale) riceve il link
+ * e si attiva impostando la nuova password.
  */
 @Service
 @Transactional(readOnly = true)
@@ -66,7 +68,8 @@ public class RecuperoPasswordService {
     }
 
     /**
-     * Invia un link per una nuova password a ogni account attivo con email che corrisponde a {@code usernameOEmail}
+     * Invia un link per una nuova password a ogni account con email che corrisponde a {@code usernameOEmail}, attivo
+     * o disattivato ma mai entrato ({@link #puoRecuperare})
      * (lo username, oppure l'email di uno o più account). Restituisce il numero di link creati, solo per i test:
      * l'interfaccia mostra sempre lo stesso messaggio.
      */
@@ -80,8 +83,9 @@ public class RecuperoPasswordService {
             .orElseGet(() -> userRepository.findByEmailIgnoreCase(valore));
         int inviati = 0;
         for (User user : account) {
-            if (!user.isEnabled() || user.getEmail() == null || user.getEmail().isBlank()) {
-                log.info("Recupero password non inviato per {}: account disattivato o senza email", user.getUsername());
+            if (!puoRecuperare(user) || user.getEmail() == null || user.getEmail().isBlank()) {
+                log.info("Recupero password non inviato per {}: account disattivato dopo l'uso o senza email",
+                    user.getUsername());
                 continue;
             }
             String token = nuovoToken();
@@ -101,14 +105,14 @@ public class RecuperoPasswordService {
         return inviati;
     }
 
-    /** Username dell'account del link, se il link è valido (esiste, non scaduto, account attivo). */
+    /** Username dell'account del link, se il link è valido (esiste, non scaduto, account recuperabile). */
     public Optional<String> verifica(String token) {
         return valido(token).map(recupero -> recupero.getUser().getUsername());
     }
 
     /**
-     * Imposta la nuova password dell'account del link e annulla tutti i suoi link; avvisa l'utente via email.
-     * Restituisce lo username.
+     * Imposta la nuova password dell'account del link e annulla tutti i suoi link; un account disattivato (mai
+     * entrato) diventa attivo. Avvisa l'utente via email. Restituisce lo username.
      */
     @Transactional
     public String reimposta(String token, String nuovaPassword) {
@@ -119,6 +123,10 @@ public class RecuperoPasswordService {
             .orElseThrow(() -> new IllegalStateException("Il link non è valido o è scaduto: chiedine uno nuovo"));
         User user = recupero.getUser();
         user.setPassword(passwordEncoder.encode(nuovaPassword));
+        if (!user.isEnabled()) {
+            user.setEnabled(true);
+            log.info("Account {} attivato con il link di recupero password", user.getUsername());
+        }
         recuperoPasswordRepository.deleteByUserId(user.getId());
         log.info("Password reimpostata con il link di recupero per {}", user.getUsername());
         emailService.inviaMessaggio(user.getEmail(), "La tua password è stata cambiata",
@@ -132,7 +140,15 @@ public class RecuperoPasswordService {
         }
         return recuperoPasswordRepository.findByTokenHash(hash(token))
             .filter(recupero -> recupero.getScadenza().isAfter(LocalDateTime.now()))
-            .filter(recupero -> recupero.getUser().isEnabled());
+            .filter(recupero -> puoRecuperare(recupero.getUser()));
+    }
+
+    /**
+     * Un account può usare il recupero password se è attivo, oppure se è disattivato ma non è mai entrato (creato
+     * bloccato): chi è stato disattivato dopo aver usato l'app resta bloccato.
+     */
+    static boolean puoRecuperare(User user) {
+        return user.isEnabled() || user.getUltimoAccesso() == null;
     }
 
     private static String saluto(User user) {

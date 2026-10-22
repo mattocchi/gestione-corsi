@@ -228,7 +228,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### ACCESSO
 
-* [ ] vorrei fare in modo che quando un utente viene creato che è disattivato non possa fare il login, ma se la persona richiede il reset password inserendo l'email e imposta una nuova password allora automaticamente si attiva, questo potrebbe sbloccare utenti nuovi creati con password casuali e inizialmente bloccati ma che poi ciascuno quando tenta di entrare, conoscendo la sua email riesce ad attivarsi autonomamente.
+* [x] vorrei fare in modo che quando un utente viene creato che è disattivato non possa fare il login, ma se la persona richiede il reset password inserendo l'email e imposta una nuova password allora automaticamente si attiva, questo potrebbe sbloccare utenti nuovi creati con password casuali e inizialmente bloccati ma che poi ciascuno quando tenta di entrare, conoscendo la sua email riesce ad attivarsi autonomamente. _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: un utente disattivato già oggi non può entrare; con il recupero password (username o email) può riattivarsi da solo solo chi non ha mai fatto un accesso (ultimo accesso vuoto): impostata la nuova password l'utente diventa attivo; chi è stato disattivato dopo aver usato l'app resta bloccato. Gli utenti già esistenti non hanno ancora l'ultimo accesso registrato e all'inizio contano come "mai entrati"._
 * [x] inoltre sarebbe utile registrare ultimo login per ogni utente in modo da sapere quando è entrato l'ultima volta _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: si registra data e ora dell'ultimo accesso riuscito (non i tentativi falliti), mostrato in Gestione Utenti (colonna "Ultimo accesso", "Mai" se vuoto, ordinabile, anche nella card)._
