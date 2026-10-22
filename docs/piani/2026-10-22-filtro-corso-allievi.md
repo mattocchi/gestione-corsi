@@ -20,10 +20,13 @@ Aggiungere un filtro per corso all'elenco "Gestione Allievi" ([F-2026-10-22/ALLI
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Filtro per corso in `AllieviView` (con "Senza corsi"), test | [F-2026-10-22/ALLIEVI.1] | `views/admin/AllieviView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Scelta di più corsi insieme; filtro per anno scolastico.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 196 test verdi; nuovo `segreteria_filtraAllieviPerCorso` (scelte del filtro, Chitarra → 6 allievi, insieme alla ricerca, "Senza corsi" → l'allievo appena creato, filtro tolto → tutti).
+- Non verificato nel browser. Nessuna modifica al database.
