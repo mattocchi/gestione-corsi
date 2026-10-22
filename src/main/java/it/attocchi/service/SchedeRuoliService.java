@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
@@ -15,9 +16,9 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * Schede di insegnante e genitore degli utenti con quei ruoli: gli elenchi Insegnanti e Genitori mostrano le
- * schede, non gli utenti, quindi un ruolo assegnato da Gestione Utenti crea la scheda che manca (con l'anagrafica
- * copiata da un'altra scheda dello stesso utente). Togliere il ruolo non cancella la scheda.
+ * Schede di insegnante, genitore e allievo degli utenti con quei ruoli: gli elenchi mostrano le schede, non gli
+ * utenti, quindi un ruolo assegnato da Gestione Utenti crea la scheda che manca (con l'anagrafica copiata da
+ * un'altra scheda dello stesso utente). Togliere il ruolo non cancella la scheda, che resta come incongruenza.
  */
 @Service
 @Transactional(readOnly = true)
@@ -67,6 +68,13 @@ public class SchedeRuoliService {
             genitore.setUser(user);
             anagraficaEsistente(user).ifPresent(da -> Anagrafica.copia(da, genitore));
             genitoreRepository.save(genitore);
+            create++;
+        }
+        if (user.getRoles().contains("ALLIEVO") && allievoRepository.findByUserId(user.getId()).isEmpty()) {
+            Allievo allievo = new Allievo();
+            allievo.setUser(user);
+            anagraficaEsistente(user).ifPresent(da -> Anagrafica.copia(da, allievo));
+            allievoRepository.save(allievo);
             create++;
         }
         return create;

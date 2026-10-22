@@ -237,7 +237,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### RUOLI E SCHEDE
 
-* [ ] ad un utente ho aggiunto il ruolo Allievo ma apparentemente non mi ha creato la scheda allievo. Puoi controllare nella gestione utenti che se aggiungo o rimuovo ruoli venga creata la relativa scheda?
+* [x] ad un utente ho aggiunto il ruolo Allievo ma apparentemente non mi ha creato la scheda allievo. Puoi controllare nella gestione utenti che se aggiungo o rimuovo ruoli venga creata la relativa scheda? _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: oggi solo INSEGNANTE e GENITORE creano la scheda; anche il ruolo ALLIEVO crea la scheda allievo (dati anagrafici copiati da un'altra scheda dello stesso utente), e all'avvio si creano le schede mancanti (in produzione 1 utente); togliendo un ruolo la scheda resta (con iscrizioni, pagamenti, figli, lezioni) ed è segnalata come incongruenza._
 * [ ] c'e' modo di evidenziare incogruenze?
   _Chiarimento 2026-10-22: in Gestione Utenti un badge di avviso sulla riga dell'utente per ogni incongruenza ("Allievo senza scheda", "Scheda genitore senza ruolo", …), un filtro "Solo incongruenze" e un pulsante che crea tutte le schede mancanti (non tocca le schede senza ruolo)._

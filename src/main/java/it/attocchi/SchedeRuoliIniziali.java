@@ -28,7 +28,7 @@ public class SchedeRuoliIniziali implements CommandLineRunner {
     public void run(String... args) {
         int create = schedeRuoliService.completaTutte();
         if (create > 0) {
-            log.info("Create {} schede di insegnante o genitore mancanti per utenti con quel ruolo", create);
+            log.info("Create {} schede di insegnante, genitore o allievo mancanti per utenti con quel ruolo", create);
         }
     }
 }

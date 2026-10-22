@@ -20,7 +20,7 @@ Assegnando il ruolo ALLIEVO a un utente non si crea la scheda allievo: controlla
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Scheda allievo dal ruolo ALLIEVO (salvataggio e avvio); test | [F-2026-10-22/RUOLI.1] | `service/SchedeRuoliService`, `SchedeRuoliIniziali`, `SchedeRuoliServiceTest` | `./mvnw test` | [ ] |
+| 1 | Scheda allievo dal ruolo ALLIEVO (salvataggio e avvio); test | [F-2026-10-22/RUOLI.1] | `service/SchedeRuoliService`, `SchedeRuoliIniziali`, `SchedeRuoliServiceTest` | `./mvnw test` | [x] |
 | 2 | `SchedeRuoliService.incongruenze()`; badge, filtro e pulsante in Gestione Utenti; test | [F-2026-10-22/RUOLI.2] | `service/SchedeRuoliService`, `views/admin/UtentiView`, test | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 

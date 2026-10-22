@@ -4,6 +4,7 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.User;
+import it.attocchi.repository.AllievoRepository;
 import it.attocchi.repository.GenitoreRepository;
 import it.attocchi.repository.InsegnanteRepository;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Schede di insegnante e genitore create dal ruolo, su un allievo creato con l'inserimento rapido. */
+/** Schede di insegnante, genitore e allievo create dal ruolo. */
 @SpringBootTest
 class SchedeRuoliServiceTest {
 
@@ -31,6 +32,9 @@ class SchedeRuoliServiceTest {
 
     @Autowired
     private GenitoreRepository genitoreRepository;
+
+    @Autowired
+    private AllievoRepository allievoRepository;
 
     @Test
     void ruoliInsegnanteEGenitore_creanoLeSchedeConLAnagraficaDellAllievo() {
@@ -81,6 +85,27 @@ class SchedeRuoliServiceTest {
             insegnanteRepository.findByUserId(user.getId()).ifPresent(insegnanteRepository::delete);
             allievoService.delete(allievoService.findById(allievo.getId()));
             userService.delete(userService.findAll().stream().filter(u -> u.getId().equals(user.getId())).findFirst().orElseThrow());
+        }
+    }
+
+    @Test
+    void ruoloAllievo_creaLaSchedaConLAnagraficaDelGenitore() {
+        // Un genitore che diventa anche allievo (es. adulto iscritto a un corso)
+        User user = userService.findByUsername("genitore9");
+        Genitore genitore = genitoreRepository.findByUserId(user.getId()).orElseThrow();
+        assertTrue(allievoRepository.findByUserId(user.getId()).isEmpty());
+        try {
+            user.getRoles().add("ALLIEVO");
+            schedeRuoliService.salvaUtente(user, null);
+            Allievo allievo = allievoRepository.findByUserId(user.getId()).orElseThrow();
+            assertEquals(genitore.getCodiceFiscale(), allievo.getCodiceFiscale());
+            assertEquals(genitore.getIndirizzo().getVia(), allievo.getIndirizzo().getVia());
+            assertEquals(null, allievo.getGenitore());
+        } finally {
+            allievoRepository.findByUserId(user.getId()).ifPresent(allievoRepository::delete);
+            User ripristino = userService.findByUsername("genitore9");
+            ripristino.getRoles().remove("ALLIEVO");
+            userService.save(ripristino, null);
         }
     }
 }
