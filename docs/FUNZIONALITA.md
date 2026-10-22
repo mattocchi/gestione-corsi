@@ -203,3 +203,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] aggiungi un fitro per corso nell'elenco "gestione allievi" _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: un corso alla volta tra tutti (prima gli attivi), indicato con l'anno scolastico, più la scelta "Senza corsi" per gli allievi non iscritti a nessun corso; si combina con la ricerca rapida._
+
+### PAGAMENTI
+
+* [ ] nella finetra gestione pagamenti, in popup assegna in quota personalizzata dove inserisco il motivo aggiungi un suggeritore che propone altre motivazioni inserite in precedenza, lasciando possibilità di scrivere nuova motivazione, in modo semplice senza creare una tabella ma con i valori presenti in db
