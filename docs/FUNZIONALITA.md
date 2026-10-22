@@ -241,3 +241,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-22: oggi solo INSEGNANTE e GENITORE creano la scheda; anche il ruolo ALLIEVO crea la scheda allievo (dati anagrafici copiati da un'altra scheda dello stesso utente), e all'avvio si creano le schede mancanti (in produzione 1 utente); togliendo un ruolo la scheda resta (con iscrizioni, pagamenti, figli, lezioni) ed è segnalata come incongruenza._
 * [x] c'e' modo di evidenziare incogruenze? _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: in Gestione Utenti un badge di avviso sulla riga dell'utente per ogni incongruenza ("Allievo senza scheda", "Scheda genitore senza ruolo", …), un filtro "Solo incongruenze" e un pulsante che crea tutte le schede mancanti (non tocca le schede senza ruolo)._
+
+### EMAIL
+
+* [ ] aggiunti un pulsante per vedere le anteprime di email di conferma o altre che partirebbero, rendi esplici i pulsanti di quali email andrebbero inviate
