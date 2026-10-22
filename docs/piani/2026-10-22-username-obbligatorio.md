@@ -17,10 +17,15 @@ Creando un genitore compare "Errore nel salvataggio: Validation failed for class
 |---|---|---|---|---|
 | 1 | `UtenteFields`: username obbligatorio rifiuta anche i soli spazi; test sul dialog Nuovo Genitore | `views/UtenteFields`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | `UtentiView`: username (non vuoto, univoco per un nuovo utente), nome, cognome obbligatori e password obbligatoria per un nuovo utente, errori sui campi (`writeBeanIfValid`); test | `views/admin/UtentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | Registro | questo piano | — | [ ] |
+| 3 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Registrare nel log gli errori mostrati come notifica.
 
 ## Registro
+
+- Passo 1: riprodotto con `segreteria_nuovoGenitoreConUsernameDiSoliSpazi_erroreSulCampo` (falliva: il campo risultava valido), poi corretto; `./mvnw test` 201 test verdi.
+- Passo 2: riprodotto con `admin_nuovoUtenteSenzaDatiObbligatori_erroriSuiCampi` (falliva: nessun errore sui campi), poi corretto; il test verifica anche username di soli spazi, username già in uso e il salvataggio con spazi ai lati (salvato senza, con la scheda genitore creata); `./mvnw test` 202 test verdi.
+- Il caso esatto dell'utente non è nel log del server (l'errore è mostrato solo come notifica): corrette entrambe le strade possibili.
+- Non verificato nel browser. Nessuna modifica al database.
