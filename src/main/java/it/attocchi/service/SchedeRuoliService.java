@@ -12,7 +12,15 @@ import it.attocchi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -48,7 +56,33 @@ public class SchedeRuoliService {
         return salvato;
     }
 
-    /** Crea le schede mancanti di tutti gli utenti (all'avvio); restituisce quante ne ha create. */
+    /**
+     * Incongruenze tra ruoli e schede, per id dell'utente (solo gli utenti che ne hanno): un ruolo senza la sua scheda
+     * ("Allievo senza scheda") o una scheda rimasta senza il ruolo ("Scheda allievo senza ruolo").
+     */
+    public Map<Long, List<String>> incongruenze() {
+        Map<String, Set<Long>> schede = new LinkedHashMap<>();
+        schede.put("INSEGNANTE", insegnanteRepository.findAll().stream().map(i -> i.getUser().getId()).collect(Collectors.toSet()));
+        schede.put("GENITORE", genitoreRepository.findAll().stream().map(g -> g.getUser().getId()).collect(Collectors.toSet()));
+        schede.put("ALLIEVO", allievoRepository.findAll().stream().map(a -> a.getUser().getId()).collect(Collectors.toSet()));
+        Map<Long, List<String>> incongruenze = new HashMap<>();
+        for (User user : userRepository.findAll()) {
+            schede.forEach((ruolo, utentiConScheda) -> {
+                boolean haRuolo = user.getRoles().contains(ruolo);
+                boolean haScheda = utentiConScheda.contains(user.getId());
+                String nome = ruolo.charAt(0) + ruolo.substring(1).toLowerCase(Locale.ITALIAN);
+                if (haRuolo && !haScheda) {
+                    incongruenze.computeIfAbsent(user.getId(), k -> new ArrayList<>()).add(nome + " senza scheda");
+                } else if (!haRuolo && haScheda) {
+                    incongruenze.computeIfAbsent(user.getId(), k -> new ArrayList<>())
+                        .add("Scheda " + nome.toLowerCase(Locale.ITALIAN) + " senza ruolo");
+                }
+            });
+        }
+        return incongruenze;
+    }
+
+    /** Crea le schede mancanti di tutti gli utenti (all'avvio e da Gestione Utenti); restituisce quante ne ha create. */
     @Transactional
     public int completaTutte() {
         return userRepository.findAll().stream().mapToInt(this::completaSchede).sum();

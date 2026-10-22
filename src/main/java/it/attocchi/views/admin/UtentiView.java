@@ -1,5 +1,8 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -7,6 +10,8 @@ import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -14,6 +19,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -29,6 +35,8 @@ import jakarta.annotation.security.RolesAllowed;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 @Route(value = "utenti", layout = MainLayout.class)
 @PageTitle("Gestione Utenti")
@@ -40,6 +48,10 @@ public class UtentiView extends VerticalLayout {
     private final SchedeRuoliService schedeRuoliService;
     private final Grid<User> grid = new Grid<>(User.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
+    private final Checkbox soloIncongruenze = new Checkbox("Solo incongruenze");
+    private GridListDataView<User> utenti;
+    private List<User> tutti = List.of();
+    private Map<Long, List<String>> incongruenze = Map.of();
 
     public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService) {
         this.userService = userService;
@@ -49,7 +61,13 @@ public class UtentiView extends VerticalLayout {
         configureGrid();
 
         Button addButton = new Button("Nuovo Utente", e -> openDialog(new User()));
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, ricerca);
+        // Incongruenze tra ruoli e schede: filtro e creazione delle schede che mancano
+        soloIncongruenze.setTooltipText("Utenti con un ruolo senza la sua scheda o una scheda senza il ruolo");
+        soloIncongruenze.addValueChangeListener(e -> applicaFiltri());
+        ricerca.addRicercaListener(this::applicaFiltri);
+        Button creaSchede = new Button("Crea schede mancanti", VaadinIcon.FILE_ADD.create(), e -> creaSchedeMancanti());
+        creaSchede.setTooltipText("Crea la scheda di insegnante, genitore o allievo a chi ha il ruolo ma non la scheda");
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, soloIncongruenze, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -63,6 +81,7 @@ public class UtentiView extends VerticalLayout {
         grid.addColumn(User::getCognome).setHeader("Cognome").setSortable(true);
         grid.addColumn(User::getEmail).setHeader("Email");
         grid.addColumn(user -> String.join(", ", user.getRoles())).setHeader("Ruoli");
+        grid.addComponentColumn(this::avvisi).setHeader("Schede").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(UtentiView::ultimoAccesso).setHeader("Ultimo accesso")
             .setComparator(Comparator.comparing(User::getUltimoAccesso, Comparator.nullsFirst(Comparator.naturalOrder())))
             .setAutoWidth(true).setFlexGrow(0);
@@ -75,6 +94,7 @@ public class UtentiView extends VerticalLayout {
             .campo("Cognome", User::getCognome)
             .campo("Email", User::getEmail)
             .campo("Ruoli", user -> String.join(", ", user.getRoles()))
+            .campo("Schede", user -> incongruenze.containsKey(user.getId()) ? avvisi(user) : null)
             .campo("Ultimo accesso", UtentiView::ultimoAccesso)
             .azioni(this::createActions)
             .applica();
@@ -167,6 +187,37 @@ public class UtentiView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        ricerca.collega(grid.setItems(userService.findAll()), RicercaRapida::testo);
+        tutti = userService.findAll();
+        incongruenze = schedeRuoliService.incongruenze();
+        utenti = grid.setItems(tutti);
+        applicaFiltri();
+    }
+
+    /** Solo incongruenze e ricerca rapida; "N di M" sugli utenti del primo filtro. */
+    private void applicaFiltri() {
+        if (utenti != null) {
+            SerializablePredicate<User> filtro = user -> !soloIncongruenze.getValue() || incongruenze.containsKey(user.getId());
+            utenti.setFilter(user -> filtro.test(user) && ricerca.corrisponde(RicercaRapida.testo(user)));
+            ricerca.mostraConteggio(utenti.getItemCount(), (int) tutti.stream().filter(filtro).count());
+        }
+    }
+
+    /** Un badge di avviso per ogni incongruenza tra ruoli e schede dell'utente; vuoto se è tutto a posto. */
+    private Component avvisi(User user) {
+        Div avvisi = new Div();
+        avvisi.addClassNames("flex flex-wrap gap-1");
+        for (String incongruenza : incongruenze.getOrDefault(user.getId(), List.of())) {
+            Badge badge = new Badge(incongruenza, VaadinIcon.WARNING.create());
+            badge.addThemeVariants(BadgeVariant.WARNING);
+            avvisi.add(badge);
+        }
+        return avvisi;
+    }
+
+    private void creaSchedeMancanti() {
+        int create = schedeRuoliService.completaTutte();
+        updateGrid();
+        Notification.show(create == 0 ? "Nessuna scheda da creare"
+            : create == 1 ? "Creata 1 scheda mancante" : "Create " + create + " schede mancanti");
     }
 }

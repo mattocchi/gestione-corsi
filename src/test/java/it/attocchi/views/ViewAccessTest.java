@@ -2102,10 +2102,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             // Ultimo accesso: data e ora, "Mai" per chi non è mai entrato
             int riga = IntStream.range(0, utenti.size()).filter(r -> utenti.getRow(r).getUsername().equals("segreteria"))
                 .findFirst().orElseThrow();
-            assertEquals(Formati.dataOra(segreteria.getUltimoAccesso()), utenti.getCellText(riga, 5));
+            assertEquals(Formati.dataOra(segreteria.getUltimoAccesso()), utenti.getCellText(riga, 6));
             int mai = IntStream.range(0, utenti.size()).filter(r -> utenti.getRow(r).getUsername().equals("genitore9"))
                 .findFirst().orElseThrow();
-            assertEquals("Mai", utenti.getCellText(mai, 5));
+            assertEquals("Mai", utenti.getCellText(mai, 6));
         } finally {
             User ripristino = userService.findByUsername("segreteria");
             ripristino.setUltimoAccesso(null);
@@ -2445,6 +2445,42 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("admin")
     @SuppressWarnings("unchecked")
+    void admin_incongruenzeTraRuoliESchede() {
+        // genitore9 senza il ruolo GENITORE (la scheda resta) e con il ruolo ALLIEVO senza scheda, salvato senza
+        // passare da Gestione Utenti
+        User user = userService.findByUsername("genitore9");
+        user.getRoles().remove("GENITORE");
+        user.getRoles().add("ALLIEVO");
+        userService.save(user, null);
+        try {
+            navigate(UtentiView.class);
+            var utenti = test((Grid<User>) find(Grid.class).single());
+            int tutti = utenti.size();
+            test(find(Checkbox.class).withLabel("Solo incongruenze").single()).click();
+            assertEquals(1, utenti.size());
+            assertEquals("genitore9", utenti.getRow(0).getUsername());
+            assertEquals(List.of("Scheda genitore senza ruolo", "Allievo senza scheda"),
+                utenti.getCellComponent(0, 5).getChildren().map(c -> ((Badge) c).getText()).toList());
+
+            // Il pulsante crea la scheda allievo; la scheda genitore senza ruolo resta segnalata
+            test(find(Button.class).withText("Crea schede mancanti").single()).click();
+            assertTrue(allievoService.findByUsername("genitore9").isPresent());
+            assertEquals(List.of("Scheda genitore senza ruolo"),
+                utenti.getCellComponent(0, 5).getChildren().map(c -> ((Badge) c).getText()).toList());
+            test(find(Checkbox.class).withLabel("Solo incongruenze").single()).click();
+            assertEquals(tutti, utenti.size());
+        } finally {
+            allievoService.findByUsername("genitore9").ifPresent(a -> allievoService.delete(a));
+            User ripristino = userService.findByUsername("genitore9");
+            ripristino.getRoles().remove("ALLIEVO");
+            ripristino.getRoles().add("GENITORE");
+            userService.save(ripristino, null);
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
     void admin_ricercaRapidaNegliUtenti() {
         navigate(UtentiView.class);
         var utenti = test((Grid<User>) find(Grid.class).single());
@@ -2469,7 +2505,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var utenti = test((Grid<User>) find(Grid.class).single());
             cerca("lia ruolo");
             assertEquals(1, utenti.size());
-            test(pulsante(utenti.getCellComponent(0, 6), "Modifica")).click();
+            test(pulsante(utenti.getCellComponent(0, 7), "Modifica")).click();
             test((CheckboxGroup<String>) find(CheckboxGroup.class).withLabel("Ruoli").single()).selectItem("GENITORE");
             test(find(Button.class).withText("Salva").single()).click();
 
