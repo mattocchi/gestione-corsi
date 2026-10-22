@@ -49,6 +49,9 @@ public class InsegnanteService {
         if (insegnante.getTariffaOraria() != null && insegnante.getTariffaOraria().signum() < 0) {
             throw new IllegalArgumentException("La tariffa oraria non può essere negativa");
         }
+        if (insegnante.getRimborsoForfettario() != null && insegnante.getRimborsoForfettario().signum() < 0) {
+            throw new IllegalArgumentException("Il rimborso forfettario non può essere negativo");
+        }
         if (insegnante.getId() == null) {
             user.getRoles().add("INSEGNANTE");
         }

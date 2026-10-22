@@ -36,6 +36,13 @@ public class Insegnante implements Anagrafica {
     @Column(precision = 10, scale = 2)
     private BigDecimal tariffaOraria;
 
+    /**
+     * Rimborso forfettario annuo in euro, sommato al costo orario in ogni anno scolastico in cui l'insegnante ha
+     * corsi: impostato solo da admin e segreteria, l'insegnante lo vede in sola lettura.
+     */
+    @Column(name = "rimborso_forfettario", precision = 10, scale = 2)
+    private BigDecimal rimborsoForfettario;
+
     @OneToMany(mappedBy = "insegnante")
     private Set<Corso> corsi = new HashSet<>();
 
@@ -122,6 +129,14 @@ public class Insegnante implements Anagrafica {
 
     public void setTariffaOraria(BigDecimal tariffaOraria) {
         this.tariffaOraria = tariffaOraria;
+    }
+
+    public BigDecimal getRimborsoForfettario() {
+        return rimborsoForfettario;
+    }
+
+    public void setRimborsoForfettario(BigDecimal rimborsoForfettario) {
+        this.rimborsoForfettario = rimborsoForfettario;
     }
 
     public Set<Corso> getCorsi() {

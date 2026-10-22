@@ -2086,9 +2086,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test(find(Grid.class).single());
         assertEquals(2, grid.size());
         for (int row = 0; row < grid.size(); row++) {
-            assertEquals("1", grid.getCellText(row, 4));
+            // Forfait annuo non impostato nei dati di prova
+            assertEquals("", grid.getCellText(row, 4));
+            assertEquals("1", grid.getCellText(row, 5));
         }
-        assertAzioni(grid.getCellComponent(0, 5), "Modifica");
+        assertAzioni(grid.getCellComponent(0, 6), "Modifica");
     }
 
     @Test
@@ -2103,6 +2105,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(TextField.class).from(dialog).withLabel("Cognome").single()).setValue("Verdi");
         new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Tariffa oraria").single())
             .setValue(new BigDecimal("27.50"));
+        new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Rimborso forfettario annuo").single())
+            .setValue(new BigDecimal("300"));
         test(find(TextField.class).from(dialog).withLabel("Provincia").single()).setValue("rm");
         TextField codiceFiscale = find(TextField.class).from(dialog).withLabel("Codice fiscale").single();
         test(codiceFiscale).setValue("RSSMRA85T10A562T");
@@ -2121,6 +2125,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("RSSMRA85T10A562S", insegnante.getCodiceFiscale());
             assertEquals("RM", insegnante.getIndirizzo().getProvincia());
             assertEquals(0, new BigDecimal("27.50").compareTo(insegnante.getTariffaOraria()));
+            assertEquals(0, new BigDecimal("300").compareTo(insegnante.getRimborsoForfettario()));
             assertTrue(insegnante.getUser().getRoles().contains("INSEGNANTE"));
             assertEquals(3, test(find(Grid.class).single()).size());
         } finally {
@@ -2763,6 +2768,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         BigDecimalField tariffa = find(BigDecimalField.class).withLabel("Tariffa oraria").single();
         assertTrue(tariffa.isReadOnly());
         assertEquals(0, new BigDecimal("25").compareTo(tariffa.getValue()));
+        assertTrue(find(BigDecimalField.class).withLabel("Rimborso forfettario annuo").single().isReadOnly());
 
         test(find(TextField.class).withLabel("Telefono").single()).setValue("333 1234567");
         test(find(TextField.class).withLabel("Comune").single()).setValue("Roma");

@@ -84,6 +84,13 @@ public class ProfiloView extends VerticalLayout {
         tariffa.setHelperText("Impostata dalla segreteria");
         tariffa.setValue(insegnante.getTariffaOraria());
         tariffa.setReadOnly(true);
+        BigDecimalField forfait = new BigDecimalField("Rimborso forfettario annuo");
+        forfait.setLocale(Locale.ITALY);
+        forfait.setPrefixComponent(new Span("€"));
+        forfait.setSuffixComponent(new Span("/anno"));
+        forfait.setHelperText("Impostato dalla segreteria");
+        forfait.setValue(insegnante.getRimborsoForfettario());
+        forfait.setReadOnly(true);
         binder.forField(specializzazione).withNullRepresentation("")
             .bind(Insegnante::getSpecializzazione, Insegnante::setSpecializzazione);
         binder.forField(biografia).withNullRepresentation("").bind(Insegnante::getBiografia, Insegnante::setBiografia);
@@ -104,7 +111,7 @@ public class ProfiloView extends VerticalLayout {
         });
         salva.addThemeVariants(ButtonVariant.PRIMARY);
 
-        FormLayout insegnamento = new FormLayout(specializzazione, tariffa, biografia);
+        FormLayout insegnamento = new FormLayout(specializzazione, tariffa, forfait, biografia);
         insegnamento.setColspan(biografia, 2);
         add(ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
             ViewSupport.sezione("Insegnamento"), insegnamento,

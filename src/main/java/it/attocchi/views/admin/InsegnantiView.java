@@ -60,6 +60,8 @@ public class InsegnantiView extends VerticalLayout {
             .setHeader("Email");
         grid.addColumn(insegnante -> Formati.euro(insegnante.getTariffaOraria())).setHeader("Tariffa oraria")
             .setWidth("8rem").setFlexGrow(0);
+        grid.addColumn(insegnante -> Formati.euro(insegnante.getRimborsoForfettario())).setHeader("Forfait annuo")
+            .setWidth("8rem").setFlexGrow(0);
         grid.addColumn(insegnante -> insegnante.getNumeroCorsi()).setHeader("N. Corsi").setWidth("6.5rem").setFlexGrow(0);
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
         CardMobile.per(grid)
@@ -67,6 +69,7 @@ public class InsegnantiView extends VerticalLayout {
             .sottotitolo(Insegnante::getSpecializzazione)
             .campo("Email", insegnante -> insegnante.getUser() != null ? insegnante.getUser().getEmail() : null)
             .campo("Tariffa oraria", insegnante -> Formati.euro(insegnante.getTariffaOraria()))
+            .campo("Forfait annuo", insegnante -> Formati.euro(insegnante.getRimborsoForfettario()))
             .campo("N. Corsi", insegnante -> insegnante.getNumeroCorsi())
             .azioni(this::createActions)
             .applica();
@@ -101,11 +104,19 @@ public class InsegnantiView extends VerticalLayout {
             .bind(Insegnante::getSpecializzazione, Insegnante::setSpecializzazione);
         binder.forField(tariffa).withValidator(t -> t == null || t.signum() >= 0, "La tariffa non può essere negativa")
             .bind(Insegnante::getTariffaOraria, Insegnante::setTariffaOraria);
+        BigDecimalField forfait = new BigDecimalField("Rimborso forfettario annuo");
+        forfait.setLocale(Locale.ITALY);
+        forfait.setPrefixComponent(new Span("€"));
+        forfait.setSuffixComponent(new Span("/anno"));
+        forfait.setClearButtonVisible(true);
+        forfait.setHelperText("Facoltativo: per ogni anno scolastico in cui ha corsi, si somma al costo delle lezioni");
+        binder.forField(forfait).withValidator(f -> f == null || f.signum() >= 0, "Il rimborso non può essere negativo")
+            .bind(Insegnante::getRimborsoForfettario, Insegnante::setRimborsoForfettario);
         binder.forField(biografia).withNullRepresentation("").bind(Insegnante::getBiografia, Insegnante::setBiografia);
         AnagraficaFields<Insegnante> anagrafica = new AnagraficaFields<>(binder, false);
         binder.readBean(insegnante);
 
-        FormLayout insegnamento = new FormLayout(specializzazione, tariffa, biografia);
+        FormLayout insegnamento = new FormLayout(specializzazione, tariffa, forfait, biografia);
         insegnamento.setColspan(biografia, 2);
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
