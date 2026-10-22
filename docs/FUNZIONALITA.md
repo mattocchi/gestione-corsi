@@ -221,6 +221,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 * [x] nella dashboard admin e segreteria, dove c'e' l'elenco dei corsi sotto le prime card, aggiungi due colonne con il costo stimato per l'insegnante o gli insegnanti del corso e quindi un mini prospetto tra quello che dovremmo incassare dagli iscritti e spendere per gli insegnanti per vedere semplicemente se il corso è in attivo o perdita _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: nella tabella dei corsi attivi della dashboard due colonne: "Costo insegnanti" (costo previsto delle lezioni con la tariffa oraria, come nel Riepilogo Iscritti; "Senza tariffa" se nessun insegnante ha la tariffa; senza il forfait annuo) e "Margine" = quote dovute dagli iscritti − costo, con badge verde "Attivo" o rosso "Perdita"; due card con i totali "Costo insegnanti previsto" e "Margine previsto" (esclusi i corsi senza tariffa)._
 * [ ] nella dashboard GENITORE vorrei aggiungere anche una o due card di riepilogo dei pagamenti
+  _Chiarimento 2026-10-22: due card "Pagato" (con la percentuale della quota) e "Da pagare" (con la quota totale), per tutti i figli insieme e solo sui corsi attivi; non compaiono se i figli non hanno iscrizioni a corsi attivi._
 
 ### GENITORI
 
