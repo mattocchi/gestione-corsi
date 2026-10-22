@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface RimborsoRepository extends JpaRepository<Rimborso, Long> {
 
+    boolean existsByInsegnanteId(Long insegnanteId);
+
     @Query("SELECT r FROM Rimborso r JOIN FETCH r.insegnante i JOIN FETCH i.user WHERE i.id = :insegnanteId "
         + "AND r.meseRiferimento BETWEEN :dal AND :al ORDER BY r.meseRiferimento DESC, r.data DESC")
     List<Rimborso> findByInsegnanteAndPeriodo(@Param("insegnanteId") Long insegnanteId,

@@ -229,7 +229,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-22: campo a scelta multipla "Figli" nel dialog Nuovo/Modifica Genitore, salvato con Salva (anche per un genitore nuovo); un allievo che ha già un altro genitore si può scegliere (compare "figlio di …") e passa a questo genitore, con un avviso al salvataggio; togliere un figlio lo lascia senza genitore._
 * [x] Inoltre se sto creando un genitore genera automaticament username se lo lascio vuoto, come abbiamo già fatto in fase di inserimento veloce degli allievi _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: come per gli allievi: username vuoto → generato da nome e cognome, utente disattivato con password casuale (accesso da attivare in Gestione Utenti), la password serve solo se si scrive lo username; vale anche per i nuovi insegnanti._
-* [ ] posso eliminare un profilo Genitore pur mantenendo l'utente se ha altri ruoli oltre a genitore? (alla proposta di un'azione "Elimina" nell'elenco Genitori che elimina solo la scheda: "si")
+* [x] posso eliminare un profilo Genitore pur mantenendo l'utente se ha altri ruoli oltre a genitore? (alla proposta di un'azione "Elimina" nell'elenco Genitori che elimina solo la scheda: "si") _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: azione "Elimina" nell'elenco Genitori, solo per l'admin, con conferma: elimina solo la scheda (mai l'utente, anche se GENITORE era il suo unico ruolo, con avviso), i figli restano senza genitore e all'utente si toglie il ruolo GENITORE; lo stesso per gli insegnanti, bloccato se l'insegnante ha corsi, lezioni o rimborsi (all'utente si toglie il ruolo INSEGNANTE)._
 
 ### ACCESSO

@@ -3,7 +3,10 @@ package it.attocchi.service;
 import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.User;
+import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.InsegnanteRepository;
+import it.attocchi.repository.LezioneRepository;
+import it.attocchi.repository.RimborsoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +19,18 @@ public class InsegnanteService {
 
     private final InsegnanteRepository insegnanteRepository;
     private final UserService userService;
+    private final CorsoRepository corsoRepository;
+    private final LezioneRepository lezioneRepository;
+    private final RimborsoRepository rimborsoRepository;
 
-    public InsegnanteService(InsegnanteRepository insegnanteRepository, UserService userService) {
+    public InsegnanteService(InsegnanteRepository insegnanteRepository, UserService userService,
+                             CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
+                             RimborsoRepository rimborsoRepository) {
         this.insegnanteRepository = insegnanteRepository;
         this.userService = userService;
+        this.corsoRepository = corsoRepository;
+        this.lezioneRepository = lezioneRepository;
+        this.rimborsoRepository = rimborsoRepository;
     }
 
     public List<Insegnante> findAll() {
@@ -38,6 +49,41 @@ public class InsegnanteService {
     @Transactional
     public Insegnante save(Insegnante insegnante) {
         return insegnanteRepository.save(insegnante);
+    }
+
+    /**
+     * Motivo per cui la scheda dell'insegnante non si può eliminare (corsi, lezioni o rimborsi collegati); {@code null}
+     * se si può.
+     */
+    public String motivoPerNonEliminare(Long insegnanteId) {
+        if (corsoRepository.esisteConInsegnante(insegnanteId)) {
+            return "è insegnante di uno o più corsi: cambia prima l'insegnante dei corsi";
+        }
+        if (!lezioneRepository.findConInsegnantePresente(insegnanteId).isEmpty()) {
+            return "risulta presente a delle lezioni";
+        }
+        if (rimborsoRepository.existsByInsegnanteId(insegnanteId)) {
+            return "ha dei rimborsi registrati";
+        }
+        return null;
+    }
+
+    /**
+     * Elimina la scheda dell'insegnante ma non il suo utente, a cui si toglie il ruolo INSEGNANTE; non si può se ha
+     * corsi, lezioni o rimborsi ({@link IllegalStateException}).
+     */
+    @Transactional
+    public void elimina(Long insegnanteId) {
+        Insegnante insegnante = insegnanteRepository.findById(insegnanteId)
+            .orElseThrow(() -> new IllegalArgumentException("Insegnante non trovato: " + insegnanteId));
+        String motivo = motivoPerNonEliminare(insegnanteId);
+        if (motivo != null) {
+            throw new IllegalStateException(insegnante.getNomeCompleto() + " " + motivo);
+        }
+        if (insegnante.getUser() != null) {
+            insegnante.getUser().getRoles().remove("INSEGNANTE");
+        }
+        insegnanteRepository.delete(insegnante);
     }
 
     /**

@@ -2192,6 +2192,42 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_eliminaLaSchedaInsegnanteSoloSenzaCollegamenti() {
+        Insegnante insegnante1 = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        assertNotNull(insegnanteService.motivoPerNonEliminare(insegnante1.getId()));
+        assertThrows(IllegalStateException.class, () -> insegnanteService.elimina(insegnante1.getId()));
+
+        User user = new User();
+        user.setUsername("ex.insegnante");
+        user.setNome("Elio");
+        user.setCognome("Senzacorsi");
+        user.getRoles().add("SEGRETERIA");
+        insegnanteService.salva(new Insegnante(), user, "segreta123");
+        try {
+            navigate(InsegnantiView.class);
+            var grid = test((Grid<Insegnante>) find(Grid.class).single());
+            cerca("elio senzacorsi");
+            assertEquals(1, grid.size());
+            test(pulsante(grid.getCellComponent(0, 6), "Elimina")).click();
+            Dialog conferma = find(Dialog.class).all().stream()
+                .filter(d -> "Eliminare la scheda insegnante?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            test(find(Button.class).from(conferma).withText("Elimina").single()).click();
+
+            assertTrue(insegnanteService.findByUsername("ex.insegnante").isEmpty());
+            assertEquals(Set.of("SEGRETERIA"), userService.findByUsername("ex.insegnante").getRoles());
+            assertTrue(insegnanteService.findByUsername("insegnante1").isPresent());
+        } finally {
+            insegnanteService.findByUsername("ex.insegnante").ifPresent(insegnanteRepository::delete);
+            User ex = userService.findByUsername("ex.insegnante");
+            if (ex != null) {
+                userService.delete(ex);
+            }
+        }
+    }
+
+    @Test
     @WithUserDetails("segreteria")
     void segreteria_vedeGliInsegnanti() {
         navigate(InsegnantiView.class);

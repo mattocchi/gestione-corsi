@@ -20,6 +20,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.User;
+import it.attocchi.security.SecurityService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
@@ -32,6 +33,7 @@ import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -46,12 +48,15 @@ public class InsegnantiView extends VerticalLayout {
 
     private final InsegnanteService insegnanteService;
     private final UserService userService;
+    /** Eliminare una scheda insegnante è riservato all'admin. */
+    private final boolean puoEliminare;
     private final Grid<Insegnante> grid = new Grid<>(Insegnante.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
 
-    public InsegnantiView(InsegnanteService insegnanteService, UserService userService) {
+    public InsegnantiView(InsegnanteService insegnanteService, UserService userService, SecurityService securityService) {
         this.insegnanteService = insegnanteService;
         this.userService = userService;
+        this.puoEliminare = securityService.hasRole("ADMIN");
         addClassNames("size-full");
 
         grid.addColumn(Insegnante::getNomeCompleto).setHeader("Nome").setSortable(true);
@@ -83,7 +88,39 @@ public class InsegnantiView extends VerticalLayout {
     }
 
     private HorizontalLayout createActions(Insegnante insegnante) {
-        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(insegnante)));
+        HorizontalLayout azioni = ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(insegnante)));
+        if (puoEliminare) {
+            Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> confermaEliminazione(insegnante));
+            elimina.addThemeVariants(ButtonVariant.ERROR);
+            azioni.add(elimina);
+        }
+        return azioni;
+    }
+
+    /** Conferma (o motivo del blocco): si elimina solo la scheda, l'utente resta senza il ruolo INSEGNANTE. */
+    private void confermaEliminazione(Insegnante insegnante) {
+        String motivo = insegnanteService.motivoPerNonEliminare(insegnante.getId());
+        if (motivo != null) {
+            Notification.show("Impossibile eliminare: " + insegnante.getNomeCompleto() + " " + motivo);
+            return;
+        }
+        boolean unicoRuolo = insegnante.getUser() != null && insegnante.getUser().getRoles().equals(Set.of("INSEGNANTE"));
+        Dialog conferma = ViewSupport.dialog("Eliminare la scheda insegnante?", "460px");
+        conferma.add(new Span(insegnante.getNomeCompleto() + ": si elimina la scheda insegnante, non l'utente, che perde il"
+            + " ruolo INSEGNANTE." + (unicoRuolo ? " L'utente non avrà più ruoli: se serve, eliminalo da Gestione Utenti." : "")));
+        Button elimina = new Button("Elimina", e -> {
+            try {
+                insegnanteService.elimina(insegnante.getId());
+                conferma.close();
+                updateGrid();
+                Notification.show("Scheda insegnante eliminata");
+            } catch (RuntimeException ex) {
+                Notification.show("Impossibile eliminare la scheda: " + ex.getMessage());
+            }
+        });
+        elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
+        conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);
+        conferma.open();
     }
 
     private void openDialog(Insegnante insegnante) {

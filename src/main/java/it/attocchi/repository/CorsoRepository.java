@@ -23,6 +23,9 @@ public interface CorsoRepository extends JpaRepository<Corso, Long> {
     long contaAttiviDellInsegnante(@Param("username") String username);
     boolean existsByAnnoScolastico(String annoScolastico);
 
+    @Query("SELECT COUNT(c) > 0 FROM Corso c WHERE c.insegnante.id = :insegnanteId OR c.secondoInsegnante.id = :insegnanteId")
+    boolean esisteConInsegnante(@Param("insegnanteId") Long insegnanteId);
+
     @Query("SELECT DISTINCT c.annoScolastico FROM Corso c WHERE c.annoScolastico IS NOT NULL")
     List<String> findAnniScolasticiUsati();
 
