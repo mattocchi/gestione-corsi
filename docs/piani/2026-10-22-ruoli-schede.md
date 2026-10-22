@@ -22,10 +22,14 @@ Assegnando il ruolo ALLIEVO a un utente non si crea la scheda allievo: controlla
 |---|---|---|---|---|---|
 | 1 | Scheda allievo dal ruolo ALLIEVO (salvataggio e avvio); test | [F-2026-10-22/RUOLI.1] | `service/SchedeRuoliService`, `SchedeRuoliIniziali`, `SchedeRuoliServiceTest` | `./mvnw test` | [x] |
 | 2 | `SchedeRuoliService.incongruenze()`; badge, filtro e pulsante in Gestione Utenti; test | [F-2026-10-22/RUOLI.2] | `service/SchedeRuoliService`, `views/admin/UtentiView`, test | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Eliminare la scheda quando si toglie un ruolo; card delle incongruenze in dashboard.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 207 test verdi; nuovo `ruoloAllievo_creaLaSchedaConLAnagraficaDelGenitore` (un genitore con il ruolo ALLIEVO riceve la scheda allievo con codice fiscale e indirizzo della scheda genitore, senza genitore).
+- Passo 2: `./mvnw test` 208 test verdi; nuovo `admin_incongruenzeTraRuoliESchede` (badge "Scheda genitore senza ruolo" e "Allievo senza scheda", filtro, pulsante che crea solo la scheda mancante); indici delle colonne di Gestione Utenti aggiornati.
+- Non verificato nel browser. Nessuna modifica allo schema. Al primo avvio in produzione si crea la scheda dell'utente con il ruolo ALLIEVO che ne è privo (1 utente al controllo del 2026-10-22).
