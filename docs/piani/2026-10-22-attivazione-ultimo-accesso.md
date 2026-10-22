@@ -20,7 +20,7 @@ Un utente disattivato non deve poter entrare, ma se chiede il recupero password 
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `User.ultimoAccesso`, listener di `AuthenticationSuccessEvent`, colonna in Gestione Utenti; test | [F-2026-10-22/ACCESSO.2] | `entity/User`, `service/UserService`, `security/UltimoAccessoListener`, `views/admin/UtentiView`, test | `./mvnw test` | [ ] |
+| 1 | `User.ultimoAccesso`, listener di `AuthenticationSuccessEvent`, colonna in Gestione Utenti; test | [F-2026-10-22/ACCESSO.2] | `entity/User`, `service/UserService`, `security/UltimoAccessoListener`, `views/admin/UtentiView`, test | `./mvnw test` | [x] |
 | 2 | Recupero password per i disattivati mai entrati e attivazione alla nuova password; test | [F-2026-10-22/ACCESSO.1] | `service/RecuperoPasswordService`, `RecuperoPasswordServiceTest` | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 

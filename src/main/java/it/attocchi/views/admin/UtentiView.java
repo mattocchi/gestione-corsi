@@ -21,12 +21,14 @@ import it.attocchi.entity.User;
 import it.attocchi.service.SchedeRuoliService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.CardMobile;
+import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 @Route(value = "utenti", layout = MainLayout.class)
 @PageTitle("Gestione Utenti")
@@ -61,6 +63,9 @@ public class UtentiView extends VerticalLayout {
         grid.addColumn(User::getCognome).setHeader("Cognome").setSortable(true);
         grid.addColumn(User::getEmail).setHeader("Email");
         grid.addColumn(user -> String.join(", ", user.getRoles())).setHeader("Ruoli");
+        grid.addColumn(UtentiView::ultimoAccesso).setHeader("Ultimo accesso")
+            .setComparator(Comparator.comparing(User::getUltimoAccesso, Comparator.nullsFirst(Comparator.naturalOrder())))
+            .setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
 
@@ -70,8 +75,13 @@ public class UtentiView extends VerticalLayout {
             .campo("Cognome", User::getCognome)
             .campo("Email", User::getEmail)
             .campo("Ruoli", user -> String.join(", ", user.getRoles()))
+            .campo("Ultimo accesso", UtentiView::ultimoAccesso)
             .azioni(this::createActions)
             .applica();
+    }
+
+    private static String ultimoAccesso(User user) {
+        return user.getUltimoAccesso() != null ? Formati.dataOra(user.getUltimoAccesso()) : "Mai";
     }
 
     private HorizontalLayout createActions(User user) {

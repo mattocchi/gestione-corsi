@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -51,6 +52,12 @@ public class UserService {
             throw new IllegalArgumentException("La password è obbligatoria per un nuovo utente");
         }
         return userRepository.save(user);
+    }
+
+    /** Registra adesso come ultimo accesso dell'utente indicato (dopo un login riuscito). */
+    @Transactional
+    public void registraAccesso(String username) {
+        userRepository.findByUsername(username).ifPresent(user -> user.setUltimoAccesso(LocalDateTime.now()));
     }
 
     /** Cambia la password dell'utente indicato (profilo personale). */

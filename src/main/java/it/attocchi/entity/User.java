@@ -3,6 +3,7 @@ package it.attocchi.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,6 +40,10 @@ public class User {
 
     @Column(name = "enabled")
     private boolean enabled = true;
+
+    /** Data e ora dell'ultimo accesso riuscito; {@code null} = mai entrato (o prima del 2026-10-22). */
+    @Column(name = "ultimo_accesso")
+    private LocalDateTime ultimoAccesso;
 
     // Costruttori
     public User() {
@@ -115,6 +120,14 @@ public class User {
 
     public void setRoles(Set<String> roles) {
         this.roles = roles;
+    }
+
+    public LocalDateTime getUltimoAccesso() {
+        return ultimoAccesso;
+    }
+
+    public void setUltimoAccesso(LocalDateTime ultimoAccesso) {
+        this.ultimoAccesso = ultimoAccesso;
     }
 
     public boolean isEnabled() {

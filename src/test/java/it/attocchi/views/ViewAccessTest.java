@@ -2075,10 +2075,27 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
     void admin_utenti_griglia() {
-        navigate(UtentiView.class);
-
-        assertEquals(26, test(find(Grid.class).single()).size());
+        User segreteria = userService.findByUsername("segreteria");
+        segreteria.setUltimoAccesso(LocalDateTime.of(LocalDate.now().getYear(), 10, 22, 14, 30));
+        userService.save(segreteria, null);
+        try {
+            navigate(UtentiView.class);
+            var utenti = test((Grid<User>) find(Grid.class).single());
+            assertEquals(26, utenti.size());
+            // Ultimo accesso: data e ora, "Mai" per chi non è mai entrato
+            int riga = IntStream.range(0, utenti.size()).filter(r -> utenti.getRow(r).getUsername().equals("segreteria"))
+                .findFirst().orElseThrow();
+            assertEquals(Formati.dataOra(segreteria.getUltimoAccesso()), utenti.getCellText(riga, 5));
+            int mai = IntStream.range(0, utenti.size()).filter(r -> utenti.getRow(r).getUsername().equals("genitore9"))
+                .findFirst().orElseThrow();
+            assertEquals("Mai", utenti.getCellText(mai, 5));
+        } finally {
+            User ripristino = userService.findByUsername("segreteria");
+            ripristino.setUltimoAccesso(null);
+            userService.save(ripristino, null);
+        }
     }
 
     @Test
@@ -2437,7 +2454,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var utenti = test((Grid<User>) find(Grid.class).single());
             cerca("lia ruolo");
             assertEquals(1, utenti.size());
-            test(pulsante(utenti.getCellComponent(0, 5), "Modifica")).click();
+            test(pulsante(utenti.getCellComponent(0, 6), "Modifica")).click();
             test((CheckboxGroup<String>) find(CheckboxGroup.class).withLabel("Ruoli").single()).selectItem("GENITORE");
             test(find(Button.class).withText("Salva").single()).click();
 

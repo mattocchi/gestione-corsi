@@ -12,8 +12,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.Authentication;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Accesso con username o email sui dati di DataInitializer, con lo stesso AuthenticationManager del form di login. */
 @SpringBootTest
@@ -45,6 +48,17 @@ class LoginTest {
         assertEquals("insegnante1", accedi(" INSEGNANTE1@Example.com ", "insegnante1").getName());
         assertThrows(BadCredentialsException.class, () -> accedi(EMAIL, "sbagliata"));
         assertThrows(BadCredentialsException.class, () -> accedi("nessuno@example.com", "insegnante1"));
+    }
+
+    @Test
+    void accesso_registraLUltimoAccesso() throws Exception {
+        LocalDateTime prima = LocalDateTime.now().minusSeconds(1);
+        accedi(EMAIL, "insegnante1");
+        LocalDateTime ultimo = userRepository.findByUsername("insegnante1").orElseThrow().getUltimoAccesso();
+        assertTrue(ultimo != null && ultimo.isAfter(prima));
+        // Un tentativo fallito non lo cambia
+        assertThrows(BadCredentialsException.class, () -> accedi("insegnante1", "sbagliata"));
+        assertEquals(ultimo, userRepository.findByUsername("insegnante1").orElseThrow().getUltimoAccesso());
     }
 
     @Test
