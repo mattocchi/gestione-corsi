@@ -2185,6 +2185,27 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_nuovoGenitoreConUsernameDiSoliSpazi_erroreSulCampo() {
+        navigate(GenitoriView.class);
+        int prima = genitoreService.findAll().size();
+        test(find(Button.class).withText("Nuovo Genitore").single()).click();
+        Dialog dialog = find(Dialog.class).single();
+        TextField username = find(TextField.class).from(dialog).withLabel("Username").single();
+        test(username).setValue("   ");
+        test(find(PasswordField.class).from(dialog).withLabel("Password").single()).setValue("segreta123");
+        test(find(TextField.class).from(dialog).withLabel("Nome").single()).setValue("Marta");
+        test(find(TextField.class).from(dialog).withLabel("Cognome").single()).setValue("Spazi");
+        test(find(Button.class).from(dialog).withText("Salva").single()).click();
+
+        // Errore sul campo, nessun salvataggio tentato sul database
+        assertTrue(username.isInvalid());
+        assertTrue(dialog.isOpened());
+        assertEquals(prima, genitoreService.findAll().size());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_modificaIDatiDiUnGenitore() {
         navigate(GenitoriView.class);
         var grid = test((Grid<Genitore>) find(Grid.class).single());

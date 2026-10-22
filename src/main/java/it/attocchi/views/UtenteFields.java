@@ -38,7 +38,9 @@ public class UtenteFields {
         if (this.accessoFacoltativo) {
             username.setHelperText("Vuoto: nessun accesso all'app (si potrà attivare da Gestione Utenti)");
         } else {
-            campoUsername.asRequired("Inserisci lo username");
+            // Anche i soli spazi contano come vuoto: lo username viene salvato senza spazi ai lati
+            campoUsername.asRequired("Inserisci lo username")
+                .withValidator(u -> u != null && !u.isBlank(), "Inserisci lo username");
         }
         campoUsername
             .withValidator(u -> !nuovo || u == null || u.isBlank() || !userService.existsByUsername(u.strip()), "Username già in uso")
