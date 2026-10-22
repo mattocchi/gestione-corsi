@@ -24,10 +24,15 @@ Associare gli allievi anche dalla scheda del genitore ([F-2026-10-22/GENITORI.1]
 |---|---|---|---|---|---|
 | 1 | Username generato per genitori e insegnanti nuovi (servizio comune, dialog con accesso facoltativo); test | [F-2026-10-22/GENITORI.2] | `service/UserService`, `AllievoService`, `GenitoreService`, `InsegnanteService`, `views/admin/GenitoriView`, `InsegnantiView`, test | `./mvnw test` | [x] |
 | 2 | Campo "Figli" nel dialog del genitore, `GenitoreService.salva` con i figli e avviso degli spostati; test | [F-2026-10-22/GENITORI.1] | `service/GenitoreService`, `views/admin/GenitoriView`, test | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro (promemoria: cancellare `prod.bundle` prima del build) | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro (promemoria: cancellare `prod.bundle` prima del build) | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Associare figli dal profilo del genitore stesso.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 203 test verdi; il test dello username di soli spazi ora verifica lo username generato ("marta.spazi") e l'utente disattivato; nuovo test per l'insegnante senza username.
+- Passo 2: `./mvnw test` 204 test verdi; nuovo `segreteria_associaIFigliDallaSchedaDelGenitore` (figli già presenti selezionati, etichetta "figlio di …", un figlio tolto resta senza genitore, uno di un altro genitore viene spostato).
+- Non verificato nel browser. Nessuna modifica al database.
+- **Prima del prossimo build di produzione cancellare `src/main/bundles/prod.bundle`**: `MultiSelectComboBox` è un componente nuovo per il progetto e il bundle esistente non lo contiene.
