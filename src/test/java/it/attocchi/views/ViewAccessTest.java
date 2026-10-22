@@ -115,6 +115,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -2293,6 +2294,57 @@ class ViewAccessTest extends SpringBrowserlessTest {
         cerca("chitarra");
         assertEquals(1, insegnanti.size());
         assertEquals("insegnante2", insegnanti.getRow(0).getUser().getUsername());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_nuovoUtenteSenzaDatiObbligatori_erroriSuiCampi() {
+        navigate(UtentiView.class);
+        int prima = userService.findAll().size();
+        test(find(Button.class).withText("Nuovo Utente").single()).click();
+        Dialog dialog = find(Dialog.class).single();
+        TextField username = find(TextField.class).from(dialog).withLabel("Username").single();
+        PasswordField password = find(PasswordField.class).from(dialog).withLabel("Password").single();
+        TextField nome = find(TextField.class).from(dialog).withLabel("Nome").single();
+        TextField cognome = find(TextField.class).from(dialog).withLabel("Cognome").single();
+        test((CheckboxGroup<String>) find(CheckboxGroup.class).from(dialog).withLabel("Ruoli").single()).selectItem("GENITORE");
+        Button salva = find(Button.class).from(dialog).withText("Salva").single();
+
+        // Tutto vuoto: errori sui campi, niente sul database
+        test(salva).click();
+        assertTrue(username.isInvalid());
+        assertTrue(password.isInvalid());
+        assertTrue(nome.isInvalid());
+        assertTrue(cognome.isInvalid());
+        assertTrue(dialog.isOpened());
+
+        // Username di soli spazi o già in uso
+        test(password).setValue("segreta123");
+        test(nome).setValue("Gino");
+        test(cognome).setValue("Senzanome");
+        test(username).setValue("   ");
+        test(salva).click();
+        assertTrue(username.isInvalid());
+        test(username).setValue("genitore1");
+        test(salva).click();
+        assertTrue(username.isInvalid());
+        assertTrue(dialog.isOpened());
+        assertEquals(prima, userService.findAll().size());
+
+        test(username).setValue(" gino.nuovo ");
+        test(salva).click();
+        User creato = userService.findByUsername("gino.nuovo");
+        try {
+            assertFalse(dialog.isOpened());
+            assertNotNull(creato);
+            assertTrue(genitoreRepository.findByUserId(creato.getId()).isPresent());
+        } finally {
+            if (creato != null) {
+                genitoreRepository.findByUserId(creato.getId()).ifPresent(genitoreRepository::delete);
+                userService.delete(creato);
+            }
+        }
     }
 
     @Test

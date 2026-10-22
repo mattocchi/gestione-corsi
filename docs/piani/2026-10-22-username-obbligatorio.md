@@ -16,7 +16,7 @@ Creando un genitore compare "Errore nel salvataggio: Validation failed for class
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `UtenteFields`: username obbligatorio rifiuta anche i soli spazi; test sul dialog Nuovo Genitore | `views/UtenteFields`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | `UtentiView`: username (non vuoto, univoco per un nuovo utente), nome, cognome obbligatori e password obbligatoria per un nuovo utente, errori sui campi (`writeBeanIfValid`); test | `views/admin/UtentiView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | `UtentiView`: username (non vuoto, univoco per un nuovo utente), nome, cognome obbligatori e password obbligatoria per un nuovo utente, errori sui campi (`writeBeanIfValid`); test | `views/admin/UtentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | Registro | questo piano | — | [ ] |
 
 ## Fuori ambito

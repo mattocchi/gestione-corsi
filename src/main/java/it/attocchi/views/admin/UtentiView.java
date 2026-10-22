@@ -103,11 +103,19 @@ public class UtentiView extends VerticalLayout {
 
         if (user.getId() != null) {
             password.setPlaceholder("Lascia vuoto per non modificare");
+        } else {
+            password.setRequiredIndicatorVisible(true);
         }
 
-        binder.forField(username).bind(User::getUsername, User::setUsername);
-        binder.forField(nome).bind(User::getNome, User::setNome);
-        binder.forField(cognome).bind(User::getCognome, User::setCognome);
+        // Obbligatori: username (anche i soli spazi contano come vuoto, salvato senza spazi ai lati), nome e cognome
+        boolean nuovo = user.getId() == null;
+        String usernameAttuale = user.getUsername();
+        binder.forField(username).asRequired("Inserisci lo username")
+            .withValidator(u -> u != null && !u.isBlank(), "Inserisci lo username")
+            .withValidator(u -> u.strip().equals(usernameAttuale) || !userService.existsByUsername(u.strip()), "Username già in uso")
+            .bind(User::getUsername, (u, v) -> u.setUsername(v.strip()));
+        binder.forField(nome).asRequired("Inserisci il nome").bind(User::getNome, User::setNome);
+        binder.forField(cognome).asRequired("Inserisci il cognome").bind(User::getCognome, User::setCognome);
         binder.forField(email).bind(User::getEmail, User::setEmail);
         binder.forField(telefono).bind(User::getTelefono, User::setTelefono);
         binder.forField(attivo).bind(User::isEnabled, User::setEnabled);
@@ -118,8 +126,14 @@ public class UtentiView extends VerticalLayout {
         formLayout.add(username, password, nome, cognome, email, telefono, attivo, roles);
 
         Button saveButton = new Button("Salva", e -> {
+            // Errori sui campi, mai un valore mancante che fallisce sul database
+            boolean passwordOk = !nuovo || !password.isEmpty();
+            password.setInvalid(!passwordOk);
+            password.setErrorMessage(passwordOk ? null : "Inserisci la password");
+            if (!(binder.validate().isOk() & passwordOk) || !binder.writeBeanIfValid(user)) {
+                return;
+            }
             try {
-                binder.writeBean(user);
                 // Con i ruoli Insegnante o Genitore crea anche la scheda che manca, così compare in quegli elenchi
                 schedeRuoliService.salvaUtente(user, password.getValue());
                 updateGrid();
