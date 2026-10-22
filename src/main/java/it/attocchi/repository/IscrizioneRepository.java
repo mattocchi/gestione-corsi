@@ -41,6 +41,8 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
 
     long countByAllievoUserUsernameAndCorsoAttivoTrue(String username);
 
+    long countByCorsoAttivoTrue();
+
     /** Numero di iscritti per corso: righe [id del corso, conteggio]. */
     @Query("SELECT i.corso.id, COUNT(i) FROM Iscrizione i GROUP BY i.corso.id")
     List<Object[]> contaPerCorso();

@@ -268,7 +268,34 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void admin_dashboardConTotali() {
         navigate(HomeView.class);
 
-        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 4));
+        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Iscritti ai corsi attivi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 5));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_dashboardContaGliIscrittiDeiCorsiAttivi() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        // Un allievo di Canto si iscrive anche a Chitarra: gli allievi restano 13, le iscrizioni diventano 14
+        corsoService.iscrivi(chitarra.getId(), allievo.getId());
+        try {
+            navigate(CorsiView.class);
+            navigate(HomeView.class);
+            assertEquals(List.of("Allievi: 13", "Iscritti ai corsi attivi: 14"), indicatori().subList(1, 3));
+
+            // Chitarra non attivo: restano le 7 iscrizioni di Canto
+            Corso inattivo = corsoService.findById(chitarra.getId());
+            inattivo.setAttivo(false);
+            corsoService.save(inattivo);
+            navigate(CorsiView.class);
+            navigate(HomeView.class);
+            assertEquals("Iscritti ai corsi attivi: 7", indicatori().get(2));
+        } finally {
+            Corso attivo = corsoService.findById(chitarra.getId());
+            attivo.setAttivo(true);
+            corsoService.save(attivo);
+            corsoService.rimuoviIscrizione(chitarra.getId(), allievo.getId());
+        }
     }
 
     @Test
@@ -276,7 +303,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_dashboardConTotali() {
         navigate(HomeView.class);
 
-        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 4));
+        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Iscritti ai corsi attivi: 13", "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 5));
     }
 
     @Test
@@ -296,7 +323,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             // 13 partecipanti da 600 € nei due corsi attivi, una rata da 200 €
             assertEquals(List.of("Saldati: 0", "Pagamento parziale: 1", "Senza pagamenti: 12",
                     "Incassato: 200,00 € (3% del totale)", "Da incassare: 7.600,00 € (97% del totale)"),
-                indicatori().subList(4, 9));
+                indicatori().subList(5, 10));
 
             var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).all().getFirst());
             assertEquals(2, grid.size());
@@ -320,7 +347,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         navigate(CorsiView.class);
         navigate(HomeView.class);
-        assertEquals(List.of("Corsi con gruppi: 0", "Gruppi: 0", "Allievi senza gruppo: 0"), indicatori().subList(9, 12));
+        assertEquals(List.of("Corsi con gruppi: 0", "Gruppi: 0", "Allievi senza gruppo: 0"), indicatori().subList(10, 13));
         var vuota = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
         assertEquals(0, vuota.size());
 
@@ -332,7 +359,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(CorsiView.class);
             navigate(HomeView.class);
             // Chitarra ha 6 iscritti: 1 nel gruppo del sabato, 5 senza gruppo
-            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(9, 12));
+            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(10, 13));
             var gruppi = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
             assertEquals(2, gruppi.size());
             assertEquals("Corso di Chitarra", gruppi.getCellText(0, 0));

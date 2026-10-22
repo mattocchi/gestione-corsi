@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class DashboardService {
 
-    /** Riepilogo generale (admin e segreteria). */
-    public record RiepilogoGenerale(long corsi, long allievi, long genitori, long insegnanti) {
+    /** Riepilogo generale (admin e segreteria); {@code iscritti} = iscrizioni ai corsi attivi (un allievo può averne più). */
+    public record RiepilogoGenerale(long corsi, long allievi, long iscritti, long genitori, long insegnanti) {
     }
 
     /** Riepilogo dell'insegnante sui propri corsi. */
@@ -68,7 +68,7 @@ public class DashboardService {
 
     public RiepilogoGenerale riepilogoGenerale() {
         return new RiepilogoGenerale(corsoRepository.count(), allievoRepository.count(),
-            genitoreRepository.count(), insegnanteRepository.count());
+            iscrizioneRepository.countByCorsoAttivoTrue(), genitoreRepository.count(), insegnanteRepository.count());
     }
 
     /** Corsi attivi dell'insegnante (titolare o secondo) e lezioni completate / da fare / non effettuate di quei corsi. */

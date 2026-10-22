@@ -17,7 +17,7 @@ Nella dashboard di admin e segreteria, accanto ad "Allievi", una card con il tot
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Conteggio iscrizioni dei corsi attivi in `RiepilogoGenerale`; card "Iscritti"; test | [F-2026-10-22/DASHBOARD.1] | `repository/IscrizioneRepository`, `service/DashboardService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | Conteggio iscrizioni dei corsi attivi in `RiepilogoGenerale`; card "Iscritti"; test | [F-2026-10-22/DASHBOARD.1] | `repository/IscrizioneRepository`, `service/DashboardService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

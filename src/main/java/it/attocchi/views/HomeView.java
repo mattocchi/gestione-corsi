@@ -53,6 +53,7 @@ public class HomeView extends VerticalLayout {
             add(sezione("Riepilogo generale",
                 indicatore(VaadinIcon.MUSIC, "Corsi", riepilogo.corsi()),
                 indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi()),
+                indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti()),
                 indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
                 indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
             add(pagamenti(pagamentoService.riepilogoCorsiAttivi()));

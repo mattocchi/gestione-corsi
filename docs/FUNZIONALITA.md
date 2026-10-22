@@ -216,5 +216,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### DASHBOARD
 
-* [ ] in dashboard admin e segreteria aggiungi una card simile ad allievi per il conteggio non degli allievi ma degli iscritti, un allievo può fare piu corsi, qundi vorrei vedere sia il numero degli allievi sia il totale degli iscritti
+* [x] in dashboard admin e segreteria aggiungi una card simile ad allievi per il conteggio non degli allievi ma degli iscritti, un allievo può fare piu corsi, qundi vorrei vedere sia il numero degli allievi sia il totale degli iscritti _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: card "Iscritti" nel Riepilogo generale accanto ad "Allievi", con il numero di iscrizioni ai soli corsi attivi._
