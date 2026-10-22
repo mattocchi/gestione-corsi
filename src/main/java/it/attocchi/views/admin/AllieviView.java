@@ -8,6 +8,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -15,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -25,6 +27,7 @@ import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.AllievoService;
+import it.attocchi.service.CorsoService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
@@ -36,7 +39,11 @@ import it.attocchi.views.Stili;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
+
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Route(value = "allievi", layout = MainLayout.class)
 @PageTitle("Gestione Allievi")
@@ -52,9 +59,30 @@ public class AllieviView extends VerticalLayout {
 
     private final Grid<Allievo> grid = new Grid<>(Allievo.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
+    private final ComboBox<FiltroCorso> filtroCorso = new ComboBox<>();
+    private GridListDataView<Allievo> allievi;
+    private List<Allievo> tutti = List.of();
+
+    /** Scelta del filtro per corso: un corso, oppure ({@code corso == null}) gli allievi senza corsi. */
+    public record FiltroCorso(Corso corso) {
+
+        static final FiltroCorso SENZA_CORSI = new FiltroCorso(null);
+
+        String etichetta() {
+            if (corso == null) {
+                return "Senza corsi";
+            }
+            return corso.getAnnoScolastico() != null ? corso.getNome() + " (" + corso.getAnnoScolastico() + ")" : corso.getNome();
+        }
+
+        boolean ammette(Allievo allievo) {
+            return corso == null ? allievo.getCorsi().isEmpty()
+                : allievo.getCorsi().stream().anyMatch(c -> c.getId().equals(corso.getId()));
+        }
+    }
 
     public AllieviView(AllievoService allievoService, UserService userService, GenitoreService genitoreService,
-                        SecurityService securityService) {
+                        CorsoService corsoService, SecurityService securityService) {
         this.allievoService = allievoService;
         this.userService = userService;
         this.genitoreService = genitoreService;
@@ -64,7 +92,20 @@ public class AllieviView extends VerticalLayout {
         configureGrid();
 
         Button addButton = new Button("Nuovo Allievo", e -> openDialog(new Allievo()));
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, ricerca);
+        // Filtro per corso: prima "Senza corsi", poi i corsi attivi e gli altri, per nome
+        filtroCorso.setPlaceholder("Tutti i corsi");
+        filtroCorso.setAriaLabel("Filtra per corso");
+        filtroCorso.setClearButtonVisible(true);
+        filtroCorso.setItemLabelGenerator(FiltroCorso::etichetta);
+        filtroCorso.setItems(Stream.concat(Stream.of(FiltroCorso.SENZA_CORSI), corsoService.findAll().stream()
+            .sorted(Comparator.comparing((Corso c) -> !c.isAttivo())
+                .thenComparing(Corso::getNome, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(Corso::getAnnoScolastico, Comparator.nullsLast(Comparator.reverseOrder())))
+            .map(FiltroCorso::new)).toList());
+        filtroCorso.addClassNames("w-60");
+        filtroCorso.addValueChangeListener(e -> applicaFiltri());
+        ricerca.addRicercaListener(this::applicaFiltri);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroCorso, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -202,9 +243,21 @@ public class AllieviView extends VerticalLayout {
     }
 
     private void updateGrid() {
-        ricerca.collega(grid.setItems(allievoService.findAll()), allievo -> RicercaRapida.testo(
-            RicercaRapida.testo(allievo.getUser()), RicercaRapida.testo(allievo), Formati.indirizzo(allievo),
-            allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : null,
-            allievo.getCorsi().stream().map(Corso::getNome).collect(Collectors.joining(" "))));
+        tutti = allievoService.findAll();
+        allievi = grid.setItems(tutti);
+        applicaFiltri();
+    }
+
+    /** Corso scelto e ricerca rapida; "N di M" sugli allievi del corso scelto. */
+    private void applicaFiltri() {
+        if (allievi != null) {
+            FiltroCorso scelto = filtroCorso.getValue();
+            SerializablePredicate<Allievo> delCorso = allievo -> scelto == null || scelto.ammette(allievo);
+            allievi.setFilter(allievo -> delCorso.test(allievo) && ricerca.corrisponde(RicercaRapida.testo(
+                RicercaRapida.testo(allievo.getUser()), RicercaRapida.testo(allievo), Formati.indirizzo(allievo),
+                allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : null,
+                allievo.getCorsi().stream().map(Corso::getNome).collect(Collectors.joining(" ")))));
+            ricerca.mostraConteggio(allievi.getItemCount(), (int) tutti.stream().filter(delCorso).count());
+        }
     }
 }

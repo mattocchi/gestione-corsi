@@ -803,6 +803,39 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_filtraAllieviPerCorso() {
+        Allievo senzaCorsi = allievoService.creaRapido("Zeno", "Senzacorsi", null, null);
+        try {
+            navigate(AllieviView.class);
+            var allievi = test((Grid<Allievo>) find(Grid.class).single());
+            ComboBox<AllieviView.FiltroCorso> filtro = find(ComboBox.class).withPlaceholder("Tutti i corsi").single();
+            assertEquals(14, allievi.size());
+            assertEquals(List.of("Senza corsi", "Corso di Canto (2024/2025)", "Corso di Chitarra (2024/2025)"),
+                filtro.getListDataView().getItems().map(f -> filtro.getItemLabelGenerator().apply(f)).toList());
+
+            test(filtro).selectItem("Corso di Chitarra (2024/2025)");
+            assertEquals(6, allievi.size());
+            assertTrue(IntStream.range(0, allievi.size()).allMatch(r -> allievi.getRow(r).getNomeCompleto().startsWith("Allievo Chitarra")));
+
+            // Si combina con la ricerca rapida
+            test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("chitarra3");
+            assertEquals(1, allievi.size());
+            test(find(TextField.class).withPlaceholder("Cerca").single()).clear();
+
+            test(filtro).selectItem("Senza corsi");
+            assertEquals(1, allievi.size());
+            assertEquals("Zeno Senzacorsi", allievi.getRow(0).getNomeCompleto());
+
+            filtro.clear();
+            assertEquals(14, allievi.size());
+        } finally {
+            allievoService.delete(allievoService.findById(senzaCorsi.getId()));
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_modificaNomeECognomeDiUnAllievo() {
         navigate(AllieviView.class);
         var allievi = test((Grid<Allievo>) find(Grid.class).single());

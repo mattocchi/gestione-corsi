@@ -19,7 +19,7 @@ Aggiungere un filtro per corso all'elenco "Gestione Allievi" ([F-2026-10-22/ALLI
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Filtro per corso in `AllieviView` (con "Senza corsi"), test | [F-2026-10-22/ALLIEVI.1] | `views/admin/AllieviView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | Filtro per corso in `AllieviView` (con "Senza corsi"), test | [F-2026-10-22/ALLIEVI.1] | `views/admin/AllieviView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

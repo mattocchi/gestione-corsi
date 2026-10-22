@@ -199,5 +199,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### ALLIEVI
 
-* [ ] aggiungi un fitro per corso nell'elenco "gestione allievi"
+* [x] aggiungi un fitro per corso nell'elenco "gestione allievi" _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: un corso alla volta tra tutti (prima gli attivi), indicato con l'anno scolastico, più la scelta "Senza corsi" per gli allievi non iscritti a nessun corso; si combina con la ricerca rapida._
