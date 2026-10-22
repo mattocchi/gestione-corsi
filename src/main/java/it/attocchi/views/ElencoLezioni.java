@@ -264,7 +264,7 @@ public class ElencoLezioni extends VerticalLayout {
             .campo("Stato", this::createStatoPresenza)
             .campo("Note", this::createNotePresenza)
             .applica();
-        gridPresenze.setItems(presenzaService.findByLezione(lezione.getId()));
+        gridPresenze.setItems(lezioneService.presenzeInOrdine(lezione.getId()));
         dialog.add(gridPresenze);
 
         if (!lezione.isCompletata()) {

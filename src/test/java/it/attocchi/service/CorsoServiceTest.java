@@ -47,6 +47,9 @@ class CorsoServiceTest {
     @Autowired
     private AllievoService allievoService;
 
+    @Autowired
+    private PagamentoService pagamentoService;
+
     @Test
     void save_prezzoConPreiscrizioneTraZeroECostoTotale() {
         Corso canto = corso("Corso di Canto");
@@ -253,6 +256,16 @@ class CorsoServiceTest {
                 "Allievo Chitarra3", "Allievo Chitarra5", // gruppo del sabato: 9:30, poi 10:00
                 "Allievo Chitarra6",                      // senza gruppo, con orario
                 "Allievo Chitarra1", "Allievo Chitarra4", "Aaron Abate"), ordine);
+
+            // Stesso ordine nel Riepilogo Iscritti e nelle presenze di una lezione del martedì (gruppo del sabato escluso)
+            assertEquals(ordine, pagamentoService.iscrittiPerCorso().stream()
+                .filter(c -> c.corso().getId().equals(chitarra.getId())).findFirst().orElseThrow()
+                .iscritti().stream().map(r -> r.allievo().getNomeCompleto()).toList());
+            Lezione martediDaFare = lezioneService.findByCorso(chitarra.getId()).stream()
+                .filter(l -> l.isDaFare() && l.getData().getDayOfWeek() == DayOfWeek.TUESDAY).findFirst().orElseThrow();
+            assertEquals(List.of("Allievo Chitarra2", "Allievo Chitarra6", "Allievo Chitarra1", "Allievo Chitarra4", "Aaron Abate"),
+                lezioneService.presenzeInOrdine(martediDaFare.getId()).stream()
+                    .map(p -> p.getAllievo().getNomeCompleto()).toList());
         } finally {
             for (int n = 1; n <= 6; n++) {
                 corsoService.assegnaGruppo(chitarra.getId(), allievo.apply(n).getId(), null);

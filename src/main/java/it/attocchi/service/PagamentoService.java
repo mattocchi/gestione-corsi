@@ -337,8 +337,8 @@ public class PagamentoService {
     }
 
     /**
-     * Ogni corso (attivo o no, anche senza iscritti) con i suoi iscritti, quanto hanno pagato finora e i suoi
-     * gruppi, in ordine di nome e anno scolastico del corso.
+     * Ogni corso (attivo o no, anche senza iscritti) con i suoi iscritti (in {@link Iscrizione#ORDINE}), quanto
+     * hanno pagato finora e i suoi gruppi, in ordine di nome e anno scolastico del corso.
      */
     public List<IscrittiCorso> iscrittiPerCorso() {
         Map<Long, List<RigaPagamento>> perCorso = new HashMap<>();
@@ -353,7 +353,8 @@ public class PagamentoService {
                 .thenComparing(Corso::getAnnoScolastico, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(Corso::getId))
             .map(corso -> new IscrittiCorso(corso, perCorso.getOrDefault(corso.getId(), List.of()).stream()
-                .sorted(PER_ALLIEVO_E_CORSO).toList(), gruppi.getOrDefault(corso.getId(), List.of())))
+                .sorted(Comparator.comparing(RigaPagamento::iscrizione, Iscrizione.ORDINE)).toList(),
+                gruppi.getOrDefault(corso.getId(), List.of())))
             .toList();
     }
 

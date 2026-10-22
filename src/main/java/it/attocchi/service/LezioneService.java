@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -259,6 +260,25 @@ public class LezioneService {
 
     private static boolean insegnanteDelCorso(Corso corso, String username) {
         return corso.haInsegnante(username);
+    }
+
+    /**
+     * Presenze della lezione nell'ordine dei partecipanti del corso ({@link Iscrizione#ORDINE}: gruppo, orario,
+     * inserimento); in fondo, per nome, quelle di allievi non più iscritti.
+     */
+    public List<Presenza> presenzeInOrdine(Long lezioneId) {
+        List<Presenza> presenze = presenzaRepository.findByLezioneId(lezioneId);
+        if (presenze.isEmpty()) {
+            return presenze;
+        }
+        Map<Long, Iscrizione> iscrizioni = new HashMap<>();
+        iscrizioneRepository.findByCorsoIdWithAllievo(presenze.getFirst().getLezione().getCorso().getId())
+            .forEach(i -> iscrizioni.put(i.getAllievo().getId(), i));
+        return presenze.stream()
+            .sorted(Comparator.comparing((Presenza p) -> iscrizioni.get(p.getAllievo().getId()),
+                    Comparator.nullsLast(Iscrizione.ORDINE))
+                .thenComparing(p -> p.getAllievo().getNomeCompleto()))
+            .toList();
     }
 
     /** Gruppo dei partecipanti del corso che ne hanno uno, per id dell'allievo (vuota se il corso non ha gruppi). */

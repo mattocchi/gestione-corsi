@@ -22,7 +22,7 @@ Ordinare i partecipanti dei corsi per gruppo e poi per orario, quando ci sono; a
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `Iscrizione.iscrittoIl` e `Iscrizione.ORDINE`; `findPartecipanti` (dialog Partecipanti); test | — | `entity/Iscrizione`, `service/CorsoService`, test | `./mvnw test` | [x] |
-| 2 | Stesso ordine in Gestisci Presenze (`LezioneService.presenzeInOrdine`) e Riepilogo Iscritti; test | [F-2026-10-22/PARTECIPANTI.1] | `service/LezioneService`, `views/ElencoLezioni`, `service/PagamentoService`, test | `./mvnw test` | [ ] |
+| 2 | Stesso ordine in Gestisci Presenze (`LezioneService.presenzeInOrdine`) e Riepilogo Iscritti; test | [F-2026-10-22/PARTECIPANTI.1] | `service/LezioneService`, `views/ElencoLezioni`, `service/PagamentoService`, test | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

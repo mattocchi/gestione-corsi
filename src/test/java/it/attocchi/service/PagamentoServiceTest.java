@@ -120,9 +120,10 @@ class PagamentoServiceTest {
             assertEquals(0, new BigDecimal("600").compareTo(iscrittiCanto.pagato()));
             assertEquals(0, new BigDecimal("3600").compareTo(iscrittiCanto.residuo()));
             assertEquals(1, iscrittiCanto.saldati());
-            // Iscritti in ordine di allievo
+            // Iscritti per orario (Canto5 alle 17:00 … Canto1 alle 19:40), poi senza orario in ordine di inserimento
             var nomi = iscrittiCanto.iscritti().stream().map(r -> r.allievo().getNomeCompleto()).toList();
-            assertEquals(nomi.stream().sorted(String.CASE_INSENSITIVE_ORDER).toList(), nomi);
+            assertEquals(java.util.List.of("Allievo Canto5", "Allievo Canto4", "Allievo Canto3", "Allievo Canto2",
+                "Allievo Canto1", "Allievo Canto6", "Allievo Canto7"), nomi);
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo).forEach(pagamentoService::elimina);
         }
