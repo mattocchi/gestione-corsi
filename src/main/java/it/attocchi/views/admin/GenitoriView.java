@@ -2,6 +2,7 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -16,6 +17,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
@@ -27,6 +29,9 @@ import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -40,12 +45,14 @@ public class GenitoriView extends VerticalLayout {
 
     private final GenitoreService genitoreService;
     private final UserService userService;
+    private final AllievoService allievoService;
     private final Grid<Genitore> grid = new Grid<>(Genitore.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
 
-    public GenitoriView(GenitoreService genitoreService, UserService userService) {
+    public GenitoriView(GenitoreService genitoreService, UserService userService, AllievoService allievoService) {
         this.genitoreService = genitoreService;
         this.userService = userService;
+        this.allievoService = allievoService;
         addClassNames("size-full");
 
         grid.addColumn(Genitore::getNomeCompleto).setHeader("Nome").setSortable(true);
@@ -87,8 +94,21 @@ public class GenitoriView extends VerticalLayout {
         AnagraficaFields<Genitore> anagrafica = new AnagraficaFields<>(binder, false);
         binder.readBean(genitore);
 
+        // Figli: anche allievi di un altro genitore, che al salvataggio passano a questo
+        MultiSelectComboBox<Allievo> figli = new MultiSelectComboBox<>("Figli");
+        figli.setPlaceholder("Cerca un allievo");
+        figli.setHelperText("Un allievo con un altro genitore passa a questo; togliendolo resta senza genitore");
+        figli.setItems(allievoService.findAll().stream()
+            .sorted(Comparator.comparing(Allievo::getNomeCompleto, String.CASE_INSENSITIVE_ORDER)).toList());
+        figli.setItemLabelGenerator(allievo -> allievo.getGenitore() != null && !allievo.getGenitore().equals(genitore)
+            ? allievo.getNomeCompleto() + " (figlio di " + allievo.getGenitore().getNomeCompleto() + ")"
+            : allievo.getNomeCompleto());
+        figli.setValue(nuovo ? Set.of() : Set.copyOf(allievoService.findByGenitore(genitore.getId())));
+        figli.addClassNames("w-full");
+
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
+            ViewSupport.sezione("Figli"), figli,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
         content.addClassNames("p-0");
 
@@ -99,10 +119,12 @@ public class GenitoriView extends VerticalLayout {
                 return;
             }
             try {
-                genitoreService.salva(genitore, user, utente.getPassword());
+                List<String> spostati = genitoreService.salvaConFigli(genitore, user, utente.getPassword(),
+                    figli.getValue().stream().map(Allievo::getId).toList());
                 updateGrid();
                 dialog.close();
-                Notification.show("Genitore salvato con successo");
+                Notification.show(spostati.isEmpty() ? "Genitore salvato con successo"
+                    : "Genitore salvato. Spostati a questo genitore: " + String.join(", ", spostati));
             } catch (RuntimeException ex) {
                 Notification.show("Errore nel salvataggio: " + ex.getMessage());
             }

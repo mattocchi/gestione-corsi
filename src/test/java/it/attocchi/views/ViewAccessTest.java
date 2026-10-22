@@ -12,6 +12,7 @@ import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -2224,6 +2225,46 @@ class ViewAccessTest extends SpringBrowserlessTest {
         user.setNome(nome);
         user.setCognome(cognome);
         return user;
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_associaIFigliDallaSchedaDelGenitore() {
+        Genitore genitore3 = genitoreService.findByUsername("genitore3").orElseThrow();
+        Genitore genitore1 = genitoreService.findByUsername("genitore1").orElseThrow();
+        List<Allievo> figliPrima = allievoService.findByGenitore(genitore3.getId());
+        Allievo tolto = figliPrima.getFirst();
+        Allievo nuovo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        assertEquals(genitore1, nuovo.getGenitore());
+        try {
+            navigate(GenitoriView.class);
+            var grid = test((Grid<Genitore>) find(Grid.class).single());
+            int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).equals(genitore3)).findFirst().orElseThrow();
+            test(pulsante(grid.getCellComponent(riga, 5), "Modifica")).click();
+            Dialog dialog = find(Dialog.class).single();
+            MultiSelectComboBox<Allievo> figli = find(MultiSelectComboBox.class).from(dialog).withLabel("Figli").single();
+            assertEquals(Set.copyOf(figliPrima), figli.getValue());
+            assertEquals("Allievo Canto1 (figlio di " + genitore1.getNomeCompleto() + ")", figli.getItemLabelGenerator().apply(nuovo));
+
+            Set<Allievo> scelti = new java.util.HashSet<>(figli.getValue());
+            scelti.remove(tolto);
+            scelti.add(nuovo);
+            figli.setValue(scelti);
+            test(find(Button.class).from(dialog).withText("Salva").single()).click();
+            assertFalse(dialog.isOpened());
+
+            assertEquals(genitore3, allievoService.findById(nuovo.getId()).getGenitore());
+            assertNull(allievoService.findById(tolto.getId()).getGenitore());
+            assertEquals(figliPrima.size(), allievoService.findByGenitore(genitore3.getId()).size());
+        } finally {
+            Allievo a = allievoService.findById(nuovo.getId());
+            a.setGenitore(genitore1);
+            allievoService.save(a);
+            Allievo b = allievoService.findById(tolto.getId());
+            b.setGenitore(genitore3);
+            allievoService.save(b);
+        }
     }
 
     @Test

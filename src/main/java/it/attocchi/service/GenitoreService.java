@@ -1,12 +1,16 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.User;
+import it.attocchi.repository.AllievoRepository;
 import it.attocchi.repository.GenitoreRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,10 +20,13 @@ public class GenitoreService {
 
     private final GenitoreRepository genitoreRepository;
     private final UserService userService;
+    private final AllievoRepository allievoRepository;
 
-    public GenitoreService(GenitoreRepository genitoreRepository, UserService userService) {
+    public GenitoreService(GenitoreRepository genitoreRepository, UserService userService,
+                           AllievoRepository allievoRepository) {
         this.genitoreRepository = genitoreRepository;
         this.userService = userService;
+        this.allievoRepository = allievoRepository;
     }
 
     public List<Genitore> findAll() {
@@ -54,6 +61,30 @@ public class GenitoreService {
         }
         genitore.setUser(userService.save(user, rawPassword));
         return genitoreRepository.save(genitore);
+    }
+
+    /**
+     * Salva il genitore come {@link #salva} e ne imposta i figli: gli allievi indicati diventano suoi figli (anche se
+     * avevano un altro genitore), quelli tolti restano senza genitore. Restituisce gli allievi spostati da un altro
+     * genitore, come "Nome (prima figlio di Altro)".
+     */
+    @Transactional
+    public List<String> salvaConFigli(Genitore genitore, User user, String rawPassword, Collection<Long> figliIds) {
+        Genitore salvato = salva(genitore, user, rawPassword);
+        List<String> spostati = new ArrayList<>();
+        for (Allievo allievo : allievoRepository.findAll()) {
+            boolean scelto = figliIds.contains(allievo.getId());
+            Genitore attuale = allievo.getGenitore();
+            if (scelto && !salvato.equals(attuale)) {
+                if (attuale != null) {
+                    spostati.add(allievo.getNomeCompleto() + " (prima figlio di " + attuale.getNomeCompleto() + ")");
+                }
+                allievo.setGenitore(salvato);
+            } else if (!scelto && salvato.equals(attuale)) {
+                allievo.setGenitore(null);
+            }
+        }
+        return spostati;
     }
 
     /** Profilo personale del genitore: aggiorna contatti e dati anagrafici (username e ruoli restano invariati). */
