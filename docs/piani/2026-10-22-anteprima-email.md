@@ -24,10 +24,14 @@ Un pulsante per vedere l'anteprima delle email (conferma o altre) che partirebbe
 |---|---|---|---|---|---|
 | 1 | `EmailService.anteprima(...)` e `destinatariConferme(...)` (oggetto in comune con `invia`); test | — | `service/EmailService`, `EmailServiceTest` | `./mvnw test` | [x] |
 | 2 | Dialog di anteprima, pulsanti "Anteprima", elenco destinatari nell'invio a tutti, nomi dei pulsanti; test | [F-2026-10-22/EMAIL.1] | `views/admin/InvioEmailDialog`, `views/ElencoPagamenti`, `views/admin/QuotaPagamentiDialog`, `views/admin/PartecipantiDialog`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Anteprima delle email di sistema.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 210 test verdi; nuovi `anteprima_comeLInvioMaSenzaInviareNeRegistrare` e `destinatariConferme_chiLaRiceveEChiESaltato`.
+- Passo 2: `./mvnw test` 210 test verdi; `segreteria_inviaConfermaDaGestionePagamenti_ricevutaSoloConPagamenti` apre anche l'anteprima (oggetto, testo, nessun invio registrato) e `segreteria_inviaLeConfermeATuttiGliIscritti` verifica l'elenco dei destinatari e l'anteprima sul primo; nomi dei pulsanti aggiornati nei test.
+- Non verificato nel browser (in particolare il riquadro del testo dell'email e l'apertura del PDF). Nessuna modifica al database; `IFrame` è un elemento HTML, il bundle di produzione non cambia.
