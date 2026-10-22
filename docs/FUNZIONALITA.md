@@ -232,3 +232,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-22: un utente disattivato già oggi non può entrare; con il recupero password (username o email) può riattivarsi da solo solo chi non ha mai fatto un accesso (ultimo accesso vuoto): impostata la nuova password l'utente diventa attivo; chi è stato disattivato dopo aver usato l'app resta bloccato. Gli utenti già esistenti non hanno ancora l'ultimo accesso registrato e all'inizio contano come "mai entrati"._
 * [x] inoltre sarebbe utile registrare ultimo login per ogni utente in modo da sapere quando è entrato l'ultima volta _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: si registra data e ora dell'ultimo accesso riuscito (non i tentativi falliti), mostrato in Gestione Utenti (colonna "Ultimo accesso", "Mai" se vuoto, ordinabile, anche nella card)._
+
+### DASHBOARD PAGAMENTI
+
+* [ ] nella dashboard admin e segreteria, dove c'e' l'elenco dei corsi sotto le prime card, aggiungi due colonne con il costo stimato per l'insegnante o gli insegnanti del corso e quindi un mini prospetto tra quello che dovremmo incassare dagli iscritti e spendere per gli insegnanti per vedere semplicemente se il corso è in attivo o perdita
