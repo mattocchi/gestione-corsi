@@ -23,7 +23,7 @@ Ordinare i partecipanti dei corsi per gruppo e poi per orario, quando ci sono; a
 |---|---|---|---|---|---|
 | 1 | `Iscrizione.iscrittoIl` e `Iscrizione.ORDINE`; `findPartecipanti` (dialog Partecipanti); test | — | `entity/Iscrizione`, `service/CorsoService`, test | `./mvnw test` | [x] |
 | 2 | Stesso ordine in Gestisci Presenze (`LezioneService.presenzeInOrdine`) e Riepilogo Iscritti; test | [F-2026-10-22/PARTECIPANTI.1] | `service/LezioneService`, `views/ElencoLezioni`, `service/PagamentoService`, test | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,7 @@ Ordinare i partecipanti dei corsi per gruppo e poi per orario, quando ci sono; a
 - Ricostruire la data delle iscrizioni già esistenti.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 195 test verdi; nuovo `partecipanti_perGruppoOrarioEOrdineDiInserimento` (Chitarra con due gruppi, orari e un allievo iscritto per ultimo con il nome che viene prima in ordine alfabetico: resta in fondo).
+- Passo 2: `./mvnw test` 195 test verdi; lo stesso test verifica l'ordine nel Riepilogo Iscritti e nelle presenze di una lezione del martedì. `PagamentoServiceTest.iscrittiPerCorso_conIPagamentiFinoAOggi` aggiornato: si aspettava l'ordine alfabetico, ora per orario e inserimento.
+- Non verificato nel browser. Produzione: `ddl-auto=update` aggiunge la colonna `iscritto_il` (nullable), nessuno script; le iscrizioni esistenti seguono l'ordine di creazione dell'allievo.
