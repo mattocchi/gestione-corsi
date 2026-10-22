@@ -119,8 +119,8 @@ public class PartecipantiDialog extends Dialog {
         }
         content.addClassNames("p-0");
         add(content);
-        Button conferme = new Button("Invia conferme", VaadinIcon.ENVELOPE.create(),
-            e -> InvioEmailDialog.inviaConferme(corso, corsoService.findPartecipanti(corso.getId()).size(), () -> { }));
+        Button conferme = new Button("Invia conferme di iscrizione a tutti", VaadinIcon.ENVELOPE.create(),
+            e -> InvioEmailDialog.inviaConferme(corso, () -> { }));
         conferme.setTooltipText("Invia per email la conferma di iscrizione a tutti gli iscritti");
         getFooter().add(conferme, ViewSupport.closeButton(this, "Chiudi"));
     }

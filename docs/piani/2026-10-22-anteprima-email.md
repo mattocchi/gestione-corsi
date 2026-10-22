@@ -23,7 +23,7 @@ Un pulsante per vedere l'anteprima delle email (conferma o altre) che partirebbe
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `EmailService.anteprima(...)` e `destinatariConferme(...)` (oggetto in comune con `invia`); test | — | `service/EmailService`, `EmailServiceTest` | `./mvnw test` | [x] |
-| 2 | Dialog di anteprima, pulsanti "Anteprima", elenco destinatari nell'invio a tutti, nomi dei pulsanti; test | [F-2026-10-22/EMAIL.1] | `views/admin/InvioEmailDialog`, `views/ElencoPagamenti`, `views/admin/QuotaPagamentiDialog`, `views/admin/PartecipantiDialog`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | Dialog di anteprima, pulsanti "Anteprima", elenco destinatari nell'invio a tutti, nomi dei pulsanti; test | [F-2026-10-22/EMAIL.1] | `views/admin/InvioEmailDialog`, `views/ElencoPagamenti`, `views/admin/QuotaPagamentiDialog`, `views/admin/PartecipantiDialog`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

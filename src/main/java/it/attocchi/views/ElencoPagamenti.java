@@ -183,7 +183,7 @@ public class ElencoPagamenti extends VerticalLayout {
                 dialog.open();
             });
             StatoPagamentoUI.coloraPulsante(quota, "Quota e pagamenti", riga.situazione());
-            azioni.add(quota, ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Invia email",
+            azioni.add(quota, ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Email: conferma o ricevuta",
                 e -> InvioEmailDialog.apri(riga.corso(), riga.allievo(), () -> { })));
         } else {
             Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> new PagamentiAllievoDialog(

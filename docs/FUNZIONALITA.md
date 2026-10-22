@@ -244,5 +244,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### EMAIL
 
-* [ ] aggiunti un pulsante per vedere le anteprime di email di conferma o altre che partirebbero, rendi esplici i pulsanti di quali email andrebbero inviate
+* [x] aggiunti un pulsante per vedere le anteprime di email di conferma o altre che partirebbero, rendi esplici i pulsanti di quali email andrebbero inviate _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: anteprima (destinatario, oggetto, testo come nell'email e PDF allegato da aprire, senza inviare) accanto a ogni invio nel dialog del singolo iscritto (conferma di iscrizione, ricevuta) e nel dialog "invia conferme a tutti" (anteprima sul primo iscritto con email ed elenco di chi la riceve e di chi viene saltato); pulsanti rinominati: "Invia email" → "Email: conferma o ricevuta", "Invia conferme" → "Invia conferme di iscrizione a tutti"; niente anteprime delle email di sistema._

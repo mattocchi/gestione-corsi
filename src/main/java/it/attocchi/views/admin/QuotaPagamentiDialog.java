@@ -118,7 +118,7 @@ public class QuotaPagamentiDialog extends Dialog {
         content.addClassNames("p-0");
         add(content);
         Button ricevuta = new Button("Ricevuta", VaadinIcon.PRINT.create());
-        Button email = new Button("Invia email", VaadinIcon.ENVELOPE.create(), e -> InvioEmailDialog.apri(corso, allievo, this::aggiorna));
+        Button email = new Button("Email: conferma o ricevuta", VaadinIcon.ENVELOPE.create(), e -> InvioEmailDialog.apri(corso, allievo, this::aggiorna));
         getFooter().add(email, Ricevute.link(corso.getId(), allievo, ricevuta), ViewSupport.closeButton(this, "Chiudi"));
     }
 

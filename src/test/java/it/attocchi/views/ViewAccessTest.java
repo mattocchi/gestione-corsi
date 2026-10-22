@@ -1872,12 +1872,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(GestionePagamentiView.class);
         var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
         try {
-            test(pulsante(righe.getCellComponent(rigaDi(righe, allievo), "azioni"), "Invia email")).click();
+            test(pulsante(righe.getCellComponent(rigaDi(righe, allievo), "azioni"), "Email: conferma o ricevuta")).click();
             // Destinatario: il genitore
             assertTrue(find(Span.class).all().stream()
                 .anyMatch(sp -> sp.getText().startsWith("A: ") && sp.getText().endsWith("<genitore3@example.com>")));
             assertTrue(find(Span.class).withText("Server email non configurato: l'invio sarà solo simulato e registrato.").exists());
             assertFalse(find(Button.class).withText("Invia ricevuta").single().isEnabled());
+            assertFalse(pulsanteAnteprima("Ricevuta di pagamento").isEnabled());
+
+            // Anteprima della conferma: destinatario, oggetto e testo dell'email, nessun invio
+            test(pulsanteAnteprima("Conferma di iscrizione")).click();
+            Dialog anteprima = find(Dialog.class).all().stream()
+                .filter(d -> "Anteprima – Conferma di iscrizione".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            assertTrue(find(Span.class).from(anteprima)
+                .withText("Oggetto: Conferma di iscrizione – Corso di Canto 2024/2025 – Allievo Canto3").exists());
+            String corpo = find(com.vaadin.flow.component.html.IFrame.class).from(anteprima).single().getSrcdoc().orElseThrow();
+            assertTrue(corpo.contains("Allievo Canto3"));
+            assertTrue(emailService.tuttiGliInvii().isEmpty());
+            anteprima.close();
             test(find(Button.class).withText("Invia conferma di iscrizione").single()).click();
 
             List<InvioEmail> invii = emailService.tuttiGliInvii();
@@ -1898,12 +1910,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Partecipanti")).click();
         try {
-            test(find(Button.class).withText("Invia conferme").single()).click();
-            test(find(Button.class).withText("Invia").single()).click();
+            test(find(Button.class).withText("Invia conferme di iscrizione a tutti").single()).click();
+            // Chi la riceve, con l'anteprima sul primo (Canto5, prima per orario)
+            assertTrue(find(Span.class).withText("→ " + genitoreService.findByUsername("genitore5").orElseThrow().getNomeCompleto()
+                + " <genitore5@example.com>").exists());
+            assertEquals("Anteprima della conferma per Allievo Canto5",
+                find(Button.class).withText("Anteprima").single().getTooltip().getText());
+            test(find(Button.class).withText("Invia 7 conferme di iscrizione").single()).click();
             assertEquals(7, emailService.tuttiGliInvii().size());
         } finally {
             invioEmailRepository.deleteAll();
         }
+    }
+
+    /** Pulsante "Anteprima" del tipo di email indicato, nel dialog di invio del singolo iscritto. */
+    private Button pulsanteAnteprima(String tipo) {
+        return find(Button.class).all().stream()
+            .filter(b -> ("Anteprima: " + tipo).equals(b.getElement().getAttribute("aria-label")))
+            .findFirst().orElseThrow();
     }
 
     @Test
