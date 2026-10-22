@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -21,10 +22,16 @@ import java.util.Set;
 @Table(name = "corso_allievi")
 public class Iscrizione {
 
-    /** Ordine dei partecipanti: per orario di lezione, quelli senza orario in fondo; a parità per nome. */
-    public static final Comparator<Iscrizione> PER_ORARIO = Comparator
-        .comparing(Iscrizione::getOrarioLezione, Comparator.nullsLast(Comparator.naturalOrder()))
-        .thenComparing(i -> i.getAllievo().getNomeCompleto());
+    /**
+     * Ordine dei partecipanti: per gruppo (chi non ne ha in fondo), poi per orario di lezione (chi non ce l'ha
+     * dopo), poi in ordine di inserimento. Le iscrizioni senza data (precedenti al 2026-10-22) vengono prima e tra
+     * loro seguono l'ordine di creazione dell'allievo.
+     */
+    public static final Comparator<Iscrizione> ORDINE = Comparator
+        .comparing(Iscrizione::getGruppo, Comparator.nullsLast(GruppoCorso.PER_GIORNO.thenComparing(GruppoCorso::getId)))
+        .thenComparing(Iscrizione::getOrarioLezione, Comparator.nullsLast(Comparator.naturalOrder()))
+        .thenComparing(Iscrizione::getIscrittoIl, Comparator.nullsFirst(Comparator.naturalOrder()))
+        .thenComparing(i -> i.getAllievo().getId());
 
     @EmbeddedId
     private IscrizioneId id = new IscrizioneId();
@@ -58,6 +65,10 @@ public class Iscrizione {
     @JoinColumn(name = "gruppo_id")
     private GruppoCorso gruppo;
 
+    /** Data e ora dell'iscrizione, per l'ordine di inserimento; {@code null} per le iscrizioni precedenti. */
+    @Column(name = "iscritto_il")
+    private LocalDateTime iscrittoIl;
+
     // Costruttori
     public Iscrizione() {
     }
@@ -67,11 +78,16 @@ public class Iscrizione {
         this.id = new IscrizioneId(corso.getId(), allievo.getId());
         this.corso = corso;
         this.allievo = allievo;
+        this.iscrittoIl = LocalDateTime.now();
     }
 
     // Getters e Setters
     public IscrizioneId getId() {
         return id;
+    }
+
+    public LocalDateTime getIscrittoIl() {
+        return iscrittoIl;
     }
 
     public Corso getCorso() {

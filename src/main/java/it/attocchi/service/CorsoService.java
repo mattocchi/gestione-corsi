@@ -107,10 +107,10 @@ public class CorsoService {
         return corso;
     }
 
-    /** Partecipanti del corso in ordine di orario di lezione (senza orario in fondo), vedi {@link Iscrizione#PER_ORARIO}. */
+    /** Partecipanti del corso per gruppo, orario e ordine di inserimento, vedi {@link Iscrizione#ORDINE}. */
     public List<Iscrizione> findPartecipanti(Long corsoId) {
         return iscrizioneRepository.findByCorsoIdWithAllievo(corsoId).stream()
-            .sorted(Iscrizione.PER_ORARIO)
+            .sorted(Iscrizione.ORDINE)
             .toList();
     }
 

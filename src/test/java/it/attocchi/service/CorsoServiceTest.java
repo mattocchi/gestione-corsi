@@ -229,6 +229,42 @@ class CorsoServiceTest {
     }
 
     @Test
+    void partecipanti_perGruppoOrarioEOrdineDiInserimento() {
+        Corso chitarra = corso("Corso di Chitarra");
+        java.util.function.IntFunction<Allievo> allievo = n -> allievoService.findByUsername("allievo_chitarra" + n).orElseThrow();
+        // Iscritto per ultimo: dopo gli altri senza gruppo né orario, anche se il nome viene prima in ordine alfabetico
+        Allievo nuovo = allievoService.creaRapido("Aaron", "Abate", null, null);
+        corsoService.iscrivi(chitarra.getId(), nuovo.getId());
+        try {
+            GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(),
+                new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+            GruppoCorso martedi = corsoService.salvaGruppo(chitarra.getId(),
+                new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.apply(5).getId(), sabato.getId());
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.apply(3).getId(), sabato.getId());
+            corsoService.impostaOrario(chitarra.getId(), allievo.apply(3).getId(), LocalTime.of(9, 30));
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.apply(2).getId(), martedi.getId());
+            corsoService.impostaOrario(chitarra.getId(), allievo.apply(6).getId(), LocalTime.of(16, 0));
+
+            List<String> ordine = corsoService.findPartecipanti(chitarra.getId()).stream()
+                .map(i -> i.getAllievo().getNomeCompleto()).toList();
+            assertEquals(List.of(
+                "Allievo Chitarra2",                      // gruppo del martedì
+                "Allievo Chitarra3", "Allievo Chitarra5", // gruppo del sabato: 9:30, poi 10:00
+                "Allievo Chitarra6",                      // senza gruppo, con orario
+                "Allievo Chitarra1", "Allievo Chitarra4", "Aaron Abate"), ordine);
+        } finally {
+            for (int n = 1; n <= 6; n++) {
+                corsoService.assegnaGruppo(chitarra.getId(), allievo.apply(n).getId(), null);
+                corsoService.impostaOrario(chitarra.getId(), allievo.apply(n).getId(), null);
+            }
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
+            corsoService.rimuoviIscrizione(chitarra.getId(), nuovo.getId());
+            allievoService.delete(allievoService.findById(nuovo.getId()));
+        }
+    }
+
+    @Test
     void generaLezioni_numeroLezioniPerOgniAllievoNelGiornoDelSuoGruppo() {
         // Chitarra (martedì e sabato, 30 lezioni): Chitarra1..3 nel gruppo del martedì, Chitarra4..6 in quello del sabato
         Corso chitarra = corso("Corso di Chitarra");
