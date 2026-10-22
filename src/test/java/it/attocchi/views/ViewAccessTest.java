@@ -2352,6 +2352,50 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_eliminaLaSchedaGenitoreMantenendoLUtente() {
+        User user = new User();
+        user.setUsername("doppio.ruolo");
+        user.setNome("Dora");
+        user.setCognome("Doppia");
+        user.getRoles().add("INSEGNANTE");
+        Genitore genitore = genitoreService.salva(new Genitore(), user, "segreta123");
+        Allievo figlio = allievoService.creaRapido("Figlio", "Doppia", null, null);
+        figlio.setGenitore(genitore);
+        allievoService.save(figlio);
+        try {
+            navigate(GenitoriView.class);
+            var grid = test((Grid<Genitore>) find(Grid.class).single());
+            cerca("dora doppia");
+            assertEquals(1, grid.size());
+            test(pulsante(grid.getCellComponent(0, 5), "Elimina")).click();
+            Dialog conferma = find(Dialog.class).all().stream()
+                .filter(d -> "Eliminare la scheda genitore?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            assertTrue(find(Span.class).from(conferma).all().stream().anyMatch(sp -> sp.getText().contains("1 figlio resta senza genitore")));
+            test(find(Button.class).from(conferma).withText("Elimina").single()).click();
+
+            // Scheda eliminata, utente mantenuto senza il ruolo GENITORE, figlio senza genitore
+            assertTrue(genitoreService.findByUsername("doppio.ruolo").isEmpty());
+            User rimasto = userService.findByUsername("doppio.ruolo");
+            assertNotNull(rimasto);
+            assertEquals(Set.of("INSEGNANTE"), rimasto.getRoles());
+            assertNull(allievoService.findById(figlio.getId()).getGenitore());
+        } finally {
+            genitoreService.findByUsername("doppio.ruolo").ifPresent(genitoreRepository::delete);
+            Allievo daEliminare = allievoService.findById(figlio.getId());
+            daEliminare.setGenitore(null);
+            allievoService.save(daEliminare);
+            allievoService.delete(daEliminare);
+            userService.delete(daEliminare.getUser());
+            User doppio = userService.findByUsername("doppio.ruolo");
+            if (doppio != null) {
+                userService.delete(doppio);
+            }
+        }
+    }
+
+    @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_modificaIDatiDiUnGenitore() {
@@ -2359,6 +2403,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test((Grid<Genitore>) find(Grid.class).single());
         int genitore3 = IntStream.range(0, grid.size())
             .filter(r -> grid.getRow(r).getUser().getUsername().equals("genitore3")).findFirst().orElseThrow();
+        // La segreteria non elimina le schede genitore
+        assertFalse(grid.getCellComponent(genitore3, 5).getChildren()
+            .anyMatch(c -> "Elimina".equals(c.getElement().getAttribute("aria-label"))));
         test(pulsante(grid.getCellComponent(genitore3, 5), "Modifica")).click();
 
         Dialog dialog = find(Dialog.class).single();

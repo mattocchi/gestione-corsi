@@ -5,6 +5,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -17,6 +18,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
+import it.attocchi.security.SecurityService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.UserService;
@@ -46,13 +48,17 @@ public class GenitoriView extends VerticalLayout {
     private final GenitoreService genitoreService;
     private final UserService userService;
     private final AllievoService allievoService;
+    /** Eliminare una scheda genitore è riservato all'admin. */
+    private final boolean puoEliminare;
     private final Grid<Genitore> grid = new Grid<>(Genitore.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
 
-    public GenitoriView(GenitoreService genitoreService, UserService userService, AllievoService allievoService) {
+    public GenitoriView(GenitoreService genitoreService, UserService userService, AllievoService allievoService,
+                        SecurityService securityService) {
         this.genitoreService = genitoreService;
         this.userService = userService;
         this.allievoService = allievoService;
+        this.puoEliminare = securityService.hasRole("ADMIN");
         addClassNames("size-full");
 
         grid.addColumn(Genitore::getNomeCompleto).setHeader("Nome").setSortable(true);
@@ -80,8 +86,37 @@ public class GenitoriView extends VerticalLayout {
     }
 
     private HorizontalLayout createActions(Genitore genitore) {
-        return ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)),
+        HorizontalLayout azioni = ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)),
             ViewSupport.iconButton(VaadinIcon.FILE_TEXT_O, "Riepilogo famiglia", e -> RiepilogoFamigliaDialog.apri(genitore)));
+        if (puoEliminare) {
+            Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> confermaEliminazione(genitore));
+            elimina.addThemeVariants(ButtonVariant.ERROR);
+            azioni.add(elimina);
+        }
+        return azioni;
+    }
+
+    /** Conferma: si elimina solo la scheda del genitore, l'utente resta (senza il ruolo GENITORE). */
+    private void confermaEliminazione(Genitore genitore) {
+        int figli = genitore.getFigli().size();
+        boolean unicoRuolo = genitore.getUser() != null && genitore.getUser().getRoles().equals(Set.of("GENITORE"));
+        Dialog conferma = ViewSupport.dialog("Eliminare la scheda genitore?", "460px");
+        conferma.add(new Span(genitore.getNomeCompleto() + ": si elimina la scheda genitore, non l'utente, che perde il ruolo"
+            + " GENITORE." + (figli > 0 ? " " + figli + (figli == 1 ? " figlio resta" : " figli restano") + " senza genitore." : "")
+            + (unicoRuolo ? " L'utente non avrà più ruoli: se serve, eliminalo da Gestione Utenti." : "")));
+        Button elimina = new Button("Elimina", e -> {
+            try {
+                genitoreService.elimina(genitore.getId());
+                conferma.close();
+                updateGrid();
+                Notification.show("Scheda genitore eliminata");
+            } catch (RuntimeException ex) {
+                Notification.show("Impossibile eliminare la scheda: " + ex.getMessage());
+            }
+        });
+        elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
+        conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);
+        conferma.open();
     }
 
     private void openDialog(Genitore genitore) {

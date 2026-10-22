@@ -20,7 +20,7 @@ Poter eliminare la scheda Genitore mantenendo l'utente quando ha altri ruoli ([F
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `GenitoreService.elimina` e azione "Elimina" con conferma in Genitori; test | [F-2026-10-22/GENITORI.3] | `service/GenitoreService`, `views/admin/GenitoriView`, test | `./mvnw test` | [ ] |
+| 1 | `GenitoreService.elimina` e azione "Elimina" con conferma in Genitori; test | [F-2026-10-22/GENITORI.3] | `service/GenitoreService`, `views/admin/GenitoriView`, test | `./mvnw test` | [x] |
 | 2 | `InsegnanteService.elimina` (bloccata se ha collegamenti) e azione in Insegnanti; test | [F-2026-10-22/GENITORI.3] | `service/InsegnanteService`, repository, `views/admin/InsegnantiView`, test | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 

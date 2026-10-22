@@ -87,6 +87,23 @@ public class GenitoreService {
         return spostati;
     }
 
+    /**
+     * Elimina la scheda del genitore ma non il suo utente: i figli restano senza genitore e all'utente si toglie il
+     * ruolo GENITORE (se era l'unico, resta senza ruoli). Restituisce quanti figli sono rimasti senza genitore.
+     */
+    @Transactional
+    public int elimina(Long genitoreId) {
+        Genitore genitore = genitoreRepository.findById(genitoreId)
+            .orElseThrow(() -> new IllegalArgumentException("Genitore non trovato: " + genitoreId));
+        List<Allievo> figli = allievoRepository.findAll().stream().filter(a -> genitore.equals(a.getGenitore())).toList();
+        figli.forEach(figlio -> figlio.setGenitore(null));
+        if (genitore.getUser() != null) {
+            genitore.getUser().getRoles().remove("GENITORE");
+        }
+        genitoreRepository.delete(genitore);
+        return figli.size();
+    }
+
     /** Profilo personale del genitore: aggiorna contatti e dati anagrafici (username e ruoli restano invariati). */
     @Transactional
     public Genitore aggiornaProfilo(String username, Genitore dati, User datiUtente) {
