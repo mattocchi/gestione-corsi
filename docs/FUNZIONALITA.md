@@ -212,3 +212,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### RIMBORSI
 
 * [ ] all'insegnante aggiungi un possibile rimborso una tantum che si aggiunge al costo orario se specificato, se sono specificati entrambi si sommano, se solo uno dei due si applica quello
+
+### DASHBOARD
+
+* [ ] in dashboard admin e segreteria aggiungi una card simile ad allievi per il conteggio non degli allievi ma degli iscritti, un allievo può fare piu corsi, qundi vorrei vedere sia il numero degli allievi sia il totale degli iscritti
