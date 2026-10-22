@@ -19,10 +19,13 @@ Nella dashboard del genitore una o due card di riepilogo dei pagamenti ([F-2026-
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `PagamentoService.situazioneDeiFigli(username)` (corsi attivi); card in `HomeView`; test | [F-2026-10-22/DASHBOARD.3] | `service/PagamentoService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Dettaglio per figlio nella dashboard (c'è già in Pagamenti).
 
 ## Registro
+
+- Passo 1: `./mvnw test` 211 test verdi; `genitore_dashboardConICorsiDeiFigli` verifica le due card (genitore3: 1.200 € da pagare) e il nuovo `genitore_dashboardConIPagamentiDeiCorsiAttivi` verifica che un corso non attivo non conti e il "tutto saldato".
+- Non verificato nel browser. Nessuna modifica al database.
