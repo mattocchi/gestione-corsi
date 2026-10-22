@@ -2580,6 +2580,39 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("admin")
     @SuppressWarnings("unchecked")
+    void admin_eliminaUnUtenteConLaSuaSchedaLibera() {
+        Allievo allievo = allievoService.creaRapido("Ivo", "Daeliminare", null, null);
+        String username = allievo.getUser().getUsername();
+        try {
+            navigate(UtentiView.class);
+            var utenti = test((Grid<User>) find(Grid.class).single());
+            // Allievo iscritto a un corso: niente conferma, solo il motivo
+            cerca("allievo_canto1");
+            test(pulsante(utenti.getCellComponent(0, 7), "Elimina")).click();
+            assertTrue(find(Dialog.class).all().stream().noneMatch(d -> "Eliminare l'utente?".equals(d.getHeaderTitle())));
+            assertNotNull(userService.findByUsername("allievo_canto1"));
+
+            cerca("ivo daeliminare");
+            assertEquals(1, utenti.size());
+            test(pulsante(utenti.getCellComponent(0, 7), "Elimina")).click();
+            Dialog conferma = find(Dialog.class).all().stream()
+                .filter(d -> "Eliminare l'utente?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            assertTrue(find(Span.class).from(conferma).all().stream().anyMatch(sp -> sp.getText().contains("si eliminano anche scheda allievo")));
+            test(find(Button.class).from(conferma).withText("Elimina").single()).click();
+            assertNull(userService.findByUsername(username));
+            assertTrue(allievoService.findByUsername(username).isEmpty());
+            assertEquals(0, utenti.size());
+        } finally {
+            allievoService.findByUsername(username).ifPresent(a -> {
+                allievoService.delete(a);
+                userService.delete(a.getUser());
+            });
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
     void admin_incongruenzeTraRuoliESchede() {
         // genitore9 senza il ruolo GENITORE (la scheda resta) e con il ruolo ALLIEVO senza scheda, salvato senza
         // passare da Gestione Utenti

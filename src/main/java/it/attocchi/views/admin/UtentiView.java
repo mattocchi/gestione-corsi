@@ -12,6 +12,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -24,7 +25,9 @@ import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.User;
+import it.attocchi.security.SecurityService;
 import it.attocchi.service.SchedeRuoliService;
+import it.attocchi.service.SchedeRuoliService.EliminazioneUtente;
 import it.attocchi.service.UserService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
@@ -46,6 +49,7 @@ public class UtentiView extends VerticalLayout {
 
     private final UserService userService;
     private final SchedeRuoliService schedeRuoliService;
+    private final SecurityService securityService;
     private final Grid<User> grid = new Grid<>(User.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
     private final Checkbox soloIncongruenze = new Checkbox("Solo incongruenze");
@@ -53,9 +57,10 @@ public class UtentiView extends VerticalLayout {
     private List<User> tutti = List.of();
     private Map<Long, List<String>> incongruenze = Map.of();
 
-    public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService) {
+    public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService, SecurityService securityService) {
         this.userService = userService;
         this.schedeRuoliService = schedeRuoliService;
+        this.securityService = securityService;
 
         addClassNames("size-full");
         configureGrid();
@@ -180,10 +185,30 @@ public class UtentiView extends VerticalLayout {
         dialog.open();
     }
 
+    /** Conferma con le schede che spariscono insieme all'utente; se non si può eliminare, solo il motivo. */
     private void deleteUser(User user) {
-        userService.delete(user);
-        updateGrid();
-        Notification.show("Utente eliminato");
+        String corrente = securityService.getUsername().orElse("");
+        EliminazioneUtente verifica = schedeRuoliService.verificaEliminazione(user.getId(), corrente);
+        if (!verifica.possibile()) {
+            Notification.show("Impossibile eliminare " + user.getUsername() + ": " + verifica.motivoBlocco());
+            return;
+        }
+        Dialog conferma = ViewSupport.dialog("Eliminare l'utente?", "460px");
+        conferma.add(new Span(user.getUsername() + " (" + user.getNomeCompleto() + ")"
+            + (verifica.schede().isEmpty() ? "" : ": si eliminano anche " + String.join(", ", verifica.schede())) + "."));
+        Button elimina = new Button("Elimina", e -> {
+            try {
+                schedeRuoliService.eliminaUtente(user.getId(), corrente);
+                conferma.close();
+                updateGrid();
+                Notification.show("Utente eliminato");
+            } catch (RuntimeException ex) {
+                Notification.show(ex.getMessage());
+            }
+        });
+        elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
+        conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);
+        conferma.open();
     }
 
     private void updateGrid() {
