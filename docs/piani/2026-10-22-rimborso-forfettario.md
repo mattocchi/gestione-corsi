@@ -24,7 +24,7 @@ Aggiungere all'insegnante un rimborso "una tantum" che si somma al costo orario;
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Campo `rimborsoForfettario` (entity, validazione, scheda Insegnanti con colonna, Profilo in sola lettura) | — | `entity/Insegnante`, `service/InsegnanteService`, `views/admin/InsegnantiView`, `views/ProfiloView`, test | `./mvnw test` | [x] |
-| 2 | `BilancioService`: forfait nel prospetto e nel bilancio dell'anno; Bilancio e dialog Rimborsi lo mostrano; test | [F-2026-10-22/RIMBORSI.1] | `service/BilancioService`, `views/admin/BilancioDialog`, `views/admin/RimborsiDialog`, `BilancioServiceTest` | `./mvnw test` | [ ] |
+| 2 | `BilancioService`: forfait nel prospetto e nel bilancio dell'anno; Bilancio e dialog Rimborsi lo mostrano; test | [F-2026-10-22/RIMBORSI.1] | `service/BilancioService`, `views/admin/BilancioDialog`, `views/admin/RimborsiDialog`, `BilancioServiceTest` | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

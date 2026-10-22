@@ -35,20 +35,27 @@ public class BilancioDialog extends Dialog {
             : "Tariffa oraria " + Formati.euro(bilancio.insegnante().getTariffaOraria())
                 + " · costo di una lezione = allievi iscritti × durata × tariffa");
         tariffa.addClassNames(Stili.TESTO_SECONDARIO);
-        content.add(tariffa,
+        content.add(tariffa);
+        if (bilancio.forfait().signum() > 0) {
+            Span forfait = new Span("Rimborso forfettario annuo " + Formati.euro(bilancio.forfait())
+                + " · compreso nel maturato e nel costo previsto");
+            forfait.addClassNames(Stili.TESTO_SECONDARIO);
+            content.add(forfait);
+        }
+        content.add(
             HomeView.sezione("Effettivo",
                 HomeView.indicatore(VaadinIcon.EURO, "Incassato", Formati.euro(bilancio.incassato()), "dagli allievi"),
                 HomeView.indicatore(VaadinIcon.WALLET, "Rimborsato", Formati.euro(bilancio.rimborsato()), "all'insegnante"),
                 HomeView.indicatore(VaadinIcon.SCALE, "Saldo", Formati.euro(bilancio.saldo()), "incassato − rimborsato")),
             HomeView.sezione("Maturato",
-                HomeView.indicatore(VaadinIcon.CHECK, "Lezioni completate", Formati.euro(bilancio.costoMaturato()), "costo"),
+                HomeView.indicatore(VaadinIcon.CHECK, "Lezioni completate", Formati.euro(bilancio.costoLezioniMaturato()), "costo"),
                 HomeView.indicatore(VaadinIcon.HOURGLASS, "Da rimborsare", Formati.euro(bilancio.daRimborsare()),
-                    "maturato − rimborsato")),
+                    bilancio.forfait().signum() > 0 ? "lezioni + forfait − rimborsato" : "maturato − rimborsato")),
             HomeView.sezione("Teorico",
                 HomeView.indicatore(VaadinIcon.EURO, "Incasso previsto", Formati.euro(bilancio.incassoPrevisto()),
                     "quote assegnate"),
                 HomeView.indicatore(VaadinIcon.CALENDAR, "Costo previsto", Formati.euro(bilancio.costoPrevisto()),
-                    "lezioni programmate"),
+                    bilancio.forfait().signum() > 0 ? "lezioni programmate + forfait" : "lezioni programmate"),
                 HomeView.indicatore(VaadinIcon.SCALE, "Margine previsto", Formati.euro(bilancio.marginePrevisto()),
                     "incasso − costo previsti")),
             ViewSupport.sezione("Per corso"), grigliaCorsi(bilancio));

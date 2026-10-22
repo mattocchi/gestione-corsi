@@ -211,7 +211,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### RIMBORSI
 
-* [ ] all'insegnante aggiungi un possibile rimborso una tantum che si aggiunge al costo orario se specificato, se sono specificati entrambi si sommano, se solo uno dei due si applica quello
+* [x] all'insegnante aggiungi un possibile rimborso una tantum che si aggiunge al costo orario se specificato, se sono specificati entrambi si sommano, se solo uno dei due si applica quello _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: "una tantum" = rimborso forfettario annuo: un importo nella scheda dell'insegnante (impostato da admin e segreteria, in sola lettura nel Profilo dell'insegnante), valido per ogni anno scolastico in cui l'insegnante ha corsi; si somma al costo delle lezioni (tariffa oraria) ed è maturato per intero dall'inizio dell'anno (prospetto Rimborsi e Bilancio: maturato, da rimborsare, costo previsto); la proposta del rimborso mensile resta solo oraria (il forfait si registra a mano); non entra nel costo insegnante dei singoli corsi del Riepilogo Iscritti; se cambia vale anche per gli anni passati._
 
 ### DASHBOARD

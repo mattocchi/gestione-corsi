@@ -32,13 +32,15 @@ import java.util.function.Predicate;
  * una lezione sono gli allievi iscritti alla lezione (le sue presenze, assenti compresi) × la durata del corso;
  * il costo è ore × tariffa oraria attuale. Ogni insegnante matura solo le lezioni a cui era presente
  * ({@code Lezione.insegnantiPresenti}): con due insegnanti presenti la lezione costa per entrambi. Le lezioni non
- * effettuate non costano.
+ * effettuate non costano. Il rimborso forfettario annuo dell'insegnante si somma al costo delle lezioni in ogni anno
+ * scolastico in cui ha corsi, maturato per intero dall'inizio dell'anno; non entra nella proposta del rimborso
+ * mensile né nel costo dei singoli corsi.
  */
 @Service
 @Transactional(readOnly = true)
 public class BilancioService {
 
-    /** Riga del prospetto dei rimborsi: rimborsato e maturato (lezioni completate) nell'anno scolastico. */
+    /** Riga del prospetto dei rimborsi: rimborsato e maturato (lezioni completate e forfait) nell'anno scolastico. */
     public record RigaRimborsi(Insegnante insegnante, BigDecimal rimborsato, BigDecimal maturato) {
         public BigDecimal daRimborsare() {
             return maturato.subtract(rimborsato);
@@ -50,8 +52,12 @@ public class BilancioService {
                                 BigDecimal costoMaturato, BigDecimal costoPrevisto) {
     }
 
-    /** Mini bilancio dell'insegnante per un anno scolastico. */
-    public record Bilancio(Insegnante insegnante, String annoScolastico, List<BilancioCorso> corsi, BigDecimal rimborsato) {
+    /**
+     * Mini bilancio dell'insegnante per un anno scolastico; {@code forfait} è il rimborso forfettario annuo (zero se
+     * non impostato o se l'insegnante non ha corsi nell'anno), compreso nel costo maturato e in quello previsto.
+     */
+    public record Bilancio(Insegnante insegnante, String annoScolastico, List<BilancioCorso> corsi, BigDecimal forfait,
+                           BigDecimal rimborsato) {
 
         public boolean senzaTariffa() {
             return !haTariffa(insegnante);
@@ -65,12 +71,19 @@ public class BilancioService {
             return somma(BilancioCorso::incassoPrevisto);
         }
 
-        public BigDecimal costoMaturato() {
+        /** Costo delle lezioni completate, senza il forfait. */
+        public BigDecimal costoLezioniMaturato() {
             return somma(BilancioCorso::costoMaturato);
         }
 
+        /** Costo delle lezioni completate più il forfait annuo. */
+        public BigDecimal costoMaturato() {
+            return costoLezioniMaturato().add(forfait);
+        }
+
+        /** Costo delle lezioni programmate più il forfait annuo. */
         public BigDecimal costoPrevisto() {
-            return somma(BilancioCorso::costoPrevisto);
+            return somma(BilancioCorso::costoPrevisto).add(forfait);
         }
 
         /** Effettivo: incassato meno rimborsato. */
@@ -120,6 +133,11 @@ public class BilancioService {
         return tariffaOraria.multiply(BigDecimal.valueOf(minuti)).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
     }
 
+    /** Rimborso forfettario annuo dell'insegnante (zero se non impostato). */
+    public static BigDecimal forfait(Insegnante insegnante) {
+        return insegnante.getRimborsoForfettario() != null ? insegnante.getRimborsoForfettario() : BigDecimal.ZERO;
+    }
+
     /** {@code true} se l'insegnante ha una tariffa oraria maggiore di zero. */
     public static boolean haTariffa(Insegnante insegnante) {
         return insegnante.getTariffaOraria() != null && insegnante.getTariffaOraria().signum() > 0;
@@ -161,7 +179,7 @@ public class BilancioService {
             .sorted(Comparator.comparing(Insegnante::getNomeCompleto))
             .map(i -> new RigaRimborsi(i, rimborsato.getOrDefault(i.getId(), BigDecimal.ZERO),
                 costo(minutiLezioni(i.getId(), l -> l.isCompletata() && annoScolastico.equals(l.getCorso().getAnnoScolastico())),
-                    i.getTariffaOraria())))
+                    i.getTariffaOraria()).add(forfaitDellAnno(i, annoScolastico))))
             .toList();
     }
 
@@ -199,10 +217,11 @@ public class BilancioService {
                 costoPrevisto(corso, lezioni, presenze, iscrizioni.size(), insegnante.getTariffaOraria())));
         }
         corsi.sort(Comparator.comparing(b -> b.corso().getNome()));
+        BigDecimal forfait = corsi.isEmpty() ? BigDecimal.ZERO : forfait(insegnante);
         BigDecimal rimborsato = rimborsoRepository.findByInsegnanteAndPeriodo(insegnanteId,
                 RimborsoService.inizioAnno(annoScolastico), RimborsoService.fineAnno(annoScolastico))
             .stream().map(Rimborso::getImporto).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new Bilancio(insegnante, annoScolastico, corsi, rimborsato);
+        return new Bilancio(insegnante, annoScolastico, corsi, forfait, rimborsato);
     }
 
     /**
@@ -215,6 +234,16 @@ public class BilancioService {
             ? valore(corso.getNumeroLezioni()) * iscritti * valore(corso.getDurataLezioneMinuti())
             : minuti(lezioni, presenze, l -> !l.isNonEffettuata());
         return costo(minutiPrevisti, tariffaOraria);
+    }
+
+    /** Forfait annuo dell'insegnante se ha corsi nell'anno scolastico (come nel {@link #bilancio}), altrimenti zero. */
+    private BigDecimal forfaitDellAnno(Insegnante insegnante, String annoScolastico) {
+        if (forfait(insegnante).signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        boolean haCorsi = corsiDaConsiderare(insegnante.getId(), lezioniPerCorso(insegnante.getId())).stream()
+            .anyMatch(c -> annoScolastico.equals(c.getAnnoScolastico()));
+        return haCorsi ? forfait(insegnante) : BigDecimal.ZERO;
     }
 
     /** Lezioni a cui l'insegnante è presente, per id del corso. */

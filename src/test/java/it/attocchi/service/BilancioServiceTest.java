@@ -117,6 +117,49 @@ class BilancioServiceTest {
     }
 
     @Test
+    void forfaitAnnuo_siSommaAlCostoOrarioSoloNegliAnniConCorsi() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Long cantoId = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow().getId();
+        Lezione completata = lezioneService.findByCorso(cantoId).getFirst();
+        lezioneService.completa(completata.getId(), "insegnante1");
+        insegnante.setRimborsoForfettario(new BigDecimal("300"));
+        insegnanteService.save(insegnante);
+        try {
+            // Tariffa e forfait si sommano: 116,67 € di lezione + 300 € maturati da inizio anno
+            Bilancio bilancio = bilancioService.bilancio(insegnante.getId(), "2024/2025");
+            assertEquals(0, new BigDecimal("300").compareTo(bilancio.forfait()));
+            assertEquals(new BigDecimal("116.67"), bilancio.costoLezioniMaturato());
+            assertEquals(new BigDecimal("416.67"), bilancio.costoMaturato());
+            assertEquals(new BigDecimal("3800.00"), bilancio.costoPrevisto());
+            RigaRimborsi riga = bilancioService.prospetto("2024/2025").stream()
+                .filter(r -> r.insegnante().getId().equals(insegnante.getId())).findFirst().orElseThrow();
+            assertEquals(new BigDecimal("416.67"), riga.maturato());
+            // La proposta mensile resta solo oraria
+            assertEquals(0, new BigDecimal("116.67").compareTo(
+                bilancioService.propostaRimborso(insegnante.getId(), YearMonth.from(completata.getData()))));
+            // Anno senza corsi: niente forfait
+            assertEquals(0, bilancioService.bilancio(insegnante.getId(), "2025/2026").costoMaturato().signum());
+            assertEquals(0, bilancioService.prospetto("2025/2026").stream()
+                .filter(r -> r.insegnante().getId().equals(insegnante.getId())).findFirst().orElseThrow().maturato().signum());
+
+            // Solo il forfait, senza tariffa oraria: vale quello
+            insegnante.setTariffaOraria(null);
+            insegnanteService.save(insegnante);
+            bilancio = bilancioService.bilancio(insegnante.getId(), "2024/2025");
+            assertEquals(0, new BigDecimal("300").compareTo(bilancio.costoMaturato()));
+            assertEquals(0, new BigDecimal("300").compareTo(bilancio.costoPrevisto()));
+        } finally {
+            Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
+            ripristino.setRimborsoForfettario(null);
+            ripristino.setTariffaOraria(new BigDecimal("25.00"));
+            insegnanteService.save(ripristino);
+            Lezione daRiaprire = lezioneService.findById(completata.getId());
+            daRiaprire.setCompletata(false);
+            lezioneService.save(daRiaprire);
+        }
+    }
+
+    @Test
     void dueInsegnanti_ognunoMaturaLeLezioniACuiEraPresente() {
         Insegnante maria = insegnanteService.findByUsername("insegnante1").orElseThrow();
         Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();

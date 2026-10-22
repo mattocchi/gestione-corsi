@@ -61,7 +61,9 @@ public class RimborsiDialog extends Dialog {
         setMaxWidth("100%");
 
         Span tariffa = new Span("Tariffa oraria " + (insegnante.getTariffaOraria() != null
-            ? Formati.euro(insegnante.getTariffaOraria()) : "non impostata"));
+            ? Formati.euro(insegnante.getTariffaOraria()) : "non impostata")
+            + (insegnante.getRimborsoForfettario() != null && insegnante.getRimborsoForfettario().signum() > 0
+                ? " · forfait annuo " + Formati.euro(insegnante.getRimborsoForfettario()) + " (non compreso nell'importo proposto)" : ""));
         tariffa.addClassNames(Stili.TESTO_SECONDARIO);
         Button aggiungi = new Button("Aggiungi rimborso", VaadinIcon.PLUS.create(), e -> apriRimborso(new Rimborso()));
         aggiungi.addThemeVariants(ButtonVariant.PRIMARY);
