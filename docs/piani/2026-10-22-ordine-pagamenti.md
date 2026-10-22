@@ -20,10 +20,13 @@ In Gestione Pagamenti, filtrando per corso, i partecipanti devono seguire lo ste
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `righePagamenti()` per corso e `Iscrizione.ORDINE`; colonna/campo "Gruppo" in gestione; test | [F-2026-10-22/PARTECIPANTI.2] | `service/PagamentoService`, `views/ElencoPagamenti`, test | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Ordine dei Pagamenti del genitore.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 197 test verdi; `segreteria_gestionePagamenti_filtriTotaliEAzioni` verifica l'ordine di Canto filtrato (per orario, poi inserimento); nuovo `segreteria_gestionePagamenti_colonnaGruppoEOrdineDelCorso` (Chitarra: prima l'allievo del gruppo, poi gli altri per inserimento; colonna "Gruppo"). I test della vista del genitore restano invariati.
+- Non verificato nel browser. Nessuna modifica al database.
