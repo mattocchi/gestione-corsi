@@ -22,10 +22,13 @@ Aggiungere alla conferma di iscrizione alcune frasi che rendano espliciti recupe
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Macro `regole-corso.ftlh` e sezione nell'email e nel PDF di conferma; test | [F-2026-10-22/EMAIL.2] | `templates/regole-corso.ftlh`, `templates/email/conferma.ftlh`, `templates/documenti/conferma.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Testo configurabile dall'interfaccia; regole nella ricevuta.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 210 test verdi; `conferma_importoDaPagareEIstruzioniPerIlBonifico` verifica le tre regole nel testo del PDF generato e nell'email.
+- Non verificato a vista: il PDF e l'email si possono controllare con il pulsante "Anteprima" nel dialog di invio.
