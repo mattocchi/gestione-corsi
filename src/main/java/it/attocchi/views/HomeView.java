@@ -1,5 +1,8 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -14,6 +17,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
+import it.attocchi.service.BilancioService;
 import it.attocchi.service.DashboardService;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
 import it.attocchi.service.DashboardService.RiepilogoGruppi;
@@ -26,6 +30,7 @@ import jakarta.annotation.security.PermitAll;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Dashboard iniziale: riquadri di riepilogo in funzione dei ruoli dell'utente
@@ -38,7 +43,7 @@ import java.util.List;
 public class HomeView extends VerticalLayout {
 
     public HomeView(SecurityService securityService, UserService userService, DashboardService dashboardService,
-                    PagamentoService pagamentoService) {
+                    PagamentoService pagamentoService, BilancioService bilancioService) {
         // Riquadri che vanno a capo, uno per riga sugli smartphone
         addClassNames("gap-6");
 
@@ -56,7 +61,7 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti()),
                 indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
                 indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
-            add(pagamenti(pagamentoService.riepilogoCorsiAttivi()));
+            add(pagamenti(pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso()));
             add(gruppi(dashboardService.riepilogoGruppi()));
         }
         if (securityService.hasRole("INSEGNANTE")) {
@@ -83,9 +88,29 @@ public class HomeView extends VerticalLayout {
         }
     }
 
-    /** Pagamenti dei corsi attivi: riquadri con i totali e una riga per corso (l'ultimo elemento è il totale). */
-    private static Div pagamenti(List<RiepilogoPagamenti> riepilogo) {
+    /**
+     * Pagamenti dei corsi attivi: riquadri con i totali e una riga per corso (l'ultimo elemento è il totale), con il
+     * costo previsto degli insegnanti ({@code costi} per id del corso, assente se nessuno ha la tariffa oraria) e il
+     * margine = quote dovute − costo.
+     */
+    private static Div pagamenti(List<RiepilogoPagamenti> riepilogo, Map<Long, BigDecimal> costi) {
         RiepilogoPagamenti totale = riepilogo.getLast();
+        List<RiepilogoPagamenti> corsi = riepilogo.subList(0, riepilogo.size() - 1);
+        // Totali di costo e margine solo sui corsi con un costo (almeno un insegnante con tariffa)
+        BigDecimal costoTotale = BigDecimal.ZERO;
+        BigDecimal margineTotale = BigDecimal.ZERO;
+        long senzaTariffa = 0;
+        for (RiepilogoPagamenti corso : corsi) {
+            BigDecimal costo = costi.get(corso.corsoId());
+            if (costo == null) {
+                senzaTariffa++;
+            } else {
+                costoTotale = costoTotale.add(costo);
+                margineTotale = margineTotale.add(corso.quota().subtract(costo));
+            }
+        }
+        String esclusi = senzaTariffa == 0 ? null
+            : senzaTariffa + (senzaTariffa == 1 ? " corso senza tariffa escluso" : " corsi senza tariffa esclusi");
         Div sezione = sezione("Pagamenti dei corsi attivi",
             indicatore(VaadinIcon.CHECK, "Saldati", totale.saldati()),
             indicatore(VaadinIcon.HOURGLASS, "Pagamento parziale", totale.parziali()),
@@ -93,7 +118,11 @@ public class HomeView extends VerticalLayout {
             indicatore(VaadinIcon.EURO, "Incassato", Formati.euro(totale.incassato()),
                 totale.percentualeIncassata() + "% del totale"),
             indicatore(VaadinIcon.WALLET, "Da incassare", Formati.euro(totale.daIncassare()),
-                totale.percentualeDaIncassare() + "% del totale"));
+                totale.percentualeDaIncassare() + "% del totale"),
+            indicatore(VaadinIcon.USER_STAR, "Costo insegnanti previsto", Formati.euro(costoTotale),
+                esclusi != null ? esclusi : "lezioni programmate"),
+            indicatore(VaadinIcon.SCALE, "Margine previsto", Formati.euro(margineTotale),
+                esclusi != null ? esclusi : "quote − costo insegnanti"));
 
         Grid<RiepilogoPagamenti> grid = new Grid<>(RiepilogoPagamenti.class, false);
         grid.addColumn(RiepilogoPagamenti::corso).setHeader("Corso");
@@ -102,6 +131,8 @@ public class HomeView extends VerticalLayout {
         grid.addColumn(RiepilogoPagamenti::senzaPagamenti).setHeader("Senza pagamenti").setWidth("10rem").setFlexGrow(0);
         grid.addColumn(r -> importo(r.incassato(), r.percentualeIncassata())).setHeader("Incassato");
         grid.addColumn(r -> importo(r.daIncassare(), r.percentualeDaIncassare())).setHeader("Da incassare");
+        grid.addColumn(r -> costo(costi, r)).setHeader("Costo insegnanti");
+        grid.addComponentColumn(r -> margine(costi, r)).setHeader("Margine").setAutoWidth(true).setFlexGrow(0);
         CardMobile.per(grid)
             .titolo(RiepilogoPagamenti::corso)
             .campo("Saldati", RiepilogoPagamenti::saldati)
@@ -109,8 +140,10 @@ public class HomeView extends VerticalLayout {
             .campo("Senza pagamenti", RiepilogoPagamenti::senzaPagamenti)
             .campo("Incassato", r -> importo(r.incassato(), r.percentualeIncassata()))
             .campo("Da incassare", r -> importo(r.daIncassare(), r.percentualeDaIncassare()))
+            .campo("Costo insegnanti", r -> costo(costi, r))
+            .campo("Margine", r -> margine(costi, r))
             .applica();
-        grid.setItems(riepilogo.subList(0, riepilogo.size() - 1));
+        grid.setItems(corsi);
         grid.setAllRowsVisible(true);
         grid.setEmptyStateText("Nessun corso attivo");
         grid.addClassNames("mt-4");
@@ -144,6 +177,29 @@ public class HomeView extends VerticalLayout {
         grid.setEmptyStateText("Nessun corso attivo con gruppi");
         grid.addClassNames("mt-4");
         return grid;
+    }
+
+    /** Costo previsto degli insegnanti del corso; "Senza tariffa" se nessuno ha la tariffa oraria. */
+    private static String costo(Map<Long, BigDecimal> costi, RiepilogoPagamenti corso) {
+        BigDecimal costo = costi.get(corso.corsoId());
+        return costo != null ? Formati.euro(costo) : "Senza tariffa";
+    }
+
+    /** Margine (quote dovute − costo insegnanti) con badge "Attivo" o "Perdita"; vuoto senza tariffa. */
+    private static Component margine(Map<Long, BigDecimal> costi, RiepilogoPagamenti corso) {
+        BigDecimal costo = costi.get(corso.corsoId());
+        if (costo == null) {
+            return new Span();
+        }
+        BigDecimal margine = corso.quota().subtract(costo);
+        Badge badge = margine.signum() >= 0
+            ? new Badge("Attivo", VaadinIcon.TRENDING_UP.create())
+            : new Badge("Perdita", VaadinIcon.TRENDING_DOWN.create());
+        badge.addThemeVariants(margine.signum() >= 0 ? BadgeVariant.SUCCESS : BadgeVariant.ERROR);
+        Span importo = new Span(Formati.euro(margine));
+        Div cella = new Div(importo, badge);
+        cella.addClassNames("flex items-center gap-2 whitespace-nowrap");
+        return cella;
     }
 
     private static String importo(BigDecimal importo, int percentuale) {

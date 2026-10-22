@@ -21,7 +21,7 @@ Nella tabella dei corsi della dashboard (admin e segreteria) aggiungere il costo
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `RiepilogoPagamenti` con id del corso e quota; colonne "Costo insegnanti" e "Margine" e due card in `HomeView`; test | [F-2026-10-22/DASHBOARD.2] | `service/PagamentoService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | `RiepilogoPagamenti` con id del corso e quota; colonne "Costo insegnanti" e "Margine" e due card in `HomeView`; test | [F-2026-10-22/DASHBOARD.2] | `service/PagamentoService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

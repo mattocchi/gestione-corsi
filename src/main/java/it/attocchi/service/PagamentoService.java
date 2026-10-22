@@ -78,11 +78,11 @@ public class PagamentoService {
     }
 
     /**
-     * Riepilogo dei pagamenti di un corso attivo (o, con {@code corso} "Totale", di tutti): partecipanti saldati,
-     * con pagamento parziale e senza pagamenti; incassato e residuo da incassare.
+     * Riepilogo dei pagamenti di un corso attivo (o, con {@code corso} "Totale" e {@code corsoId} nullo, di tutti):
+     * partecipanti saldati, con pagamento parziale e senza pagamenti; quote dovute, incassato e residuo da incassare.
      */
-    public record RiepilogoPagamenti(String corso, int saldati, int parziali, int senzaPagamenti,
-                                     BigDecimal incassato, BigDecimal daIncassare) {
+    public record RiepilogoPagamenti(Long corsoId, String corso, int saldati, int parziali, int senzaPagamenti,
+                                     BigDecimal quota, BigDecimal incassato, BigDecimal daIncassare) {
 
         public int partecipanti() {
             return saldati + parziali + senzaPagamenti;
@@ -101,10 +101,12 @@ public class PagamentoService {
             return 100 - percentualeIncassata();
         }
 
-        static RiepilogoPagamenti di(String corso, List<Situazione> situazioni) {
+        /** @param corsoId {@code null} per la riga del totale */
+        static RiepilogoPagamenti di(Long corsoId, String corso, List<Situazione> situazioni) {
             int saldati = 0;
             int parziali = 0;
             int senzaPagamenti = 0;
+            BigDecimal quota = BigDecimal.ZERO;
             BigDecimal incassato = BigDecimal.ZERO;
             BigDecimal daIncassare = BigDecimal.ZERO;
             for (Situazione situazione : situazioni) {
@@ -113,10 +115,11 @@ public class PagamentoService {
                     case PARZIALE -> parziali++;
                     case NESSUN_PAGAMENTO -> senzaPagamenti++;
                 }
+                quota = quota.add(situazione.quota());
                 incassato = incassato.add(situazione.pagato());
                 daIncassare = daIncassare.add(situazione.residuo());
             }
-            return new RiepilogoPagamenti(corso, saldati, parziali, senzaPagamenti, incassato, daIncassare);
+            return new RiepilogoPagamenti(corsoId, corso, saldati, parziali, senzaPagamenti, quota, incassato, daIncassare);
         }
     }
 
@@ -296,8 +299,8 @@ public class PagamentoService {
             tutte.add(situazione);
         }
         List<RiepilogoPagamenti> riepilogo = new ArrayList<>();
-        perCorso.forEach((corso, situazioni) -> riepilogo.add(RiepilogoPagamenti.di(corso.getNome(), situazioni)));
-        riepilogo.add(RiepilogoPagamenti.di("Totale", tutte));
+        perCorso.forEach((corso, situazioni) -> riepilogo.add(RiepilogoPagamenti.di(corso.getId(), corso.getNome(), situazioni)));
+        riepilogo.add(RiepilogoPagamenti.di(null, "Totale", tutte));
         return riepilogo;
     }
 

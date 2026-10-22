@@ -175,6 +175,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private RimborsoService rimborsoService;
 
     @Autowired
+    private BilancioService bilancioService;
+
+    @Autowired
     private DocumentiService documentiService;
 
     @Autowired
@@ -336,6 +339,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("200,00 € (5%)", grid.getCellText(0, 4));
             assertEquals("Corso di Chitarra", grid.getCellText(1, 0));
             assertEquals("3.600,00 € (100%)", grid.getCellText(1, 5));
+
+            // Costo previsto degli insegnanti e margine: Canto 7 × 600 € = 4.200 € di quote, 3.500 € di costo
+            var costi = bilancioService.costiPrevistiPerCorso();
+            assertEquals(0, new BigDecimal("3500").compareTo(costi.get(canto.getId())));
+            assertEquals("3.500,00 €", grid.getCellText(0, 6));
+            Component margine = grid.getCellComponent(0, 7);
+            assertEquals("700,00 €", ((Span) margine.getChildren().findFirst().orElseThrow()).getText());
+            assertEquals("Attivo", ((Badge) margine.getChildren().skip(1).findFirst().orElseThrow()).getText());
+            BigDecimal costoTotale = costi.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            assertEquals(List.of("Costo insegnanti previsto: " + Formati.euro(costoTotale) + " (lezioni programmate)",
+                    "Margine previsto: " + Formati.euro(new BigDecimal("7800").subtract(costoTotale)) + " (quote − costo insegnanti)"),
+                indicatori().subList(10, 12));
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
@@ -349,7 +364,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         navigate(CorsiView.class);
         navigate(HomeView.class);
-        assertEquals(List.of("Corsi con gruppi: 0", "Gruppi: 0", "Allievi senza gruppo: 0"), indicatori().subList(10, 13));
+        assertEquals(List.of("Corsi con gruppi: 0", "Gruppi: 0", "Allievi senza gruppo: 0"), indicatori().subList(12, 15));
         var vuota = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
         assertEquals(0, vuota.size());
 
@@ -361,7 +376,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(CorsiView.class);
             navigate(HomeView.class);
             // Chitarra ha 6 iscritti: 1 nel gruppo del sabato, 5 senza gruppo
-            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(10, 13));
+            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(12, 15));
             var gruppi = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
             assertEquals(2, gruppi.size());
             assertEquals("Corso di Chitarra", gruppi.getCellText(0, 0));
