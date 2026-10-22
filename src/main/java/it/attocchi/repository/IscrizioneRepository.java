@@ -44,4 +44,8 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
     /** Numero di iscritti per corso: righe [id del corso, conteggio]. */
     @Query("SELECT i.corso.id, COUNT(i) FROM Iscrizione i GROUP BY i.corso.id")
     List<Object[]> contaPerCorso();
+
+    /** Motivi delle quote personalizzate con il numero di iscrizioni che li usano. */
+    @Query("SELECT i.notaQuota, COUNT(i) FROM Iscrizione i WHERE i.notaQuota IS NOT NULL GROUP BY i.notaQuota")
+    List<Object[]> contaMotiviQuota();
 }

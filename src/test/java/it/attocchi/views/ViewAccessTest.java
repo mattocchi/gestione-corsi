@@ -1241,7 +1241,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
                 .setValue(new BigDecimal("450"));
-            test(find(TextField.class).from(dialog).withLabel("Motivo").single()).setValue("fratelli");
+            // Motivo nuovo scritto a mano (valore personalizzato della ComboBox)
+            ComboBox<String> motivo = find(ComboBox.class).from(dialog).withLabel("Motivo").single();
+            com.vaadin.flow.component.ComponentUtil.fireEvent(motivo,
+                new com.vaadin.flow.component.combobox.ComboBoxBase.CustomValueSetEvent<>(motivo, true, " fratelli "));
 
             Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
             assertEquals(0, new BigDecimal("450").compareTo(iscrizione.getQuotaPersonalizzata()));
@@ -1249,6 +1252,42 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 450,00 €").exists());
         } finally {
             pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_motivoQuotaSuggerisceIMotiviGiaUsati() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Long canto1 = allievoService.findByUsername("allievo_canto1").orElseThrow().getId();
+        Long canto2 = allievoService.findByUsername("allievo_canto2").orElseThrow().getId();
+        Long chitarra1 = allievoService.findByUsername("allievo_chitarra1").orElseThrow().getId();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        pagamentoService.impostaQuota(canto.getId(), canto1, new BigDecimal("500"), "Borsa di studio");
+        pagamentoService.impostaQuota(canto.getId(), canto2, new BigDecimal("450"), "fratelli");
+        pagamentoService.impostaQuota(chitarra.getId(), chitarra1, new BigDecimal("450"), "Fratelli ");
+        try {
+            // Senza doppioni (maiuscole e spazi), prima i più usati
+            assertEquals(List.of("Fratelli", "Borsa di studio"), pagamentoService.motiviQuota().stream()
+                .filter(m -> List.of("fratelli", "borsa di studio").contains(m.toLowerCase())).toList());
+
+            new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
+            QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+            ComboBox<String> motivo = find(ComboBox.class).from(dialog).withLabel("Motivo").single();
+            assertFalse(motivo.isEnabled());
+            new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
+                .setValue(new BigDecimal("400"));
+            assertTrue(motivo.isEnabled());
+            assertTrue(motivo.getListDataView().getItems().toList().containsAll(List.of("Fratelli", "Borsa di studio")));
+            test(motivo).selectItem("Borsa di studio");
+            assertEquals("Borsa di studio", pagamentoService.findIscrizione(canto.getId(), allievo.getId()).getNotaQuota());
+        } finally {
+            pagamentoService.impostaQuota(canto.getId(), canto1, null, null);
+            pagamentoService.impostaQuota(canto.getId(), canto2, null, null);
+            pagamentoService.impostaQuota(chitarra.getId(), chitarra1, null, null);
+            pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
         }
     }
 

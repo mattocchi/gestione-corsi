@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -362,6 +363,31 @@ public class PagamentoService {
             .map(corso -> new IscrittiCorso(corso, perCorso.getOrDefault(corso.getId(), List.of()).stream()
                 .sorted(Comparator.comparing(RigaPagamento::iscrizione, Iscrizione.ORDINE)).toList(),
                 gruppi.getOrDefault(corso.getId(), List.of())))
+            .toList();
+    }
+
+    /**
+     * Motivi già usati per le quote personalizzate (tutti i corsi), da suggerire: senza doppioni ignorando maiuscole e
+     * spazi ai lati (con la grafia più usata), prima i più usati, a parità in ordine alfabetico.
+     */
+    public List<String> motiviQuota() {
+        Map<String, Map<String, Long>> grafiePerMotivo = new HashMap<>();
+        for (Object[] riga : iscrizioneRepository.contaMotiviQuota()) {
+            String motivo = ((String) riga[0]).strip();
+            if (!motivo.isEmpty()) {
+                grafiePerMotivo.computeIfAbsent(motivo.toLowerCase(Locale.ITALIAN), k -> new HashMap<>())
+                    .merge(motivo, (Long) riga[1], Long::sum);
+            }
+        }
+        record Motivo(String testo, long usi) {
+        }
+        return grafiePerMotivo.values().stream()
+            .map(grafie -> new Motivo(grafie.entrySet().stream()
+                .max(Map.Entry.<String, Long>comparingByValue().thenComparing(Map.Entry::getKey, Comparator.reverseOrder()))
+                .orElseThrow().getKey(), grafie.values().stream().mapToLong(Long::longValue).sum()))
+            .sorted(Comparator.comparingLong(Motivo::usi).reversed()
+                .thenComparing(Motivo::testo, String.CASE_INSENSITIVE_ORDER))
+            .map(Motivo::testo)
             .toList();
     }
 

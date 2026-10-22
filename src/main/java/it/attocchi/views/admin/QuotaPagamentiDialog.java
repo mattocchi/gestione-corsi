@@ -2,6 +2,7 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -35,6 +36,7 @@ import it.attocchi.views.ViewSupport;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -74,9 +76,26 @@ public class QuotaPagamentiDialog extends Dialog {
         quota.setHelperText("Vuota = quota piena del corso");
         quota.setValue(iscrizione.getQuotaPersonalizzata());
 
-        TextField motivo = new TextField("Motivo");
+        // Motivo: suggerisce quelli già usati (prima i più frequenti), se ne può scrivere uno nuovo
+        ComboBox<String> motivo = new ComboBox<>("Motivo");
         motivo.setPlaceholder("es. fratelli");
-        motivo.setValue(iscrizione.getNotaQuota() != null ? iscrizione.getNotaQuota() : "");
+        motivo.setHelperText("Scegli un motivo già usato o scrivine uno nuovo");
+        motivo.setAllowCustomValue(true);
+        motivo.setClearButtonVisible(true);
+        List<String> motivi = new ArrayList<>(pagamentoService.motiviQuota());
+        if (iscrizione.getNotaQuota() != null && !motivi.contains(iscrizione.getNotaQuota())) {
+            motivi.add(iscrizione.getNotaQuota());
+        }
+        motivo.setItems(motivi);
+        motivo.setValue(iscrizione.getNotaQuota());
+        motivo.addCustomValueSetListener(e -> {
+            String nuovo = e.getDetail().strip();
+            if (!nuovo.isEmpty() && !motivi.contains(nuovo)) {
+                motivi.add(nuovo);
+                motivo.getListDataView().refreshAll();
+            }
+            motivo.setValue(nuovo.isEmpty() ? null : nuovo);
+        });
         motivo.setEnabled(iscrizione.getQuotaPersonalizzata() != null);
 
         quota.addValueChangeListener(e -> {

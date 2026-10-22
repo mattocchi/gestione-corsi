@@ -19,7 +19,7 @@ Nel dialog "Quota e pagamenti" (Gestione Pagamenti) il campo del motivo della qu
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `PagamentoService.motiviQuota()` (query su `corso_allievi`); "Motivo" come `ComboBox` con valori liberi; test | [F-2026-10-22/PAGAMENTI.1] | `repository/IscrizioneRepository`, `service/PagamentoService`, `views/admin/QuotaPagamentiDialog`, test | `./mvnw test` | [ ] |
+| 1 | `PagamentoService.motiviQuota()` (query su `corso_allievi`); "Motivo" come `ComboBox` con valori liberi; test | [F-2026-10-22/PAGAMENTI.1] | `repository/IscrizioneRepository`, `service/PagamentoService`, `views/admin/QuotaPagamentiDialog`, test | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
