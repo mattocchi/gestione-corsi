@@ -223,5 +223,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [ ] anche dalla scheda genitore vorrei poter associare una allievo, non solo dall'allievo.
   _Chiarimento 2026-10-22: campo a scelta multipla "Figli" nel dialog Nuovo/Modifica Genitore, salvato con Salva (anche per un genitore nuovo); un allievo che ha già un altro genitore si può scegliere (compare "figlio di …") e passa a questo genitore, con un avviso al salvataggio; togliere un figlio lo lascia senza genitore._
-* [ ] Inoltre se sto creando un genitore genera automaticament username se lo lascio vuoto, come abbiamo già fatto in fase di inserimento veloce degli allievi
+* [x] Inoltre se sto creando un genitore genera automaticament username se lo lascio vuoto, come abbiamo già fatto in fase di inserimento veloce degli allievi _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: come per gli allievi: username vuoto → generato da nome e cognome, utente disattivato con password casuale (accesso da attivare in Gestione Utenti), la password serve solo se si scrive lo username; vale anche per i nuovi insegnanti._

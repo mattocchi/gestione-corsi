@@ -91,7 +91,7 @@ public class InsegnantiView extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Insegnante" : "Modifica Insegnante", "700px");
 
         User user = nuovo ? new User() : insegnante.getUser();
-        UtenteFields utente = new UtenteFields(user, userService);
+        UtenteFields utente = new UtenteFields(user, userService, true);
 
         Binder<Insegnante> binder = new Binder<>(Insegnante.class);
         TextField specializzazione = new TextField("Specializzazione");

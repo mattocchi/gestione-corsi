@@ -42,12 +42,15 @@ public class GenitoreService {
 
     /**
      * Salva insieme utente e scheda del genitore (admin e segreteria). Un genitore nuovo riceve il ruolo
-     * GENITORE e richiede la password; per uno esistente {@code rawPassword} vuota lascia quella attuale.
+     * GENITORE; senza username non ha accesso: username generato, password casuale e utente disattivato
+     * ({@link UserService#accessoGeneratoSeManca}). Con lo username serve la password. Per uno esistente
+     * {@code rawPassword} vuota lascia quella attuale.
      */
     @Transactional
     public Genitore salva(Genitore genitore, User user, String rawPassword) {
         if (genitore.getId() == null) {
             user.getRoles().add("GENITORE");
+            rawPassword = userService.accessoGeneratoSeManca(user, rawPassword);
         }
         genitore.setUser(userService.save(user, rawPassword));
         return genitoreRepository.save(genitore);

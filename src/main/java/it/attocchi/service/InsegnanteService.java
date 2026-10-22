@@ -42,7 +42,9 @@ public class InsegnanteService {
 
     /**
      * Salva insieme utente e scheda dell'insegnante (admin e segreteria). Un insegnante nuovo riceve il ruolo
-     * INSEGNANTE e richiede la password; per uno esistente {@code rawPassword} vuota lascia quella attuale.
+     * INSEGNANTE; senza username non ha accesso: username generato, password casuale e utente disattivato
+     * ({@link UserService#accessoGeneratoSeManca}). Con lo username serve la password. Per uno esistente
+     * {@code rawPassword} vuota lascia quella attuale.
      */
     @Transactional
     public Insegnante salva(Insegnante insegnante, User user, String rawPassword) {
@@ -54,6 +56,7 @@ public class InsegnanteService {
         }
         if (insegnante.getId() == null) {
             user.getRoles().add("INSEGNANTE");
+            rawPassword = userService.accessoGeneratoSeManca(user, rawPassword);
         }
         insegnante.setUser(userService.save(user, rawPassword));
         return insegnanteRepository.save(insegnante);

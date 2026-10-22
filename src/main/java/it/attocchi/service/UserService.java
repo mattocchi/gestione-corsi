@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -78,6 +79,20 @@ public class UserService {
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    /**
+     * Per un utente nuovo senza username (accesso facoltativo): genera lo username da nome e cognome, disattiva
+     * l'utente e restituisce una password casuale da usare al salvataggio; altrimenti restituisce {@code rawPassword}.
+     * L'accesso si attiva poi da Gestione Utenti.
+     */
+    public String accessoGeneratoSeManca(User user, String rawPassword) {
+        if (user.getId() != null || (user.getUsername() != null && !user.getUsername().isBlank())) {
+            return rawPassword;
+        }
+        user.setUsername(usernameLibero(user.getNome(), user.getCognome()));
+        user.setEnabled(false);
+        return UUID.randomUUID().toString();
     }
 
     /** Primo username libero ricavato da nome e cognome: "mario.rossi", poi "mario.rossi2", "mario.rossi3"… */

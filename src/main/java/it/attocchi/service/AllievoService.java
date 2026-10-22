@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -63,11 +62,7 @@ public class AllievoService {
     public Allievo salva(Allievo allievo, User user, String rawPassword) {
         if (allievo.getId() == null) {
             user.getRoles().add("ALLIEVO");
-            if (user.getUsername() == null || user.getUsername().isBlank()) {
-                user.setUsername(userService.usernameLibero(user.getNome(), user.getCognome()));
-                user.setEnabled(false);
-                rawPassword = UUID.randomUUID().toString();
-            }
+            rawPassword = userService.accessoGeneratoSeManca(user, rawPassword);
         }
         allievo.setUser(userService.save(user, rawPassword));
         return allievoRepository.save(allievo);

@@ -22,7 +22,7 @@ Associare gli allievi anche dalla scheda del genitore ([F-2026-10-22/GENITORI.1]
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Username generato per genitori e insegnanti nuovi (servizio comune, dialog con accesso facoltativo); test | [F-2026-10-22/GENITORI.2] | `service/UserService`, `AllievoService`, `GenitoreService`, `InsegnanteService`, `views/admin/GenitoriView`, `InsegnantiView`, test | `./mvnw test` | [ ] |
+| 1 | Username generato per genitori e insegnanti nuovi (servizio comune, dialog con accesso facoltativo); test | [F-2026-10-22/GENITORI.2] | `service/UserService`, `AllievoService`, `GenitoreService`, `InsegnanteService`, `views/admin/GenitoriView`, `InsegnantiView`, test | `./mvnw test` | [x] |
 | 2 | Campo "Figli" nel dialog del genitore, `GenitoreService.salva` con i figli e avviso degli spostati; test | [F-2026-10-22/GENITORI.1] | `service/GenitoreService`, `views/admin/GenitoriView`, test | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro (promemoria: cancellare `prod.bundle` prima del build) | — | `CLAUDE.md`, questo piano | — | [ ] |
 

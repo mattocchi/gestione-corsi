@@ -82,7 +82,7 @@ public class GenitoriView extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Genitore" : "Modifica Genitore", "700px");
 
         User user = nuovo ? new User() : genitore.getUser();
-        UtenteFields utente = new UtenteFields(user, userService);
+        UtenteFields utente = new UtenteFields(user, userService, true);
         Binder<Genitore> binder = new Binder<>(Genitore.class);
         AnagraficaFields<Genitore> anagrafica = new AnagraficaFields<>(binder, false);
         binder.readBean(genitore);

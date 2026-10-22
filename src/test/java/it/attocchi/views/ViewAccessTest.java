@@ -2185,23 +2185,45 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
-    @SuppressWarnings("unchecked")
-    void segreteria_nuovoGenitoreConUsernameDiSoliSpazi_erroreSulCampo() {
+    void segreteria_nuovoGenitoreSenzaUsername_usernameGeneratoEAccessoDisattivato() {
         navigate(GenitoriView.class);
-        int prima = genitoreService.findAll().size();
         test(find(Button.class).withText("Nuovo Genitore").single()).click();
         Dialog dialog = find(Dialog.class).single();
-        TextField username = find(TextField.class).from(dialog).withLabel("Username").single();
-        test(username).setValue("   ");
-        test(find(PasswordField.class).from(dialog).withLabel("Password").single()).setValue("segreta123");
+        // Soli spazi = vuoto: niente password richiesta
+        test(find(TextField.class).from(dialog).withLabel("Username").single()).setValue("   ");
         test(find(TextField.class).from(dialog).withLabel("Nome").single()).setValue("Marta");
         test(find(TextField.class).from(dialog).withLabel("Cognome").single()).setValue("Spazi");
         test(find(Button.class).from(dialog).withText("Salva").single()).click();
+        assertFalse(dialog.isOpened());
 
-        // Errore sul campo, nessun salvataggio tentato sul database
-        assertTrue(username.isInvalid());
-        assertTrue(dialog.isOpened());
-        assertEquals(prima, genitoreService.findAll().size());
+        Genitore genitore = genitoreService.findByUsername("marta.spazi").orElseThrow();
+        try {
+            assertFalse(genitore.getUser().isEnabled());
+            assertTrue(genitore.getUser().getRoles().contains("GENITORE"));
+        } finally {
+            genitoreRepository.delete(genitore);
+            userService.delete(genitore.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_nuovoInsegnanteSenzaUsername_usernameGenerato() {
+        Insegnante insegnante = insegnanteService.salva(new Insegnante(), utenteSenzaUsername("Ugo", "Generato"), "");
+        try {
+            assertEquals("ugo.generato", insegnante.getUser().getUsername());
+            assertFalse(insegnante.getUser().isEnabled());
+        } finally {
+            insegnanteRepository.delete(insegnante);
+            userService.delete(insegnante.getUser());
+        }
+    }
+
+    private static User utenteSenzaUsername(String nome, String cognome) {
+        User user = new User();
+        user.setNome(nome);
+        user.setCognome(cognome);
+        return user;
     }
 
     @Test
