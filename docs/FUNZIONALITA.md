@@ -196,3 +196,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] nella vista dei partecipanti ai corsi metti come ordine predefinito il gruppo e poi l'orario se sono specificati in modo da vederli ordinati per gruppo prima e poi per orario, se non sono specificati usa l'ordine di inserimento anzichè l'ordine alfabetico che potrebbe presumbilmente rispettare la sequenza _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: ordine = gruppo (per giorno, orario e nome; chi non ha gruppo in fondo), poi orario (chi non ce l'ha dopo), poi ordine di inserimento; si registra da ora la data di iscrizione, le iscrizioni già esistenti seguono l'ordine di creazione dell'allievo e vengono prima delle nuove; vale in Partecipanti, Gestisci Presenze e Riepilogo Iscritti._
+
+### ALLIEVI
+
+* [ ] aggiungi un fitro per corso nell'elenco "gestione allievi"
