@@ -22,10 +22,14 @@ Poter eliminare la scheda Genitore mantenendo l'utente quando ha altri ruoli ([F
 |---|---|---|---|---|---|
 | 1 | `GenitoreService.elimina` e azione "Elimina" con conferma in Genitori; test | [F-2026-10-22/GENITORI.3] | `service/GenitoreService`, `views/admin/GenitoriView`, test | `./mvnw test` | [x] |
 | 2 | `InsegnanteService.elimina` (bloccata se ha collegamenti) e azione in Insegnanti; test | [F-2026-10-22/GENITORI.3] | `service/InsegnanteService`, repository, `views/admin/InsegnantiView`, test | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Eliminazione dell'utente insieme alla scheda.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 212 test verdi; nuovo `admin_eliminaLaSchedaGenitoreMantenendoLUtente` (conferma con il figlio che resta senza genitore, scheda eliminata, utente con il solo altro ruolo); la segreteria non vede "Elimina".
+- Passo 2: `./mvnw test` 213 test verdi; nuovo `admin_eliminaLaSchedaInsegnanteSoloSenzaCollegamenti` (insegnante1 con un corso: bloccato; insegnante senza collegamenti: eliminato, l'utente resta con SEGRETERIA).
+- Non verificato nel browser. Nessuna modifica allo schema.
