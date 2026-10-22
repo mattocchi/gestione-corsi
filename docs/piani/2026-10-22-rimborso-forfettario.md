@@ -25,10 +25,14 @@ Aggiungere all'insegnante un rimborso "una tantum" che si somma al costo orario;
 |---|---|---|---|---|---|
 | 1 | Campo `rimborsoForfettario` (entity, validazione, scheda Insegnanti con colonna, Profilo in sola lettura) | — | `entity/Insegnante`, `service/InsegnanteService`, `views/admin/InsegnantiView`, `views/ProfiloView`, test | `./mvnw test` | [x] |
 | 2 | `BilancioService`: forfait nel prospetto e nel bilancio dell'anno; Bilancio e dialog Rimborsi lo mostrano; test | [F-2026-10-22/RIMBORSI.1] | `service/BilancioService`, `views/admin/BilancioDialog`, `views/admin/RimborsiDialog`, `BilancioServiceTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Importo diverso per anno scolastico; forfait nella proposta mensile; forfait ripartito sui corsi.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 198 test verdi; il test di creazione dell'insegnante imposta anche il forfait, il profilo dell'insegnante lo mostra in sola lettura; indici della lista Insegnanti aggiornati (nuova colonna "Forfait annuo").
+- Passo 2: `./mvnw test` 199 test verdi; nuovo `forfaitAnnuo_siSommaAlCostoOrarioSoloNegliAnniConCorsi` (tariffa + forfait, proposta mensile solo oraria, anno senza corsi a zero, solo forfait senza tariffa).
+- Non verificato nel browser. Produzione: `ddl-auto=update` aggiunge la colonna `rimborso_forfettario` (nullable), nessuno script.
