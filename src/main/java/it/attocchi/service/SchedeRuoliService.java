@@ -7,7 +7,11 @@ import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.User;
 import it.attocchi.repository.AllievoRepository;
 import it.attocchi.repository.GenitoreRepository;
+import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.InsegnanteRepository;
+import it.attocchi.repository.PagamentoRepository;
+import it.attocchi.repository.PresenzaRepository;
+import it.attocchi.repository.RecuperoPasswordRepository;
 import it.attocchi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,15 +41,99 @@ public class SchedeRuoliService {
     private final InsegnanteRepository insegnanteRepository;
     private final GenitoreRepository genitoreRepository;
     private final AllievoRepository allievoRepository;
+    private final InsegnanteService insegnanteService;
+    private final PagamentoRepository pagamentoRepository;
+    private final IscrizioneRepository iscrizioneRepository;
+    private final PresenzaRepository presenzaRepository;
+    private final RecuperoPasswordRepository recuperoPasswordRepository;
 
     public SchedeRuoliService(UserService userService, UserRepository userRepository,
                               InsegnanteRepository insegnanteRepository, GenitoreRepository genitoreRepository,
-                              AllievoRepository allievoRepository) {
+                              AllievoRepository allievoRepository, InsegnanteService insegnanteService,
+                              PagamentoRepository pagamentoRepository, IscrizioneRepository iscrizioneRepository,
+                              PresenzaRepository presenzaRepository, RecuperoPasswordRepository recuperoPasswordRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.insegnanteRepository = insegnanteRepository;
         this.genitoreRepository = genitoreRepository;
         this.allievoRepository = allievoRepository;
+        this.insegnanteService = insegnanteService;
+        this.pagamentoRepository = pagamentoRepository;
+        this.iscrizioneRepository = iscrizioneRepository;
+        this.presenzaRepository = presenzaRepository;
+        this.recuperoPasswordRepository = recuperoPasswordRepository;
+    }
+
+    /**
+     * Cosa comporta eliminare l'utente: le schede che verrebbero eliminate con lui (es. "scheda genitore, 2 figli
+     * restano senza genitore") e, se non si può, il motivo (scheda con collegamenti, o il proprio utente).
+     */
+    public record EliminazioneUtente(List<String> schede, String motivoBlocco) {
+
+        public boolean possibile() {
+            return motivoBlocco == null;
+        }
+    }
+
+    public EliminazioneUtente verificaEliminazione(Long userId, String usernameCorrente) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Utente non trovato: " + userId));
+        if (user.getUsername().equals(usernameCorrente)) {
+            return new EliminazioneUtente(List.of(), "non puoi eliminare il tuo utente");
+        }
+        List<String> schede = new ArrayList<>();
+        Optional<Allievo> allievo = allievoRepository.findByUserId(userId);
+        if (allievo.isPresent()) {
+            Long allievoId = allievo.get().getId();
+            if (pagamentoRepository.existsByAllievo(allievoId)) {
+                return new EliminazioneUtente(List.of(), "la scheda allievo ha pagamenti registrati");
+            }
+            if (!iscrizioneRepository.findByAllievoIdWithCorso(allievoId).isEmpty()) {
+                return new EliminazioneUtente(List.of(), "l'allievo è iscritto a dei corsi: toglilo prima dai partecipanti");
+            }
+            if (!presenzaRepository.findByAllievoId(allievoId).isEmpty()) {
+                return new EliminazioneUtente(List.of(), "l'allievo ha presenze registrate in lezioni passate");
+            }
+            schede.add("scheda allievo");
+        }
+        Optional<Insegnante> insegnante = insegnanteRepository.findByUserId(userId);
+        if (insegnante.isPresent()) {
+            String motivo = insegnanteService.motivoPerNonEliminare(insegnante.get().getId());
+            if (motivo != null) {
+                return new EliminazioneUtente(List.of(), "la scheda insegnante " + motivo);
+            }
+            schede.add("scheda insegnante");
+        }
+        Optional<Genitore> genitore = genitoreRepository.findByUserId(userId);
+        if (genitore.isPresent()) {
+            long figli = figli(genitore.get()).size();
+            schede.add("scheda genitore" + (figli == 0 ? "" : figli == 1 ? " (1 figlio resta senza genitore)"
+                : " (" + figli + " figli restano senza genitore)"));
+        }
+        return new EliminazioneUtente(schede, null);
+    }
+
+    /**
+     * Elimina l'utente con le sue schede e i suoi link di recupero password, se {@link #verificaEliminazione} lo
+     * permette; altrimenti {@link IllegalStateException} con il motivo.
+     */
+    @Transactional
+    public void eliminaUtente(Long userId, String usernameCorrente) {
+        EliminazioneUtente verifica = verificaEliminazione(userId, usernameCorrente);
+        if (!verifica.possibile()) {
+            throw new IllegalStateException("Impossibile eliminare l'utente: " + verifica.motivoBlocco());
+        }
+        allievoRepository.findByUserId(userId).ifPresent(allievoRepository::delete);
+        insegnanteRepository.findByUserId(userId).ifPresent(insegnanteRepository::delete);
+        genitoreRepository.findByUserId(userId).ifPresent(genitore -> {
+            figli(genitore).forEach(figlio -> figlio.setGenitore(null));
+            genitoreRepository.delete(genitore);
+        });
+        recuperoPasswordRepository.deleteByUserId(userId);
+        userRepository.deleteById(userId);
+    }
+
+    private List<Allievo> figli(Genitore genitore) {
+        return allievoRepository.findAll().stream().filter(a -> genitore.equals(a.getGenitore())).toList();
     }
 
     /** Salva l'utente da Gestione Utenti e crea le schede che mancano per i suoi ruoli. */

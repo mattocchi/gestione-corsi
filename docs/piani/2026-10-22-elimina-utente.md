@@ -19,7 +19,7 @@ Da admin, "Elimina" sulla riga di un utente in Gestione Utenti non elimina l'ute
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `SchedeRuoliService.schedeDaEliminare` / `eliminaUtente` (schede libere, link di recupero, blocco con motivo, non sé stessi); test | `service/SchedeRuoliService`, `SchedeRuoliServiceTest` | `./mvnw test` | [ ] |
+| 1 | `SchedeRuoliService.schedeDaEliminare` / `eliminaUtente` (schede libere, link di recupero, blocco con motivo, non sé stessi); test | `service/SchedeRuoliService`, `SchedeRuoliServiceTest` | `./mvnw test` | [x] |
 | 2 | Gestione Utenti: conferma con l'elenco delle schede, errori come notifica; test | `views/admin/UtentiView`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
