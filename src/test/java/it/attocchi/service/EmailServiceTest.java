@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -87,6 +88,52 @@ class EmailServiceTest {
             assertEquals(Esito.SIMULATA, emailService.invia(TipoDocumento.RICEVUTA, canto.getId(), allievo.getId(), "admin").getEsito());
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+        }
+    }
+
+    @Test
+    void anteprima_comeLInvioMaSenzaInviareNeRegistrare() {
+        Corso canto = canto();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        EmailService.Anteprima anteprima = emailService.anteprima(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(),
+            allievo.getId(), "segreteria");
+        assertEquals("genitore3@example.com", anteprima.destinatario().email());
+        assertEquals("Conferma di iscrizione – Corso di Canto 2024/2025 – Allievo Canto3", anteprima.oggetto());
+        assertEquals(documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(),
+            anteprima.destinatario().nome()), anteprima.corpoHtml());
+        assertTrue(anteprima.allegato().endsWith(".pdf"));
+        assertTrue(anteprima.pdf().length > 0);
+        assertEquals(0, emailService.tuttiGliInvii().size());
+
+        // Stessi controlli dell'invio: ricevuta senza pagamenti, utente non autorizzato
+        assertThrows(IllegalStateException.class,
+            () -> emailService.anteprima(TipoDocumento.RICEVUTA, canto.getId(), allievo.getId(), "segreteria"));
+        assertThrows(IllegalStateException.class,
+            () -> emailService.anteprima(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(), "insegnante1"));
+    }
+
+    @Test
+    void destinatariConferme_chiLaRiceveEChiESaltato() {
+        Allievo allievo = allievoService.findByUsername("allievo_canto6").orElseThrow();
+        String codiceFiscale = allievo.getCodiceFiscale();
+        allievo.setCodiceFiscale(null);
+        allievoService.save(allievo);
+        try {
+            List<EmailService.DestinatarioConferma> destinatari = emailService.destinatariConferme(canto().getId(), "segreteria");
+            assertEquals(7, destinatari.size());
+            // Nell'ordine dei partecipanti: prima per orario (Canto5 alle 17:00)
+            assertEquals("Allievo Canto5", destinatari.getFirst().allievo());
+            assertTrue(destinatari.getFirst().riceve());
+            EmailService.DestinatarioConferma saltato = destinatari.stream()
+                .filter(d -> d.allievo().equals("Allievo Canto6")).findFirst().orElseThrow();
+            assertFalse(saltato.riceve());
+            assertEquals("senza codice fiscale o data di nascita", saltato.motivoEsclusione());
+            assertEquals(6, destinatari.stream().filter(EmailService.DestinatarioConferma::riceve).count());
+            assertEquals(0, emailService.tuttiGliInvii().size());
+        } finally {
+            Allievo ripristino = allievoService.findById(allievo.getId());
+            ripristino.setCodiceFiscale(codiceFiscale);
+            allievoService.save(ripristino);
         }
     }
 

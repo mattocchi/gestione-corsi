@@ -46,6 +46,18 @@ public class EmailService {
     }
 
     /** Esito di un invio multiplo. */
+    /** Anteprima di un'email dell'iscrizione: com'è costruita dall'invio, senza inviarla né registrarla. */
+    public record Anteprima(Destinatario destinatario, String oggetto, String corpoHtml, String allegato, byte[] pdf) {
+    }
+
+    /** Partecipante dell'invio delle conferme a tutti: il destinatario, o il motivo per cui è saltato. */
+    public record DestinatarioConferma(Long allievoId, String allievo, Destinatario destinatario, String motivoEsclusione) {
+
+        public boolean riceve() {
+            return motivoEsclusione == null;
+        }
+    }
+
     public record Riepilogo(int inviate, int simulate, int errori, int senzaEmail, int datiMancanti) {
     }
 
@@ -161,15 +173,7 @@ public class EmailService {
     public InvioEmail invia(TipoDocumento tipo, Long corsoId, Long allievoId, String username) {
         verificaPermesso(username);
         Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
-        Destinatario destinatario = destinatario(iscrizione.getAllievo())
-            .orElseThrow(() -> new IllegalStateException("Né il genitore né l'allievo hanno un indirizzo email"));
-        if (tipo == TipoDocumento.RICEVUTA && !haPagamenti(corsoId, allievoId)) {
-            throw new IllegalStateException("Nessun pagamento registrato: non c'è una ricevuta da inviare");
-        }
-        String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo());
-        if (datiMancanti != null) {
-            throw new IllegalStateException(datiMancanti);
-        }
+        Destinatario destinatario = verificaInviabile(tipo, iscrizione);
 
         InvioEmail invio = new InvioEmail();
         invio.setDataOra(LocalDateTime.now());
@@ -180,9 +184,7 @@ public class EmailService {
         invio.setAllievoNome(iscrizione.getAllievo().getNomeCompleto());
         invio.setDestinatario(destinatario.email());
         invio.setDestinatarioNome(destinatario.nome());
-        invio.setOggetto(tipo.getTitolo() + " – " + iscrizione.getCorso().getNome()
-            + (iscrizione.getCorso().getAnnoScolastico() != null ? " " + iscrizione.getCorso().getAnnoScolastico() : "")
-            + " – " + iscrizione.getAllievo().getNomeCompleto());
+        invio.setOggetto(oggetto(tipo, iscrizione));
         invio.setAllegato(documentiService.nomeFile(tipo, iscrizione));
         invio.setInviatoDa(username);
 
@@ -204,6 +206,37 @@ public class EmailService {
             invio.setErrore(messaggio.length() > 1000 ? messaggio.substring(0, 1000) : messaggio);
         }
         return invioEmailRepository.save(invio);
+    }
+
+    /**
+     * Anteprima dell'email che {@link #invia} manderebbe (stessi controlli, destinatario, oggetto, testo e PDF), senza
+     * inviarla né registrarla.
+     */
+    public Anteprima anteprima(TipoDocumento tipo, Long corsoId, Long allievoId, String username) {
+        verificaPermesso(username);
+        Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
+        Destinatario destinatario = verificaInviabile(tipo, iscrizione);
+        return new Anteprima(destinatario, oggetto(tipo, iscrizione),
+            documentiService.emailHtml(tipo, corsoId, allievoId, destinatario.nome()),
+            documentiService.nomeFile(tipo, iscrizione), documentiService.documentoPdf(tipo, corsoId, allievoId));
+    }
+
+    /**
+     * Partecipanti del corso nell'ordine dei partecipanti, con chi riceverebbe la conferma di iscrizione da
+     * {@link #inviaConferme} e chi verrebbe saltato (e perché).
+     */
+    public List<DestinatarioConferma> destinatariConferme(Long corsoId, String username) {
+        verificaPermesso(username);
+        return iscrizioneRepository.findByCorsoIdWithAllievo(corsoId).stream()
+            .sorted(Iscrizione.ORDINE)
+            .map(iscrizione -> {
+                Allievo allievo = iscrizione.getAllievo();
+                Destinatario destinatario = destinatario(allievo).orElse(null);
+                String motivo = !allievo.isDatiPerDocumenti() ? "senza codice fiscale o data di nascita"
+                    : destinatario == null ? "senza email" : null;
+                return new DestinatarioConferma(allievo.getId(), allievo.getNomeCompleto(), destinatario, motivo);
+            })
+            .toList();
     }
 
     /**
@@ -291,6 +324,27 @@ public class EmailService {
         if (!userRepository.findByUsername(username).map(User::getRoles).orElse(Set.of()).contains("ADMIN")) {
             throw new IllegalStateException("Solo l'admin può inviare email di test");
         }
+    }
+
+    /** Destinatario dell'email, se l'iscrizione la può ricevere; altrimenti {@link IllegalStateException}. */
+    private Destinatario verificaInviabile(TipoDocumento tipo, Iscrizione iscrizione) {
+        Destinatario destinatario = destinatario(iscrizione.getAllievo())
+            .orElseThrow(() -> new IllegalStateException("Né il genitore né l'allievo hanno un indirizzo email"));
+        if (tipo == TipoDocumento.RICEVUTA
+                && !haPagamenti(iscrizione.getCorso().getId(), iscrizione.getAllievo().getId())) {
+            throw new IllegalStateException("Nessun pagamento registrato: non c'è una ricevuta da inviare");
+        }
+        String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo());
+        if (datiMancanti != null) {
+            throw new IllegalStateException(datiMancanti);
+        }
+        return destinatario;
+    }
+
+    private static String oggetto(TipoDocumento tipo, Iscrizione iscrizione) {
+        return tipo.getTitolo() + " – " + iscrizione.getCorso().getNome()
+            + (iscrizione.getCorso().getAnnoScolastico() != null ? " " + iscrizione.getCorso().getAnnoScolastico() : "")
+            + " – " + iscrizione.getAllievo().getNomeCompleto();
     }
 
     private void verificaPermesso(String username) {
