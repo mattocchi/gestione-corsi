@@ -22,10 +22,15 @@ Un utente disattivato non deve poter entrare, ma se chiede il recupero password 
 |---|---|---|---|---|---|
 | 1 | `User.ultimoAccesso`, listener di `AuthenticationSuccessEvent`, colonna in Gestione Utenti; test | [F-2026-10-22/ACCESSO.2] | `entity/User`, `service/UserService`, `security/UltimoAccessoListener`, `views/admin/UtentiView`, test | `./mvnw test` | [x] |
 | 2 | Recupero password per i disattivati mai entrati e attivazione alla nuova password; test | [F-2026-10-22/ACCESSO.1] | `service/RecuperoPasswordService`, `RecuperoPasswordServiceTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Registro dei tentativi di accesso falliti; ultimo accesso negli elenchi delle persone.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 205 test verdi; `LoginTest.accesso_registraLUltimoAccesso` (login con lo stesso AuthenticationManager del form: ultimo accesso registrato, non cambiato da un tentativo fallito); `admin_utenti_griglia` verifica la colonna ("Mai" e data/ora); indice della colonna azioni di Gestione Utenti aggiornato.
+- Passo 2: `./mvnw test` 206 test verdi; `accountDisattivatoDopoLUso_nessunLinkENessunLinkValido` e `accountDisattivatoMaiEntrato_siAttivaConLaNuovaPassword`.
+- Non verificato nel browser. Produzione: `ddl-auto=update` aggiunge la colonna `ultimo_accesso` (nullable), nessuno script. Fino al primo accesso di ciascuno tutti gli utenti esistenti risultano "Mai" e, se disattivati, possono riattivarsi con il recupero password.
+- Nota: per attivarsi serve un'email nell'utente; gli allievi creati con l'inserimento rapido senza email non possono farlo.
