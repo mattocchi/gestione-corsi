@@ -22,10 +22,13 @@ Nella tabella dei corsi della dashboard (admin e segreteria) aggiungere il costo
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `RiepilogoPagamenti` con id del corso e quota; colonne "Costo insegnanti" e "Margine" e due card in `HomeView`; test | [F-2026-10-22/DASHBOARD.2] | `service/PagamentoService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Forfait annuo nel costo dei corsi.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 206 test verdi; `segreteria_dashboardConRiepilogoPagamenti` verifica costo (Canto 3.500 €), margine (700 €, "Attivo") e le due nuove card; indici delle card dei gruppi aggiornati.
+- Non verificato nel browser. Nessuna modifica al database.
