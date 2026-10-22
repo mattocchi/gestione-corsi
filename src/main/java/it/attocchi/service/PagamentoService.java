@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 
@@ -307,6 +308,22 @@ public class PagamentoService {
     /** Una riga per ogni partecipante di ogni corso (anche non attivo), in ordine di corso e allievo. */
     public List<RigaPagamento> righePagamenti() {
         return righe(iscrizioneRepository.findAllWithCorsoAllievoGenitore()).stream().sorted(PER_CORSO_E_PARTECIPANTE).toList();
+    }
+
+    /**
+     * Quota e pagato di tutti i figli del genitore sui corsi attivi (dashboard); vuoto se non hanno iscrizioni a corsi
+     * attivi.
+     */
+    public Optional<Situazione> situazioneDeiFigli(String usernameGenitore) {
+        List<Situazione> situazioni = righePagamentiDeiFigli(usernameGenitore).stream()
+            .filter(riga -> riga.corso().isAttivo())
+            .map(RigaPagamento::situazione)
+            .toList();
+        if (situazioni.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new Situazione(situazioni.stream().map(Situazione::quota).reduce(BigDecimal.ZERO, BigDecimal::add),
+            situazioni.stream().map(Situazione::pagato).reduce(BigDecimal.ZERO, BigDecimal::add)));
     }
 
     /** Le righe dei soli figli del genitore indicato, anche nei corsi non attivi, per corso e nome del figlio. */

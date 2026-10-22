@@ -18,7 +18,7 @@ Nella dashboard del genitore una o due card di riepilogo dei pagamenti ([F-2026-
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `PagamentoService.situazioneDeiFigli(username)` (corsi attivi); card in `HomeView`; test | [F-2026-10-22/DASHBOARD.3] | `service/PagamentoService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | `PagamentoService.situazioneDeiFigli(username)` (corsi attivi); card in `HomeView`; test | [F-2026-10-22/DASHBOARD.3] | `service/PagamentoService`, `views/HomeView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

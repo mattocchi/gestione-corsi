@@ -443,8 +443,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void genitore_dashboardConICorsiDeiFigli() {
         navigate(HomeView.class);
 
-        // genitore3: Allievo Canto3 (Canto) e Allievo Chitarra1 (Chitarra)
-        assertEquals(List.of("Corsi dei figli: 2"), indicatori());
+        // genitore3: Allievo Canto3 (Canto) e Allievo Chitarra1 (Chitarra), 600 € ciascuno, nessun pagamento
+        assertEquals(List.of("Corsi dei figli: 2", "Pagato: 0,00 € (0% della quota)",
+            "Da pagare: 1.200,00 € (su 1.200,00 € di quota)"), indicatori());
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_dashboardConIPagamentiDeiCorsiAttivi() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.now());
+        rata.setImporto(new BigDecimal("600"));
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        Corso inattivo = corsoService.findById(chitarra.getId());
+        inattivo.setAttivo(false);
+        corsoService.save(inattivo);
+        try {
+            // Chitarra non attivo non conta: resta solo Canto, saldato
+            navigate(FigliView.class);
+            navigate(HomeView.class);
+            assertEquals(List.of("Pagato: 600,00 € (100% della quota)", "Da pagare: 0,00 € (tutto saldato)"),
+                indicatori().subList(1, 3));
+        } finally {
+            Corso attivo = corsoService.findById(chitarra.getId());
+            attivo.setAttivo(true);
+            corsoService.save(attivo);
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+        }
     }
 
     @Test

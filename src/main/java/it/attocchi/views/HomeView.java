@@ -29,6 +29,7 @@ import it.attocchi.service.UserService;
 import jakarta.annotation.security.PermitAll;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -83,8 +84,16 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.BOOK, "Corsi a cui sono iscritto", dashboardService.corsiAllievo(username))));
         }
         if (securityService.hasRole("GENITORE")) {
-            add(sezione("I miei figli",
-                indicatore(VaadinIcon.BOOK, "Corsi dei figli", dashboardService.corsiDeiFigli(username))));
+            List<Card> figli = new ArrayList<>();
+            figli.add(indicatore(VaadinIcon.BOOK, "Corsi dei figli", dashboardService.corsiDeiFigli(username)));
+            // Pagamenti di tutti i figli sui corsi attivi
+            pagamentoService.situazioneDeiFigli(username).ifPresent(situazione -> {
+                figli.add(indicatore(VaadinIcon.CHECK, "Pagato", Formati.euro(situazione.pagato()),
+                    situazione.percentualePagata() + "% della quota"));
+                figli.add(indicatore(VaadinIcon.WALLET, "Da pagare", Formati.euro(situazione.residuo()),
+                    situazione.residuo().signum() == 0 ? "tutto saldato" : "su " + Formati.euro(situazione.quota()) + " di quota"));
+            });
+            add(sezione("I miei figli", figli.toArray(Card[]::new)));
         }
     }
 
