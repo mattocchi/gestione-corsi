@@ -189,3 +189,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-21: numero di gruppi in Gestione Corsi (colonna "Gruppi", anche nella card) e in Riepilogo Iscritti sulla riga del corso._
 * [x] Aggiungi anche un recap in dashboard _(completata 2026-10-21)_
   _Chiarimento 2026-10-21: riepilogo dei gruppi dei soli corsi attivi; admin e segreteria: sezione "Gruppi dei corsi attivi" con riquadri (corsi con gruppi, gruppi, allievi senza gruppo nei corsi con gruppi) e tabella con una riga per gruppo (corso, gruppo, iscritti); l'insegnante vede la stessa tabella per i suoi corsi._
+
+## FUNZIONALITA del 22-10-2026
+
+### PARTECIPANTI
+
+* [ ] nella vista dei partecipanti ai corsi metti come ordine predefinito il gruppo e poi l'orario se sono specificati in modo da vederli ordinati per gruppo prima e poi per orario, se non sono specificati usa l'ordine di inserimento anzichè l'ordine alfabetico che potrebbe presumbilmente rispettare la sequenza
