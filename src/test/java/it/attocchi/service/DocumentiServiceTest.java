@@ -84,10 +84,20 @@ class DocumentiServiceTest {
         assertTrue(testo.contains("600,00 €"), testo);
         assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
         assertTrue(testo.contains("Già pagato"), testo);
+        // Regole su recuperi, assenze e rinuncia, uguali nel PDF e nell'email
+        String regole = testo.replaceAll("\\s+", " ");
+        assertTrue(regole.contains("Lezioni, assenze e recuperi"), testo);
+        assertTrue(regole.contains("in coda al corso: il numero di lezioni previsto è garantito"), testo);
+        assertTrue(regole.contains("Se avvisate la segreteria dei corsi almeno una settimana prima"), testo);
+        assertTrue(regole.contains("a giudizio insindacabile della segreteria dei corsi"), testo);
 
         String email = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
         assertTrue(email.contains("Gentile Mario Rossi"));
         assertTrue(email.contains("IT60X0542811101000000123456"));
+        String regoleEmail = email.replaceAll("\\s+", " ");
+        assertTrue(regoleEmail.contains("Lezioni, assenze e recuperi"));
+        assertTrue(regoleEmail.contains("la lezione non viene recuperata ed è comunque dovuta"));
+        assertTrue(regoleEmail.contains("Non è previsto il rimborso delle lezioni non frequentate"));
         assertFalse(email.contains("data:image"));
         assertEquals("conferma-iscrizione-corso-di-canto-" + iscrizione.getAllievo().getNomeCompleto().toLowerCase().replace(' ', '-') + ".pdf",
             documentiService.nomeFile(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione));

@@ -1,3 +1,4 @@
+<#import "/regole-corso.ftlh" as r>
 <!DOCTYPE html>
 <html lang="it">
 <head><meta charset="UTF-8"/></head>
@@ -14,6 +15,7 @@
 <p>Il pagamento può essere effettuato con bonifico intestato a ${associazione.nome}, IBAN <strong>${associazione.iban}</strong>,
   indicando nella causale &quot;${corso.nome} ${corso.anno} – ${allievo.nome}&quot;.</p>
 </#if>
+<@r.regole email=true/>
 <p>In allegato la conferma di iscrizione in PDF.</p>
 <p>Cordiali saluti,<br/>${associazione.nome}</p>
 </body>

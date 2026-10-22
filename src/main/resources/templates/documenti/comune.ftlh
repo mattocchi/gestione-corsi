@@ -21,6 +21,8 @@
   .totali td { padding: 1mm 0; }
   .totali td.valore { text-align: right; font-weight: bold; }
   .riquadro { border: 1px solid #999; padding: 3mm 4mm; margin-top: 6mm; }
+  ul.regole { margin: 0; padding-left: 5mm; }
+  ul.regole li { margin-bottom: 1.5mm; }
 </style>
 </#macro>
 

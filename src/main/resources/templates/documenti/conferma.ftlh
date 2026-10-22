@@ -1,4 +1,5 @@
 <#import "comune.ftlh" as c>
+<#import "/regole-corso.ftlh" as r>
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -24,5 +25,6 @@
   &quot;${corso.nome} ${corso.anno} – ${allievo.nome}&quot;.
 </div>
 </#if>
+<@r.regole/>
 </body>
 </html>
