@@ -207,6 +207,13 @@ public class PagamentoService {
         .comparing((RigaPagamento r) -> r.corso().getNome(), String.CASE_INSENSITIVE_ORDER)
         .thenComparing(r -> r.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER);
 
+    /** Per corso (nome, anno scolastico) e dentro il corso nell'ordine dei partecipanti ({@link Iscrizione#ORDINE}). */
+    private static final Comparator<RigaPagamento> PER_CORSO_E_PARTECIPANTE = Comparator
+        .comparing((RigaPagamento r) -> r.corso().getNome(), String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(r -> r.corso().getAnnoScolastico(), Comparator.nullsLast(Comparator.<String>reverseOrder()))
+        .thenComparing(r -> r.corso().getId())
+        .thenComparing(RigaPagamento::iscrizione, Iscrizione.ORDINE);
+
     private final PagamentoRepository pagamentoRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final CorsoRepository corsoRepository;
@@ -295,12 +302,13 @@ public class PagamentoService {
 
     /** Una riga per ogni partecipante di ogni corso (anche non attivo), in ordine di corso e allievo. */
     public List<RigaPagamento> righePagamenti() {
-        return righe(iscrizioneRepository.findAllWithCorsoAllievoGenitore());
+        return righe(iscrizioneRepository.findAllWithCorsoAllievoGenitore()).stream().sorted(PER_CORSO_E_PARTECIPANTE).toList();
     }
 
-    /** Le righe dei soli figli del genitore indicato, anche nei corsi non attivi. */
+    /** Le righe dei soli figli del genitore indicato, anche nei corsi non attivi, per corso e nome del figlio. */
     public List<RigaPagamento> righePagamentiDeiFigli(String usernameGenitore) {
-        return righe(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(usernameGenitore));
+        return righe(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(usernameGenitore)).stream()
+            .sorted(PER_CORSO_E_ALLIEVO).toList();
     }
 
     /**
@@ -332,7 +340,6 @@ public class PagamentoService {
         }
         return iscrizioni.stream()
             .map(i -> new RigaPagamento(i, new Situazione(i.getQuotaDovuta(), pagato.getOrDefault(i.getId(), BigDecimal.ZERO))))
-            .sorted(PER_CORSO_E_ALLIEVO)
             .toList();
     }
 

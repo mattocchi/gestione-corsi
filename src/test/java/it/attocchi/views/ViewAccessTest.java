@@ -369,6 +369,32 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_gestionePagamenti_colonnaGruppoEOrdineDelCorso() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_chitarra4").orElseThrow();
+        GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(),
+            new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), sabato.getId());
+        try {
+            navigate(GestionePagamentiView.class);
+            var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
+            test(filtro("Filtra per corso")).selectItem("Corso di Chitarra (" + chitarra.getAnnoScolastico() + ")");
+            // Prima il gruppo, poi gli altri in ordine di inserimento
+            assertEquals(List.of("Allievo Chitarra4", "Allievo Chitarra1", "Allievo Chitarra2", "Allievo Chitarra3",
+                    "Allievo Chitarra5", "Allievo Chitarra6"),
+                IntStream.range(0, righe.size()).mapToObj(r -> righe.getRow(r).allievo().getNomeCompleto()).toList());
+            assertEquals("Piccoli – sab 10:00", righe.getCellText(0, 3));
+            assertEquals("", righe.getCellText(1, 3));
+        } finally {
+            corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), null);
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
+        }
+    }
+
+    @Test
     @WithUserDetails("genitore3")
     void genitore_dashboardConICorsiDeiFigli() {
         navigate(HomeView.class);
@@ -1297,6 +1323,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(filtroCorso).selectItem("Corso di Canto (" + canto.getAnnoScolastico() + ")");
             assertTrue(IntStream.range(0, righe.size()).allMatch(r -> righe.getRow(r).corso().equals(canto)));
             assertTrue(find(Span.class).withText("Da pagare " + Formati.euro(new BigDecimal(600 * righe.size()))).exists());
+            // Ordine dei partecipanti: per orario (Canto5 alle 17:00 … Canto1 alle 19:40), poi senza orario per inserimento
+            assertEquals(List.of("Allievo Canto5", "Allievo Canto4", "Allievo Canto3", "Allievo Canto2", "Allievo Canto1",
+                    "Allievo Canto6", "Allievo Canto7"),
+                IntStream.range(0, righe.size()).mapToObj(r -> righe.getRow(r).allievo().getNomeCompleto()).toList());
 
             // Aggiungi pagamento dalla riga: importo proposto = residuo
             int riga = rigaDi(righe, allievo);

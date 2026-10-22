@@ -19,7 +19,7 @@ In Gestione Pagamenti, filtrando per corso, i partecipanti devono seguire lo ste
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `righePagamenti()` per corso e `Iscrizione.ORDINE`; colonna/campo "Gruppo" in gestione; test | [F-2026-10-22/PARTECIPANTI.2] | `service/PagamentoService`, `views/ElencoPagamenti`, test | `./mvnw test` | [ ] |
+| 1 | `righePagamenti()` per corso e `Iscrizione.ORDINE`; colonna/campo "Gruppo" in gestione; test | [F-2026-10-22/PARTECIPANTI.2] | `service/PagamentoService`, `views/ElencoPagamenti`, test | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

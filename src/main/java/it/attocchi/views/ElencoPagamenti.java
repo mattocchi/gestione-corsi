@@ -13,6 +13,7 @@ import com.vaadin.flow.function.SerializableSupplier;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.RigaPagamento;
@@ -131,6 +132,11 @@ public class ElencoPagamenti extends VerticalLayout {
         grid.addColumn(r -> r.corso().getAnnoScolastico()).setHeader("Anno").setSortable(true)
             .setWidth("7rem").setFlexGrow(0);
         grid.addColumn(r -> r.allievo().getNomeCompleto()).setHeader("Allievo").setSortable(true);
+        // Il gruppo del partecipante, solo in gestione
+        grid.addColumn(r -> Formati.gruppo(r.iscrizione().getGruppo())).setHeader("Gruppo")
+            .setComparator(Comparator.comparing((RigaPagamento r) -> r.iscrizione().getGruppo(),
+                Comparator.nullsLast(GruppoCorso.PER_GIORNO)))
+            .setAutoWidth(true).setFlexGrow(0).setVisible(gestione);
         var genitore = grid.addColumn(r -> r.genitore() != null ? r.genitore().getNomeCompleto() : "").setHeader("Genitore")
             .setSortable(true);
         genitore.setVisible(gestione);
@@ -145,6 +151,7 @@ public class ElencoPagamenti extends VerticalLayout {
             .titolo(r -> r.allievo().getNomeCompleto())
             .sottotitolo(r -> r.corso().getNome() + " · " + r.corso().getAnnoScolastico())
             .stato(r -> StatoPagamentoUI.badge(r.situazione()))
+            .campo("Gruppo", r -> gestione ? Formati.gruppo(r.iscrizione().getGruppo()) : null)
             .campo("Genitore", r -> gestione && r.genitore() != null ? r.genitore().getNomeCompleto() : null)
             .campo("Quota", r -> Formati.euro(r.situazione().quota()))
             .campo("Pagato", r -> Formati.euro(r.situazione().pagato()))
