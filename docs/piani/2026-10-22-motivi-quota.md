@@ -28,5 +28,5 @@ Nel dialog "Quota e pagamenti" (Gestione Pagamenti) il campo del motivo della qu
 
 ## Registro
 
-- Passo 1: `./mvnw test` 198 test verdi; nuovo `segreteria_motivoQuotaSuggerisceIMotiviGiaUsati` (motivi da più corsi senza doppioni, prima i più usati, scelta di un motivo suggerito); `segreteria_quotaPersonalizzataDaPartecipanti` ora scrive il motivo come valore nuovo della ComboBox (spazi tolti).
+- Passo 1: `./mvnw test` 198 test verdi; nuovo `segreteria_motivoQuotaSuggerisceIMotiviGiaUsati` (motivi da più corsi senza doppioni, prima i più usati, scelta di un motivo suggerito); `segreteria_impostaQuotaPersonalizzata` ora scrive il motivo come valore nuovo della ComboBox (spazi tolti).
 - Non verificato nel browser. Nessuna modifica al database.
