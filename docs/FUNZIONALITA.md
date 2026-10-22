@@ -208,3 +208,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] nella finetra gestione pagamenti, in popup assegna in quota personalizzata dove inserisco il motivo aggiungi un suggeritore che propone altre motivazioni inserite in precedenza, lasciando possibilità di scrivere nuova motivazione, in modo semplice senza creare una tabella ma con i valori presenti in db _(completata 2026-10-22)_
   _Chiarimento 2026-10-22: il campo "Motivo" propone i motivi già usati nelle quote personalizzate di tutti i corsi, senza doppioni (maiuscole e spazi ignorati), prima i più usati; si può sempre scriverne uno nuovo; nessuna tabella nuova; la "Nota" dei pagamenti resta un campo libero._
+
+### RIMBORSI
+
+* [ ] all'insegnante aggiungi un possibile rimborso una tantum che si aggiunge al costo orario se specificato, se sono specificati entrambi si sommano, se solo uno dei due si applica quello
