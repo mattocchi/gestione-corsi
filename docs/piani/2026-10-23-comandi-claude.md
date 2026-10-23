@@ -20,7 +20,7 @@ Aggiungere comandi Claude Code (slash command di progetto) per eseguire `build.s
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Comandi `/build`, `/deploy-test`, `/deploy` | `.claude/commands/*.md` | lettura dei file | [ ] |
+| 1 | Comandi `/build`, `/deploy-test`, `/deploy` | `.claude/commands/*.md` | lettura dei file | [x] |
 | 2 | CLAUDE.md (sezione Commands) e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
