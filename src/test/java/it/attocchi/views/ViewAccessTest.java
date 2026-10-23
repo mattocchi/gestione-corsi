@@ -114,6 +114,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1818,6 +1819,33 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             lezioneService.eliminaAggiunta(oggi.getId(), "insegnante1");
         }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnanteSenzaTariffa_vedeLeOreDonate() {
+        apriLezioni();
+        navigate(HomeView.class);
+        // Con la tariffa nessun riquadro
+        assertFalse(oreDonate().isPresent());
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        insegnante.setTariffaOraria(null);
+        insegnanteService.save(insegnante);
+        try {
+            apriLezioni();
+            navigate(HomeView.class);
+            // Canto: 30 lezioni × 7 allievi × 40 minuti = 140 ore previste, nessuna svolta
+            assertEquals("Ore donate: 0 h (su 140 h previste)", oreDonate().orElseThrow().getElement().getAttribute("aria-label"));
+        } finally {
+            Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
+            ripristino.setTariffaOraria(new BigDecimal("25.00"));
+            insegnanteService.save(ripristino);
+        }
+    }
+
+    private java.util.Optional<Card> oreDonate() {
+        return find(Card.class).all().stream()
+            .filter(c -> Objects.toString(c.getElement().getAttribute("aria-label"), "").startsWith("Ore donate")).findFirst();
     }
 
     /** Riquadro della prossima lezione del corso indicato, in dashboard. */

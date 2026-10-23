@@ -99,11 +99,15 @@ public class HomeView extends VerticalLayout {
         }
         if (securityService.hasRole("INSEGNANTE")) {
             RiepilogoInsegnante riepilogo = dashboardService.riepilogoInsegnante(username);
-            Div sezione = sezione("I miei corsi",
+            List<Card> corsi = new ArrayList<>(List.of(
                 indicatore(VaadinIcon.MUSIC, "Corsi assegnati", riepilogo.corsi()),
                 indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
                 indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare()),
-                indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate()));
+                indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate())));
+            // Insegnante senza tariffa oraria: le ore di lezione che sta donando sui corsi attivi
+            bilancioService.oreDonate(username).ifPresent(ore -> corsi.add(indicatore(VaadinIcon.HEART, "Ore donate",
+                Formati.durata(ore.minutiSvolti()), "su " + Formati.durata(ore.minutiPrevisti()) + " previste")));
+            Div sezione = sezione("I miei corsi", corsi.toArray(Card[]::new));
             // I gruppi dei suoi corsi, solo se ce ne sono
             List<RigaGruppo> gruppi = dashboardService.gruppiDellInsegnante(username);
             if (!gruppi.isEmpty()) {

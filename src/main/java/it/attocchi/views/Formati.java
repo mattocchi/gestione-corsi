@@ -78,6 +78,16 @@ public final class Formati {
         return Character.toUpperCase(giorno.charAt(0)) + giorno.substring(1) + orario;
     }
 
+    /** Durata in minuti come ore e minuti: "12 h 30 min", "12 h", "45 min", "0 h". */
+    public static String durata(long minuti) {
+        long ore = minuti / 60;
+        long resto = minuti % 60;
+        if (ore == 0 && resto > 0) {
+            return resto + " min";
+        }
+        return ore + " h" + (resto > 0 ? " " + resto + " min" : "");
+    }
+
     /** Orario "17:00"; stringa vuota se {@code null}. */
     public static String ora(LocalTime ora) {
         return ora != null ? ora.format(ORA) : "";
