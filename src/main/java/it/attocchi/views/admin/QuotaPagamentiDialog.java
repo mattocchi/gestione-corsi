@@ -27,7 +27,6 @@ import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
-import it.attocchi.views.Ricevute;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.Stili;
@@ -117,8 +116,8 @@ public class QuotaPagamentiDialog extends Dialog {
             ViewSupport.sezione("Pagamenti"), aggiungi, grid, ViewSupport.sezione("Email inviate"), invii);
         content.addClassNames("p-0");
         add(content);
-        Button email = new Button("Email: conferma o ricevuta", VaadinIcon.ENVELOPE.create(), e -> InvioEmailDialog.apri(corso, allievo, this::aggiorna));
-        getFooter().add(email, Ricevute.pulsante(corso.getId(), allievo, "Ricevuta"), ViewSupport.closeButton(this, "Chiudi"));
+        // Conferma, ricevuta e loro invio sono nella sezione Documenti
+        getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private void configureGrid() {

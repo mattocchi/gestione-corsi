@@ -1,8 +1,6 @@
 package it.attocchi.views.allievo;
 
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
@@ -12,13 +10,12 @@ import it.attocchi.service.AllievoService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.views.ElencoPagamenti;
 import it.attocchi.views.MainLayout;
-import it.attocchi.views.RiepilogoFamigliaDialog;
 import it.attocchi.views.Stili;
 import jakarta.annotation.security.RolesAllowed;
 
 /**
- * Pagamenti dell'allievo adulto (senza genitore), che li gestisce da sé come un genitore di sé stesso: quote, rate e
- * ricevute dei suoi corsi, in sola lettura, con il riepilogo PDF per anno. La voce di menu compare solo a lui
+ * Pagamenti dell'allievo adulto (senza genitore), che li gestisce da sé come un genitore di sé stesso: quote e rate
+ * dei suoi corsi, in sola lettura (ricevute e riepiloghi sono in Documenti). La voce di menu compare solo a lui
  * ({@code MainLayout}); chi ha un genitore vede un avviso.
  */
 @Route(value = "miei-pagamenti", layout = MainLayout.class)
@@ -40,8 +37,6 @@ public class MieiPagamentiView extends VerticalLayout {
             add(avviso);
             return;
         }
-        allievoService.findByUsername(username).ifPresent(allievo -> add(
-            new Button("Riepilogo", VaadinIcon.FILE_TEXT.create(), e -> RiepilogoFamigliaDialog.apri(allievo))));
         ElencoPagamenti elenco = new ElencoPagamenti(pagamentoService, () -> pagamentoService.righePagamentiPropri(username), false);
         add(elenco);
         elenco.addClassNames("grow");

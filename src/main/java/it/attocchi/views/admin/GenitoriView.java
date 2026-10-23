@@ -26,7 +26,6 @@ import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
-import it.attocchi.views.RiepilogoFamigliaDialog;
 import it.attocchi.views.UtenteFields;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -86,8 +85,7 @@ public class GenitoriView extends VerticalLayout {
     }
 
     private HorizontalLayout createActions(Genitore genitore) {
-        HorizontalLayout azioni = ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)),
-            ViewSupport.iconButton(VaadinIcon.FILE_TEXT_O, "Riepilogo famiglia", e -> RiepilogoFamigliaDialog.apri(genitore)));
+        HorizontalLayout azioni = ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)));
         if (puoEliminare) {
             Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> confermaEliminazione(genitore));
             elimina.addThemeVariants(ButtonVariant.ERROR);

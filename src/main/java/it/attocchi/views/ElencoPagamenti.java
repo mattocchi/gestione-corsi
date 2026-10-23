@@ -20,7 +20,6 @@ import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PagamentoService.Situazione;
 import it.attocchi.service.PagamentoService.StatoPagamento;
 import it.attocchi.views.admin.CorsiView.FiltroStato;
-import it.attocchi.views.admin.InvioEmailDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
 
 import java.math.BigDecimal;
@@ -33,8 +32,8 @@ import java.util.function.Function;
  * Elenco dei partecipanti con quota, pagato, residuo e stato del pagamento, filtri e totali dei partecipanti filtrati.
  * <p>
  * In gestione (admin e segreteria): filtri per stato del corso, stato del pagamento, corso, allievo, genitore e anno;
- * sulla riga "Aggiungi pagamento", "Quota e pagamenti" e "Ricevuta". In consultazione (genitore): filtro per figlio
- * se ne ha più di uno, pagamenti in sola lettura e ricevuta.
+ * sulla riga "Aggiungi pagamento" e "Quota e pagamenti". In consultazione (genitore, allievo adulto): filtro per
+ * figlio se ne ha più di uno e pagamenti in sola lettura. Ricevute e loro invio sono in Documenti.
  */
 public class ElencoPagamenti extends VerticalLayout {
 
@@ -183,8 +182,7 @@ public class ElencoPagamenti extends VerticalLayout {
                 dialog.open();
             });
             StatoPagamentoUI.coloraPulsante(quota, "Quota e pagamenti", riga.situazione());
-            azioni.add(quota, ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Email: conferma o ricevuta",
-                e -> InvioEmailDialog.apri(riga.corso(), riga.allievo(), () -> { })));
+            azioni.add(quota);
         } else {
             Button pagamenti = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> new PagamentiAllievoDialog(
                 "Pagamenti " + riga.corso().getNome() + " – " + riga.allievo().getNomeCompleto(), riga.iscrizione(),
@@ -192,7 +190,6 @@ public class ElencoPagamenti extends VerticalLayout {
             StatoPagamentoUI.coloraPulsante(pagamenti, "Pagamenti", riga.situazione());
             azioni.add(pagamenti);
         }
-        azioni.add(Ricevute.pulsante(corsoId, riga.allievo(), null));
         return azioni;
     }
 

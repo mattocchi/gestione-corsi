@@ -119,10 +119,8 @@ public class PartecipantiDialog extends Dialog {
         }
         content.addClassNames("p-0");
         add(content);
-        Button conferme = new Button("Invia conferme di iscrizione a tutti", VaadinIcon.ENVELOPE.create(),
-            e -> InvioEmailDialog.inviaConferme(corso, () -> { }));
-        conferme.setTooltipText("Invia per email la conferma di iscrizione a tutti gli iscritti");
-        getFooter().add(conferme, ViewSupport.closeButton(this, "Chiudi"));
+        // Le conferme di iscrizione si inviano dalla sezione Documenti
+        getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private HorizontalLayout createAzioni(Iscrizione iscrizione, boolean modificabile) {

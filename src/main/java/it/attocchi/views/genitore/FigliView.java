@@ -32,7 +32,6 @@ import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
-import it.attocchi.views.Ricevute;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PagamentiAllievoDialog;
 import it.attocchi.views.PrezziCorso;
@@ -160,9 +159,7 @@ public class FigliView extends VerticalLayout {
             Button pagamentiButton = ViewSupport.iconButton(VaadinIcon.EURO, "Pagamenti", e -> openPagamentiDialog(allievo, corso));
             StatoPagamentoUI.coloraPulsante(pagamentiButton, "Pagamenti", situazioni.get(corso.getId()));
 
-            HorizontalLayout actions = ViewSupport.actions(presenzeButton, pagamentiButton);
-            actions.add(Ricevute.pulsante(corso.getId(), allievo, null));
-            return actions;
+            return ViewSupport.actions(presenzeButton, pagamentiButton);
         };
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(azioni::apply));
 

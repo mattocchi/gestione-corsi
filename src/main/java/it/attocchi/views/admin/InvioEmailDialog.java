@@ -126,54 +126,6 @@ public final class InvioEmailDialog {
         dopoInvio.run();
     }
 
-    /** Apre il dialog di invio per l'iscrizione; {@code dopoInvio} è eseguito dopo ogni invio. */
-    public static void apri(Corso corso, Allievo allievo, Runnable dopoInvio) {
-        EmailService emailService = emailService();
-        String username = username();
-        Dialog dialog = ViewSupport.dialog("Email: conferma o ricevuta – " + allievo.getNomeCompleto(), "520px");
-        VerticalLayout content = new VerticalLayout();
-        content.addClassNames("p-0");
-        content.add(new Span(corso.getNome() + (corso.getAnnoScolastico() != null ? " " + corso.getAnnoScolastico() : "")));
-
-        Optional<Destinatario> destinatario = emailService.destinatario(corso.getId(), allievo.getId());
-        Span a = new Span(destinatario.map(d -> "A: " + d.nome() + " <" + d.email() + ">")
-            .orElse("Né il genitore né l'allievo hanno un indirizzo email: aggiungilo nella loro scheda per poter inviare."));
-        a.addClassNames(Stili.TESTO_SECONDARIO);
-        content.add(a);
-        String datiMancanti = DocumentiService.avvisoDatiMancanti(allievo);
-        if (datiMancanti != null) {
-            Span avviso = new Span(datiMancanti + ".");
-            avviso.addClassNames(Stili.TESTO_SECONDARIO);
-            content.add(avviso);
-        }
-        if (!emailService.invioReale()) {
-            Span simulato = new Span("Server email non configurato: l'invio sarà solo simulato e registrato.");
-            simulato.addClassNames(Stili.TESTO_SECONDARIO);
-            content.add(simulato);
-        }
-
-        Button conferma = new Button("Invia conferma di iscrizione", VaadinIcon.ENVELOPE.create(),
-            e -> invia(emailService, TipoDocumento.CONFERMA_ISCRIZIONE, corso, allievo, username, dialog, dopoInvio));
-        conferma.addThemeVariants(ButtonVariant.PRIMARY);
-        Button ricevuta = new Button("Invia ricevuta", VaadinIcon.ENVELOPE.create(),
-            e -> invia(emailService, TipoDocumento.RICEVUTA, corso, allievo, username, dialog, dopoInvio));
-        boolean conPagamenti = emailService.haPagamenti(corso.getId(), allievo.getId());
-        conferma.setEnabled(destinatario.isPresent() && datiMancanti == null);
-        ricevuta.setEnabled(destinatario.isPresent() && conPagamenti && datiMancanti == null);
-        if (!conPagamenti) {
-            ricevuta.setTooltipText("Nessun pagamento registrato");
-        }
-        // Accanto a ogni invio la sua anteprima, con gli stessi controlli
-        Button anteprimaConferma = pulsanteAnteprima(emailService, TipoDocumento.CONFERMA_ISCRIZIONE, corso, allievo.getId(), username);
-        anteprimaConferma.setEnabled(conferma.isEnabled());
-        Button anteprimaRicevuta = pulsanteAnteprima(emailService, TipoDocumento.RICEVUTA, corso, allievo.getId(), username);
-        anteprimaRicevuta.setEnabled(ricevuta.isEnabled());
-        content.add(riga(conferma, anteprimaConferma), riga(ricevuta, anteprimaRicevuta));
-        dialog.add(content);
-        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
-        dialog.open();
-    }
-
     /**
      * Mostra a chi andrà la conferma di iscrizione (e chi è saltato), con l'anteprima sul primo che la riceve, e la
      * invia a tutti dopo la conferma.
@@ -228,14 +180,6 @@ public final class InvioEmailDialog {
         dialog.open();
     }
 
-    /** Pulsante di invio e la sua anteprima sulla stessa riga (vanno a capo se lo spazio non basta). */
-    private static Div riga(Button invia, Button anteprima) {
-        invia.addClassNames("grow");
-        Div riga = new Div(invia, anteprima);
-        riga.addClassNames("flex flex-wrap gap-2 w-full");
-        return riga;
-    }
-
     private static Button pulsanteAnteprima(EmailService emailService, TipoDocumento tipo, Corso corso, Long allievoId,
                                             String username) {
         Button anteprima = new Button("Anteprima", VaadinIcon.EYE.create(),
@@ -276,22 +220,6 @@ public final class InvioEmailDialog {
         dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
         dialog.open();
-    }
-
-    private static void invia(EmailService emailService, TipoDocumento tipo, Corso corso, Allievo allievo, String username,
-                              Dialog dialog, Runnable dopoInvio) {
-        try {
-            InvioEmail invio = emailService.invia(tipo, corso.getId(), allievo.getId(), username);
-            switch (invio.getEsito()) {
-                case INVIATA -> Notification.show(tipo.getTitolo() + " inviata a " + invio.getDestinatario());
-                case SIMULATA -> Notification.show(tipo.getTitolo() + ": invio simulato a " + invio.getDestinatario());
-                case ERRORE -> Notification.show("Invio non riuscito: " + invio.getErrore());
-            }
-            dialog.close();
-        } catch (RuntimeException ex) {
-            Notification.show("Invio non possibile: " + ex.getMessage());
-        }
-        dopoInvio.run();
     }
 
     private static EmailService emailService() {

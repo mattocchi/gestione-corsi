@@ -5,7 +5,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.login.LoginForm;
-import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
@@ -484,12 +483,21 @@ class ViewAccessTest extends SpringBrowserlessTest {
             // Menu (costruito al login): la voce Pagamenti compare
             MainLayout layout = new MainLayout(securityService, dashboardService, allievoService);
             assertTrue(find(SideNavItem.class).from(layout).all().stream().anyMatch(i -> i.getLabel().equals("Pagamenti")));
+            assertTrue(find(SideNavItem.class).from(layout).all().stream().anyMatch(i -> i.getLabel().equals("Documenti")));
 
             navigate(MieiPagamentiView.class);
             var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
             assertEquals(1, righe.size());
             assertEquals("Corso di Canto", righe.getRow(0).corso().getNome());
-            assertTrue(find(Button.class).withText("Riepilogo").exists());
+            assertFalse(find(Button.class).withText("Riepilogo").exists());
+
+            // I documenti sono in Documenti: il proprio riepilogo e la conferma
+            navigate(DocumentiView.class);
+            var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
+            assertEquals(2, documenti.size());
+            assertEquals("Riepilogo pagamenti", documenti.getCellText(0, 0));
+            assertEquals("Allievo Canto1", documenti.getCellText(0, 1));
+            assertLinkPdf(documenti.getCellComponent(0, 5));
 
             navigate(MieiCorsiView.class);
             navigate(HomeView.class);
@@ -2065,18 +2073,28 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_inviaConfermaDaGestionePagamenti_ricevutaSoloConPagamenti() {
+    void segreteria_inviaConfermaDaDocumenti_ricevutaSoloConPagamenti() {
         Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        // Gestione Pagamenti non ha più invii né ricevute: sono in Documenti
         navigate(GestionePagamentiView.class);
         var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
+        assertThrows(AssertionError.class,
+            () -> pulsante(righe.getCellComponent(rigaDi(righe, allievo), "azioni"), "Email: conferma o ricevuta"));
+        navigate(DocumentiView.class);
         try {
-            test(pulsante(righe.getCellComponent(rigaDi(righe, allievo), "azioni"), "Email: conferma o ricevuta")).click();
+            // Senza pagamenti l'allievo non è tra le ricevute
+            SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
+            test(tipo.getPulsante(TipoDocumento.RICEVUTA)).click();
+            test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("canto3");
+            var ricevute = test((Grid<DocumentoIscrizione>) find(Grid.class).single());
+            assertEquals(0, ricevute.size());
+            test(tipo.getPulsante(TipoDocumento.CONFERMA_ISCRIZIONE)).click();
+            var conferme = test((Grid<DocumentoIscrizione>) find(Grid.class).single());
+            test(pulsante(conferme.getCellComponent(0, 6), "Invia per email")).click();
             // Destinatario: il genitore
             assertTrue(find(Span.class).all().stream()
                 .anyMatch(sp -> sp.getText().startsWith("A: ") && sp.getText().endsWith("<genitore3@example.com>")));
             assertTrue(find(Span.class).withText("Server email non configurato: l'invio sarà solo simulato e registrato.").exists());
-            assertFalse(find(Button.class).withText("Invia ricevuta").single().isEnabled());
-            assertFalse(pulsanteAnteprima("Ricevuta di pagamento").isEnabled());
 
             // Anteprima della conferma: destinatario, oggetto e testo dell'email, nessun invio
             test(pulsanteAnteprima("Conferma di iscrizione")).click();
@@ -2088,13 +2106,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(corpo.contains("Allievo Canto3"));
             assertTrue(emailService.tuttiGliInvii().isEmpty());
             anteprima.close();
-            test(find(Button.class).withText("Invia conferma di iscrizione").single()).click();
+            test(find(Button.class).withText("Invia conferma").single()).click();
 
             List<InvioEmail> invii = emailService.tuttiGliInvii();
             assertEquals(1, invii.size());
             assertEquals(InvioEmail.Esito.SIMULATA, invii.getFirst().getEsito());
             assertEquals("segreteria", invii.getFirst().getInviatoDa());
-            assertFalse(find(Button.class).withText("Invia conferma di iscrizione").exists());
+            assertFalse(find(Button.class).withText("Invia conferma").exists());
         } finally {
             invioEmailRepository.deleteAll();
         }
@@ -2104,9 +2122,14 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_inviaLeConfermeATuttiGliIscritti() {
+        // Non più da Partecipanti, ma da Documenti scelto il corso
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Partecipanti")).click();
+        assertFalse(find(Button.class).withText("Invia conferme di iscrizione a tutti").exists());
+        find(Dialog.class).single().close();
+        navigate(DocumentiView.class);
+        test(this.<Corso>filtro("Filtra per corso")).selectItem("Corso di Canto");
         try {
             test(find(Button.class).withText("Invia conferme di iscrizione a tutti").single()).click();
             // Chi la riceve, con l'anteprima sul primo (Canto5, prima per orario)
@@ -2171,8 +2194,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         allievo.setDataNascita(null);
         allievoService.save(allievo);
         try {
-            InvioEmailDialog.apri(canto, allievo, () -> { });
-            assertFalse(find(Button.class).withText("Invia conferma di iscrizione").single().isEnabled());
+            InvioEmailDialog.apri(TipoDocumento.CONFERMA_ISCRIZIONE, canto, allievo, () -> { });
+            assertFalse(find(Button.class).withText("Invia conferma").single().isEnabled());
             assertTrue(find(Span.class).all().stream().anyMatch(s -> s.getText().startsWith("Manca data di nascita di Allievo Canto3")));
         } finally {
             allievo.setDataNascita(dataNascita);
@@ -2632,35 +2655,37 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_scaricaIlRiepilogoDellaFamiglia() {
+        // In Genitori non c'è più il riepilogo: è in Documenti
         navigate(GenitoriView.class);
-        var grid = test((Grid<Genitore>) find(Grid.class).single());
-        int genitore3 = IntStream.range(0, grid.size())
-            .filter(r -> grid.getRow(r).getUser().getUsername().equals("genitore3")).findFirst().orElseThrow();
-        test(pulsante(grid.getCellComponent(genitore3, 5), "Riepilogo famiglia")).click();
+        var genitori = test((Grid<Genitore>) find(Grid.class).single());
+        assertThrows(AssertionError.class, () -> pulsante(genitori.getCellComponent(0, 5), "Riepilogo famiglia"));
 
-        Dialog dialog = find(Dialog.class).single();
-        assertEquals("2024/2025", find(ComboBox.class).from(dialog).withLabel("Anno scolastico").single().getValue());
-        assertLinkPdf(dialog);
-        test(find(Button.class).from(dialog).withText("Chiudi").single()).click();
-
-        // Genitore senza figli iscritti: solo il messaggio
-        int genitore9 = IntStream.range(0, grid.size())
-            .filter(r -> grid.getRow(r).getUser().getUsername().equals("genitore9")).findFirst().orElseThrow();
-        test(pulsante(grid.getCellComponent(genitore9, 5), "Riepilogo famiglia")).click();
-        Dialog vuoto = find(Dialog.class).single();
-        assertTrue(find(Paragraph.class).from(vuoto).all().stream().anyMatch(p -> p.getText().contains("è iscritto a un corso")));
-        assertFalse(find(MenuBar.class).from(vuoto).exists());
+        navigate(DocumentiView.class);
+        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
+        test(tipo.getPulsante(TipoDocumento.RIEPILOGO)).click();
+        var riepiloghi = test((Grid<DocumentoRiepilogo>) find(Grid.class).single());
+        String genitore3 = genitoreService.findByUsername("genitore3").orElseThrow().getNomeCompleto();
+        test(find(TextField.class).withPlaceholder("Cerca").single()).setValue(genitore3);
+        assertEquals(1, riepiloghi.size());
+        assertEquals("2024/2025", riepiloghi.getCellText(0, 2));
+        assertLinkPdf(riepiloghi.getCellComponent(0, 6));
+        // Genitore senza figli iscritti: nessun riepilogo
+        test(find(TextField.class).withPlaceholder("Cerca").single())
+            .setValue(genitoreService.findByUsername("genitore9").orElseThrow().getNomeCompleto());
+        assertEquals(0, riepiloghi.size());
     }
 
     @Test
     @WithUserDetails("genitore3")
-    void genitore_scaricaIlProprioRiepilogoDallaPaginaPagamenti() {
+    @SuppressWarnings("unchecked")
+    void genitore_scaricaIlProprioRiepilogoDaDocumenti() {
         navigate(PagamentiFigliView.class);
-        test(find(Button.class).withText("Riepilogo famiglia").single()).click();
-        Dialog dialog = find(Dialog.class).single();
-        assertEquals("2024/2025", find(ComboBox.class).from(dialog).withLabel("Anno scolastico").single().getValue());
-        assertTrue(find(Paragraph.class).from(dialog).all().stream().anyMatch(p -> p.getText().contains("Genitore3 Cognome3")));
-        assertLinkPdf(dialog);
+        assertFalse(find(Button.class).withText("Riepilogo famiglia").exists());
+        navigate(DocumentiView.class);
+        var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
+        assertEquals("Riepilogo pagamenti", documenti.getCellText(0, 0));
+        assertEquals("2024/2025", documenti.getCellText(0, 3));
+        assertLinkPdf(documenti.getCellComponent(0, 5));
     }
 
     /** Nel componente un menu PDF con l'anteprima in una nuova scheda (inline) e lo scarico, entrambi con un indirizzo. */
@@ -3719,14 +3744,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
         rata.setImporto(new BigDecimal("200"));
         pagamentoService.salva(canto.getId(), figlio.getId(), rata);
         try {
-            navigate(FigliView.class);
-            var figli = test((Grid<Allievo>) find(Grid.class).single());
-            int riga = IntStream.range(0, figli.size())
-                .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
-            test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
-            var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
-            // La ricevuta: menu con anteprima in una nuova scheda e scarico
-            assertLinkPdf(corsi.getCellComponent(0, 8));
+            // La ricevuta è in Documenti: menu con anteprima in una nuova scheda e scarico
+            navigate(DocumentiView.class);
+            var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
+            int ricevuta = IntStream.range(0, documenti.size())
+                .filter(r -> documenti.getCellText(r, 0).equals("Ricevuta di pagamento")).findFirst().orElseThrow();
+            assertEquals("Allievo Canto3", documenti.getCellText(ricevuta, 1));
+            assertLinkPdf(documenti.getCellComponent(ricevuta, 5));
 
             var pdf = documentiService.ricevutaPer(canto.getId(), figlio.getId(), "genitore3");
             assertTrue(pdf.nomeFile().startsWith("ricevuta-corso-di-canto-"));
