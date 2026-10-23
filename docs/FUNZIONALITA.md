@@ -264,3 +264,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] vorrei sistemare il conteggio del numero di lezione, esempio nel caso in cui un corso ha due gruppi, uno il lun e uno il ven la lezione numero 1 è sia per il gruppo 1 che il gruppo 2 quella settimana, se un gruppo salta la lezione, in modo che entrambi i gruppo hanno 30 lezioni, il gruppo che ha saltato dovrà valutare di recuperarle per arrivare a 30. _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: nei corsi con gruppi ogni giorno di gruppo ha la sua numerazione (lun 1..30, ven 1..30; due gruppi nello stesso giorno condividono la lezione); una lezione non effettuata tiene il suo numero e il recupero prende lo stesso numero; i corsi senza gruppi restano come oggi; si rinumerano tutte le lezioni dei corsi con gruppi, anche quelle svolte; accanto al numero si mostra il gruppo o il giorno (es. "5 · Piccoli", "5 · lun")._
+
+### RICORDAMI
+
+* [ ] proponi un meccanismo di ricordami al login
+  _Chiarimento 2026-10-23: proposta approvata: casella "Ricordami su questo dispositivo" sotto il form di accesso, non spuntata di default; cookie firmato (meccanismo standard di Spring Security, nessuna tabella) valido 30 giorni, annullato al cambio password e all'uscita, non valido per gli utenti disattivati; chiave di firma dalla variabile d'ambiente `REMEMBER_ME_KEY`; il rientro automatico aggiorna l'ultimo accesso._
