@@ -24,7 +24,7 @@ Un endpoint di health check della web application, per poterla monitorare.
 |---|---|---|---|---|
 | 1 | Actuator, configurazione dell'endpoint (solo `health`, dettagli agli admin, niente controllo SMTP), accesso libero in `SecurityConfig`; test con MockMvc (anonimo: 200 e solo lo stato; admin: dettagli; altri endpoint non esposti) | `pom.xml`, `application.properties`, `SecurityConfig`, `security/HealthCheckTest` | `./mvnw test`; `curl` sull'app avviata | [x] Spring Boot 4 attiva di default i gruppi liveness/readiness: disattivati (`probes.enabled=false`) come deciso |
 | 2 | Documentazione: monitoraggio in `deploy/README.md` e `CLAUDE.md` | `deploy/README.md`, `CLAUDE.md` | rilettura | [x] |
-| 3 | Registro finale | questo piano | build e test | [ ] |
+| 3 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -32,4 +32,7 @@ Un endpoint di health check della web application, per poterla monitorare.
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati, compreso il nuovo `HealthCheckTest` (anonimo e segreteria solo `{"status":"UP"}`, admin con `db` e senza `mail`, `/actuator/env`, `/beans`, `/info` non esposti).
+- `curl` sull'app in sviluppo (con la servlet di Vaadin): `/actuator/health` 200 `{"status":"UP"}` senza login; `/actuator`, `/actuator/env`, `/actuator/info` rimandano al login.
+- Da fare sul server: build e deploy, poi configurare il monitor esterno sull'indirizzo pubblico (`https://<indirizzo-app>/actuator/health`). Nessuno script SQL.
+- Lasciato aperto: nessuno.
