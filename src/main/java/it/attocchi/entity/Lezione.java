@@ -13,6 +13,9 @@ import java.util.Set;
 @Table(name = "lezioni")
 public class Lezione {
 
+    /** Lunghezza massima delle note: quella della colonna {@code note} già esistente in MySQL. */
+    public static final int LUNGHEZZA_NOTE = 255;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,7 +41,13 @@ public class Lezione {
 
     private Integer numeroLezione;
 
+    /** Note per lo staff (admin, segreteria, insegnanti del corso): allievi e genitori non le vedono. */
+    @Column(length = Lezione.LUNGHEZZA_NOTE)
     private String note;
+
+    /** Note per allievi e genitori, visibili nel loro calendario e nelle loro presenze. */
+    @Column(name = "note_pubbliche", length = Lezione.LUNGHEZZA_NOTE)
+    private String notePubbliche;
 
     @OneToMany(mappedBy = "lezione", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Presenza> presenze = new HashSet<>();
@@ -154,6 +163,14 @@ public class Lezione {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getNotePubbliche() {
+        return notePubbliche;
+    }
+
+    public void setNotePubbliche(String notePubbliche) {
+        this.notePubbliche = notePubbliche;
     }
 
     public Set<Presenza> getPresenze() {

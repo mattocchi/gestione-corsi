@@ -126,6 +126,28 @@ public class LezioneService {
         lezione.setInsegnantiPresenti(presenti);
     }
 
+    /**
+     * Note della lezione per lo staff e per allievi e genitori (testo ripulito, vuoto = nessuna nota), in qualsiasi
+     * stato della lezione: un insegnante del corso, la segreteria o l'admin, sui corsi attivi.
+     */
+    @Transactional
+    public void impostaNote(Long lezioneId, String noteStaff, String notePubbliche, String username) {
+        Lezione lezione = gestibile(lezioneId, username, false);
+        if (lunga(noteStaff) || lunga(notePubbliche)) {
+            throw new IllegalArgumentException("Le note non possono superare " + Lezione.LUNGHEZZA_NOTE + " caratteri");
+        }
+        lezione.setNote(testo(noteStaff));
+        lezione.setNotePubbliche(testo(notePubbliche));
+    }
+
+    private static boolean lunga(String valore) {
+        return valore != null && valore.strip().length() > Lezione.LUNGHEZZA_NOTE;
+    }
+
+    private static String testo(String valore) {
+        return valore != null && !valore.isBlank() ? valore.strip() : null;
+    }
+
     /** Segna svolta una lezione da fare. */
     @Transactional
     public void completa(Long lezioneId, String username) {

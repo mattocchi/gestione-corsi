@@ -183,6 +183,34 @@ class LezioneServiceTest {
         }
     }
 
+    @Test
+    void note_staffEPubbliche_ancheSuLezioniCompletate() {
+        Lezione lezione = lezioniDi("Corso di Canto").get(6);
+        assertThrows(IllegalStateException.class,
+            () -> lezioneService.impostaNote(lezione.getId(), "x", "y", "insegnante2"));
+        assertThrows(IllegalStateException.class,
+            () -> lezioneService.impostaNote(lezione.getId(), "x", "y", "allievo_canto1"));
+        lezioneService.completa(lezione.getId(), "insegnante1");
+        try {
+            lezioneService.impostaNote(lezione.getId(), "  ripassare la scala ", "Portare lo spartito", "insegnante1");
+            Lezione salvata = lezioneService.findById(lezione.getId());
+            assertEquals("ripassare la scala", salvata.getNote());
+            assertEquals("Portare lo spartito", salvata.getNotePubbliche());
+            assertThrows(IllegalArgumentException.class,
+                () -> lezioneService.impostaNote(lezione.getId(), "a".repeat(256), null, "admin"));
+            lezioneService.impostaNote(lezione.getId(), " ", null, "segreteria");
+            salvata = lezioneService.findById(lezione.getId());
+            assertNull(salvata.getNote());
+            assertNull(salvata.getNotePubbliche());
+        } finally {
+            Lezione daRiaprire = lezioneService.findById(lezione.getId());
+            daRiaprire.setCompletata(false);
+            daRiaprire.setNote(null);
+            daRiaprire.setNotePubbliche(null);
+            lezioneService.save(daRiaprire);
+        }
+    }
+
     private List<Lezione> lezioniDi(String nomeCorso) {
         Corso corso = corsoService.findAll().stream().filter(c -> c.getNome().equals(nomeCorso)).findFirst().orElseThrow();
         return lezioneService.findByCorso(corso.getId());
