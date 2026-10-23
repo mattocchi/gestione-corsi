@@ -1,12 +1,8 @@
 package it.attocchi.views;
 
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.badge.Badge;
-import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -16,11 +12,9 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
-import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CalendarioFestivita;
@@ -29,8 +23,6 @@ import it.attocchi.service.CalendarioService.VoceCalendario;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.FestivitaService;
 import it.attocchi.service.LezioneService;
-import it.attocchi.views.admin.LezioniView;
-import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.time.DayOfWeek;
@@ -218,72 +210,6 @@ public class CalendarioView extends VerticalLayout {
 
     /** Dettagli in sola lettura; "Gestisci presenze" per admin, segreteria e gli insegnanti del corso. */
     private void dettagli(VoceCalendario voce) {
-        Lezione lezione = voce.lezione();
-        Dialog dialog = ViewSupport.dialog(lezione.getCorso().getNome(), "440px");
-        VerticalLayout contenuto = new VerticalLayout(
-            riga("Lezione", numero(lezione) + (lezione.getRecuperoDi() != null ? " (recupero)" : "")),
-            riga("Data", Formati.data(lezione.getData()) + (lezione.getOrarioInizio() != null
-                ? ", " + Formati.ora(lezione.getOrarioInizio())
-                + (lezione.getOrarioFine() != null ? "–" + Formati.ora(lezione.getOrarioFine()) : "") : "")),
-            riga("Insegnanti", lezione.getInsegnantiPresenti().isEmpty() ? lezione.getCorso().getNomiInsegnanti()
-                : lezione.getInsegnantiPresenti().stream().map(Insegnante::getNomeCompleto).sorted()
-                    .collect(Collectors.joining(", "))));
-        if (lezione.isSpostata()) {
-            contenuto.add(riga("Spostata dal", Formati.data(lezione.getDataOriginale())));
-        }
-        if (voce.perChi() != null) {
-            contenuto.add(riga("Allievo", voce.perChi()));
-        }
-        contenuto.add(riga("Stato", badge(lezione)));
-        if (lezione.isNonEffettuata() && lezione.getMotivoNonEffettuata() != null) {
-            contenuto.add(riga("Motivo", lezione.getMotivoNonEffettuata()));
-        }
-        boolean staff = gestione || lezione.getCorso().haInsegnante(username);
-        // Le note per lo staff solo ad admin, segreteria e insegnanti del corso
-        if (lezione.getNotePubbliche() != null) {
-            contenuto.add(riga(staff ? "Note pubbliche" : "Note", lezione.getNotePubbliche()));
-        }
-        if (staff && lezione.getNote() != null) {
-            contenuto.add(riga("Note staff", lezione.getNote()));
-        }
-        contenuto.addClassNames("p-0 gap-2");
-        dialog.add(contenuto);
-        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
-        if (staff) {
-            Button presenze = new Button("Gestisci presenze", VaadinIcon.CLIPBOARD_CHECK.create(), e -> {
-                dialog.close();
-                QueryParameters parametri = QueryParameters.of(ElencoLezioni.PARAMETRO_LEZIONE, String.valueOf(lezione.getId()));
-                getUI().ifPresent(ui -> ui.navigate(gestione ? LezioniView.class : LezioniInsegnanteView.class, parametri));
-            });
-            presenze.addThemeVariants(ButtonVariant.PRIMARY);
-            dialog.getFooter().add(presenze);
-        }
-        dialog.open();
-    }
-
-    private static Badge badge(Lezione lezione) {
-        if (lezione.isCompletata()) {
-            Badge badge = new Badge("Completata", VaadinIcon.CHECK.create());
-            badge.addThemeVariants(BadgeVariant.SUCCESS);
-            return badge;
-        }
-        if (lezione.isNonEffettuata()) {
-            Badge badge = new Badge("Non effettuata", VaadinIcon.BAN.create());
-            badge.addThemeVariants(BadgeVariant.ERROR);
-            return badge;
-        }
-        return new Badge("Da fare", VaadinIcon.CLOCK.create());
-    }
-
-    private static Div riga(String etichetta, String valore) {
-        return riga(etichetta, new Span(valore));
-    }
-
-    private static Div riga(String etichetta, Component valore) {
-        Span nome = new Span(etichetta);
-        nome.addClassNames("w-24 shrink-0", Stili.TESTO_SECONDARIO);
-        Div riga = new Div(nome, valore);
-        riga.addClassNames("flex items-baseline gap-2");
-        return riga;
+        DettaglioLezioneDialog.apri(voce.lezione(), voce.perChi(), null, numero(voce.lezione()), username, gestione);
     }
 }
