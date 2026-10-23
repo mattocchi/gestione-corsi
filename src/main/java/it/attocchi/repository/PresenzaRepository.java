@@ -6,12 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PresenzaRepository extends JpaRepository<Presenza, Long> {
     List<Presenza> findByLezioneId(Long lezioneId);
+    List<Presenza> findByLezioneIdIn(Collection<Long> lezioniIds);
 
     /** Numero di presenze (allievi iscritti) per lezione, per le lezioni a cui l'insegnante era presente. */
     @Query("SELECT p.lezione.id, COUNT(p) FROM Presenza p JOIN p.lezione.insegnantiPresenti i"

@@ -1,18 +1,22 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.service.CalendarioService.VoceCalendario;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -29,6 +33,9 @@ class CalendarioServiceTest {
 
     @Autowired
     private CorsoService corsoService;
+
+    @Autowired
+    private AllievoService allievoService;
 
     @Test
     void adminESegreteria_tutteLeLezioniConIlFiltroPerCorso() {
@@ -58,6 +65,58 @@ class CalendarioServiceTest {
         List<VoceCalendario> voci = calendarioService.lezioniDelMese("genitore3", OTTOBRE, null);
         assertEquals(14, voci.size());
         assertEquals(Set.of("Allievo Canto3", "Allievo Chitarra1"), voci.stream().map(VoceCalendario::perChi).collect(Collectors.toSet()));
+    }
+
+    @Test
+    void gruppi_unaVocePerGruppoConIlSuoOrario() {
+        // Chitarra (insegnante2): sabato due gruppi, Piccoli alle 10 (Chitarra1, Chitarra2) e Grandi alle 11 (Chitarra3);
+        // Chitarra4..6 senza gruppo frequentano martedì e sabato
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        GruppoCorso piccoli = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        GruppoCorso grandi = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Grandi", DayOfWeek.SATURDAY, LocalTime.of(11, 0)));
+        try {
+            assegna(chitarra, "allievo_chitarra1", piccoli);
+            assegna(chitarra, "allievo_chitarra2", piccoli);
+            assegna(chitarra, "allievo_chitarra3", grandi);
+
+            // Sabato 5 ottobre: Piccoli 10:00, Grandi 11:00, poi chi non ha gruppo all'orario della lezione
+            List<VoceCalendario> sabato = delGiorno(calendarioService.lezioniDelMese("insegnante2", OTTOBRE, null), 5);
+            assertEquals(3, sabato.size());
+            assertEquals(piccoli.getId(), sabato.get(0).gruppo().getId());
+            assertEquals(LocalTime.of(10, 0), sabato.get(0).orario());
+            assertEquals(grandi.getId(), sabato.get(1).gruppo().getId());
+            assertEquals(LocalTime.of(11, 0), sabato.get(1).orario());
+            assertTrue(sabato.get(2).senzaGruppo());
+            // Tutte e tre sono la stessa lezione
+            assertEquals(1, sabato.stream().map(v -> v.lezione().getId()).distinct().count());
+            // Martedì 1: nessuno dei presenti ha un gruppo, la lezione intera
+            List<VoceCalendario> martedi = delGiorno(calendarioService.lezioniDelMese("insegnante2", OTTOBRE, null), 1);
+            assertEquals(1, martedi.size());
+            assertNull(martedi.getFirst().gruppo());
+            assertFalse(martedi.getFirst().senzaGruppo());
+            // Anche per l'admin
+            assertEquals(3, delGiorno(calendarioService.lezioniDelMese("admin", OTTOBRE, chitarra.getId()), 5).size());
+
+            // L'allievo: solo il suo gruppo, con l'orario del gruppo (e niente martedì)
+            List<VoceCalendario> allievo = calendarioService.lezioniDelMese("allievo_chitarra3", OTTOBRE, null);
+            assertEquals(4, allievo.size());
+            assertTrue(allievo.stream().allMatch(v -> v.gruppo().getId().equals(grandi.getId()) && v.orario().equals(LocalTime.of(11, 0))));
+        } finally {
+            corsoService.eliminaGruppo(piccoli.getId());
+            corsoService.eliminaGruppo(grandi.getId());
+            // Assegnati al gruppo avevano preso il suo orario: tornano senza
+            for (String username : List.of("allievo_chitarra1", "allievo_chitarra2", "allievo_chitarra3")) {
+                corsoService.impostaOrario(chitarra.getId(), allievoService.findByUsername(username).orElseThrow().getId(), null);
+            }
+        }
+    }
+
+    private void assegna(Corso corso, String username, GruppoCorso gruppo) {
+        corsoService.assegnaGruppo(corso.getId(), allievoService.findByUsername(username).orElseThrow().getId(), gruppo.getId());
+    }
+
+    private static List<VoceCalendario> delGiorno(List<VoceCalendario> voci, int giorno) {
+        return voci.stream().filter(v -> v.lezione().getData().getDayOfMonth() == giorno).toList();
     }
 
     private static Set<String> corsi(List<VoceCalendario> voci) {
