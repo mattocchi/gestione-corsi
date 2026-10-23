@@ -6,7 +6,6 @@ import com.vaadin.flow.component.html.AttachmentType;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
-import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
@@ -38,7 +37,6 @@ public final class MenuPdf {
     /** Pulsante con la sola icona (azioni nelle righe delle tabelle); {@code etichetta} è il nome accessibile. */
     public static MenuBar soloIcona(VaadinIcon icona, String etichetta, SerializableSupplier<Pdf> pdf) {
         MenuBar menu = new MenuBar();
-        menu.addThemeVariants(MenuBarVariant.TERTIARY);
         MenuItem voce = menu.addItem(icona.create());
         voce.setAriaLabel(etichetta);
         menu.setTooltipText(voce, etichetta);

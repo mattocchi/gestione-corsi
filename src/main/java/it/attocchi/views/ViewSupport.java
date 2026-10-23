@@ -85,8 +85,8 @@ public final class ViewSupport {
 
     /** Pulsante con sola icona senza listener, ad esempio dentro un {@code Anchor} di download. */
     public static Button iconButton(VaadinIcon icon, String label) {
+        // Stile normale (fondo e bordo), non terziario: si vede che è un pulsante anche senza hover (touch)
         Button button = new Button(icon.create());
-        button.addThemeVariants(ButtonVariant.TERTIARY);
         button.setAriaLabel(label);
         button.setTooltipText(label);
         return button;

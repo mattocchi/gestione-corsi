@@ -287,5 +287,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### PULSANTI
 
-* [ ] ha senso in mobile e desktop di modificare i pulsanti che sono solo icone con un button per enfatizzare che è un punto cliccabile, un button appunto? (alla proposta di applicarlo ovunque o solo su mobile: "everywhere")
+* [x] ha senso in mobile e desktop di modificare i pulsanti che sono solo icone con un button per enfatizzare che è un punto cliccabile, un button appunto? (alla proposta di applicarlo ovunque o solo su mobile: "everywhere") _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: ovunque (desktop e mobile): i pulsanti con la sola icona (azioni nelle righe e nelle card, frecce del calendario, stampante delle ricevute) passano dallo stile "terziario" (solo icona) allo stile normale dei pulsanti Aura (fondo e bordo); i pulsanti con testo restano come sono; Elimina resta rosso._

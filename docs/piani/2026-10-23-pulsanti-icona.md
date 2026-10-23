@@ -17,7 +17,7 @@ Dare ai pulsanti con la sola icona l'aspetto di un pulsante, per far capire che 
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Stile normale in `ViewSupport.iconButton` e `MenuPdf.soloIcona` | [F-2026-10-23/PULSANTI.1] | `views/ViewSupport`, `views/MenuPdf` | `./mvnw test` | [ ] |
+| 1 | Stile normale in `ViewSupport.iconButton` e `MenuPdf.soloIcona` | [F-2026-10-23/PULSANTI.1] | `views/ViewSupport`, `views/MenuPdf` | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
