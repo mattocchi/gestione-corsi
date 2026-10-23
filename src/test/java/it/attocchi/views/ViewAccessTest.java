@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.login.LoginForm;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
@@ -2525,9 +2526,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         Dialog dialog = find(Dialog.class).single();
         assertEquals("2024/2025", find(ComboBox.class).from(dialog).withLabel("Anno scolastico").single().getValue());
-        com.vaadin.flow.component.html.Anchor link = find(com.vaadin.flow.component.html.Anchor.class).from(dialog).single();
-        assertFalse(link.getHref().isBlank());
-        assertTrue(find(Button.class).from(dialog).withText("Scarica PDF").exists());
+        assertLinkPdf(dialog);
         test(find(Button.class).from(dialog).withText("Chiudi").single()).click();
 
         // Genitore senza figli iscritti: solo il messaggio
@@ -2536,7 +2535,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(pulsante(grid.getCellComponent(genitore9, 5), "Riepilogo famiglia")).click();
         Dialog vuoto = find(Dialog.class).single();
         assertTrue(find(Paragraph.class).from(vuoto).all().stream().anyMatch(p -> p.getText().contains("è iscritto a un corso")));
-        assertFalse(find(Button.class).from(vuoto).withText("Scarica PDF").exists());
+        assertFalse(find(MenuBar.class).from(vuoto).exists());
     }
 
     @Test
@@ -2547,7 +2546,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Dialog dialog = find(Dialog.class).single();
         assertEquals("2024/2025", find(ComboBox.class).from(dialog).withLabel("Anno scolastico").single().getValue());
         assertTrue(find(Paragraph.class).from(dialog).all().stream().anyMatch(p -> p.getText().contains("Genitore3 Cognome3")));
-        assertFalse(find(com.vaadin.flow.component.html.Anchor.class).from(dialog).single().getHref().isBlank());
+        assertLinkPdf(dialog);
+    }
+
+    /** Nel componente un menu PDF con l'anteprima in una nuova scheda (inline) e lo scarico, entrambi con un indirizzo. */
+    private void assertLinkPdf(Component contenitore) {
+        List<com.vaadin.flow.component.html.Anchor> link = find(com.vaadin.flow.component.html.Anchor.class).from(contenitore).all();
+        assertEquals(2, link.size());
+        assertTrue(link.stream().allMatch(a -> !a.getHref().isBlank()));
+        var anteprima = link.stream().filter(a -> "_blank".equals(a.getTarget().orElse(null))).findFirst().orElseThrow();
+        assertFalse(anteprima.getElement().hasAttribute("download"));
+        assertTrue(link.stream().anyMatch(a -> a.getElement().hasAttribute("download")));
     }
 
     @Test
@@ -3483,10 +3492,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
             test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
-            // Il pulsante Ricevuta è dentro un link di download
-            com.vaadin.flow.component.html.Anchor link = (com.vaadin.flow.component.html.Anchor) corsi.getCellComponent(0, 8)
-                .getChildren().filter(com.vaadin.flow.component.html.Anchor.class::isInstance).findFirst().orElseThrow();
-            assertFalse(link.getHref().isBlank());
+            // La ricevuta: menu con anteprima in una nuova scheda e scarico
+            assertLinkPdf(corsi.getCellComponent(0, 8));
 
             var pdf = documentiService.ricevutaPer(canto.getId(), figlio.getId(), "genitore3");
             assertTrue(pdf.nomeFile().startsWith("ricevuta-corso-di-canto-"));

@@ -20,7 +20,7 @@ Rendere i PDF disponibili come anteprima inline in una nuova scheda oltre che co
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `MenuPdf`; ricevute, riepilogo e allegato email lo usano; test | [F-2026-10-23/PDF.1] | `views/MenuPdf`, `views/Ricevute`, chiamanti, `RiepilogoFamigliaDialog`, `admin/InvioEmailDialog`, test | `./mvnw test` | [ ] |
+| 1 | `MenuPdf`; ricevute, riepilogo e allegato email lo usano; test | [F-2026-10-23/PDF.1] | `views/MenuPdf`, `views/Ricevute`, chiamanti, `RiepilogoFamigliaDialog`, `admin/InvioEmailDialog`, test | `./mvnw test` | [x] |
 | 2 | CLAUDE.md e registro (promemoria `prod.bundle`) | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

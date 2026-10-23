@@ -1,16 +1,13 @@
 package it.attocchi.views;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.server.VaadinService;
-import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.server.streams.DownloadResponse;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Genitore;
 import it.attocchi.service.DocumentiService;
@@ -19,7 +16,6 @@ import it.attocchi.service.PagamentoService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -83,27 +79,18 @@ public final class RiepilogoFamigliaDialog {
         testo.addClassNames(Stili.TESTO_SECONDARIO);
         dialog.add(testo, anno);
 
-        DownloadHandler handler = DownloadHandler.fromInputStream(evento -> {
+        // PDF dell'anno scelto, in anteprima o da scaricare; senza anno scelto il menu è disattivato
+        MenuBar pdfMenu = MenuPdf.conTesto("PDF", VaadinIcon.FILE_TEXT, () -> {
             String scelto = anno.getValue();
             if (scelto == null) {
-                return DownloadResponse.error(404);
+                throw new IllegalStateException("Nessun anno scelto");
             }
-            try {
-                Pdf documento = pdf.apply(scelto.isEmpty() ? null : scelto);
-                return new DownloadResponse(new ByteArrayInputStream(documento.contenuto()), documento.nomeFile(),
-                    "application/pdf", documento.contenuto().length);
-            } catch (IllegalArgumentException | IllegalStateException ex) {
-                return DownloadResponse.error(404);
-            }
+            return pdf.apply(scelto.isEmpty() ? null : scelto);
         });
-        Button scarica = new Button("Scarica PDF", VaadinIcon.DOWNLOAD.create());
-        scarica.addThemeVariants(ButtonVariant.PRIMARY);
-        Anchor link = new Anchor(handler, "");
-        link.add(scarica);
-        // Senza anno scelto non si scarica
-        anno.addValueChangeListener(e -> scarica.setEnabled(e.getValue() != null));
+        pdfMenu.addThemeVariants(MenuBarVariant.PRIMARY);
+        anno.addValueChangeListener(e -> pdfMenu.setEnabled(e.getValue() != null));
 
-        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"), link);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"), pdfMenu);
         dialog.open();
     }
 

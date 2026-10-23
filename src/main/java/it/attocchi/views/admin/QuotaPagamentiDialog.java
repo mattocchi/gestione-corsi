@@ -117,9 +117,8 @@ public class QuotaPagamentiDialog extends Dialog {
             ViewSupport.sezione("Pagamenti"), aggiungi, grid, ViewSupport.sezione("Email inviate"), invii);
         content.addClassNames("p-0");
         add(content);
-        Button ricevuta = new Button("Ricevuta", VaadinIcon.PRINT.create());
         Button email = new Button("Email: conferma o ricevuta", VaadinIcon.ENVELOPE.create(), e -> InvioEmailDialog.apri(corso, allievo, this::aggiorna));
-        getFooter().add(email, Ricevute.link(corso.getId(), allievo, ricevuta), ViewSupport.closeButton(this, "Chiudi"));
+        getFooter().add(email, Ricevute.pulsante(corso.getId(), allievo, "Ricevuta"), ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private void configureGrid() {

@@ -3,32 +3,31 @@ package it.attocchi.views.admin;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.server.VaadinService;
-import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.server.streams.DownloadResponse;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
+import it.attocchi.service.DocumentiService.Pdf;
 import it.attocchi.service.EmailService.Anteprima;
 import it.attocchi.service.EmailService.Destinatario;
 import it.attocchi.service.EmailService.DestinatarioConferma;
 import it.attocchi.service.EmailService.Riepilogo;
+import it.attocchi.views.MenuPdf;
 import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -174,10 +173,8 @@ public final class InvioEmailDialog {
         Span a = new Span("A: " + anteprima.destinatario().nome() + " <" + anteprima.destinatario().email() + ">");
         Span oggetto = new Span("Oggetto: " + anteprima.oggetto());
         byte[] pdf = anteprima.pdf();
-        Anchor allegato = new Anchor(DownloadHandler.fromInputStream(evento -> new DownloadResponse(
-            new ByteArrayInputStream(pdf), anteprima.allegato(), "application/pdf", pdf.length)), "");
-        allegato.setTarget("_blank");
-        allegato.add(new Button("Allegato: " + anteprima.allegato(), VaadinIcon.DOWNLOAD.create()));
+        MenuBar allegato = MenuPdf.conTesto("Allegato: " + anteprima.allegato(), VaadinIcon.FILE_TEXT,
+            () -> new Pdf(anteprima.allegato(), pdf));
         // Il testo dell'email in un riquadro isolato dalla pagina (nessuno script)
         IFrame corpo = new IFrame();
         corpo.setSrcdoc(anteprima.corpoHtml());

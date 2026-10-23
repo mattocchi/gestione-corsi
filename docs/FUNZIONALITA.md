@@ -282,5 +282,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### PDF
 
-* [ ] vorrei che i generatori PDF fossero disponibili come anteprima INLINE su nuovo tab oltre che download, quindi i pulsanti di PDF potrebbero avere tipo il selettore ANTEPRIMA PDF o DOWNLOAD?
+* [x] vorrei che i generatori PDF fossero disponibili come anteprima INLINE su nuovo tab oltre che download, quindi i pulsanti di PDF potrebbero avere tipo il selettore ANTEPRIMA PDF o DOWNLOAD? _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: un solo pulsante con un menu ("Anteprima in una nuova scheda" / "Scarica PDF") per tutti i PDF: ricevute (azione nelle righe e pulsante in Quota e pagamenti), riepilogo famiglia / allievo e allegato nell'anteprima delle email._
