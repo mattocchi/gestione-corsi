@@ -26,7 +26,7 @@ Permettere ad admin, segreteria e insegnante di modificare la data di una lezion
 |---|---|---|---|---|---|
 | 1 | `Lezione.dataOriginale` + `getDataDelCalendario()`; `LezioneService.sposta`; generazione, presenze e numerazione sulla data del calendario; test | — | `entity/Lezione`, `service/LezioneService`, `service/CorsoService`, `service/NumerazioneLezioni`, `LezioneServiceTest` | `./mvnw test` | [x] |
 | 2 | "Cambia data" nel dialog presenze, badge "Spostata", riga nel dettaglio del Calendario; test browserless | [F-2026-10-23/DATA.1] | `views/ElencoLezioni`, `views/CalendarioView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -37,3 +37,4 @@ Permettere ad admin, segreteria e insegnante di modificare la data di una lezion
 
 - Passo 1: `./mvnw test` 233 test verdi; nuovo `sposta_tienePartecipantiENumero_eGeneraLezioniLaConserva` (permessi, giorno occupato, presenze e numero invariati, rigenerazione che conserva lo spostamento, ritorno alla data originale, lezioni completate rifiutate).
 - Passo 2: `./mvnw test` 234 test verdi; nuovo `insegnante_cambiaLaDataDiUnaLezione` (dialog con data e orario della lezione, salvataggio, badge "Spostata" nella riga).
+- Chiusura: `./mvnw test` 234 test verdi. Nessuna build di produzione (scelta dell'utente). Non verificato nel browser. Non c'è un test dedicato alla numerazione per giorno di una lezione spostata in un corso con gruppi (la logica usa `getDataDelCalendario()` come per la rigenerazione, coperta dal test del passo 1). Produzione: la colonna `data_originale` la aggiunge `ddl-auto=update`, nessuno script.
