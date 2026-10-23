@@ -42,12 +42,15 @@ public class CorsoService {
     private final PagamentoRepository pagamentoRepository;
     private final FestivitaService festivitaService;
     private final GruppoCorsoRepository gruppoRepository;
+    private final NumerazioneLezioni numerazioneLezioni;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
                        AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository,
-                       FestivitaService festivitaService, GruppoCorsoRepository gruppoRepository) {
+                       FestivitaService festivitaService, GruppoCorsoRepository gruppoRepository,
+                       NumerazioneLezioni numerazioneLezioni) {
         this.gruppoRepository = gruppoRepository;
+        this.numerazioneLezioni = numerazioneLezioni;
         this.pagamentoRepository = pagamentoRepository;
         this.festivitaService = festivitaService;
         this.corsoRepository = corsoRepository;
@@ -161,6 +164,8 @@ public class CorsoService {
         GruppoCorso salvato = gruppoRepository.save(gruppo);
         // Il gruppo caricato nelle iscrizioni è quello aggiornato: le presenze seguono il nuovo giorno
         partecipantiDelGruppo(salvato).forEach(this::sincronizzaPresenze);
+        gruppoRepository.flush();
+        numerazioneLezioni.rinumera(corsoId);
         return salvato;
     }
 
@@ -175,6 +180,11 @@ public class CorsoService {
             sincronizzaPresenze(iscrizione);
         }
         gruppoRepository.delete(gruppo);
+        gruppoRepository.flush();
+        // Con altri gruppi resta la numerazione per giorno; senza gruppi si torna al contatore unico
+        Long corsoId = gruppo.getCorso().getId();
+        numerazioneLezioni.rinumera(corsoId);
+        numerazioneLezioni.rinumeraSenzaGruppi(corsoId);
     }
 
     /**
@@ -431,5 +441,7 @@ public class CorsoService {
                 contate.merge(iscrizione, 1, Integer::sum);
             }
         }
+        lezioneRepository.flush();
+        numerazioneLezioni.rinumera(corso.getId());
     }
 }

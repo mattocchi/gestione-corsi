@@ -295,9 +295,21 @@ class CorsoServiceTest {
 
             List<Lezione> lezioni = lezioneService.findByCorso(chitarra.getId());
             assertEquals(60, lezioni.size());
-            assertEquals(java.util.stream.IntStream.rangeClosed(1, 60).boxed().toList(),
-                lezioni.stream().map(Lezione::getNumeroLezione).sorted().toList());
+            // Numerazione per giorno: martedì 1..30 e sabato 1..30 (la lezione 1 è della prima settimana per entrambi)
+            List<Integer> uno30 = java.util.stream.IntStream.rangeClosed(1, 30).boxed().toList();
+            assertEquals(uno30, numeri(lezioni, DayOfWeek.TUESDAY));
+            assertEquals(uno30, numeri(lezioni, DayOfWeek.SATURDAY));
             lezioni.forEach(l -> assertEquals(3, presenzaService.findByLezione(l.getId()).size()));
+
+            // Il gruppo del martedì salta la lezione 3 e la recupera di giovedì: il recupero è la lezione 3
+            Lezione terza = lezioni.stream().filter(l -> l.getData().getDayOfWeek() == DayOfWeek.TUESDAY)
+                .sorted(java.util.Comparator.comparing(Lezione::getData)).skip(2).findFirst().orElseThrow();
+            lezioneService.segnaNonEffettuata(terza.getId(), "insegnante malato", "admin");
+            Lezione recupero = lezioneService.aggiungi(chitarra.getId(), terza.getData().plusDays(2), null, terza.getId(), "admin");
+            assertEquals(3, lezioneService.findById(recupero.getId()).getNumeroLezione());
+            assertEquals(uno30, numeri(lezioneService.findByCorso(chitarra.getId()), DayOfWeek.TUESDAY));
+            lezioneService.eliminaAggiunta(recupero.getId(), "admin");
+            lezioneService.ripristina(terza.getId(), "admin");
             for (int n = 0; n < 6; n++) {
                 Allievo allievo = allievi.get(n);
                 assertEquals(30, presenzaService.findByCorsoAndAllievo(chitarra.getId(), allievo.getId()).size());
@@ -324,10 +336,18 @@ class CorsoServiceTest {
             corsoService.eliminaGruppo(sabato.getId());
             corsoService.generaLezioni(chitarra);
         }
-        // Senza gruppi: come prima, 30 date con tutti gli iscritti
+        // Senza gruppi: come prima, 30 date con tutti gli iscritti e un contatore unico
         List<Lezione> lezioni = lezioneService.findByCorso(chitarra.getId());
         assertEquals(30, lezioni.size());
         lezioni.forEach(l -> assertEquals(6, presenzaService.findByLezione(l.getId()).size()));
+        assertEquals(java.util.stream.IntStream.rangeClosed(1, 30).boxed().toList(),
+            lezioni.stream().map(Lezione::getNumeroLezione).sorted().toList());
+    }
+
+    /** Numeri delle lezioni di un giorno della settimana, in ordine di data (senza i recuperi). */
+    private static List<Integer> numeri(List<Lezione> lezioni, DayOfWeek giorno) {
+        return lezioni.stream().filter(l -> l.getData().getDayOfWeek() == giorno && l.getRecuperoDi() == null)
+            .sorted(java.util.Comparator.comparing(Lezione::getData)).map(Lezione::getNumeroLezione).toList();
     }
 
     private Iscrizione iscrizione(Corso corso, Allievo allievo) {

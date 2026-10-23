@@ -34,15 +34,17 @@ public class LezioneService {
     private final IscrizioneRepository iscrizioneRepository;
     private final PresenzaRepository presenzaRepository;
     private final UserRepository userRepository;
+    private final NumerazioneLezioni numerazioneLezioni;
 
     public LezioneService(LezioneRepository lezioneRepository, CorsoRepository corsoRepository,
                           IscrizioneRepository iscrizioneRepository, PresenzaRepository presenzaRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository, NumerazioneLezioni numerazioneLezioni) {
         this.lezioneRepository = lezioneRepository;
         this.corsoRepository = corsoRepository;
         this.iscrizioneRepository = iscrizioneRepository;
         this.presenzaRepository = presenzaRepository;
         this.userRepository = userRepository;
+        this.numerazioneLezioni = numerazioneLezioni;
     }
 
     public List<Lezione> findAll() {
@@ -217,6 +219,9 @@ public class LezioneService {
                 presenzaRepository.save(new Presenza(salvata, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
             }
         }
+        // Nei corsi con gruppi il numero si ricalcola per giorno (il recupero prende quello della lezione saltata)
+        lezioneRepository.flush();
+        numerazioneLezioni.rinumera(corsoId);
         return salvata;
     }
 
@@ -228,6 +233,8 @@ public class LezioneService {
             throw new IllegalStateException("Si eliminano solo le lezioni aggiunte non completate");
         }
         lezioneRepository.delete(lezione);
+        lezioneRepository.flush();
+        numerazioneLezioni.rinumera(lezione.getCorso().getId());
     }
 
     /** {@code true} se l'utente può eliminare le lezioni aggiunte del corso (il suo insegnante o un admin). */

@@ -23,7 +23,7 @@ import java.util.Set;
  * sola volta. Senza la tabella (database nuovo) non fa nulla.
  */
 @Component
-@Order(Ordered.LOWEST_PRECEDENCE)
+@Order(Ordered.LOWEST_PRECEDENCE - 1) // prima di NumerazioneIniziale
 public class GruppiIniziali implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(GruppiIniziali.class);

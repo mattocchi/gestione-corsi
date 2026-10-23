@@ -17,13 +17,13 @@ Nei corsi con due gruppi (es. lun e ven) la lezione numero 1 deve essere quella 
 - [F-2026-10-23/NUMERO.1] I corsi senza gruppi restano come oggi.
 - [F-2026-10-23/NUMERO.1] Si rinumerano tutte le lezioni dei corsi con gruppi, anche quelle svolte: all'avvio e ogni volta che cambiano le lezioni (generazione, aggiunta, eliminazione) o i gruppi.
 - [F-2026-10-23/NUMERO.1] Nei corsi con gruppi accanto al numero si mostra il gruppo (nome, se uno solo con nome in quel giorno) o il giorno: "5 · Piccoli", "5 · lun".
-- Tecnica: la numerazione si ricalcola dalle lezioni (`NumerazioneLezioni.rinumera(corsoId)`), per date crescenti; se si elimina l'ultimo gruppo il corso torna a un contatore unico per data.
+- Tecnica: il numero dipende dalla data (una lezione aggiunta a metà corso sposta di uno i numeri successivi del suo giorno); la numerazione si ricalcola dalle lezioni (`NumerazioneLezioni.rinumera(corsoId)`), per date crescenti; se si elimina l'ultimo gruppo il corso torna a un contatore unico per data.
 
 ## Passi
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `NumerazioneLezioni` (ricalcolo per giorno nei corsi con gruppi) chiamata da generazione, lezioni aggiunte/eliminate, gruppi e all'avvio; test | — | `service/NumerazioneLezioni`, `CorsoService`, `LezioneService`, avvio, test | `./mvnw test` | [ ] |
+| 1 | `NumerazioneLezioni` (ricalcolo per giorno nei corsi con gruppi) chiamata da generazione, lezioni aggiunte/eliminate, gruppi e all'avvio; test | — | `service/NumerazioneLezioni`, `CorsoService`, `LezioneService`, avvio, test | `./mvnw test` | [x] |
 | 2 | Etichetta "N · gruppo/giorno" in Lezioni, Le Mie Lezioni e presenze dell'allievo; test | [F-2026-10-23/NUMERO.1] | `views/ElencoLezioni`, `views/PresenzeAllievoDialog`, `views/Formati`, test | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
