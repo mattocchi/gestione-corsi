@@ -273,7 +273,6 @@ public class ElencoLezioni extends VerticalLayout {
             return;
         }
 
-        dialog.add(createNoteLezione(lezione));
         List<Insegnante> insegnanti = lezione.getCorso().getInsegnanti();
         if (insegnanti.size() == 2) {
             dialog.add(ViewSupport.sezione("Insegnanti presenti"), createInsegnantiPresenti(lezione, insegnanti));
@@ -297,6 +296,8 @@ public class ElencoLezioni extends VerticalLayout {
             .applica();
         gridPresenze.setItems(lezioneService.presenzeInOrdine(lezione.getId()));
         dialog.add(gridPresenze);
+        // Le note in fondo, dopo le presenze e prima dei pulsanti
+        dialog.add(ViewSupport.sezione("Note della lezione"), createNoteLezione(lezione));
 
         if (!lezione.isCompletata()) {
             Button nonEffettuata = new Button("Non effettuata", VaadinIcon.BAN.create(),

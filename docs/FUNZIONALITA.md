@@ -303,7 +303,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] aggiunti delle note che ADMIN, SEGRETERIA o INSEGNANTE possono aggiungere alla lezione oltre alle note che già si possono mettere su singolo allievo nella lezione _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: due note per lezione, "Note per lo staff" (solo admin, segreteria e insegnanti del corso) e "Note per allievi e genitori"; si scrivono nel dialog "Gestisci Presenze" e si salvano subito, modificabili sempre (anche su lezioni completate o non effettuate) sui corsi attivi; allievi e genitori vedono le note pubbliche nel dettaglio della lezione del Calendario e nell'elenco delle presenze dell'allievo._
-* [ ] per favore sposta le note della lezione sia quelle per lo staff che per gli altri in fondo dopo l'elenco delle presenze prima dei pulsanti
+* [x] per favore sposta le note della lezione sia quelle per lo staff che per gli altri in fondo dopo l'elenco delle presenze prima dei pulsanti _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: nel dialog "Gestisci Presenze" le due note vanno dopo l'elenco degli allievi, sotto un titolo "Note della lezione"; nella lezione non effettuata (che non ha l'elenco delle presenze) restano dove sono._
 
 ### SCORCIATOIA HOME

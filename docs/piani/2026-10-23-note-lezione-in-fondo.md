@@ -19,7 +19,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Note della lezione in fondo al dialog "Gestisci Presenze", con il titolo "Note della lezione" | `views/ElencoLezioni.java`, `CLAUDE.md` se serve | `./mvnw test` | [ ] |
+| 1 | Note della lezione in fondo al dialog "Gestisci Presenze", con il titolo "Note della lezione" | `views/ElencoLezioni.java`, `CLAUDE.md` se serve | `./mvnw test` | [x] |
 | 2 | Registro finale | questo piano | build e test | [ ] |
 
 ## Fuori ambito
