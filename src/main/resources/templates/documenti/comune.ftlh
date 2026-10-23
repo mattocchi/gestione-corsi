@@ -20,6 +20,14 @@
   .totali { margin-top: 5mm; width: 100%; }
   .totali td { padding: 1mm 0; }
   .totali td.valore { text-align: right; font-weight: bold; }
+  /* Evidenza senza grassetto (il font del PDF non lo rende): righe più grandi su fondo grigio */
+  table.importi { border-collapse: collapse; }
+  .importi td { padding: 1mm 2mm; }
+  .importi tr.listino td { color: #555; font-weight: normal; }
+  .importi tr.evidenza td { font-size: 12.5pt; background: #eeeeee; padding: 1.5mm 2mm; }
+  .importi tr.separa td { border-top: 1px solid #999; }
+  .importi td.normale { font-weight: normal; padding: 1mm 2mm; }
+  p.nota { color: #555; margin-top: 2mm; }
   .riquadro { border: 1px solid #999; padding: 3mm 4mm; margin-top: 6mm; }
   ul.regole { margin: 0; padding-left: 5mm; }
   ul.regole li { margin-bottom: 1.5mm; }
@@ -61,6 +69,6 @@
   <tr><td class="etichetta">Corso</td><td>${corso.nome}</td></tr>
   <tr><td class="etichetta">Anno scolastico</td><td>${corso.anno}</td></tr>
   <tr><td class="etichetta">${corso.etichettaInsegnante}</td><td>${corso.insegnante}</td></tr>
-  <tr><td class="etichetta">Quota</td><td>${corso.quota}</td></tr>
+  <tr><td class="etichetta">Quota dovuta</td><td>${corso.quota}</td></tr>
 </table>
 </#macro>

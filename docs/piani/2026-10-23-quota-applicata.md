@@ -22,12 +22,13 @@ Rendere esplicito, nella conferma di iscrizione (email e PDF) e nel portale, che
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Modello `importi` in `DocumentiService`; macro `importi.ftlh` in conferma e ricevuta (email e PDF); test | — | `service/DocumentiService`, `templates/…`, `DocumentiServiceTest` | `./mvnw test` | [ ] |
+| 1 | Modello `importi` in `DocumentiService`; macro `importi.ftlh` in conferma e ricevuta (email e PDF); test | — | `service/DocumentiService`, `templates/…`, `DocumentiServiceTest` | `./mvnw test` | [x] |
 | 2 | Portale: colonne rinominate, quota dovuta in grassetto e badge dello sconto; test | [F-2026-10-23/QUOTA.1] | `views/PrezziCorso`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
 
 - Riepilogo famiglia (PDF): resta con la quota dovuta per corso.
+- Grassetto nei PDF: il generatore usa il font di base senza la variante grassetta (titoli e totali non sono mai stati in grassetto); per evidenziare la quota dovuta si usano righe più grandi su fondo grigio. Per avere il grassetto bisognerebbe incorporare un font (es. con licenza libera) nei PDF.
 
 ## Registro

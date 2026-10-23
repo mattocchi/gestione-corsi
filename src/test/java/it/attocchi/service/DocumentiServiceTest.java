@@ -63,7 +63,8 @@ class DocumentiServiceTest {
 
             String testo = testo(documentiService.documentoPdf(TipoDocumento.RICEVUTA, corsoId, allievoId));
             assertTrue(testo.contains("Ricevuta di pagamento"), testo);
-            assertTrue(testo.contains("Totale pagato"), testo);
+            assertTrue(testo.contains("Già pagato"), testo);
+            assertTrue(testo.contains("DA PAGARE"), testo);
             assertTrue(testo.contains("150,00 €"), testo);
             assertTrue(testo.contains("450,00 €"), testo);
         } finally {
@@ -80,7 +81,10 @@ class DocumentiServiceTest {
         String testo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId));
         assertTrue(testo.contains("Conferma di iscrizione"), testo);
         assertTrue(testo.replaceAll("\\s+", " ").contains("con lezione il giovedì"), testo);
-        assertTrue(testo.contains("Da pagare"), testo);
+        assertTrue(testo.contains("DA PAGARE"), testo);
+        assertTrue(testo.contains("QUOTA DOVUTA"), testo);
+        // Senza sconto niente listino
+        assertFalse(testo.contains("Prezzo di listino"), testo);
         assertTrue(testo.contains("600,00 €"), testo);
         assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
         assertTrue(testo.contains("Già pagato"), testo);
@@ -101,6 +105,40 @@ class DocumentiServiceTest {
         assertFalse(email.contains("data:image"));
         assertEquals("conferma-iscrizione-corso-di-canto-" + iscrizione.getAllievo().getNomeCompleto().toLowerCase().replace(' ', '-') + ".pdf",
             documentiService.nomeFile(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione));
+    }
+
+    @Test
+    void scontoApplicato_listinoBarratoScontoEQuotaDovuta() throws IOException {
+        Iscrizione iscrizione = iscrizione();
+        Long corsoId = iscrizione.getCorso().getId();
+        Long allievoId = iscrizione.getAllievo().getId();
+        pagamentoService.impostaQuota(corsoId, allievoId, new BigDecimal("450"), "fratelli");
+        try {
+            String testo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId))
+                .replaceAll("\\s+", " ");
+            assertTrue(testo.contains("Prezzo di listino del corso 600,00 €"), testo);
+            assertTrue(testo.contains("Sconto applicato (fratelli) -150,00 €"), testo);
+            assertTrue(testo.contains("QUOTA DOVUTA 450,00 €"), testo);
+            assertTrue(testo.contains("già scontata: il prezzo di listino è solo un riferimento"), testo);
+
+            String email = documentiService.emailHtml(TipoDocumento.RICEVUTA, corsoId, allievoId, "Mario Rossi");
+            assertTrue(email.contains("<s>600,00 €</s>"));
+            assertTrue(email.contains("Sconto applicato (fratelli)"));
+
+            // Senza motivo, con la quota uguale al prezzo di pre-iscrizione (510 €)
+            it.attocchi.entity.Corso corso = corsoService.findById(corsoId);
+            corso.setPrezzoPreiscrizione(new BigDecimal("510.00"));
+            corsoService.save(corso);
+            pagamentoService.impostaQuota(corsoId, allievoId, new BigDecimal("510"), null);
+            String preiscrizione = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
+            assertTrue(preiscrizione.contains("Sconto applicato (pre-iscrizione)"), preiscrizione);
+            assertTrue(preiscrizione.contains("-90,00 €"));
+        } finally {
+            pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+            it.attocchi.entity.Corso corso = corsoService.findById(corsoId);
+            corso.setPrezzoPreiscrizione(null);
+            corsoService.save(corso);
+        }
     }
 
     @Test

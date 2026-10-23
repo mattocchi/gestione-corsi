@@ -1,4 +1,5 @@
 <#import "comune.ftlh" as c>
+<#import "/importi.ftlh" as i>
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -20,9 +21,7 @@
 <#else>
 <p>Nessun pagamento registrato.</p>
 </#if>
-<table class="totali">
-  <tr><td>Totale pagato</td><td class="valore">${totali.pagato}</td></tr>
-  <tr><td>Residuo da pagare</td><td class="valore">${totali.residuo}</td></tr>
-</table>
+<h2>Importi</h2>
+<@i.blocco/>
 </body>
 </html>

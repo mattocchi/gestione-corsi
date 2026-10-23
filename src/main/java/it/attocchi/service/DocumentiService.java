@@ -317,20 +317,47 @@ public class DocumentiService {
         if (genitore != null) {
             modello.put("genitore", Map.of("nome", genitore.getNomeCompleto(), "codiceFiscale", testo(genitore.getCodiceFiscale())));
         }
-        String quota = Formati.euro(situazione.quota());
-        if (iscrizione.getQuotaPersonalizzata() != null) {
-            quota += " (quota piena " + Formati.euro(corso.getCostoTotale())
-                + (iscrizione.getNotaQuota() != null ? ", " + iscrizione.getNotaQuota() : "") + ")";
-        }
         modello.put("corso", Map.of("nome", corso.getNome(), "anno", testo(corso.getAnnoScolastico()),
             "insegnante", corso.getNomiInsegnanti(),
-            "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante", "quota", quota,
-            "giorni", giorni(iscrizione)));
+            "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante",
+            "quota", Formati.euro(situazione.quota()), "giorni", giorni(iscrizione)));
+        modello.put("importi", importi(iscrizione, situazione));
         List<Map<String, String>> pagamenti = ricevuta.pagamenti().stream().map(DocumentiService::pagamento).toList();
         modello.put("pagamenti", pagamenti);
         modello.put("totali", Map.of("quota", Formati.euro(situazione.quota()), "pagato", Formati.euro(situazione.pagato()),
             "residuo", Formati.euro(situazione.residuo())));
         return modello;
+    }
+
+    /**
+     * Importi della conferma e della ricevuta: quota dovuta, pagato e residuo; con una quota personalizzata diversa
+     * dal listino anche il prezzo di listino, la riga dello sconto (o maggiorazione) con il motivo e la nota che
+     * chiarisce che l'importo dovuto è la quota.
+     */
+    private static Map<String, Object> importi(Iscrizione iscrizione, Situazione situazione) {
+        Corso corso = iscrizione.getCorso();
+        Map<String, Object> importi = new HashMap<>();
+        importi.put("quota", Formati.euro(situazione.quota()));
+        importi.put("pagato", Formati.euro(situazione.pagato()));
+        importi.put("residuo", Formati.euro(situazione.residuo()));
+        BigDecimal listino = corso.getCostoTotale();
+        BigDecimal differenza = listino != null && iscrizione.getQuotaPersonalizzata() != null
+            ? iscrizione.getQuotaPersonalizzata().subtract(listino) : BigDecimal.ZERO;
+        importi.put("conVariazione", differenza.signum() != 0);
+        if (differenza.signum() != 0) {
+            boolean sconto = differenza.signum() < 0;
+            String motivo = iscrizione.getNotaQuota() != null ? iscrizione.getNotaQuota()
+                : sconto && corso.getPrezzoPreiscrizione() != null
+                    && iscrizione.getQuotaPersonalizzata().compareTo(corso.getPrezzoPreiscrizione()) == 0 ? "pre-iscrizione" : null;
+            importi.put("listino", Formati.euro(listino));
+            importi.put("etichettaVariazione", (sconto ? "Sconto applicato" : "Maggiorazione applicata")
+                + (motivo != null ? " (" + motivo + ")" : ""));
+            // Trattino normale: il segno meno tipografico non è nel font del PDF
+            importi.put("variazione", (sconto ? "-" : "+") + Formati.euro(differenza.abs()));
+            importi.put("nota", "L'importo dovuto è la quota indicata sopra" + (sconto ? ", già scontata" : "")
+                + ": il prezzo di listino è solo un riferimento.");
+        }
+        return importi;
     }
 
     private Map<String, String> associazione() {

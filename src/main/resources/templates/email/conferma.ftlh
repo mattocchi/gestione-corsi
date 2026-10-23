@@ -1,4 +1,5 @@
 <#import "/regole-corso.ftlh" as r>
+<#import "/importi.ftlh" as i>
 <!DOCTYPE html>
 <html lang="it">
 <head><meta charset="UTF-8"/></head>
@@ -6,11 +7,7 @@
 <p>Gentile ${saluto},</p>
 <p>confermiamo l'iscrizione di <strong>${allievo.nome}</strong> al corso <strong>${corso.nome}</strong>
   (anno scolastico ${corso.anno}<#if corso.insegnante?has_content>, ${corso.etichettaInsegnante?lower_case} ${corso.insegnante}</#if>)<#if corso.giorni?has_content>, con lezione il ${corso.giorni}</#if>.</p>
-<table style="border-collapse: collapse;">
-  <tr><td style="padding: 2px 16px 2px 0;">Quota del corso</td><td style="text-align: right;"><strong>${totali.quota}</strong></td></tr>
-  <tr><td style="padding: 2px 16px 2px 0;">Già pagato</td><td style="text-align: right;">${totali.pagato}</td></tr>
-  <tr><td style="padding: 2px 16px 2px 0;">Da pagare</td><td style="text-align: right;"><strong>${totali.residuo}</strong></td></tr>
-</table>
+<@i.blocco email=true/>
 <#if associazione.iban?has_content>
 <p>Il pagamento può essere effettuato con bonifico intestato a ${associazione.nome}, IBAN <strong>${associazione.iban}</strong>,
   indicando nella causale &quot;${corso.nome} ${corso.anno} – ${allievo.nome}&quot;.</p>
