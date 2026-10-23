@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | 1 | `CalendarioService`: `VoceCalendario` con gruppo e orario, una voce per gruppo con orario (staff) o per il gruppo dell'allievo (famiglie), voce in più senza gruppo; test | `CalendarioService`, `PresenzaRepository`, `CalendarioServiceTest` | `./mvnw test` | [x] Se nessuno dei presenti ha un gruppo con orario (es. il martedì quando i gruppi sono di sabato) resta la voce unica della lezione |
 | 2 | `CalendarioView`: orario e gruppo della voce; `DettaglioLezioneDialog` con la riga "Gruppo"; test browserless | `CalendarioView`, `DettaglioLezioneDialog`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -31,4 +31,7 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati. Nuovi: `CalendarioServiceTest.gruppi_…` (due gruppi il sabato con i loro orari, voce "Senza gruppo", martedì voce unica, allievo solo il suo gruppo) e in `ViewAccessTest` le voci nel calendario dell'insegnante e la riga "Gruppo" del dettaglio.
+- Problema trovato: assegnare un gruppo dà all'allievo senza orario quello del gruppo, ed eliminarlo non lo toglie; i test ripuliscono l'orario.
+- Browser: non verificato (nei dati di sviluppo non ci sono gruppi).
+- Lasciato aperto: nessuno.
