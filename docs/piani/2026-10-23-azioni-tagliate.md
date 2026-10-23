@@ -18,7 +18,7 @@ Controllo UI di tutte le griglie desktop: in GENITORE alcuni pulsanti non si ved
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Larghezza fissa del menu ricevuta nelle righe (`flex-none w-[4.5rem]`) | `views/MenuPdf.java` | compile, test, controllo headless delle griglie | [x] |
-| 2 | CLAUDE.md e registro | `CLAUDE.md`, piano | — | [ ] |
+| 2 | CLAUDE.md e registro | `CLAUDE.md`, piano | — | [x] |
 
 ## Fuori ambito
 - Controllo su mobile (le card non usano la colonna "Azioni").
@@ -26,3 +26,7 @@ Controllo UI di tutte le griglie desktop: in GENITORE alcuni pulsanti non si ved
   della colonna bloccata a destra.
 
 ## Registro
+- Passo 1: dopo la correzione nessun pulsante tagliato né voce finita nel menu "…" in Gestione Pagamenti, Pagamenti
+  del genitore e dettaglio corsi dei figli; le altre griglie restano a posto (controllo headless 1440×900).
+- `./mvnw test`: 232 test, tutti verdi.
+- Prima del prossimo build di produzione: cancellare `src/main/bundles/prod.bundle` (nuova classe Tailwind e MenuBar).
