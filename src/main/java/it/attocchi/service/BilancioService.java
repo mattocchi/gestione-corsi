@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -166,6 +167,26 @@ public class BilancioService {
             }
         }
         return costi;
+    }
+
+    /** Minuti di lezione donati da un insegnante senza tariffa: delle lezioni svolte e di tutte quelle previste. */
+    public record OreDonate(long minutiSvolti, long minutiPrevisti) {
+    }
+
+    /**
+     * Ore donate dall'insegnante senza tariffa oraria (anche con il rimborso forfettario) sui corsi attivi, con lo
+     * stesso calcolo dei costi: allievi attesi (assenti compresi) × durata, sulle lezioni a cui era presente; svolte =
+     * completate, previste = tutte tranne le non effettuate. Vuoto se l'insegnante ha la tariffa (o non esiste).
+     */
+    public Optional<OreDonate> oreDonate(String usernameInsegnante) {
+        return insegnanteRepository.findByUserUsername(usernameInsegnante)
+            .filter(insegnante -> !haTariffa(insegnante))
+            .map(insegnante -> {
+                List<Lezione> lezioni = lezioneRepository.findConInsegnantePresente(insegnante.getId()).stream()
+                    .filter(l -> l.getCorso().isAttivo()).toList();
+                Map<Long, Long> presenze = presenzePerLezione(insegnante.getId());
+                return new OreDonate(minuti(lezioni, presenze, Lezione::isCompletata), minuti(lezioni, presenze, l -> true));
+            });
     }
 
     /** Prospetto per anno scolastico: una riga per insegnante, in ordine di nome. */
