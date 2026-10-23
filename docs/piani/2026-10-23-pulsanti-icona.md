@@ -18,10 +18,14 @@ Dare ai pulsanti con la sola icona l'aspetto di un pulsante, per far capire che 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Stile normale in `ViewSupport.iconButton` e `MenuPdf.soloIcona` | [F-2026-10-23/PULSANTI.1] | `views/ViewSupport`, `views/MenuPdf` | `./mvnw test` | [x] |
-| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Stili diversi tra desktop e mobile.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 232 test verdi (nessun test dipende dalla variante).
+- Non verificato nel browser: da controllare a vista le righe con più azioni (Gestione Corsi, Gestione Pagamenti, Lezioni) su desktop e a 390px.
+- Nessuna modifica al database né componenti nuovi.
