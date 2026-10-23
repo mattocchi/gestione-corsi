@@ -23,10 +23,15 @@ Proporre un meccanismo di "ricordami" all'accesso ([F-2026-10-23/RICORDAMI.1]); 
 |---|---|---|---|---|---|
 | 1 | `RememberMeServices` in `SecurityConfig` (cookie firmato 30 giorni, richiesto dal cookie `ricordami`); proprietà e variabile d'ambiente; test sul filtro di login | — | `security/SecurityConfig`, `application*.properties`, `deploy/…`, test | `./mvnw test` | [x] |
 | 2 | Casella "Ricordami su questo dispositivo" in `LoginView`; test | [F-2026-10-23/RICORDAMI.1] | `views/LoginView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md, README di deploy e registro | — | `CLAUDE.md`, `deploy/README.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md, README di deploy e registro | — | `CLAUDE.md`, `deploy/README.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Elenco dei dispositivi ricordati e revoca dal gestionale (token in database).
 
 ## Registro
+
+- Passo 1: `./mvnw test` 223 test verdi; nuovo `security/RicordamiTest` sul filtro di login reale (MockMvc): senza la casella nessun cookie; con la casella cookie di 30 giorni che fa rientrare; cambio password o utente disattivato: non rientra; uscita (`/logout`): cookie cancellato.
+- Passo 2: `./mvnw test` 223 test verdi; `login_inItaliano` verifica la casella non spuntata.
+- Non verificato nel browser (casella → cookie → login). L'uscita dall'app passa da `AuthenticationContext.logout()` di Vaadin, che usa gli stessi gestori di uscita di Spring Security verificati sul `/logout`.
+- **Produzione**: impostare `REMEMBER_ME_KEY` in `gestione-corsi.env` (es. `openssl rand -base64 32`) e ricaricare con `pm2 reload ecosystem.config.js --update-env`; senza, gli accessi ricordati si perdono a ogni riavvio (che con il watch di pm2 avviene a ogni deploy).

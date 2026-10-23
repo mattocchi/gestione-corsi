@@ -50,6 +50,7 @@ Variabili di `gestione-corsi.env`:
 | `DB_URL` | no | `jdbc:mysql://localhost:3306/gestione_corsi?...` | URL JDBC |
 | `DB_USERNAME` | no | `gestione_corsi_user` | utente MySQL |
 | `PORT` | no | `8080` | porta HTTP |
+| `REMEMBER_ME_KEY` | consigliata | casuale a ogni avvio | chiave di firma dei cookie "Ricordami su questo dispositivo" (`openssl rand -base64 32`); senza, gli accessi ricordati si perdono a ogni riavvio |
 | `APP_JAR` | no | `gestione-corsi.jar` | JAR da avviare |
 | `JAVA_BIN` | no | `java` | eseguibile Java 21 |
 | `JAVA_OPTS` | no | `-Xms256m -Xmx512m ...` | opzioni della JVM |
