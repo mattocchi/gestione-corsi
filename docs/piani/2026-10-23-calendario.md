@@ -22,7 +22,7 @@ Per admin, segreteria, insegnanti e allievi una vista "Calendario" mensile con i
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `CalendarioService.lezioniDelMese(username, mese, corsoId)` secondo il ruolo; test | — | `service/CalendarioService`, test | `./mvnw test` | [ ] |
+| 1 | `CalendarioService.lezioniDelMese(username, mese, corsoId)` secondo il ruolo; test | — | `service/CalendarioService`, test | `./mvnw test` | [x] |
 | 2 | Apertura delle presenze da `?lezione=ID` in Lezioni e Le Mie Lezioni; test | — | `views/ElencoLezioni`, `admin/LezioniView`, `insegnante/LezioniInsegnanteView`, test | `./mvnw test` | [ ] |
 | 3 | `CalendarioView`: griglia mensile, elenco su mobile, filtro corso, festività, dettagli; test | [F-2026-10-23/CALENDARIO.1] | `views/CalendarioView`, `styles`, test | `./mvnw test`, browser | [ ] |
 | 4 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
