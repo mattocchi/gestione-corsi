@@ -322,3 +322,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] Vorrei togliere tutti i pulsanti in giro per la generazione dei PDF e fare una sezione dedicata "documenti" in cui é possibile generare ed inviare o consultare in anteprima. E nel caso di genitori e allievi é l'area preposta per tutta la documentazione. _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: si tolgono dalle altre viste i pulsanti dei PDF (ricevuta, riepilogo famiglia/allievo) e gli invii email dei documenti (conferma o ricevuta, conferme a tutti); restano "Email inviate" e l'email di test. Per admin e segreteria "Documenti" è organizzata per tipo (conferme di iscrizione, ricevute, riepiloghi annuali) con filtri per anno scolastico e corso, ricerca, anteprima/scarica del PDF, invio email con anteprima, colonna "Ultimo invio" e, scelto un corso, l'invio delle conferme a tutti; il riepilogo annuale si può ora inviare per email (registrato in "Email inviate", serve uno script SQL su MySQL prima del deploy). Genitori e allievi senza genitore vedono conferme di iscrizione, ricevute (se ci sono pagamenti) e riepiloghi annuali di tutti i corsi, anche passati, solo in anteprima o da scaricare; l'allievo con genitore non ha la voce._
+
+## FUNZIONALITA del 24-10-2026
+
+### DASHBOARD
+
+* [ ] in dashboard aggiunti la prossima lezione prevista come informazione prima delle card di riepilogo, se cliccata si va alla lezione, che per l'insegnante è il registro delle presenze
