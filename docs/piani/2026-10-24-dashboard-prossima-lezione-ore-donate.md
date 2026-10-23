@@ -31,8 +31,8 @@
 | 3 | `HomeView`: sezione delle prossime lezioni prima dei riepiloghi, riquadri cliccabili (registro per l'insegnante, dettaglio per allievo e genitore); test browserless | `HomeView`, `ViewAccessTest` | `./mvnw test`; browser | [x] Riquadri con `role=button`, clic e Invio; verifica nel browser insieme al passo 5 |
 | 4 | `BilancioService.oreDonate(username)`: minuti svolti e previsti sui corsi attivi per l'insegnante senza tariffa; test | `BilancioService`, test | `./mvnw test` | [x] Previste = lezioni già generate (nessuna stima per i corsi senza lezioni) |
 | 5 | `HomeView`: riquadro "Ore donate" nella sezione dell'insegnante; test browserless | `HomeView`, `Formati.durata`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 6 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [ ] |
-| 7 | Registro finale | questo piano | build e test | [ ] |
+| 6 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [x] |
+| 7 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -40,4 +40,7 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati dopo ogni passo. Nuovi: `DashboardServiceTest` (prossime lezioni di insegnante, allievo e genitore, da oggi in poi, una per corso), `BilancioServiceTest.oreDonate_…` (solo senza tariffa, svolte e previste, forfait ignorato), in `ViewAccessTest` il riquadro della prossima lezione (insegnante → registro, genitore → dettaglio senza "Gestisci presenze") e quello delle ore donate.
+- Browser: non verificato. Nei dati di sviluppo le lezioni sono del 2024 (nessuna prossima lezione) e gli insegnanti hanno tutti la tariffa; in più in questa sessione i clic simulati dell'estensione non arrivavano alla pagina. Da provare a mano: aggiungere una lezione futura e togliere la tariffa a un insegnante.
+- Nessuno script SQL.
+- Lasciato aperto: la richiesta [F-2026-10-23/RICORDAMI.2], interrotta, è nello stash (`git stash list`).
