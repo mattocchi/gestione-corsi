@@ -16,7 +16,7 @@ Dopo il deploy della 1.1.0 la pagina `/login` in produzione è vuota e non si pu
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `build.sh`: cancella `prod.bundle` e `src/main/frontend/generated` prima della build, toglie `-Pproduction`, si ferma con errore se il JAR contiene Copilot | `build.sh` | `./build.sh`, 0 file `copilot` nel JAR | [ ] |
+| 1 | `build.sh`: cancella `prod.bundle` e `src/main/frontend/generated` prima della build, toglie `-Pproduction`, si ferma con errore se il JAR contiene Copilot | `build.sh` | `./build.sh`, 0 file `copilot` nel JAR | [x] |
 | 2 | CLAUDE.md e registro | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
