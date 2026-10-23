@@ -238,10 +238,18 @@ public class CalendarioView extends VerticalLayout {
         if (lezione.isNonEffettuata() && lezione.getMotivoNonEffettuata() != null) {
             contenuto.add(riga("Motivo", lezione.getMotivoNonEffettuata()));
         }
+        boolean staff = gestione || lezione.getCorso().haInsegnante(username);
+        // Le note per lo staff solo ad admin, segreteria e insegnanti del corso
+        if (lezione.getNotePubbliche() != null) {
+            contenuto.add(riga(staff ? "Note pubbliche" : "Note", lezione.getNotePubbliche()));
+        }
+        if (staff && lezione.getNote() != null) {
+            contenuto.add(riga("Note staff", lezione.getNote()));
+        }
         contenuto.addClassNames("p-0 gap-2");
         dialog.add(contenuto);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
-        if (gestione || lezione.getCorso().haInsegnante(username)) {
+        if (staff) {
             Button presenze = new Button("Gestisci presenze", VaadinIcon.CLIPBOARD_CHECK.create(), e -> {
                 dialog.close();
                 QueryParameters parametri = QueryParameters.of(ElencoLezioni.PARAMETRO_LEZIONE, String.valueOf(lezione.getId()));

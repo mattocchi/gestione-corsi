@@ -17,6 +17,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.shared.Tooltip;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
@@ -253,7 +254,7 @@ public class ElencoLezioni extends VerticalLayout {
             Span avviso = new Span("Lezione non effettuata" + (lezione.getMotivoNonEffettuata() != null
                 ? ": " + lezione.getMotivoNonEffettuata() : ""));
             avviso.addClassNames(Stili.TESTO_SECONDARIO);
-            dialog.add(avviso);
+            dialog.add(avviso, createNoteLezione(lezione));
             Lezione recupero = elenco.stream().filter(l -> l.getRecuperoDi() != null
                 && l.getRecuperoDi().getId().equals(lezione.getId())).findFirst().orElse(null);
             if (recupero != null) {
@@ -272,11 +273,12 @@ public class ElencoLezioni extends VerticalLayout {
             return;
         }
 
+        dialog.add(createNoteLezione(lezione));
         List<Insegnante> insegnanti = lezione.getCorso().getInsegnanti();
         if (insegnanti.size() == 2) {
-            dialog.add(ViewSupport.sezione("Insegnanti presenti"), createInsegnantiPresenti(lezione, insegnanti),
-                ViewSupport.sezione("Allievi"));
+            dialog.add(ViewSupport.sezione("Insegnanti presenti"), createInsegnantiPresenti(lezione, insegnanti));
         }
+        dialog.add(ViewSupport.sezione("Allievi"));
 
         Grid<Presenza> gridPresenze = new Grid<>(Presenza.class, false);
         gridPresenze.addColumn(p -> p.getAllievo().getNomeCompleto()).setHeader("Allievo");
@@ -490,6 +492,44 @@ public class ElencoLezioni extends VerticalLayout {
         dialog.close();
         updateGrid();
         Notification.show(conferma);
+    }
+
+    /**
+     * Note della lezione per lo staff e per allievi e genitori, salvate subito all'uscita dal campo; in caso di
+     * errore un avviso e il campo torna al valore precedente.
+     */
+    private FormLayout createNoteLezione(Lezione lezione) {
+        TextArea staff = areaNote("Note per lo staff", "Visibili solo ad admin, segreteria e insegnanti del corso",
+            lezione.getNote());
+        TextArea pubbliche = areaNote("Note per allievi e genitori", "Visibili ad allievi e genitori nel calendario",
+            lezione.getNotePubbliche());
+        for (TextArea area : List.of(staff, pubbliche)) {
+            area.addValueChangeListener(e -> {
+                if (!e.isFromClient()) {
+                    return;
+                }
+                try {
+                    lezioneService.impostaNote(lezione.getId(), staff.getValue(), pubbliche.getValue(), username);
+                    // L'elenco non si rilegge: la lezione in memoria tiene le note per la prossima apertura
+                    lezione.setNote(staff.getValue().isBlank() ? null : staff.getValue().strip());
+                    lezione.setNotePubbliche(pubbliche.getValue().isBlank() ? null : pubbliche.getValue().strip());
+                } catch (RuntimeException ex) {
+                    Notification.show("Errore nel salvataggio delle note: " + ex.getMessage());
+                    area.setValue(e.getOldValue());
+                }
+            });
+        }
+        FormLayout form = new FormLayout(staff, pubbliche);
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("500px", 2));
+        return form;
+    }
+
+    private static TextArea areaNote(String etichetta, String aiuto, String valore) {
+        TextArea area = new TextArea(etichetta);
+        area.setHelperText(aiuto);
+        area.setMaxLength(Lezione.LUNGHEZZA_NOTE);
+        area.setValue(valore != null ? valore : "");
+        return area;
     }
 
     /** Scelta degli insegnanti presenti a una lezione di un corso con due insegnanti. */

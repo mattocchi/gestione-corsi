@@ -33,6 +33,7 @@ public class PresenzeAllievoDialog extends Dialog {
             .setTooltipGenerator(presenza -> presenza.getLezione().isNonEffettuata()
                 ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote());
         grid.addColumn(Presenza::getNote).setHeader("Note");
+        grid.addColumn(presenza -> presenza.getLezione().getNotePubbliche()).setHeader("Note della lezione");
         grid.setItems(presenze);
         CardMobile.per(grid)
             .titolo(presenza -> Formati.data(presenza.getLezione().getData()))
@@ -40,6 +41,7 @@ public class PresenzeAllievoDialog extends Dialog {
             .campo("Stato", PresenzeAllievoDialog::stato)
             .campo("Note", presenza -> presenza.getLezione().isNonEffettuata()
                 ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote())
+            .campo("Note della lezione", presenza -> presenza.getLezione().getNotePubbliche())
             .applica();
 
         VerticalLayout content = new VerticalLayout(statistiche(presenze), grid);

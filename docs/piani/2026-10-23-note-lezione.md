@@ -24,7 +24,7 @@ Note sulla lezione che admin, segreteria o insegnante possono aggiungere, oltre 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `Lezione.notePubbliche`; `LezioneService.impostaNote` (permessi, testo ripulito, vuoto = null); test | — | `entity/Lezione`, `service/LezioneService`, `LezioneServiceTest` | `./mvnw test` | [x] |
-| 2 | Le due aree di testo nel dialog presenze (anche per le lezioni non effettuate); note nel dettaglio del Calendario secondo il ruolo e in `PresenzeAllievoDialog`; test browserless | [F-2026-10-23/NOTE.1] | `views/ElencoLezioni`, `views/CalendarioView`, `views/PresenzeAllievoDialog`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | Le due aree di testo nel dialog presenze (anche per le lezioni non effettuate); note nel dettaglio del Calendario secondo il ruolo e in `PresenzeAllievoDialog`; test browserless | [F-2026-10-23/NOTE.1] | `views/ElencoLezioni`, `views/CalendarioView`, `views/PresenzeAllievoDialog`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
@@ -33,3 +33,4 @@ Note sulla lezione che admin, segreteria o insegnante possono aggiungere, oltre 
 
 ## Registro
 - Passo 1: `./mvnw test` 235 test verdi; nuovo `note_staffEPubbliche_ancheSuLezioniCompletate` (permessi, testo ripulito, vuoto = nessuna nota, limite di 255 caratteri, anche su lezioni completate).
+- Passo 2: `./mvnw test` 237 test verdi; nuovi `insegnante_scriveLeNoteDellaLezione` (salvataggio immediato, valori ritrovati alla riapertura) e `allievo_nelCalendarioVedeSoloLeNotePubblicheDellaLezione`.

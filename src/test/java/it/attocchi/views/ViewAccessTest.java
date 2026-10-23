@@ -28,6 +28,7 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextFieldTester;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
@@ -2928,6 +2929,47 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     /** Pulsanti delle lezioni nel calendario (griglia ed elenco), eventualmente di un corso. */
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievo_nelCalendarioVedeSoloLeNotePubblicheDellaLezione() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Lezione prima = lezioneService.findByCorso(canto.getId()).getFirst();
+        lezioneService.impostaNote(prima.getId(), "Nota interna", "Portare lo spartito", "admin");
+        try {
+            navigate(CalendarioView.class);
+            find(CalendarioView.class).single().vaiA(java.time.YearMonth.of(2024, 10));
+            test(lezioniNelCalendario(null).getFirst()).click();
+            List<String> testi = find(Span.class).from(find(Dialog.class).single()).all().stream().map(Span::getText).toList();
+            assertTrue(testi.contains("Portare lo spartito"));
+            assertFalse(testi.contains("Nota interna"));
+        } finally {
+            lezioneService.impostaNote(prima.getId(), null, null, "admin");
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_scriveLeNoteDellaLezione() {
+        apriLezioni();
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        Lezione lezione = grid.getRow(0);
+        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        try {
+            test(find(TextArea.class).withLabel("Note per lo staff").single()).setValue("Ripassare la scala");
+            test(find(TextArea.class).withLabel("Note per allievi e genitori").single()).setValue("Portare lo spartito");
+            Lezione salvata = lezioneService.findById(lezione.getId());
+            assertEquals("Ripassare la scala", salvata.getNote());
+            assertEquals("Portare lo spartito", salvata.getNotePubbliche());
+            // Riaperta, il dialog mostra le note salvate
+            find(Dialog.class).single().close();
+            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            assertEquals("Ripassare la scala", find(TextArea.class).withLabel("Note per lo staff").single().getValue());
+        } finally {
+            lezioneService.impostaNote(lezione.getId(), null, null, "admin");
+        }
+    }
+
     private List<Button> lezioniNelCalendario(String corso) {
         return find(Button.class).from(find(CalendarioView.class).single()).all().stream()
             .filter(b -> b.getElement().getAttribute("aria-label") != null
