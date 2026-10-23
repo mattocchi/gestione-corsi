@@ -109,7 +109,8 @@ public class MieiCorsiView extends VerticalLayout {
             return;
         }
         List<Presenza> presenze = presenzaService.findByCorsoAndAllievo(corso.getId(), allievoCorrente.getId());
-        new PresenzeAllievoDialog("Presenze – " + corso.getNome(), presenze, corsoService.gruppi(corso.getId())).open();
+        new PresenzeAllievoDialog("Presenze – " + corso.getNome(), presenze, corsoService.gruppi(corso.getId()),
+            corso.getNumeroLezioni(), false).open();
     }
 
     private void updateGrid() {

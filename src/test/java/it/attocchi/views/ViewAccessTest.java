@@ -3269,9 +3269,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var corsi = test(find(Grid.class).single());
             test(pulsante(corsi.getCellComponent(0, 9), "Visualizza Presenze")).click();
             Dialog dialog = find(Dialog.class).single();
-            assertTrue(find(Span.class).from(dialog).withText("Totale lezioni: 29").exists());
-            var presenze = test((Grid<Presenza>) find(Grid.class).from(dialog).single());
+            // La non effettuata non conta: 29 da fare, nessuna svolta, 30 mancanti
+            assertTrue(find(Span.class).from(dialog).withText("Da fare: 29").exists());
+            assertTrue(find(Span.class).from(dialog).withText("Svolte: 0 su 30").exists());
+            assertTrue(find(Span.class).from(dialog).withText("Mancanti: 30").exists());
+            assertTrue(find(Span.class).from(dialog).withText("Presenze: 0").exists());
+            Grid<Presenza> gridPresenze = find(Grid.class).from(dialog).single();
+            var presenze = test(gridPresenze);
             assertEquals("Lezione non effettuata", presenze.getCellText(0, 2));
+            // Le lezioni future non risultano "Presente" e le note per lo staff restano nascoste
+            assertEquals("Da fare", presenze.getCellText(1, 2));
+            assertFalse(gridPresenze.getColumns().stream()
+                .anyMatch(c -> c.isVisible() && "Note per lo staff".equals(c.getHeaderText())));
         } finally {
             lezioneService.ripristina(lezione.getId(), "insegnante1");
         }

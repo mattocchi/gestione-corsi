@@ -6,20 +6,27 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import it.attocchi.entity.GruppoCorso;
+import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
-import it.attocchi.entity.Presenza.StatoPresenza;
+import it.attocchi.service.ConteggioLezioni;
 
 import java.util.List;
 
 /**
- * Dialog in sola lettura con le presenze di un allievo in un corso, usato dalle view
- * di allievi e genitori. Su mobile mostra solo data e stato; la nota resta leggibile
- * come tooltip dello stato.
+ * Dialog in sola lettura con le lezioni di un allievo in un corso, usato dalle view di allievi, genitori e
+ * insegnanti: in alto il {@link ConteggioLezioni} (svolte, da fare, mancanti, presenze e assenze), sotto ogni
+ * lezione con il suo stato ("Da fare" finché non è completata). Su mobile mostra solo data e stato; la nota resta
+ * leggibile come tooltip dello stato.
  */
 public class PresenzeAllievoDialog extends Dialog {
 
-    /** @param gruppiDelCorso i gruppi del corso, per il numero della lezione con il gruppo o il giorno */
-    public PresenzeAllievoDialog(String title, List<Presenza> presenze, List<GruppoCorso> gruppiDelCorso) {
+    /**
+     * @param gruppiDelCorso i gruppi del corso, per il numero della lezione con il gruppo o il giorno
+     * @param previste       lezioni previste per partecipante ({@code Corso.numeroLezioni})
+     * @param noteStaff      mostra anche le note della lezione per lo staff (solo agli insegnanti)
+     */
+    public PresenzeAllievoDialog(String title, List<Presenza> presenze, List<GruppoCorso> gruppiDelCorso,
+                                 Integer previste, boolean noteStaff) {
         setHeaderTitle(title);
         setWidth("800px");
         setMaxWidth("100%");
@@ -34,39 +41,45 @@ public class PresenzeAllievoDialog extends Dialog {
                 ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote());
         grid.addColumn(Presenza::getNote).setHeader("Note");
         grid.addColumn(presenza -> presenza.getLezione().getNotePubbliche()).setHeader("Note della lezione");
+        grid.addColumn(presenza -> presenza.getLezione().getNote()).setHeader("Note per lo staff").setVisible(noteStaff);
         grid.setItems(presenze);
-        CardMobile.per(grid)
+        CardMobile<Presenza> card = CardMobile.per(grid)
             .titolo(presenza -> Formati.data(presenza.getLezione().getData()))
             .campo("N. Lezione", presenza -> Formati.numeroLezione(presenza.getLezione(), gruppiDelCorso))
             .campo("Stato", PresenzeAllievoDialog::stato)
             .campo("Note", presenza -> presenza.getLezione().isNonEffettuata()
                 ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote())
-            .campo("Note della lezione", presenza -> presenza.getLezione().getNotePubbliche())
-            .applica();
+            .campo("Note della lezione", presenza -> presenza.getLezione().getNotePubbliche());
+        if (noteStaff) {
+            card.campo("Note per lo staff", presenza -> presenza.getLezione().getNote());
+        }
+        card.applica();
 
-        VerticalLayout content = new VerticalLayout(statistiche(presenze), grid);
+        VerticalLayout content = new VerticalLayout(statistiche(ConteggioLezioni.di(presenze, previste)), grid);
         content.addClassNames("p-0");
         add(content);
         getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
     }
 
     private static String stato(Presenza presenza) {
-        return presenza.getLezione().isNonEffettuata() ? "Lezione non effettuata" : presenza.getStato().getDescrizione();
+        Lezione lezione = presenza.getLezione();
+        if (lezione.isNonEffettuata()) {
+            return "Lezione non effettuata";
+        }
+        // Le presenze delle lezioni future nascono "Presente": finché la lezione non è completata non dicono nulla
+        return lezione.isCompletata() ? presenza.getStato().getDescrizione() : "Da fare";
     }
 
-    /** Statistiche delle sole lezioni effettuate (o da fare): le non effettuate non contano. */
-    private static HorizontalLayout statistiche(List<Presenza> tutte) {
-        List<Presenza> presenze = tutte.stream().filter(p -> !p.getLezione().isNonEffettuata()).toList();
+    /** Lezioni svolte, da fare e mancanti sulle previste; presenze e assenze solo sulle svolte. */
+    private static HorizontalLayout statistiche(ConteggioLezioni conteggio) {
         HorizontalLayout stats = new HorizontalLayout(
-            new Span("Totale lezioni: " + presenze.size()),
-            new Span("Presenze: " + conta(presenze, StatoPresenza.PRESENTE)),
-            new Span("Assenze giustificate: " + conta(presenze, StatoPresenza.ASSENTE_GIUSTIFICATA)),
-            new Span("Assenze ingiustificate: " + conta(presenze, StatoPresenza.ASSENTE_INGIUSTIFICATA)));
+            new Span("Svolte: " + conteggio.svolte() + " su " + conteggio.previste()),
+            new Span("Da fare: " + conteggio.daFare()),
+            new Span("Mancanti: " + conteggio.mancanti()),
+            new Span("Presenze: " + conteggio.presenze()),
+            new Span("Assenze giustificate: " + conteggio.giustificate()),
+            new Span("Assenze ingiustificate: " + conteggio.ingiustificate()));
         stats.addClassNames("flex-wrap items-baseline");
         return stats;
-    }
-
-    private static long conta(List<Presenza> presenze, StatoPresenza stato) {
-        return presenze.stream().filter(p -> p.getStato() == stato).count();
     }
 }
