@@ -20,7 +20,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Schede per gruppo nel dialog "Gestisci Presenze" che filtrano la griglia; test browserless | `ElencoLezioni`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | Schede per gruppo nel dialog "Gestisci Presenze" che filtrano la griglia; test browserless | `ElencoLezioni`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito

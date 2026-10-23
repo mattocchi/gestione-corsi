@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
@@ -28,6 +30,8 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
+import java.util.TreeMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import it.attocchi.entity.GruppoCorso;
 import com.vaadin.flow.function.SerializableFunction;
@@ -294,7 +298,9 @@ public class ElencoLezioni extends VerticalLayout {
             .campo("Stato", this::createStatoPresenza)
             .campo("Note", this::createNotePresenza)
             .applica();
-        gridPresenze.setItems(lezioneService.presenzeInOrdine(lezione.getId()));
+        List<Presenza> presenze = lezioneService.presenzeInOrdine(lezione.getId());
+        GridListDataView<Presenza> righe = gridPresenze.setItems(presenze);
+        schedePerGruppo(presenze, gruppi, righe).ifPresent(dialog::add);
         dialog.add(gridPresenze);
         // Le note in fondo, dopo le presenze e prima dei pulsanti
         dialog.add(ViewSupport.sezione("Note della lezione"), createNoteLezione(lezione));
@@ -493,6 +499,45 @@ public class ElencoLezioni extends VerticalLayout {
         dialog.close();
         updateGrid();
         Notification.show(conferma);
+    }
+
+    /**
+     * Schede che filtrano il registro per gruppo: una per ogni gruppo con allievi alla lezione (in ordine di giorno e
+     * orario, con il numero di allievi), "Senza gruppo" se c'è chi non ne ha e "Tutti"; si apre sul primo gruppo.
+     * Vuoto se la lezione non ha almeno due schede di gruppo (corso senza gruppi o un solo gruppo per tutti).
+     */
+    private static Optional<Tabs> schedePerGruppo(List<Presenza> presenze, Map<Long, GruppoCorso> gruppi,
+                                                  GridListDataView<Presenza> righe) {
+        Map<GruppoCorso, Long> perGruppo = new TreeMap<>(GruppoCorso.PER_GIORNO.thenComparing(GruppoCorso::getId));
+        long senzaGruppo = 0;
+        for (Presenza presenza : presenze) {
+            GruppoCorso gruppo = gruppi.get(presenza.getAllievo().getId());
+            if (gruppo != null) {
+                perGruppo.merge(gruppo, 1L, Long::sum);
+            } else {
+                senzaGruppo++;
+            }
+        }
+        if (perGruppo.size() + (senzaGruppo > 0 ? 1 : 0) < 2) {
+            return Optional.empty();
+        }
+        Tabs schede = new Tabs();
+        schede.getElement().setAttribute("aria-label", "Gruppi della lezione");
+        Map<Tab, SerializablePredicate<Presenza>> filtri = new LinkedHashMap<>();
+        perGruppo.forEach((gruppo, numero) -> {
+            String nome = gruppo.getNome() != null && !gruppo.getNome().isBlank() ? gruppo.getNome() : Formati.giorno(gruppo.getGiorno());
+            Tab scheda = new Tab(nome + (gruppo.getOrario() != null ? " " + Formati.ora(gruppo.getOrario()) : "") + " (" + numero + ")");
+            filtri.put(scheda, p -> gruppo.equals(gruppi.get(p.getAllievo().getId())));
+        });
+        if (senzaGruppo > 0) {
+            filtri.put(new Tab("Senza gruppo (" + senzaGruppo + ")"), p -> !gruppi.containsKey(p.getAllievo().getId()));
+        }
+        filtri.put(new Tab("Tutti (" + presenze.size() + ")"), p -> true);
+        filtri.keySet().forEach(schede::add);
+        schede.addSelectedChangeListener(e -> righe.setFilter(filtri.get(e.getSelectedTab())));
+        schede.setSelectedIndex(0);
+        righe.setFilter(filtri.values().iterator().next());
+        return Optional.of(schede);
     }
 
     /**

@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.browserless.SpringBrowserlessTest;
@@ -3168,6 +3170,50 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             corsoService.eliminaGruppo(piccoli.getId());
             corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante2")
+    @SuppressWarnings("unchecked")
+    void insegnante_registroDellaLezioneConUnaSchedaPerGruppo() {
+        // Chitarra il sabato: Piccoli alle 10 (Chitarra1, Chitarra2), Grandi alle 11 (Chitarra3), Chitarra4..6 senza gruppo
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        GruppoCorso piccoli = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        GruppoCorso grandi = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Grandi", DayOfWeek.SATURDAY, LocalTime.of(11, 0)));
+        List<Allievo> assegnati = List.of("allievo_chitarra1", "allievo_chitarra2", "allievo_chitarra3").stream()
+            .map(u -> allievoService.findByUsername(u).orElseThrow()).toList();
+        corsoService.assegnaGruppo(chitarra.getId(), assegnati.get(0).getId(), piccoli.getId());
+        corsoService.assegnaGruppo(chitarra.getId(), assegnati.get(1).getId(), piccoli.getId());
+        corsoService.assegnaGruppo(chitarra.getId(), assegnati.get(2).getId(), grandi.getId());
+        try {
+            Lezione sabato = lezioneService.findByCorso(chitarra.getId()).stream()
+                .filter(l -> l.getData().getDayOfWeek() == DayOfWeek.SATURDAY).findFirst().orElseThrow();
+            Lezione martedi = lezioneService.findByCorso(chitarra.getId()).stream()
+                .filter(l -> l.getData().getDayOfWeek() == DayOfWeek.TUESDAY).findFirst().orElseThrow();
+            navigate(LezioniInsegnanteView.class);
+            find(ElencoLezioni.class).single().apriPresenze(sabato.getId());
+            Dialog registro = find(Dialog.class).single();
+            Tabs schede = find(Tabs.class).from(registro).single();
+            assertEquals(List.of("Piccoli 10:00 (2)", "Grandi 11:00 (1)", "Senza gruppo (3)", "Tutti (6)"),
+                find(Tab.class).from(schede).all().stream().map(Tab::getLabel).toList());
+            // Si apre sul primo gruppo, poi si cambia scheda
+            var presenze = test((Grid<Presenza>) find(Grid.class).from(registro).single());
+            assertEquals(2, presenze.size());
+            schede.setSelectedIndex(1);
+            assertEquals(1, presenze.size());
+            assertEquals("Allievo Chitarra3", presenze.getRow(0).getAllievo().getNomeCompleto());
+            schede.setSelectedIndex(3);
+            assertEquals(6, presenze.size());
+            registro.close();
+
+            // Il martedì ci sono solo quelli senza gruppo: niente schede
+            find(ElencoLezioni.class).single().apriPresenze(martedi.getId());
+            assertFalse(find(Tabs.class).from(find(Dialog.class).single()).exists());
+        } finally {
+            corsoService.eliminaGruppo(piccoli.getId());
+            corsoService.eliminaGruppo(grandi.getId());
+            assegnati.forEach(a -> corsoService.impostaOrario(chitarra.getId(), a.getId(), null));
         }
     }
 
