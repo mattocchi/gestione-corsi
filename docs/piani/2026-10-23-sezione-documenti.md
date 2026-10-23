@@ -36,7 +36,7 @@
 | 5 | `DocumentiView` per admin e segreteria: tipo, filtri, ricerca, PDF, invio, ultimo invio, conferme a tutti; card su mobile; test browserless | `views/DocumentiView.java`, `ViewAccessTest` | `./mvnw test` | [x] Anno iniziale: quello corrente se ha documenti, altrimenti il più recente |
 | 6 | `DocumentiView` per genitori e allievi senza genitore (voce nascosta all'allievo con genitore); test browserless | `views/DocumentiView.java`, `MainLayout`, `ViewAccessTest` | `./mvnw test` | [x] Filtro per anno solo con più anni; l'allievo con genitore che apre l'indirizzo vede un avviso |
 | 7 | Via i pulsanti PDF ed email dalle altre viste; rimozione di `Ricevute` e `RiepilogoFamigliaDialog` se non più usati; test aggiornati | `ElencoPagamenti`, `QuotaPagamentiDialog`, `FigliView`, `GenitoriView`, `PagamentiFigliView`, `MieiPagamentiView`, `PartecipantiDialog`, test | `./mvnw test`; browser | [x] Tolti anche il vecchio dialog combinato di `InvioEmailDialog`, `Ricevute` e `RiepilogoFamigliaDialog`; i test che usavano i pulsanti ora verificano le stesse cose in Documenti e che i pulsanti non ci siano più. Browser (segreteria, desktop): elenco conferme, riepiloghi, dialog di invio e anteprima dell'email del riepilogo |
-| 8 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [ ] |
+| 8 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [x] |
 | 9 | Registro finale | questo piano | build e test | [ ] |
 
 ## Fuori ambito
