@@ -36,6 +36,8 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String LOGO_ALT = "MOSSON Drum & Bugle Corps";
     /** Nome dell'applicazione: intestazione, pagina di accesso e titolo delle schede del browser. */
     public static final String NOME_APP = "Area Corsi Mosson";
+    /** Nome sotto l'icona della scorciatoia sul telefono (massimo 12 caratteri). */
+    public static final String NOME_BREVE = "Corsi Mosson";
 
     /** Attributo di sessione: la prima navigazione dopo il login è già avvenuta. */
     private static final String PAGINA_INIZIALE_DECISA = MainLayout.class.getName() + ".paginaInizialeDecisa";

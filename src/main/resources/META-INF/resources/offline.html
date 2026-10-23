@@ -1,38 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>Offline | Vaadin CRM</title>
+    <title>Sei offline | Area Corsi Mosson</title>
     <style>
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-family: sans-serif;
-            color: #555;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0 16px;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+            text-align: center;
+            color: #333;
+            background: #fff;
         }
 
-        .content {
-            width: 80%;
+        img {
+            width: min(22rem, 85vw);
+            margin-bottom: 2rem;
         }
 
-        .offline-image {
-            width: 100%;
-            margin: 4em 0px;
+        h1 {
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem;
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            color: #666;
+        }
+
+        button {
+            font: inherit;
+            padding: 0.6rem 1.4rem;
+            border: 0;
+            border-radius: 8px;
+            background: #1a1a1a;
+            color: #fff;
         }
     </style>
 </head>
 <body>
-
-<div class="content">
-    <img src="./images/offline.png" alt="VaadinCRM is offline" class="offline-image"/>
-    <h1>Oh deer, you're offline</h1>
-    <p>Your internet connection is offline. Get back online to continue using Vaadin CRM.</p>
-</div>
-<script>
-    window.addEventListener('online', () => window.location.reload());
-</script>
+<img src="./images/logo-mosson.png" alt="MOSSON Drum &amp; Bugle Corps"/>
+<h1>Sei offline</h1>
+<p>Area Corsi Mosson ha bisogno di Internet: controlla la connessione e riprova.</p>
+<button type="button" onclick="location.reload()">Riprova</button>
 </body>
 </html>

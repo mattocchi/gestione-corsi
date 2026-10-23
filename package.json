@@ -43,7 +43,12 @@
     "transform-ast": "2.4.4",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vite": "8.3.1",
-    "vite-plugin-checker": "0.14.5"
+    "vite-plugin-checker": "0.14.5",
+    "workbox-build": "7.4.1",
+    "workbox-core": "7.4.1",
+    "workbox-precaching": "7.4.1",
+    "workbox-routing": "7.4.1",
+    "workbox-strategies": "7.4.1"
   },
   "vaadin": {
     "dependencies": {
@@ -87,9 +92,14 @@
       "transform-ast": "2.4.4",
       "typescript": "npm:@typescript/typescript6@6.0.2",
       "vite": "8.3.1",
-      "vite-plugin-checker": "0.14.5"
+      "vite-plugin-checker": "0.14.5",
+      "workbox-build": "7.4.1",
+      "workbox-core": "7.4.1",
+      "workbox-precaching": "7.4.1",
+      "workbox-routing": "7.4.1",
+      "workbox-strategies": "7.4.1"
     },
-    "hash": "77e2455af1c42b562f5c872579d762e90454191f8383a73606900bd74f0ed50b"
+    "hash": "41de0c78f84803206ae8c89199692db263c4a3f08b4e97058566fcb8e2293197"
   },
   "overrides": {
     "@vaadin/a11y-base": "25.3.2",
@@ -177,6 +187,9 @@
     "react": "$react",
     "react-dom": "$react-dom",
     "react-router": "$react-router",
-    "tailwindcss": "$tailwindcss"
+    "tailwindcss": "$tailwindcss",
+    "workbox-build": {
+      "glob": "13.0.6"
+    }
   }
 }
