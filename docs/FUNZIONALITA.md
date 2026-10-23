@@ -336,3 +336,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [ ] nel calendario, se un corso ha piu gruppi con un orario di inizio specificato visualizza separatamente nel girno il gruppo con il relativo orario
   _Chiarimento 2026-10-24: admin, segreteria e insegnanti vedono nel giorno una voce per ogni gruppo con orario (anche se è uno solo), con l'orario e il nome del gruppo; allievi e genitori solo quella del gruppo dell'allievo; se alla lezione ci sono anche allievi senza gruppo o di un gruppo senza orario, una voce in più all'orario del corso; il dettaglio della lezione mostra anche il gruppo._
+
+### PRESENZE PER GRUPPO
+
+* [ ] quando l'insegnante consula il registro presenze della lezione deve vedere gli allievi per gruppo in modo da selezionare il gruppo, come fosse una tab e inseire le presenze o altro
