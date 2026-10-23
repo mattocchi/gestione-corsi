@@ -313,5 +313,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### I MIEI ALLIEVI
 
-* [ ] Per gli insegnanti vorrei fare una nuova sezione, i miei allievi, in cui si vedono gli allievi dei corsi e cliccando su vedono le informazioni sull'allievo che sono ad esempio le lezioni fatte, quante mancano e l'elenco delle lezioni
+* [x] Per gli insegnanti vorrei fare una nuova sezione, i miei allievi, in cui si vedono gli allievi dei corsi e cliccando su vedono le informazioni sull'allievo che sono ad esempio le lezioni fatte, quante mancano e l'elenco delle lezioni _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: voce di menu "I miei allievi" solo per gli insegnanti, in sola lettura; una riga per allievo e corso sui corsi attivi dell'insegnante (gruppo, orario, lezioni svolte/previste, mancanti, da fare), con filtro per corso e ricerca; nessun dato personale o contatto; cliccando, un dialog con svolte (lezioni completate, presente o assente), da fare (in calendario), mancanti (previste meno svolte), presenze e assenze, e l'elenco delle lezioni con le note (anche quelle per lo staff); lo stesso dialog, che allievi e genitori già vedono, mostra "Da fare" sulle lezioni non svolte e non le conta tra le presenze._

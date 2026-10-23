@@ -28,7 +28,7 @@
 | 1 | Conteggio delle lezioni di un allievo in un corso (`service/ConteggioLezioni`) e servizio `MieiAllieviService`: righe allievo-corso dei corsi attivi dell'insegnante con i conteggi, lezioni di un allievo solo per l'insegnante del corso; test | `service/ConteggioLezioni.java`, `service/MieiAllieviService.java`, `IscrizioneRepository`, `PresenzaRepository`, `MieiAllieviServiceTest` | `./mvnw test` | [x] |
 | 2 | `PresenzeAllievoDialog`: "Da fare" sulle lezioni non svolte, riepilogo con `ConteggioLezioni` (svolte, da fare, mancanti, presenze, assenze), colonna facoltativa delle note per lo staff; I Miei Corsi e I Miei Figli aggiornati | `views/PresenzeAllievoDialog.java`, `allievo/MieiCorsiView.java`, `genitore/FigliView.java`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | Vista `insegnante/MieiAllieviView` ("I miei allievi"): griglia, filtro per corso, ricerca, card su mobile, dettaglio; test browserless (insegnante vede solo i suoi allievi, dettaglio, accesso negato agli altri ruoli) | `views/insegnante/MieiAllieviView.java`, `ViewAccessTest` | `./mvnw test`; browser | [x] Il clic sul pulsante arriva anche alla riga: il dialog si apre una sola volta (verificato nel browser). Su mobile (500px) card e dettaglio verificati con screenshot |
-| 4 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [ ] |
+| 4 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [x] |
 | 5 | Registro finale | questo piano | build e test | [ ] |
 
 ## Fuori ambito
