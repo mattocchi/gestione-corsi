@@ -27,10 +27,15 @@ Un allievo adulto non deve passare per un genitore: deve vedere sé stesso e i p
 |---|---|---|---|---|---|
 | 1 | Servizi: `AllievoService.gestisceDaSe`, righe/situazione/anni/riepilogo dell'allievo in `PagamentoService`, permessi e riepilogo PDF in `DocumentiService`; test | — | `service/…`, `templates/documenti/riepilogo-famiglia.ftlh`, test | `./mvnw test` | [x] |
 | 2 | Viste: "Pagamenti" dell'allievo con riepilogo, filtro del menu, card in dashboard, stato in I Miei Corsi; test | [F-2026-10-23/ADULTI.1] | `views/allievo/…`, `views/RiepilogoFamigliaDialog`, `views/MainLayout`, `views/HomeView`, test | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Criterio per età (data di nascita) o casella esplicita nella scheda.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 230 test verdi; nuovo `allievoAdulto_vedeIPropriPagamentiERiepilogo` (con il genitore niente pagamenti propri né ricevute; senza: righe, situazione, anni, ricevuta e riepilogo PDF "Riepilogo pagamenti", negati a un altro allievo).
+- Passo 2: `./mvnw test` 232 test verdi; nuovi `allievoConGenitore_nonVedeIPagamenti` e `allievoAdulto_vedeIPropriPagamentiComeUnGenitore` (voce di menu, elenco, Riepilogo, card in dashboard, badge in I Miei Corsi). Il percorso delle voci di menu ha la barra iniziale: il filtro la ignora.
+- Il menu è costruito all'accesso: se si toglie il genitore a un allievo, la voce "Pagamenti" gli compare al prossimo accesso.
+- Non verificato nel browser. Nessuna modifica al database.
