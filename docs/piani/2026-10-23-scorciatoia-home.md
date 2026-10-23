@@ -31,7 +31,7 @@
 | 1 | PWA: `@PWA` su `Application` (nomi, descrizione, colori, pagina offline), icona 512×512 dalla "M" del logo, `offline.html` in italiano, rimozione di `images/offline.png` del template; verifica che manifest, icone e pagina offline siano accessibili senza login | `Application.java`, `MainLayout.java` (`NOME_BREVE`), `META-INF/resources/icons/icon.png`, `META-INF/resources/offline.html`, `images/offline.png` | `./mvnw test`; `curl` senza login sull'app avviata | [x] Niente test MockMvc: le risorse le serve la servlet di Vaadin, che MockMvc non esegue. Verificato con `curl`: tutte 200, manifest con "Corsi Mosson" e le icone generate |
 | 2 | Script globale nella `<head>` (cattura `beforeinstallprompt`, piattaforma, app già installata) e componente `views/ScorciatoiaHome`: banner chiudibile e voce di menu, dialog con le istruzioni per iPhone/Android; nel layout principale (sotto l'intestazione, voce sopra il logo del drawer) e nella pagina di accesso | `src/main/resources/scorciatoia-home.js`, `Application.java`, `views/ScorciatoiaHome.java`, `MainLayout.java`, `LoginView.java` | `./mvnw test`; browser a 390px con user agent mobile | [x] Nel browser (Chrome desktop, l'estensione non emula lo smartphone né fa screenshot): su computer banner e voce nascosti e intestazione invariata; Chrome emette `beforeinstallprompt` (app installabile); mostrato a mano, il banner sta in 358px con i due pulsanti; "Aggiungi" senza invito del browser apre le istruzioni; "Chiudi" salva la scelta nel browser |
 | 3 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [x] |
-| 4 | Registro finale | questo piano | build e test | [ ] |
+| 4 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -41,4 +41,8 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati (dopo i passi 1 e 2).
+- `curl` senza login sull'app in sviluppo: `manifest.webmanifest`, `sw.js`, `offline.html`, `icons/icon.png` e le misure generate (192, 512, 180 per iOS) rispondono 200; il manifest ha "Area Corsi Mosson" / "Corsi Mosson"; la `<head>` contiene il manifest, le icone e le schermate di avvio per iOS e lo script `scorciatoia-home.js`.
+- Browser (Chrome desktop): Chrome considera l'app installabile (`beforeinstallprompt`); su computer banner e voce restano nascosti; con il banner mostrato a mano: a 390px sta in larghezza, "Aggiungi" senza invito del browser apre le istruzioni, "Chiudi" salva la scelta. L'estensione non permette di emulare uno smartphone né di fare screenshot (errore "Detached"): **da provare su un telefono vero** (Android: installazione nativa; iPhone con Safari: istruzioni), che richiede HTTPS (il server di produzione).
+- Vaadin ha aggiunto le dipendenze Workbox a `package.json`: per la build di produzione cancellare `prod.bundle` (`/build pulito`).
+- Lasciato aperto: nessuno; un'icona ufficiale si può mettere al posto di `icons/icon.png` (PNG quadrato ≥ 512×512).
