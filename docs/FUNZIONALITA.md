@@ -306,5 +306,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### SCORCIATOIA HOME
 
-* [ ] Vorrei aggiungere a vaadin il supporto per creare un link quando l'utente visualizza la web app per creare una scorciatoia in home mobile
+* [x] Vorrei aggiungere a vaadin il supporto per creare un link quando l'utente visualizza la web app per creare una scorciatoia in home mobile _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: l'app diventa installabile (PWA) con icona quadrata ricavata dalla "M" del logo e nome "Corsi Mosson"; su smartphone un banner "Aggiungi alla schermata Home" (anche nella pagina di accesso), che una volta chiuso non ricompare su quel dispositivo, più la voce "Aggiungi alla Home" nel menu laterale, per tutti i ruoli; su Android apre l'installazione del browser, su iPhone mostra le istruzioni (Condividi → Aggiungi alla schermata Home); nulla se l'app è già aperta dalla scorciatoia o su computer; senza connessione una pagina "Sei offline" in italiano._
