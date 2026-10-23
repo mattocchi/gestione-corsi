@@ -32,6 +32,9 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
+import it.attocchi.service.ElencoDocumentiService.DocumentoRiepilogo;
+import it.attocchi.service.ElencoDocumentiService.DocumentoIscrizione;
+import it.attocchi.views.DocumentiView;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Genitore;
@@ -1943,6 +1946,79 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("insegnante1")
     void insegnante_nonAccedeAiRimborsiDiTutti() {
         navigate("rimborsi", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_documenti_conferme_PdfInvioEUltimoInvio() {
+        navigate(DocumentiView.class);
+        try {
+            var documenti = test((Grid<DocumentoIscrizione>) find(Grid.class).single());
+            // Conferme di iscrizione dell'anno più recente: tutti i 13 iscritti di Canto e Chitarra
+            assertEquals("2024/2025", this.<String>filtro("Filtra per anno scolastico").getValue());
+            assertEquals(13, documenti.size());
+            assertFalse(find(Button.class).withText("Invia conferme di iscrizione a tutti").exists());
+
+            test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("canto3");
+            assertEquals(1, documenti.size());
+            assertEquals("genitore3@example.com", documenti.getCellText(0, 3));
+            assertEquals("", documenti.getCellText(0, 4));
+            test(pulsante(documenti.getCellComponent(0, 6), "Invia per email")).click();
+            Dialog dialog = find(Dialog.class).single();
+            assertEquals("Invia: Conferma di iscrizione – Allievo Canto3", dialog.getHeaderTitle());
+            test(find(Button.class).withText("Anteprima").from(dialog).single()).click();
+            Dialog anteprima = find(Dialog.class).all().stream()
+                .filter(d -> "Anteprima – Conferma di iscrizione".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            anteprima.close();
+            assertTrue(emailService.tuttiGliInvii().isEmpty());
+            test(find(Button.class).withText("Invia conferma").single()).click();
+            assertEquals(1, emailService.tuttiGliInvii().size());
+            // L'elenco si aggiorna con l'ultimo invio (simulato: SMTP non configurato nei test)
+            assertTrue(documenti.getCellText(0, 4).endsWith("(simulato)"), documenti.getCellText(0, 4));
+
+            // Scelto un corso, l'invio delle conferme a tutti i suoi iscritti
+            test(find(TextField.class).withPlaceholder("Cerca").single()).clear();
+            test(this.<Corso>filtro("Filtra per corso")).selectItem("Corso di Canto");
+            assertEquals(7, documenti.size());
+            test(find(Button.class).withText("Invia conferme di iscrizione a tutti").single()).click();
+            assertTrue(find(Button.class).withText("Invia 7 conferme di iscrizione").exists());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_documenti_riepiloghiConInvio() {
+        navigate(DocumentiView.class);
+        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
+        test(tipo.getPulsante(TipoDocumento.RIEPILOGO)).click();
+        try {
+            var riepiloghi = test((Grid<DocumentoRiepilogo>) find(Grid.class).single());
+            test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("chitarra1");
+            assertEquals(1, riepiloghi.size());
+            assertEquals("Allievo Canto3, Allievo Chitarra1", riepiloghi.getCellText(0, 1));
+            assertEquals("2", riepiloghi.getCellText(0, 3));
+            assertEquals("genitore3@example.com", riepiloghi.getCellText(0, 4));
+            assertFalse(find(ComboBox.class).all().stream().anyMatch(c -> c.getAriaLabel().filter("Filtra per corso"::equals).isPresent()));
+            test(pulsante(riepiloghi.getCellComponent(0, 6), "Invia per email")).click();
+            assertTrue(find(Dialog.class).single().getHeaderTitle().startsWith("Invia: Riepilogo pagamenti – "));
+            test(find(Button.class).withText("Invia riepilogo").single()).click();
+            InvioEmail invio = emailService.tuttiGliInvii().getFirst();
+            assertEquals(TipoDocumento.RIEPILOGO, invio.getTipo());
+            assertEquals("2024/2025", invio.getAnno());
+            assertFalse(riepiloghi.getCellText(0, 5).isEmpty());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAiDocumenti() {
+        navigate("documenti", RouteNotFoundError.class);
     }
 
     @SuppressWarnings("unchecked")
