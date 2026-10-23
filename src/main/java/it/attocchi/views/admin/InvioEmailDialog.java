@@ -10,9 +10,11 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.VaadinService;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.Genitore;
 import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.service.DocumentiService;
@@ -32,12 +34,96 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Invio per email della conferma di iscrizione o della ricevuta di un partecipante (admin e segreteria),
- * con il destinatario in evidenza; e conferma dell'invio multiplo delle conferme di un corso.
+ * Invio per email di un documento (admin e segreteria): conferma di iscrizione o ricevuta di un partecipante,
+ * riepilogo annuale di una famiglia o di un allievo adulto; con il destinatario in evidenza e l'anteprima dell'email.
+ * E conferma dell'invio multiplo delle conferme di un corso.
  */
 public final class InvioEmailDialog {
 
     private InvioEmailDialog() {
+    }
+
+    /** Invio della conferma o della ricevuta di un'iscrizione; {@code dopoInvio} è eseguito dopo l'invio. */
+    public static void apri(TipoDocumento tipo, Corso corso, Allievo allievo, Runnable dopoInvio) {
+        EmailService emailService = emailService();
+        String username = username();
+        String impedimento = DocumentiService.avvisoDatiMancanti(allievo);
+        if (impedimento == null && tipo == TipoDocumento.RICEVUTA && !emailService.haPagamenti(corso.getId(), allievo.getId())) {
+            impedimento = "Nessun pagamento registrato: non c'è una ricevuta da inviare";
+        }
+        apriInvio(emailService, tipo, tipo.getTitolo() + " – " + allievo.getNomeCompleto(),
+            corso.getNome() + (corso.getAnnoScolastico() != null ? " " + corso.getAnnoScolastico() : ""),
+            emailService.destinatario(corso.getId(), allievo.getId()), impedimento,
+            () -> emailService.anteprima(tipo, corso.getId(), allievo.getId(), username),
+            () -> emailService.invia(tipo, corso.getId(), allievo.getId(), username), dopoInvio);
+    }
+
+    /**
+     * Invio del riepilogo annuale della famiglia ({@code genitore}) o dell'allievo adulto ({@code allievo});
+     * {@code anno} {@code null} = corsi senza anno scolastico.
+     */
+    public static void apriRiepilogo(Genitore genitore, Allievo allievo, String anno, Runnable dopoInvio) {
+        EmailService emailService = emailService();
+        String username = username();
+        Long genitoreId = genitore != null ? genitore.getId() : null;
+        Long allievoId = genitore == null ? allievo.getId() : null;
+        String intestatario = genitore != null ? genitore.getNomeCompleto() : allievo.getNomeCompleto();
+        apriInvio(emailService, TipoDocumento.RIEPILOGO, TipoDocumento.RIEPILOGO.getTitolo() + " – " + intestatario,
+            anno != null ? "Anno scolastico " + anno : "Corsi senza anno scolastico",
+            emailService.destinatarioRiepilogo(genitoreId, allievoId, anno), null,
+            () -> emailService.anteprimaRiepilogo(genitoreId, allievoId, anno, username),
+            () -> emailService.inviaRiepilogo(genitoreId, allievoId, anno, username), dopoInvio);
+    }
+
+    /** Dialog comune: documento, destinatario o motivo per cui non si può inviare, anteprima e invio. */
+    private static void apriInvio(EmailService emailService, TipoDocumento tipo, String titolo, String descrizione,
+                                  Optional<Destinatario> destinatario, String impedimento,
+                                  SerializableSupplier<Anteprima> anteprima, SerializableSupplier<InvioEmail> invio,
+                                  Runnable dopoInvio) {
+        Dialog dialog = ViewSupport.dialog("Invia: " + titolo, "520px");
+        VerticalLayout content = new VerticalLayout();
+        content.addClassNames("p-0");
+        content.add(new Span(descrizione));
+        Span a = new Span(destinatario.map(d -> "A: " + d.nome() + " <" + d.email() + ">")
+            .orElse("Nessun indirizzo email: aggiungilo nella scheda del genitore o dell'allievo per poter inviare."));
+        a.addClassNames(Stili.TESTO_SECONDARIO);
+        content.add(a);
+        if (impedimento != null) {
+            Span avviso = new Span(impedimento + ".");
+            avviso.addClassNames(Stili.TESTO_SECONDARIO);
+            content.add(avviso);
+        }
+        if (!emailService.invioReale()) {
+            Span simulato = new Span("Server email non configurato: l'invio sarà solo simulato e registrato.");
+            simulato.addClassNames(Stili.TESTO_SECONDARIO);
+            content.add(simulato);
+        }
+        boolean inviabile = destinatario.isPresent() && impedimento == null;
+        Button vedi = new Button("Anteprima", VaadinIcon.EYE.create(), e -> mostraAnteprima(tipo, anteprima));
+        vedi.setAriaLabel("Anteprima: " + tipo.getTitolo());
+        vedi.setEnabled(inviabile);
+        Button invia = new Button("Invia " + tipo.getBreve().toLowerCase(), VaadinIcon.ENVELOPE.create(),
+            e -> esegui(tipo, invio, dialog, dopoInvio));
+        invia.addThemeVariants(ButtonVariant.PRIMARY);
+        invia.setEnabled(inviabile);
+        dialog.add(content);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), vedi, invia);
+        dialog.open();
+    }
+
+    private static void esegui(TipoDocumento tipo, SerializableSupplier<InvioEmail> invio, Dialog dialog, Runnable dopoInvio) {
+        try {
+            InvioEmail esito = invio.get();
+            switch (esito.getEsito()) {
+                case INVIATA -> Notification.show(tipo.getTitolo() + " inviata a " + esito.getDestinatario());
+                case SIMULATA -> Notification.show(tipo.getTitolo() + ": invio simulato a " + esito.getDestinatario());
+                case ERRORE -> Notification.show("Invio non riuscito: " + esito.getErrore());
+            }
+            dialog.close();
+        } catch (RuntimeException ex) {
+            Notification.show("Invio non possibile: " + ex.getMessage());
+        }
+        dopoInvio.run();
     }
 
     /** Apre il dialog di invio per l'iscrizione; {@code dopoInvio} è eseguito dopo ogni invio. */
@@ -160,9 +246,13 @@ public final class InvioEmailDialog {
 
     /** Anteprima dell'email com'è inviata (destinatario, oggetto, testo e allegato), senza inviarla. */
     static void mostraAnteprima(EmailService emailService, TipoDocumento tipo, Corso corso, Long allievoId, String username) {
+        mostraAnteprima(tipo, () -> emailService.anteprima(tipo, corso.getId(), allievoId, username));
+    }
+
+    private static void mostraAnteprima(TipoDocumento tipo, SerializableSupplier<Anteprima> costruisci) {
         Anteprima anteprima;
         try {
-            anteprima = emailService.anteprima(tipo, corso.getId(), allievoId, username);
+            anteprima = costruisci.get();
         } catch (RuntimeException ex) {
             Notification.show("Anteprima non disponibile: " + ex.getMessage());
             return;
@@ -205,7 +295,7 @@ public final class InvioEmailDialog {
     }
 
     private static EmailService emailService() {
-        // Servizio Spring tramite l'Instantiator di Vaadin, come Ricevute: non va passato a ogni vista e dialog
+        // Servizio Spring tramite l'Instantiator di Vaadin: non va passato a ogni vista e dialog
         return VaadinService.getCurrent().getInstantiator().getOrCreate(EmailService.class);
     }
 
