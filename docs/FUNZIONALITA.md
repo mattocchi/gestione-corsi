@@ -279,3 +279,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] mi servirebbe implementare qualcosa per cui un allievo che è adulto non deve passare per genitore, ma in qualche modo se è un adulto deve vedere se stesso e i pagamenti come fosse un genitore di se stesso _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: "adulto" = allievo senza genitore (la regola già usata per email e documenti); vede la voce "Pagamenti" come il genitore (quota, pagato, residuo, rate, ricevute, solo per sé), le card "Pagato" e "Da pagare" in dashboard, lo stato del pagamento in I Miei Corsi e un riepilogo PDF per anno scolastico; chi ha un genitore non vede nulla di questo (i pagamenti restano al genitore)._
+
+### PDF
+
+* [ ] vorrei che i generatori PDF fossero disponibili come anteprima INLINE su nuovo tab oltre che download, quindi i pulsanti di PDF potrebbero avere tipo il selettore ANTEPRIMA PDF o DOWNLOAD?
