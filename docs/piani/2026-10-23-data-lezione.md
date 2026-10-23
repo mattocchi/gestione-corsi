@@ -25,7 +25,7 @@ Permettere ad admin, segreteria e insegnante di modificare la data di una lezion
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `Lezione.dataOriginale` + `getDataDelCalendario()`; `LezioneService.sposta`; generazione, presenze e numerazione sulla data del calendario; test | — | `entity/Lezione`, `service/LezioneService`, `service/CorsoService`, `service/NumerazioneLezioni`, `LezioneServiceTest` | `./mvnw test` | [x] |
-| 2 | "Cambia data" nel dialog presenze, badge "Spostata", riga nel dettaglio del Calendario; test browserless | [F-2026-10-23/DATA.1] | `views/ElencoLezioni`, `views/CalendarioView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | "Cambia data" nel dialog presenze, badge "Spostata", riga nel dettaglio del Calendario; test browserless | [F-2026-10-23/DATA.1] | `views/ElencoLezioni`, `views/CalendarioView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito
@@ -36,3 +36,4 @@ Permettere ad admin, segreteria e insegnante di modificare la data di una lezion
 ## Registro
 
 - Passo 1: `./mvnw test` 233 test verdi; nuovo `sposta_tienePartecipantiENumero_eGeneraLezioniLaConserva` (permessi, giorno occupato, presenze e numero invariati, rigenerazione che conserva lo spostamento, ritorno alla data originale, lezioni completate rifiutate).
+- Passo 2: `./mvnw test` 234 test verdi; nuovo `insegnante_cambiaLaDataDiUnaLezione` (dialog con data e orario della lezione, salvataggio, badge "Spostata" nella riga).

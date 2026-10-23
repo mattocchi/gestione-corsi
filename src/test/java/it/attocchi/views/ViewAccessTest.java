@@ -3000,6 +3000,33 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("insegnante1")
     @SuppressWarnings("unchecked")
+    void insegnante_cambiaLaDataDiUnaLezione() {
+        apriLezioni();
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        Lezione lezione = grid.getRow(0);
+        LocalDate nuova = lezione.getData().plusDays(1);
+        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        test(find(Button.class).withText("Cambia data").single()).click();
+        assertEquals(lezione.getData(), find(DatePicker.class).withLabel("Data").single().getValue());
+        test(find(DatePicker.class).withLabel("Data").single()).setValue(nuova);
+        test(find(TimePicker.class).withLabel("Orario").single()).setValue(LocalTime.of(16, 0));
+        test(find(Button.class).withText("Salva").single()).click();
+        try {
+            Lezione spostata = lezioneService.findById(lezione.getId());
+            assertEquals(nuova, spostata.getData());
+            assertEquals(lezione.getData(), spostata.getDataOriginale());
+            assertEquals(LocalTime.of(16, 0), spostata.getOrarioInizio());
+            assertFalse(find(Button.class).withText("Cambia data").exists());
+            assertTrue(grid.getCellComponent(0, 1).getChildren()
+                .anyMatch(c -> c instanceof Badge b && "Spostata".equals(b.getText())));
+        } finally {
+            lezioneService.sposta(lezione.getId(), lezione.getData(), lezione.getOrarioInizio(), "insegnante1");
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
     void insegnante_segnaLezioneNonEffettuataELaRipristina() {
         apriLezioni();
         var grid = test((Grid<Lezione>) find(Grid.class).single());

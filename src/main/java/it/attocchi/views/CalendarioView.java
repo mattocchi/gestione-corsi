@@ -228,6 +228,9 @@ public class CalendarioView extends VerticalLayout {
             riga("Insegnanti", lezione.getInsegnantiPresenti().isEmpty() ? lezione.getCorso().getNomiInsegnanti()
                 : lezione.getInsegnantiPresenti().stream().map(Insegnante::getNomeCompleto).sorted()
                     .collect(Collectors.joining(", "))));
+        if (lezione.isSpostata()) {
+            contenuto.add(riga("Spostata dal", Formati.data(lezione.getDataOriginale())));
+        }
         if (voce.perChi() != null) {
             contenuto.add(riga("Allievo", voce.perChi()));
         }

@@ -182,11 +182,18 @@ public class ElencoLezioni extends VerticalLayout {
             }
             data.add(badge);
         });
+        if (lezione.isSpostata()) {
+            Badge badge = new Badge("Spostata", VaadinIcon.CALENDAR_CLOCK.create());
+            badge.addThemeVariants(BadgeVariant.SMALL);
+            Tooltip.forComponent(badge).setText("Spostata dal " + Formati.data(lezione.getDataOriginale()));
+            data.add(badge);
+        }
         if (lezione.isDaFare()) {
             festivita.festivita(lezione.getData()).ifPresent(nome -> {
                 Badge badge = new Badge(nome, VaadinIcon.FLAG_O.create());
                 badge.addThemeVariants(BadgeVariant.SMALL, BadgeVariant.WARNING);
-                Tooltip.forComponent(badge).setText("Festività: con \"Genera Lezioni\" la lezione viene spostata");
+                Tooltip.forComponent(badge).setText(lezione.isSpostata() ? "Festività"
+                    : "Festività: con \"Genera Lezioni\" la lezione viene spostata");
                 data.add(badge);
             });
         }
@@ -295,6 +302,8 @@ public class ElencoLezioni extends VerticalLayout {
             Button completaButton = new Button("Segna Completata",
                 e -> esegui(dialog, () -> lezioneService.completa(lezione.getId(), username), "Lezione completata"));
             completaButton.addThemeVariants(ButtonVariant.SUCCESS);
+            dialog.getFooter().add(new Button("Cambia data", VaadinIcon.CALENDAR.create(),
+                e -> apriCambiaData(lezione, dialog)));
             if (lezione.isAggiunta()) {
                 // Le lezioni aggiunte a mano non si segnano non effettuate: si eliminano (insegnante o admin)
                 if (lezioneService.puoEliminare(lezione.getCorso(), username)) {
@@ -370,6 +379,56 @@ public class ElencoLezioni extends VerticalLayout {
         dialog.open();
     }
 
+    /**
+     * Sposta la lezione da fare a un'altra data e orario: stessi partecipanti e numero; in un giorno festivo un
+     * avviso, se il corso ha già una lezione quel giorno il service la rifiuta.
+     */
+    private void apriCambiaData(Lezione lezione, Dialog dialogLezione) {
+        Dialog dialog = ViewSupport.dialog("Cambia data della lezione " + numero(lezione), "480px");
+        DatePicker data = ViewSupport.datePicker("Data");
+        TimePicker orario = ViewSupport.timePicker("Orario");
+        Span avvisoFestivita = new Span();
+        avvisoFestivita.addClassNames(Stili.TESTO_SECONDARIO);
+        avvisoFestivita.setVisible(false);
+        CalendarioFestivita calendario = festivitaService().calendario();
+        data.addValueChangeListener(e -> {
+            var nome = e.getValue() != null ? calendario.festivita(e.getValue()) : Optional.<String>empty();
+            avvisoFestivita.setText(nome.map(n -> "È una festività (" + n + "): la lezione si può comunque spostare.").orElse(""));
+            avvisoFestivita.setVisible(nome.isPresent());
+        });
+        Binder<NuovaLezione> binder = new Binder<>();
+        binder.forField(data).asRequired("Inserisci la data della lezione").bind(NuovaLezione::getData, NuovaLezione::setData);
+        binder.forField(orario).bind(NuovaLezione::getOrario, NuovaLezione::setOrario);
+        NuovaLezione valori = new NuovaLezione();
+        valori.setData(lezione.getData());
+        valori.setOrario(lezione.getOrarioInizio());
+        binder.readBean(valori);
+
+        Span info = new Span(lezione.isSpostata()
+            ? "Data del calendario del corso: " + Formati.data(lezione.getDataOriginale()) + "."
+            : "Partecipanti e numero della lezione restano gli stessi.");
+        info.addClassNames(Stili.TESTO_SECONDARIO);
+        Button salva = new Button("Salva", e -> {
+            if (!binder.writeBeanIfValid(valori)) {
+                return;
+            }
+            try {
+                lezioneService.sposta(lezione.getId(), valori.getData(), valori.getOrario(), username);
+            } catch (RuntimeException ex) {
+                Notification.show(ex.getMessage());
+                return;
+            }
+            dialog.close();
+            dialogLezione.close();
+            updateGrid();
+            Notification.show("Lezione spostata a " + Formati.data(valori.getData()));
+        });
+        salva.addThemeVariants(ButtonVariant.PRIMARY);
+        dialog.add(new FormLayout(data, orario, avvisoFestivita), info);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
+        dialog.open();
+    }
+
     private void confermaEliminazione(Lezione lezione, Dialog dialogLezione) {
         Dialog conferma = ViewSupport.dialog("Eliminare la lezione?", "420px");
         conferma.add(new Span(lezione.getCorso().getNome() + " – lezione " + lezione.getNumeroLezione()
@@ -392,7 +451,7 @@ public class ElencoLezioni extends VerticalLayout {
         return lezione.isAggiunta() ? numero + " · Aggiunta" : numero;
     }
 
-    /** Valori del dialog "Nuova lezione". */
+    /** Valori dei dialog "Nuova lezione" e "Cambia data". */
     private static class NuovaLezione {
         private LocalDate data;
         private LocalTime orario;
