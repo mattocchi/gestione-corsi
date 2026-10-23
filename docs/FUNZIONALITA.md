@@ -272,5 +272,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### CALENDARIO
 
-* [ ] per admin, segreteria, insegnanti, allievi aggiungi una vista "calendario" in cui si visualizzano i corsi secondo il livello corretto, ok una vista mensile, penso vaadin abbia un calendario mensile
+* [x] per admin, segreteria, insegnanti, allievi aggiungi una vista "calendario" in cui si visualizzano i corsi secondo il livello corretto, ok una vista mensile, penso vaadin abbia un calendario mensile _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: Vaadin 25.3 non ha un componente calendario: si realizza una griglia mensile (lun–dom) con mese precedente/successivo e "Oggi", su smartphone un elenco giorno per giorno; mostra le lezioni secondo il ruolo (admin e segreteria tutti i corsi attivi con filtro per corso, insegnante i suoi corsi, allievo le sue lezioni, anche i genitori le lezioni dei figli) con orario, corso, gruppo e stato, e le festività; cliccando una lezione i dettagli in sola lettura e, per insegnanti, admin e segreteria, "Gestisci presenze"._

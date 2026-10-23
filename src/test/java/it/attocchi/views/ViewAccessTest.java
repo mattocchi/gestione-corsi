@@ -2834,6 +2834,48 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_calendarioDelMeseConFiltroDettagliEPresenze() {
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(i -> i.getLabel().equals("Calendario")));
+        navigate(CalendarioView.class);
+        CalendarioView calendario = find(CalendarioView.class).single();
+        // Ottobre 2024: Canto il giovedì (5), Chitarra martedì e sabato (9); griglia ed elenco mobile
+        calendario.vaiA(java.time.YearMonth.of(2024, 10));
+        assertTrue(find(H2.class).withText("ottobre 2024").exists());
+        assertEquals(2 * 14, lezioniNelCalendario(null).size());
+        test((ComboBox<Corso>) find(ComboBox.class).withPlaceholder("Tutti i corsi").single()).selectItem("Corso di Canto");
+        assertEquals(2 * 5, lezioniNelCalendario("Corso di Canto").size());
+
+        test(lezioniNelCalendario("Corso di Canto").getFirst()).click();
+        Dialog dettagli = find(Dialog.class).all().stream()
+            .filter(d -> "Corso di Canto".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+        test(find(Button.class).from(dettagli).withText("Gestisci presenze").single()).click();
+        assertInstanceOf(LezioniView.class, getCurrentView());
+        assertTrue(find(Dialog.class).all().stream().anyMatch(d -> d.getHeaderTitle().startsWith("Corso di Canto – Lezione 1 ")));
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievo_calendarioSoloLeSueLezioniSenzaPresenze() {
+        navigate(CalendarioView.class);
+        find(CalendarioView.class).single().vaiA(java.time.YearMonth.of(2024, 10));
+        assertEquals(2 * 5, lezioniNelCalendario(null).size());
+        assertFalse(find(ComboBox.class).withPlaceholder("Tutti i corsi").exists());
+        test(lezioniNelCalendario(null).getFirst()).click();
+        assertFalse(find(Button.class).withText("Gestisci presenze").exists());
+    }
+
+    /** Pulsanti delle lezioni nel calendario (griglia ed elenco), eventualmente di un corso. */
+    private List<Button> lezioniNelCalendario(String corso) {
+        return find(Button.class).from(find(CalendarioView.class).single()).all().stream()
+            .filter(b -> b.getElement().getAttribute("aria-label") != null
+                && b.getElement().getAttribute("aria-label").contains("Corso di")
+                && (corso == null || b.getElement().getAttribute("aria-label").contains(corso)))
+            .toList();
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
     void insegnante_conUnSoloCorso_alLoginApreLeLezioni() {
         assertInstanceOf(LezioniInsegnanteView.class, getCurrentView());
