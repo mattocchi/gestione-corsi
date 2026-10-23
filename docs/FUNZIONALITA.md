@@ -293,3 +293,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### DATI PER RICEVUTE
 
 * [ ] bisogna fare in modo che un GENITORE o un ALLIEVO ADULTO (un allievo senza genitore) possa COMPLETARE i propri dati obbligatori come ALLIEVO o COME GENITORE per poter stampare le ricevute
+
+### DATA LEZIONE
+
+* [ ] permetti ad admin, segreteria, insegnante di modificare una data della lezione generata
