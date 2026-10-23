@@ -30,6 +30,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         login.setI18n(italiano());
         login.addForgotPasswordListener(e -> getUI().ifPresent(ui -> ui.navigate(RecuperoPasswordView.class)));
 
+        add(ScorciatoiaHome.banner());
         add(PaginaPubblica.intestazione());
         add(login, ricordami());
     }

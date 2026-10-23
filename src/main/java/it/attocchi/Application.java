@@ -2,6 +2,8 @@ package it.attocchi;
 
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Inline;
+import com.vaadin.flow.server.AppShellSettings;
 import com.vaadin.flow.server.PWA;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PaginaPubblica;
@@ -30,6 +32,12 @@ public class Application implements AppShellConfigurator {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+    }
+
+    /** The home-screen shortcut script must be in the head: the browser's install prompt can come before the views. */
+    @Override
+    public void configurePage(AppShellSettings settings) {
+        settings.addInlineFromFile("scorciatoia-home.js", Inline.Wrapping.JAVASCRIPT);
     }
 
 }

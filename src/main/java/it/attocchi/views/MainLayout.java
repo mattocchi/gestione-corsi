@@ -90,7 +90,14 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), title, logout);
         header.addClassNames("w-full items-center px-4 min-w-0");
 
-        addToNavbar(header);
+        // Sotto l'intestazione, su smartphone, l'invito a creare la scorciatoia nella schermata Home
+        ScorciatoiaHome scorciatoia = ScorciatoiaHome.banner();
+        Div banner = new Div(scorciatoia);
+        banner.addClassNames("px-2 pb-2 has-[>.hidden]:hidden");
+        Div navbar = new Div(header, banner);
+        navbar.addClassNames("flex flex-col w-full min-w-0");
+
+        addToNavbar(navbar);
     }
 
     /** Menu scorrevole in alto e logo fisso in fondo al drawer (desktop e mobile). */
@@ -101,7 +108,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         Image logo = new Image(LOGO, LOGO_ALT);
         logo.addClassNames(Stili.LOGO, "flex-none w-[calc(100%_-_2rem)] max-w-56 m-4");
 
-        Div drawer = new Div(menu, logo);
+        Div drawer = new Div(menu, ScorciatoiaHome.voceMenu(), logo);
         drawer.addClassNames("flex flex-col h-full min-h-0");
         return drawer;
     }
