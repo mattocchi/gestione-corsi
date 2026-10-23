@@ -278,3 +278,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### ALLIEVI ADULTI
 
 * [ ] mi servirebbe implementare qualcosa per cui un allievo che è adulto non deve passare per genitore, ma in qualche modo se è un adulto deve vedere se stesso e i pagamenti come fosse un genitore di se stesso
+  _Chiarimento 2026-10-23: "adulto" = allievo senza genitore (la regola già usata per email e documenti); vede la voce "Pagamenti" come il genitore (quota, pagato, residuo, rate, ricevute, solo per sé), le card "Pagato" e "Da pagare" in dashboard, lo stato del pagamento in I Miei Corsi e un riepilogo PDF per anno scolastico; chi ha un genitore non vede nulla di questo (i pagamenti restano al genitore)._
