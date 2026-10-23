@@ -22,7 +22,7 @@ Proporre un meccanismo di "ricordami" all'accesso ([F-2026-10-23/RICORDAMI.1]); 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `RememberMeServices` in `SecurityConfig` (cookie firmato 30 giorni, richiesto dal cookie `ricordami`); proprietà e variabile d'ambiente; test sul filtro di login | — | `security/SecurityConfig`, `application*.properties`, `deploy/…`, test | `./mvnw test` | [x] |
-| 2 | Casella "Ricordami su questo dispositivo" in `LoginView`; test | [F-2026-10-23/RICORDAMI.1] | `views/LoginView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | Casella "Ricordami su questo dispositivo" in `LoginView`; test | [F-2026-10-23/RICORDAMI.1] | `views/LoginView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | CLAUDE.md, README di deploy e registro | — | `CLAUDE.md`, `deploy/README.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

@@ -267,5 +267,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### RICORDAMI
 
-* [ ] proponi un meccanismo di ricordami al login
+* [x] proponi un meccanismo di ricordami al login _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: proposta approvata: casella "Ricordami su questo dispositivo" sotto il form di accesso, non spuntata di default; cookie firmato (meccanismo standard di Spring Security, nessuna tabella) valido 30 giorni, annullato al cambio password e all'uscita, non valido per gli utenti disattivati; chiave di firma dalla variabile d'ambiente `REMEMBER_ME_KEY`; il rientro automatico aggiorna l'ultimo accesso._

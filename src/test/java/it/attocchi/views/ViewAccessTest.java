@@ -1741,6 +1741,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals("Nome utente o email", i18n.getForm().getUsername());
         assertEquals("Accedi", i18n.getForm().getSubmit());
         assertEquals("Password dimenticata?", i18n.getForm().getForgotPassword());
+        // "Ricordami" non spuntato di default
+        Checkbox ricordami = find(Checkbox.class).withLabel("Ricordami su questo dispositivo").single();
+        assertFalse(ricordami.getValue());
         assertEquals("Credenziali errate", i18n.getErrorMessage().getTitle());
     }
 

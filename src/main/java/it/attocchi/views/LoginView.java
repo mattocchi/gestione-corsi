@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -7,7 +8,13 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinRequest;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import it.attocchi.security.SecurityConfig;
+import jakarta.servlet.http.Cookie;
+
+import java.util.Arrays;
 
 @Route("login")
 @PageTitle("Accesso")
@@ -24,7 +31,23 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         login.addForgotPasswordListener(e -> getUI().ifPresent(ui -> ui.navigate(RecuperoPasswordView.class)));
 
         add(PaginaPubblica.intestazione());
-        add(login);
+        add(login, ricordami());
+    }
+
+    /**
+     * Casella "Ricordami su questo dispositivo": il form di accesso è nativo e non ha campi in più, quindi la scelta
+     * va al server con un cookie tecnico letto al login ({@link SecurityConfig#COOKIE_RICORDAMI}).
+     */
+    private static Checkbox ricordami() {
+        Checkbox ricordami = new Checkbox("Ricordami su questo dispositivo");
+        ricordami.setTooltipText("Resti collegato per 30 giorni; non usarlo su un computer condiviso");
+        VaadinRequest richiesta = VaadinService.getCurrentRequest();
+        Cookie[] cookies = richiesta != null ? richiesta.getCookies() : null;
+        ricordami.setValue(cookies != null && Arrays.stream(cookies)
+            .anyMatch(c -> SecurityConfig.COOKIE_RICORDAMI.equals(c.getName()) && "1".equals(c.getValue())));
+        ricordami.addValueChangeListener(e -> e.getSource().getElement().executeJs("document.cookie = $0",
+            SecurityConfig.COOKIE_RICORDAMI + (e.getValue() ? "=1; path=/; SameSite=Lax" : "=; path=/; max-age=0; SameSite=Lax")));
+        return ricordami;
     }
 
     /** Testi del form di accesso in italiano (i default del componente sono in inglese). */
