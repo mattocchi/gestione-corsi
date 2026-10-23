@@ -168,6 +168,22 @@ class DocumentiServiceTest {
     }
 
     @Test
+    void conferma_vistaDalGenitoreDelFiglioEDalloStaff() throws IOException {
+        it.attocchi.entity.Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Long cantoId = iscrizione().getCorso().getId();
+        DocumentiService.Pdf pdf = documentiService.confermaPer(cantoId, allievo.getId(), "genitore3");
+        assertTrue(pdf.nomeFile().startsWith("conferma-iscrizione-"), pdf.nomeFile());
+        assertTrue(testo(pdf.contenuto()).contains("Allievo Canto3"));
+        assertNotNull(documentiService.confermaPer(cantoId, allievo.getId(), "segreteria"));
+        // Un altro genitore, l'insegnante e l'allievo con genitore no
+        assertThrows(IllegalArgumentException.class, () -> documentiService.confermaPer(cantoId, allievo.getId(), "genitore1"));
+        assertThrows(IllegalArgumentException.class, () -> documentiService.confermaPer(cantoId, allievo.getId(), "insegnante1"));
+        assertThrows(IllegalArgumentException.class, () -> documentiService.confermaPer(cantoId, allievo.getId(), "allievo_canto3"));
+        assertThrows(IllegalArgumentException.class,
+            () -> documentiService.documentoPer(TipoDocumento.RIEPILOGO, cantoId, allievo.getId(), "segreteria"));
+    }
+
+    @Test
     void allievoAdulto_vedeIPropriPagamentiERiepilogo() throws IOException {
         it.attocchi.entity.Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
         it.attocchi.entity.Genitore genitore = allievo.getGenitore();

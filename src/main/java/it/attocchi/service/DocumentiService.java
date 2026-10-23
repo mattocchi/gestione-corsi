@@ -102,20 +102,33 @@ public class DocumentiService {
 
     /**
      * Ricevuta in PDF per l'utente indicato: admin e segreteria le vedono tutte, il genitore solo quelle dei
-     * propri figli. Altrimenti (o se l'iscrizione non esiste) {@link IllegalArgumentException}, senza distinguere
-     * i due casi per non rivelare le iscrizioni di altri.
+     * propri figli, l'allievo adulto le proprie. Altrimenti (o se l'iscrizione non esiste)
+     * {@link IllegalArgumentException}, senza distinguere i due casi per non rivelare le iscrizioni di altri.
      */
     public Pdf ricevutaPer(Long corsoId, Long allievoId, String username) {
+        return documentoPer(TipoDocumento.RICEVUTA, corsoId, allievoId, username);
+    }
+
+    /** Conferma di iscrizione in PDF per l'utente indicato, con gli stessi permessi di {@link #ricevutaPer}. */
+    public Pdf confermaPer(Long corsoId, Long allievoId, String username) {
+        return documentoPer(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, username);
+    }
+
+    /** Documento dell'iscrizione (conferma o ricevuta) in PDF, con i permessi di {@link #ricevutaPer}. */
+    public Pdf documentoPer(TipoDocumento tipo, Long corsoId, Long allievoId, String username) {
+        if (!tipo.isDellIscrizione()) {
+            throw new IllegalArgumentException("Non è un documento dell'iscrizione: " + tipo);
+        }
         Iscrizione iscrizione;
         try {
             iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
         } catch (RuntimeException ex) {
-            throw new IllegalArgumentException("Ricevuta non trovata");
+            throw new IllegalArgumentException(tipo.getBreve() + " non trovata");
         }
         if (!puoVedere(iscrizione.getAllievo(), username)) {
-            throw new IllegalArgumentException("Ricevuta non trovata");
+            throw new IllegalArgumentException(tipo.getBreve() + " non trovata");
         }
-        return new Pdf(nomeFile(TipoDocumento.RICEVUTA, iscrizione), documentoPdf(TipoDocumento.RICEVUTA, corsoId, allievoId));
+        return new Pdf(nomeFile(tipo, iscrizione), documentoPdf(tipo, corsoId, allievoId));
     }
 
     /** Come per il genitore; un allievo senza genitore (adulto) vede i propri documenti. */
@@ -171,6 +184,25 @@ public class DocumentiService {
             throw new IllegalArgumentException("Riepilogo non trovato");
         }
         return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
+    }
+
+    /** PDF del riepilogo, senza controllo dei permessi (allegato delle email, inviate solo da admin e segreteria). */
+    public Pdf riepilogoPdf(RiepilogoFamiglia riepilogo) {
+        return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
+    }
+
+    /** Corpo HTML dell'email che accompagna il riepilogo; {@code saluto} è il nome del destinatario. */
+    public String emailRiepilogoHtml(RiepilogoFamiglia riepilogo, String saluto) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("famiglia", riepilogo.genitore() != null);
+        modello.put("intestatario", riepilogo.intestatario());
+        modello.put("anno", riepilogo.anno() != null ? "dell'anno scolastico " + riepilogo.anno() : "dei corsi senza anno scolastico");
+        modello.put("numeroCorsi", riepilogo.righe().size());
+        modello.put("totali", Map.of("quota", Formati.euro(riepilogo.quota()), "pagato", Formati.euro(riepilogo.pagato()),
+            "residuo", Formati.euro(riepilogo.residuo())));
+        return render("email/" + TipoDocumento.RIEPILOGO.getTemplate() + ".ftlh", modello);
     }
 
     /** HTML (pagina A4) del riepilogo della famiglia: corsi dei figli nell'anno con quota, pagato e residuo. */

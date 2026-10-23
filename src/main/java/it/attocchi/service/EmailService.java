@@ -12,6 +12,8 @@ import it.attocchi.repository.InvioEmailRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.UserRepository;
+import it.attocchi.service.DocumentiService.Pdf;
+import it.attocchi.service.PagamentoService.RiepilogoFamiglia;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
@@ -32,7 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Invio per email di conferme di iscrizione e ricevute (admin e segreteria), con il PDF allegato. Senza SMTP
+ * Invio per email di conferme di iscrizione, ricevute e riepiloghi annuali (admin e segreteria), con il PDF allegato. Senza SMTP
  * configurato l'invio è simulato. Ogni tentativo è registrato in {@link InvioEmail} con il suo esito.
  */
 @Service
@@ -188,24 +190,108 @@ public class EmailService {
         invio.setAllegato(documentiService.nomeFile(tipo, iscrizione));
         invio.setInviatoDa(username);
 
+        return spedisciERegistra(invio, () -> documentiService.emailHtml(tipo, corsoId, allievoId, destinatario.nome()),
+            () -> documentiService.documentoPdf(tipo, corsoId, allievoId));
+    }
+
+    /** Corpo e PDF di un invio, calcolati solo al momento di spedire (un errore diventa l'esito dell'invio). */
+    private interface Contenuto<T> {
+        T get() throws Exception;
+    }
+
+    /** Spedisce (o simula) l'email dell'invio già compilato e lo registra con l'esito. */
+    private InvioEmail spedisciERegistra(InvioEmail invio, Contenuto<String> corpo, Contenuto<byte[]> pdf) {
         try {
-            String corpo = documentiService.emailHtml(tipo, corsoId, allievoId, destinatario.nome());
-            byte[] pdf = documentiService.documentoPdf(tipo, corsoId, allievoId);
+            String testo = corpo.get();
+            byte[] allegato = pdf.get();
             JavaMailSender sender = mailSender.getIfAvailable();
             if (sender == null) {
-                log.info("Invio email simulato (SMTP non configurato): {} a {}", invio.getOggetto(), destinatario.email());
+                log.info("Invio email simulato (SMTP non configurato): {} a {}", invio.getOggetto(), invio.getDestinatario());
                 invio.setEsito(Esito.SIMULATA);
             } else {
-                spedisci(sender, destinatario.email(), invio.getOggetto(), corpo, invio.getAllegato(), pdf);
+                spedisci(sender, invio.getDestinatario(), invio.getOggetto(), testo, invio.getAllegato(), allegato);
                 invio.setEsito(Esito.INVIATA);
             }
         } catch (Exception ex) {
-            log.warn("Invio email non riuscito: {} a {}", invio.getOggetto(), destinatario.email(), ex);
+            log.warn("Invio email non riuscito: {} a {}", invio.getOggetto(), invio.getDestinatario(), ex);
             invio.setEsito(Esito.ERRORE);
             String messaggio = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
             invio.setErrore(messaggio.length() > 1000 ? messaggio.substring(0, 1000) : messaggio);
         }
         return invioEmailRepository.save(invio);
+    }
+
+    /**
+     * Destinatario del riepilogo annuale: il genitore ({@code genitoreId}) o l'allievo adulto ({@code allievoId}), se
+     * ha un'email.
+     */
+    public Optional<Destinatario> destinatarioRiepilogo(Long genitoreId, Long allievoId, String anno) {
+        return destinatario(riepilogo(genitoreId, allievoId, anno));
+    }
+
+    /**
+     * Invia il riepilogo annuale della famiglia ({@code genitoreId}) o dell'allievo adulto ({@code allievoId}) e
+     * registra il tentativo come {@link #invia}; senza destinatario o senza corsi nell'anno {@link IllegalStateException}.
+     */
+    @Transactional
+    public InvioEmail inviaRiepilogo(Long genitoreId, Long allievoId, String anno, String username) {
+        verificaPermesso(username);
+        RiepilogoFamiglia riepilogo = riepilogo(genitoreId, allievoId, anno);
+        Destinatario destinatario = verificaInviabile(riepilogo);
+
+        InvioEmail invio = new InvioEmail();
+        invio.setDataOra(LocalDateTime.now());
+        invio.setTipo(TipoDocumento.RIEPILOGO);
+        invio.setGenitoreId(genitoreId);
+        invio.setAllievoId(allievoId);
+        invio.setAllievoNome(riepilogo.intestatario());
+        invio.setAnno(anno);
+        invio.setCorsoNome(anno != null ? "Anno " + anno : "Senza anno scolastico");
+        invio.setDestinatario(destinatario.email());
+        invio.setDestinatarioNome(destinatario.nome());
+        invio.setOggetto(oggetto(riepilogo));
+        Pdf pdf = documentiService.riepilogoPdf(riepilogo);
+        invio.setAllegato(pdf.nomeFile());
+        invio.setInviatoDa(username);
+        return spedisciERegistra(invio, () -> documentiService.emailRiepilogoHtml(riepilogo, destinatario.nome()), pdf::contenuto);
+    }
+
+    /** Anteprima dell'email del riepilogo, con gli stessi controlli di {@link #inviaRiepilogo}, senza inviarla. */
+    public Anteprima anteprimaRiepilogo(Long genitoreId, Long allievoId, String anno, String username) {
+        verificaPermesso(username);
+        RiepilogoFamiglia riepilogo = riepilogo(genitoreId, allievoId, anno);
+        Destinatario destinatario = verificaInviabile(riepilogo);
+        Pdf pdf = documentiService.riepilogoPdf(riepilogo);
+        return new Anteprima(destinatario, oggetto(riepilogo), documentiService.emailRiepilogoHtml(riepilogo, destinatario.nome()),
+            pdf.nomeFile(), pdf.contenuto());
+    }
+
+    private RiepilogoFamiglia riepilogo(Long genitoreId, Long allievoId, String anno) {
+        if ((genitoreId == null) == (allievoId == null)) {
+            throw new IllegalArgumentException("Indicare il genitore o l'allievo del riepilogo");
+        }
+        return genitoreId != null ? pagamentoService.riepilogoFamiglia(genitoreId, anno) : pagamentoService.riepilogoAllievo(allievoId, anno);
+    }
+
+    private static Optional<Destinatario> destinatario(RiepilogoFamiglia riepilogo) {
+        User user = riepilogo.genitore() != null ? riepilogo.genitore().getUser() : riepilogo.allievo().getUser();
+        if (user == null || !conEmail(user)) {
+            return Optional.empty();
+        }
+        return Optional.of(new Destinatario(riepilogo.intestatario(), user.getEmail().strip()));
+    }
+
+    private static Destinatario verificaInviabile(RiepilogoFamiglia riepilogo) {
+        if (riepilogo.righe().isEmpty()) {
+            throw new IllegalStateException("Nessun corso nell'anno scolastico scelto");
+        }
+        return destinatario(riepilogo).orElseThrow(() -> new IllegalStateException(
+            (riepilogo.genitore() != null ? "Il genitore" : "L'allievo") + " non ha un indirizzo email"));
+    }
+
+    private static String oggetto(RiepilogoFamiglia riepilogo) {
+        return TipoDocumento.RIEPILOGO.getTitolo() + (riepilogo.anno() != null ? " " + riepilogo.anno() : "")
+            + " – " + riepilogo.intestatario();
     }
 
     /**

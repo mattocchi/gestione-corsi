@@ -45,6 +45,9 @@ class EmailServiceTest {
     @Autowired
     private DocumentiService documentiService;
 
+    @Autowired
+    private GenitoreService genitoreService;
+
     @AfterEach
     void pulisci() {
         invioEmailRepository.deleteAll();
@@ -163,6 +166,34 @@ class EmailServiceTest {
             allievo.setCodiceFiscale(codiceFiscale);
             allievoService.save(allievo);
         }
+    }
+
+    @Test
+    void riepilogo_dellaFamigliaSimulatoERegistrato() {
+        // genitore3: Allievo Canto3 (Canto) e Allievo Chitarra1 (Chitarra), entrambi nel 2024/2025
+        Long genitoreId = genitoreService.findByUsername("genitore3").orElseThrow().getId();
+        assertEquals("genitore3@example.com", emailService.destinatarioRiepilogo(genitoreId, null, "2024/2025").orElseThrow().email());
+
+        EmailService.Anteprima anteprima = emailService.anteprimaRiepilogo(genitoreId, null, "2024/2025", "segreteria");
+        assertTrue(anteprima.oggetto().startsWith("Riepilogo pagamenti 2024/2025 – "), anteprima.oggetto());
+        assertTrue(anteprima.corpoHtml().contains("anno scolastico 2024/2025 per i corsi dei tuoi figli"), anteprima.corpoHtml());
+        assertTrue(anteprima.corpoHtml().contains("(2 corsi)"), anteprima.corpoHtml());
+        assertTrue(anteprima.allegato().startsWith("riepilogo-famiglia-"), anteprima.allegato());
+        assertTrue(emailService.tuttiGliInvii().isEmpty());
+
+        InvioEmail invio = emailService.inviaRiepilogo(genitoreId, null, "2024/2025", "segreteria");
+        assertEquals(Esito.SIMULATA, invio.getEsito());
+        assertEquals(TipoDocumento.RIEPILOGO, invio.getTipo());
+        assertEquals(genitoreId, invio.getGenitoreId());
+        assertNull(invio.getAllievoId());
+        assertEquals("2024/2025", invio.getAnno());
+        assertEquals("genitore3@example.com", invio.getDestinatario());
+        assertEquals(1, emailService.tuttiGliInvii().size());
+
+        // Solo admin e segreteria; un anno senza corsi non ha nulla da inviare
+        assertThrows(IllegalStateException.class, () -> emailService.inviaRiepilogo(genitoreId, null, "2024/2025", "insegnante1"));
+        assertThrows(IllegalStateException.class, () -> emailService.inviaRiepilogo(genitoreId, null, "2030/2031", "segreteria"));
+        assertThrows(IllegalArgumentException.class, () -> emailService.inviaRiepilogo(null, null, "2024/2025", "segreteria"));
     }
 
     @Test
