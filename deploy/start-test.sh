@@ -4,5 +4,7 @@
 # pm2 start /home/cloud/gestionecorsi/start-test.sh --name test-gestionecorsi --watch
 #
 export PORT=8081
+export APP_URL=https://test-corsi.bandamosson.org
+
 JAVA_HOME="/home/cloud/.sdkman/candidates/java/25.0.4-tem/"
 $JAVA_HOME/bin/java -jar gestione-corsi-test.jar
