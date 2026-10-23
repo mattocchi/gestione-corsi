@@ -68,6 +68,23 @@ registrato nella vista "Email inviate" con esito "Simulata" e scritto nel log. I
 a ricevute e conferme (e l'IBAN per il bonifico) sono le variabili `ASSOCIAZIONE_*`. Dopo averle cambiate:
 `pm2 reload ecosystem.config.js --update-env`.
 
+### Monitoraggio
+
+Health check per uno strumento di monitoraggio (UptimeRobot, Uptime Kuma, …): `GET /actuator/health`, senza login.
+
+- `200` con `{"status":"UP"}`: applicazione e database funzionano;
+- `503` con `{"status":"DOWN"}`: il database non risponde (o un altro controllo fallisce);
+- nessuna risposta: applicazione ferma.
+
+Basta controllare il codice HTTP (o la parola `UP`). Senza login non c'è nessun dettaglio sul server; un admin
+collegato all'applicazione vede anche database e spazio su disco aprendo lo stesso indirizzo nel browser. Il server
+email non è controllato: un SMTP lento non fa risultare ferma l'applicazione. Gli altri endpoint di Actuator non
+sono esposti.
+
+```bash
+curl -s https://<indirizzo-app>/actuator/health    # {"status":"UP"}
+```
+
 ### Aggiornamento
 
 1. Backup del database (`mysqldump gestione_corsi > backup-AAAA-MM-GG.sql`).
