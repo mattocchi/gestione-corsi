@@ -2786,6 +2786,41 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("insegnante2")
+    @SuppressWarnings("unchecked")
+    void insegnante_numeroDellaLezioneConGruppoOGiorno() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        GruppoCorso martedi = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
+        GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Principianti", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        List<Allievo> allievi = IntStream.rangeClosed(1, 6)
+            .mapToObj(n -> allievoService.findByUsername("allievo_chitarra" + n).orElseThrow()).toList();
+        try {
+            for (int n = 0; n < 6; n++) {
+                corsoService.assegnaGruppo(chitarra.getId(), allievi.get(n).getId(), (n < 3 ? martedi : sabato).getId());
+            }
+            corsoService.generaLezioni(chitarra);
+            apriLezioni();
+            Grid<Lezione> griglia = find(Grid.class).all().stream()
+                .filter(g -> g.getColumns().stream().anyMatch(c -> "N. Lezione".equals(((Grid.Column<?>) c).getHeaderText())))
+                .findFirst().orElseThrow();
+            List<Grid.Column<Lezione>> visibili = griglia.getColumns().stream().filter(Grid.Column::isVisible).toList();
+            int numero = IntStream.range(0, visibili.size()).filter(i -> "N. Lezione".equals(visibili.get(i).getHeaderText()))
+                .findFirst().orElseThrow();
+            var lezioni = test(griglia);
+            List<String> numeri = IntStream.range(0, lezioni.size()).mapToObj(r -> lezioni.getCellText(r, numero)).toList();
+            assertTrue(numeri.contains("1 · mar"), numeri.toString());
+            assertTrue(numeri.contains("1 · Principianti"), numeri.toString());
+        } finally {
+            allievi.forEach(a -> {
+                corsoService.assegnaGruppo(chitarra.getId(), a.getId(), null);
+                corsoService.impostaOrario(chitarra.getId(), a.getId(), null);
+            });
+            corsoService.gruppi(chitarra.getId()).forEach(g -> corsoService.eliminaGruppo(g.getId()));
+            corsoService.generaLezioni(chitarra);
+        }
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
     void insegnante_conUnSoloCorso_alLoginApreLeLezioni() {
         assertInstanceOf(LezioniInsegnanteView.class, getCurrentView());

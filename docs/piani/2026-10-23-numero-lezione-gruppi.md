@@ -24,7 +24,7 @@ Nei corsi con due gruppi (es. lun e ven) la lezione numero 1 deve essere quella 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | `NumerazioneLezioni` (ricalcolo per giorno nei corsi con gruppi) chiamata da generazione, lezioni aggiunte/eliminate, gruppi e all'avvio; test | — | `service/NumerazioneLezioni`, `CorsoService`, `LezioneService`, avvio, test | `./mvnw test` | [x] |
-| 2 | Etichetta "N · gruppo/giorno" in Lezioni, Le Mie Lezioni e presenze dell'allievo; test | [F-2026-10-23/NUMERO.1] | `views/ElencoLezioni`, `views/PresenzeAllievoDialog`, `views/Formati`, test | `./mvnw test` | [ ] |
+| 2 | Etichetta "N · gruppo/giorno" in Lezioni, Le Mie Lezioni e presenze dell'allievo; test | [F-2026-10-23/NUMERO.1] | `views/ElencoLezioni`, `views/PresenzeAllievoDialog`, `views/Formati`, test | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

@@ -288,6 +288,11 @@ public class LezioneService {
             .toList();
     }
 
+    /** Gruppi per id del corso, per il numero della lezione con il gruppo o il giorno ({@code Formati.numeroLezione}). */
+    public Map<Long, List<GruppoCorso>> gruppiPerCorso() {
+        return numerazioneLezioni.gruppiPerCorso();
+    }
+
     /** Gruppo dei partecipanti del corso che ne hanno uno, per id dell'allievo (vuota se il corso non ha gruppi). */
     public Map<Long, GruppoCorso> gruppiDeiPartecipanti(Long corsoId) {
         Map<Long, GruppoCorso> gruppi = new HashMap<>();

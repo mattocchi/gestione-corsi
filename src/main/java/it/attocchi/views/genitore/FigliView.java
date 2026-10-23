@@ -188,7 +188,8 @@ public class FigliView extends VerticalLayout {
 
     private void openPresenzeDialog(Allievo allievo, Corso corso) {
         List<Presenza> presenze = presenzaService.findByCorsoAndAllievo(corso.getId(), allievo.getId());
-        new PresenzeAllievoDialog(corso.getNome() + " – " + allievo.getNomeCompleto(), presenze).open();
+        new PresenzeAllievoDialog(corso.getNome() + " – " + allievo.getNomeCompleto(), presenze,
+            corsoService.gruppi(corso.getId())).open();
     }
 
     private void openPagamentiDialog(Allievo allievo, Corso corso) {

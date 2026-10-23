@@ -79,6 +79,7 @@ public class ElencoLezioni extends VerticalLayout {
     private final boolean tuttiICorsi;
     private final ComboBox<Corso> filtroCorso = new ComboBox<>();
     private List<Lezione> elenco = List.of();
+    private Map<Long, List<GruppoCorso>> gruppiPerCorso = Map.of();
     /** Festività attive, rilette con l'elenco: segnalano le lezioni da fare che cadono in un giorno festivo. */
     private CalendarioFestivita festivita;
 
@@ -140,7 +141,7 @@ public class ElencoLezioni extends VerticalLayout {
         // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
         gridLezioni.addComponentColumn(this::createData).setHeader("Data")
             .setComparator(Lezione::getData).setSortable(true).setWidth("17rem").setFlexGrow(0);
-        gridLezioni.addColumn(ElencoLezioni::numero).setHeader("N. Lezione")
+        gridLezioni.addColumn(this::numero).setHeader("N. Lezione")
             .setComparator(Lezione::getNumeroLezione);
         gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
         // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
@@ -155,7 +156,7 @@ public class ElencoLezioni extends VerticalLayout {
             .stato(this::createStatoBadge)
             .campo("Data", this::createData)
             .campo("Insegnanti", l -> tuttiICorsi ? insegnante(l) : null)
-            .campo("N. Lezione", ElencoLezioni::numero)
+            .campo("N. Lezione", this::numero)
             .campo("Orario", Lezione::getOrarioInizio)
             .azioni(this::createAzioni)
             .applica();
@@ -215,7 +216,7 @@ public class ElencoLezioni extends VerticalLayout {
 
     private void openPresenzeDialog(Lezione lezione) {
         Dialog dialog = ViewSupport.dialog(
-            lezione.getCorso().getNome() + " – Lezione " + lezione.getNumeroLezione() + " (" + Formati.data(lezione.getData()) + ")", "800px");
+            lezione.getCorso().getNome() + " – Lezione " + Formati.numeroLezione(lezione, gruppiPerCorso.get(lezione.getCorso().getId())) + " (" + Formati.data(lezione.getData()) + ")", "800px");
 
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
 
@@ -362,8 +363,8 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     /** Numero della lezione, con l'indicazione delle lezioni di recupero e di quelle aggiunte. */
-    private static String numero(Lezione lezione) {
-        String numero = String.valueOf(lezione.getNumeroLezione());
+    private String numero(Lezione lezione) {
+        String numero = Formati.numeroLezione(lezione, gruppiPerCorso.get(lezione.getCorso().getId()));
         if (lezione.getRecuperoDi() != null) {
             return numero + " · Recupero";
         }
@@ -479,6 +480,7 @@ public class ElencoLezioni extends VerticalLayout {
     private void updateGrid() {
         festivita = festivitaService().calendario();
         elenco = fonte.get();
+        gruppiPerCorso = lezioneService.gruppiPerCorso();
         lezioni = gridLezioni.setItems(elenco);
         applicaFiltro();
     }

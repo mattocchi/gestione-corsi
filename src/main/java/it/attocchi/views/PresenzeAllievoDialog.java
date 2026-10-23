@@ -5,6 +5,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Presenza.StatoPresenza;
 
@@ -17,7 +18,8 @@ import java.util.List;
  */
 public class PresenzeAllievoDialog extends Dialog {
 
-    public PresenzeAllievoDialog(String title, List<Presenza> presenze) {
+    /** @param gruppiDelCorso i gruppi del corso, per il numero della lezione con il gruppo o il giorno */
+    public PresenzeAllievoDialog(String title, List<Presenza> presenze, List<GruppoCorso> gruppiDelCorso) {
         setHeaderTitle(title);
         setWidth("800px");
         setMaxWidth("100%");
@@ -25,7 +27,7 @@ public class PresenzeAllievoDialog extends Dialog {
         Grid<Presenza> grid = new Grid<>(Presenza.class, false);
         grid.addColumn(presenza -> Formati.data(presenza.getLezione().getData())).setHeader("Data")
             .setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(presenza -> presenza.getLezione().getNumeroLezione()).setHeader("N. Lezione")
+        grid.addColumn(presenza -> Formati.numeroLezione(presenza.getLezione(), gruppiDelCorso)).setHeader("N. Lezione")
             .setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(PresenzeAllievoDialog::stato).setHeader("Stato")
             .setTooltipGenerator(presenza -> presenza.getLezione().isNonEffettuata()
@@ -34,7 +36,7 @@ public class PresenzeAllievoDialog extends Dialog {
         grid.setItems(presenze);
         CardMobile.per(grid)
             .titolo(presenza -> Formati.data(presenza.getLezione().getData()))
-            .campo("N. Lezione", presenza -> presenza.getLezione().getNumeroLezione())
+            .campo("N. Lezione", presenza -> Formati.numeroLezione(presenza.getLezione(), gruppiDelCorso))
             .campo("Stato", PresenzeAllievoDialog::stato)
             .campo("Note", presenza -> presenza.getLezione().isNonEffettuata()
                 ? presenza.getLezione().getMotivoNonEffettuata() : presenza.getNote())

@@ -3,6 +3,7 @@ package it.attocchi.views;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
+import it.attocchi.entity.Lezione;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -80,6 +81,21 @@ public final class Formati {
     /** Orario "17:00"; stringa vuota se {@code null}. */
     public static String ora(LocalTime ora) {
         return ora != null ? ora.format(ORA) : "";
+    }
+
+    /**
+     * Numero della lezione; nei corsi con gruppi (numerati per giorno) con il gruppo di quel giorno, se è uno solo e
+     * ha un nome, o il giorno: "5 · Piccoli", "5 · lun". Un recupero usa il giorno della lezione saltata.
+     */
+    public static String numeroLezione(Lezione lezione, List<GruppoCorso> gruppiDelCorso) {
+        String numero = String.valueOf(lezione.getNumeroLezione());
+        if (gruppiDelCorso == null || gruppiDelCorso.isEmpty()) {
+            return numero;
+        }
+        DayOfWeek giorno = (lezione.getRecuperoDi() != null ? lezione.getRecuperoDi() : lezione).getData().getDayOfWeek();
+        List<GruppoCorso> delGiorno = gruppiDelCorso.stream().filter(g -> g.getGiorno() == giorno).toList();
+        boolean nome = delGiorno.size() == 1 && delGiorno.getFirst().getNome() != null && !delGiorno.getFirst().getNome().isBlank();
+        return numero + " · " + (nome ? delGiorno.getFirst().getNome() : giorno(giorno));
     }
 
     /** Il gruppo del partecipante o, senza gruppo, i giorni del corso (es. "mar, sab"). */
