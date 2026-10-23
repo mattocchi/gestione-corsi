@@ -340,3 +340,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### PRESENZE PER GRUPPO
 
 * [ ] quando l'insegnante consula il registro presenze della lezione deve vedere gli allievi per gruppo in modo da selezionare il gruppo, come fosse una tab e inseire le presenze o altro
+  _Chiarimento 2026-10-24: nel dialog "Gestisci Presenze" una scheda per ogni gruppo con allievi alla lezione, in ordine di orario, più "Senza gruppo" se serve e "Tutti"; si apre sul primo gruppo; le schede filtrano l'elenco degli allievi, mentre "Segna Completata" e "Non effettuata" restano per tutta la lezione; vale per insegnanti, admin e segreteria, solo nelle lezioni con più gruppi (o un gruppo e chi è senza)._
