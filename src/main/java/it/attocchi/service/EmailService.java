@@ -158,7 +158,7 @@ public class EmailService {
 
     /** Destinatario dell'iscrizione, vuoto se né il genitore né l'allievo hanno un'email. */
     public Optional<Destinatario> destinatario(Long corsoId, Long allievoId) {
-        return destinatario(pagamentoService.findIscrizione(corsoId, allievoId).getAllievo());
+        return destinatarioDi(pagamentoService.findIscrizione(corsoId, allievoId).getAllievo());
     }
 
     /** {@code true} se l'iscrizione ha pagamenti, e quindi una ricevuta da inviare. */
@@ -274,11 +274,17 @@ public class EmailService {
     }
 
     private static Optional<Destinatario> destinatario(RiepilogoFamiglia riepilogo) {
-        User user = riepilogo.genitore() != null ? riepilogo.genitore().getUser() : riepilogo.allievo().getUser();
+        return destinatarioRiepilogoDi(riepilogo.genitore(), riepilogo.allievo());
+    }
+
+    /** Destinatario del riepilogo: il genitore se indicato, altrimenti l'allievo adulto; vuoto se non ha un'email. */
+    public static Optional<Destinatario> destinatarioRiepilogoDi(Genitore genitore, Allievo allievo) {
+        User user = genitore != null ? genitore.getUser() : allievo.getUser();
         if (user == null || !conEmail(user)) {
             return Optional.empty();
         }
-        return Optional.of(new Destinatario(riepilogo.intestatario(), user.getEmail().strip()));
+        return Optional.of(new Destinatario(genitore != null ? genitore.getNomeCompleto() : allievo.getNomeCompleto(),
+            user.getEmail().strip()));
     }
 
     private static Destinatario verificaInviabile(RiepilogoFamiglia riepilogo) {
@@ -317,7 +323,7 @@ public class EmailService {
             .sorted(Iscrizione.ORDINE)
             .map(iscrizione -> {
                 Allievo allievo = iscrizione.getAllievo();
-                Destinatario destinatario = destinatario(allievo).orElse(null);
+                Destinatario destinatario = destinatarioDi(allievo).orElse(null);
                 String motivo = !allievo.isDatiPerDocumenti() ? "senza codice fiscale o data di nascita"
                     : destinatario == null ? "senza email" : null;
                 return new DestinatarioConferma(allievo.getId(), allievo.getNomeCompleto(), destinatario, motivo);
@@ -342,7 +348,7 @@ public class EmailService {
                 datiMancanti++;
                 continue;
             }
-            if (destinatario(iscrizione.getAllievo()).isEmpty()) {
+            if (destinatarioDi(iscrizione.getAllievo()).isEmpty()) {
                 senzaEmail++;
                 continue;
             }
@@ -391,7 +397,8 @@ public class EmailService {
         return String.join(" ← ", messaggi);
     }
 
-    private static Optional<Destinatario> destinatario(Allievo allievo) {
+    /** Destinatario dei documenti dell'allievo: il genitore con email o, in mancanza, l'allievo. */
+    public static Optional<Destinatario> destinatarioDi(Allievo allievo) {
         Genitore genitore = allievo.getGenitore();
         if (genitore != null && genitore.getUser() != null && conEmail(genitore.getUser())) {
             return Optional.of(new Destinatario(genitore.getNomeCompleto(), genitore.getUser().getEmail().strip()));
@@ -414,7 +421,7 @@ public class EmailService {
 
     /** Destinatario dell'email, se l'iscrizione la può ricevere; altrimenti {@link IllegalStateException}. */
     private Destinatario verificaInviabile(TipoDocumento tipo, Iscrizione iscrizione) {
-        Destinatario destinatario = destinatario(iscrizione.getAllievo())
+        Destinatario destinatario = destinatarioDi(iscrizione.getAllievo())
             .orElseThrow(() -> new IllegalStateException("Né il genitore né l'allievo hanno un indirizzo email"));
         if (tipo == TipoDocumento.RICEVUTA
                 && !haPagamenti(iscrizione.getCorso().getId(), iscrizione.getAllievo().getId())) {
