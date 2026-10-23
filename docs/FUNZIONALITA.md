@@ -297,3 +297,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### DATA LEZIONE
 
 * [ ] permetti ad admin, segreteria, insegnante di modificare una data della lezione generata
+  _Chiarimento 2026-10-23: solo le lezioni da fare (generate o aggiunte); pulsante "Cambia data" nel dialog "Gestisci Presenze" con data e orario; restano gli stessi partecipanti e, nei corsi con gruppi, lo stesso numero; rifiutata se il corso ha già una lezione quel giorno, avviso se è festivo; "Genera Lezioni" conserva lo spostamento (data originale memorizzata, badge "Spostata dal …"); nessuna email._
