@@ -263,3 +263,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### NUMERO LEZIONE
 
 * [ ] vorrei sistemare il conteggio del numero di lezione, esempio nel caso in cui un corso ha due gruppi, uno il lun e uno il ven la lezione numero 1 è sia per il gruppo 1 che il gruppo 2 quella settimana, se un gruppo salta la lezione, in modo che entrambi i gruppo hanno 30 lezioni, il gruppo che ha saltato dovrà valutare di recuperarle per arrivare a 30.
+  _Chiarimento 2026-10-23: nei corsi con gruppi ogni giorno di gruppo ha la sua numerazione (lun 1..30, ven 1..30; due gruppi nello stesso giorno condividono la lezione); una lezione non effettuata tiene il suo numero e il recupero prende lo stesso numero; i corsi senza gruppi restano come oggi; si rinumerano tutte le lezioni dei corsi con gruppi, anche quelle svolte; accanto al numero si mostra il gruppo o il giorno (es. "5 · Piccoli", "5 · lun")._
