@@ -24,6 +24,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./deploy.sh
 ```
 
+Claude Code project commands (`.claude/commands/`): `/build [pulito]` runs `build.sh` (`pulito` deletes `prod.bundle` first), `/deploy-test` and `/deploy` run `deploy-test.sh` / `deploy.sh` (only the user can start them; `/deploy` asks for confirmation unless called with `si`). On the server pm2 watches the folder and restarts the app when the JAR changes.
+
 ## Architecture
 
 **Spring Boot 4.1.1 + Vaadin 25.3.1** (Flow, server-side Java UI; Vaadin 25.3 requires Spring Boot ≥ 4.1) for managing music courses. No separate frontend framework.

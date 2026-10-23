@@ -21,11 +21,15 @@ Aggiungere comandi Claude Code (slash command di progetto) per eseguire `build.s
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Comandi `/build`, `/deploy-test`, `/deploy` | `.claude/commands/*.md` | lettura dei file | [x] |
-| 2 | CLAUDE.md (sezione Commands) e registro | `CLAUDE.md`, questo piano | — | [ ] |
+| 2 | CLAUDE.md (sezione Commands) e registro | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
-- Riavvio remoto del servizio dopo il deploy (gli script attuali non lo fanno).
+- Riavvio remoto esplicito: non serve, pm2 ha `watch: true` e riavvia l'app quando cambia il JAR (i comandi indicano il comando pm2 se non ripartisse).
 - Modifiche agli script stessi (es. versione `1.1.0` scritta a mano).
 
 ## Registro
+
+- Creati `.claude/commands/build.md`, `deploy-test.md`, `deploy.md`; nessuno eseguito (la build e i deploy li avvia l'utente).
+- Verificato in `deploy/ecosystem.config.js` e `deploy/start-test.sh` che pm2 usa `watch`: il riavvio al cambio del JAR è automatico.
+- I comandi compaiono in Claude Code dalla prossima sessione (o dopo il ricaricamento dei comandi).
