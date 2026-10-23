@@ -29,7 +29,7 @@
 | 2 | `PresenzeAllievoDialog`: "Da fare" sulle lezioni non svolte, riepilogo con `ConteggioLezioni` (svolte, da fare, mancanti, presenze, assenze), colonna facoltativa delle note per lo staff; I Miei Corsi e I Miei Figli aggiornati | `views/PresenzeAllievoDialog.java`, `allievo/MieiCorsiView.java`, `genitore/FigliView.java`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | Vista `insegnante/MieiAllieviView` ("I miei allievi"): griglia, filtro per corso, ricerca, card su mobile, dettaglio; test browserless (insegnante vede solo i suoi allievi, dettaglio, accesso negato agli altri ruoli) | `views/insegnante/MieiAllieviView.java`, `ViewAccessTest` | `./mvnw test`; browser | [x] Il clic sul pulsante arriva anche alla riga: il dialog si apre una sola volta (verificato nel browser). Su mobile (500px) card e dettaglio verificati con screenshot |
 | 4 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [x] |
-| 5 | Registro finale | questo piano | build e test | [ ] |
+| 5 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -39,4 +39,7 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati dopo ogni passo; nuovi `MieiAllieviServiceTest` (righe solo dei corsi dell'insegnante, conteggi con lezione completata, assenza e lezione non effettuata, permessi sulle lezioni) e, in `ViewAccessTest`, la vista dell'insegnante (righe, ricerca, dialog con le note per lo staff) e l'accesso negato ad allievo e segreteria; il test del dialog dell'allievo controlla ora "Da fare" e i nuovi conteggi.
+- Browser (app in sviluppo, `insegnante1`, finestra larga 500px): card degli allievi, dettaglio con conteggi e lezioni "Da fare", un solo dialog sia toccando la card sia con il pulsante. La tabella da desktop è verificata solo dai test (la finestra del browser non si lasciava allargare).
+- Cambia anche per allievi e genitori: nel dialog delle presenze le lezioni future mostrano "Da fare" e in alto ci sono svolte, da fare e mancanti al posto di "Totale lezioni".
+- Lasciato aperto: nessuno.
