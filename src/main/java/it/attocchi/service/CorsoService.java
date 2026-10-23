@@ -133,7 +133,7 @@ public class CorsoService {
 
         lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId).stream()
             .filter(Lezione::isDaFare)
-            .filter(lezione -> iscrizione.frequenta(lezione.getData()))
+            .filter(lezione -> iscrizione.frequenta(lezione.getDataDelCalendario()))
             .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE)));
     }
 
@@ -260,7 +260,7 @@ public class CorsoService {
                 continue;
             }
             Presenza presenza = presenze.get(lezione.getId());
-            boolean frequenta = iscrizione.frequenta(lezione.getData());
+            boolean frequenta = iscrizione.frequenta(lezione.getDataDelCalendario());
             if (frequenta && presenza == null) {
                 presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
             } else if (!frequenta && presenza != null) {
@@ -371,7 +371,8 @@ public class CorsoService {
         List<Lezione> lezioniEsistenti = lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId());
         List<Lezione> conservate = new ArrayList<>();
         for (Lezione esistente : lezioniEsistenti) {
-            if (esistente.isDaFare() && !esistente.isAggiunta()) {
+            // Le lezioni spostate a mano restano dove sono state messe
+            if (esistente.isDaFare() && !esistente.isAggiunta() && !esistente.isSpostata()) {
                 lezioneRepository.delete(esistente);
             } else if (!esistente.isAggiunta()) {
                 conservate.add(esistente);
@@ -382,12 +383,13 @@ public class CorsoService {
         conservate.forEach(l -> {
             numeriConservati.add(l.getNumeroLezione());
             dateConservate.add(l.getData());
+            dateConservate.add(l.getDataDelCalendario());
         });
 
         List<Iscrizione> iscrizioni = iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId());
         int lezioniPerAllievo = corso.getNumeroLezioni() != null ? corso.getNumeroLezioni() : 0;
         Map<Iscrizione, Integer> contate = new HashMap<>();
-        iscrizioni.forEach(i -> contate.put(i, (int) conservate.stream().filter(l -> i.frequenta(l.getData())).count()));
+        iscrizioni.forEach(i -> contate.put(i, (int) conservate.stream().filter(l -> i.frequenta(l.getDataDelCalendario())).count()));
 
         // I giorni festivi si saltano senza consumare un numero: la fine del corso slitta
         CalendarioFestivita festivita = festivitaService.calendario();

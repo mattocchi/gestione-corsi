@@ -131,6 +131,58 @@ class LezioneServiceTest {
         }
     }
 
+    @Test
+    void sposta_tienePartecipantiENumero_eGeneraLezioniLaConserva() {
+        Corso chitarra = lezioniDi("Corso di Chitarra").getFirst().getCorso();
+        Lezione lezione = lezioniDi("Corso di Chitarra").get(2);
+        LocalDate originale = lezione.getData();
+        LocalDate nuova = originale.plusDays(1);
+        int presenze = presenzaService.findByLezione(lezione.getId()).size();
+        Lezione successiva = lezioniDi("Corso di Chitarra").get(3);
+
+        assertThrows(IllegalStateException.class, () -> lezioneService.sposta(lezione.getId(), nuova, null, "insegnante1"));
+        assertThrows(IllegalStateException.class, () -> lezioneService.sposta(lezione.getId(), nuova, null, "genitore1"));
+        assertThrows(IllegalArgumentException.class, () -> lezioneService.sposta(lezione.getId(), null, null, "admin"));
+        // Il corso ha già una lezione in quel giorno
+        assertThrows(IllegalStateException.class,
+            () -> lezioneService.sposta(lezione.getId(), successiva.getData(), null, "segreteria"));
+
+        lezioneService.sposta(lezione.getId(), nuova, LocalTime.of(16, 30), "insegnante2");
+        try {
+            Lezione spostata = lezioneService.findById(lezione.getId());
+            assertEquals(nuova, spostata.getData());
+            assertEquals(originale, spostata.getDataOriginale());
+            assertEquals(LocalTime.of(17, 10), spostata.getOrarioFine());
+            assertEquals(lezione.getNumeroLezione(), spostata.getNumeroLezione());
+            assertEquals(presenze, presenzaService.findByLezione(lezione.getId()).size());
+
+            // Rigenerando resta spostata e non si ricrea una lezione alla data originale
+            corsoService.generaLezioni(chitarra);
+            List<Lezione> dopo = lezioniDi("Corso di Chitarra");
+            assertEquals(30, dopo.size());
+            assertTrue(dopo.stream().anyMatch(l -> l.getId().equals(lezione.getId()) && l.getData().equals(nuova)));
+            assertTrue(dopo.stream().noneMatch(l -> l.getData().equals(originale)));
+
+            // Spostata di nuovo conserva la data del calendario
+            lezioneService.sposta(lezione.getId(), nuova.plusDays(1), LocalTime.of(16, 30), "segreteria");
+            assertEquals(originale, lezioneService.findById(lezione.getId()).getDataOriginale());
+        } finally {
+            lezioneService.sposta(lezione.getId(), originale, LocalTime.of(18, 0), "admin");
+        }
+        Lezione riportata = lezioneService.findById(lezione.getId());
+        assertFalse(riportata.isSpostata());
+        assertEquals(LocalTime.of(18, 40), riportata.getOrarioFine());
+
+        // Solo le lezioni da fare
+        lezioneService.completa(lezione.getId(), "insegnante2");
+        try {
+            assertThrows(IllegalStateException.class, () -> lezioneService.sposta(lezione.getId(), nuova, null, "admin"));
+        } finally {
+            riportata.setCompletata(false);
+            lezioneService.save(riportata);
+        }
+    }
+
     private List<Lezione> lezioniDi(String nomeCorso) {
         Corso corso = corsoService.findAll().stream().filter(c -> c.getNome().equals(nomeCorso)).findFirst().orElseThrow();
         return lezioneService.findByCorso(corso.getId());

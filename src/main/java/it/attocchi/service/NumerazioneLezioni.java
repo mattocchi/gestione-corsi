@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
  * Numero delle lezioni nei corsi con gruppi: ogni giorno della settimana ha la sua numerazione (con i gruppi del lunedì
  * e del venerdì la lezione 1 è quella della prima settimana per entrambi), così ogni gruppo conta le sue lezioni. Si
  * ricalcola dalle lezioni in ordine di data: una lezione non effettuata tiene il suo numero, il suo recupero prende lo
- * stesso numero. I corsi senza gruppi tengono il contatore unico di sempre.
+ * stesso numero; una lezione spostata conta nel giorno della data originale. I corsi senza gruppi tengono il
+ * contatore unico di sempre.
  */
 @Service
 @Transactional(readOnly = true)
@@ -60,7 +61,7 @@ public class NumerazioneLezioni {
 
     private void numera(Long corsoId, boolean perGiorno) {
         List<Lezione> lezioni = lezioneRepository.findByCorsoIdOrderByDataAsc(corsoId).stream()
-            .sorted(Comparator.comparing(Lezione::getData).thenComparing(Lezione::getId))
+            .sorted(Comparator.comparing(Lezione::getDataDelCalendario).thenComparing(Lezione::getId))
             .toList();
         Map<DayOfWeek, Integer> contatori = new EnumMap<>(DayOfWeek.class);
         int contatoreUnico = 0;
@@ -70,7 +71,7 @@ public class NumerazioneLezioni {
             if (lezione.getRecuperoDi() != null) {
                 continue;
             }
-            int numero = perGiorno ? contatori.merge(lezione.getData().getDayOfWeek(), 1, Integer::sum) : ++contatoreUnico;
+            int numero = perGiorno ? contatori.merge(lezione.getDataDelCalendario().getDayOfWeek(), 1, Integer::sum) : ++contatoreUnico;
             numeri.put(lezione.getId(), numero);
             lezione.setNumeroLezione(numero);
         }

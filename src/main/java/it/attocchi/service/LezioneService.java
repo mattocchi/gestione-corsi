@@ -12,6 +12,7 @@ import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.UserRepository;
+import it.attocchi.views.Formati;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -161,7 +162,7 @@ public class LezioneService {
         Set<Long> conPresenza = presenzaRepository.findByLezioneId(lezioneId).stream()
             .map(p -> p.getAllievo().getId()).collect(Collectors.toSet());
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(lezione.getCorso().getId())) {
-            if (!conPresenza.contains(iscrizione.getAllievo().getId()) && iscrizione.frequenta(lezione.getData())) {
+            if (!conPresenza.contains(iscrizione.getAllievo().getId()) && iscrizione.frequenta(lezione.getDataDelCalendario())) {
                 presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
             }
         }
@@ -223,6 +224,36 @@ public class LezioneService {
         lezioneRepository.flush();
         numerazioneLezioni.rinumera(corsoId);
         return salvata;
+    }
+
+    /**
+     * Sposta una lezione da fare a un'altra data e orario (senza orario la lezione resta senza; la fine segue la durata
+     * del corso). Tiene partecipanti e numero; la data originale resta memorizzata, così "Genera Lezioni" non la
+     * ricrea; riportata alla data originale torna una lezione normale. Rifiutata se il corso ha già una lezione quel
+     * giorno. Insegnante del corso, segreteria o admin.
+     */
+    @Transactional
+    public void sposta(Long lezioneId, LocalDate data, LocalTime orario, String username) {
+        if (data == null) {
+            throw new IllegalArgumentException("Inserisci la data della lezione");
+        }
+        Lezione lezione = gestibile(lezioneId, username, false);
+        if (!lezione.isDaFare()) {
+            throw new IllegalStateException("Si sposta solo una lezione ancora da fare");
+        }
+        boolean occupata = lezioneRepository.findByCorsoIdOrderByDataAsc(lezione.getCorso().getId()).stream()
+            .anyMatch(l -> !l.getId().equals(lezioneId) && l.getData().equals(data));
+        if (occupata) {
+            throw new IllegalStateException("Il corso ha già una lezione " + Formati.data(data));
+        }
+        LocalDate delCalendario = lezione.getDataDelCalendario();
+        lezione.setDataOriginale(data.equals(delCalendario) ? null : delCalendario);
+        lezione.setData(data);
+        Integer durata = lezione.getCorso().getDurataLezioneMinuti();
+        lezione.setOrarioInizio(orario);
+        lezione.setOrarioFine(orario != null && durata != null ? orario.plusMinutes(durata) : null);
+        lezioneRepository.flush();
+        numerazioneLezioni.rinumera(lezione.getCorso().getId());
     }
 
     /** Elimina una lezione aggiunta a mano non ancora completata (insegnante del corso o admin). */

@@ -25,6 +25,13 @@ public class Lezione {
     @NotNull
     private LocalDate data;
 
+    /**
+     * Data del calendario del corso di una lezione spostata a mano; {@code null} se non è stata spostata. Decide
+     * partecipanti e numero e impedisce a "Genera Lezioni" di ricrearla in quella data.
+     */
+    @Column(name = "data_originale")
+    private LocalDate dataOriginale;
+
     private LocalTime orarioInizio;
 
     private LocalTime orarioFine;
@@ -97,6 +104,24 @@ public class Lezione {
 
     public void setData(LocalDate data) {
         this.data = data;
+    }
+
+    public LocalDate getDataOriginale() {
+        return dataOriginale;
+    }
+
+    public void setDataOriginale(LocalDate dataOriginale) {
+        this.dataOriginale = dataOriginale;
+    }
+
+    /** Spostata a mano dalla data del calendario del corso. */
+    public boolean isSpostata() {
+        return dataOriginale != null;
+    }
+
+    /** Data che la lezione ha nel calendario del corso: quella originale se è stata spostata. */
+    public LocalDate getDataDelCalendario() {
+        return dataOriginale != null ? dataOriginale : data;
     }
 
     public LocalTime getOrarioInizio() {
