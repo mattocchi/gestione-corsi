@@ -24,7 +24,7 @@ Rendere esplicito, nella conferma di iscrizione (email e PDF) e nel portale, che
 |---|---|---|---|---|---|
 | 1 | Modello `importi` in `DocumentiService`; macro `importi.ftlh` in conferma e ricevuta (email e PDF); test | — | `service/DocumentiService`, `templates/…`, `DocumentiServiceTest` | `./mvnw test` | [x] |
 | 2 | Portale: colonne rinominate, quota dovuta in grassetto e badge dello sconto; test | [F-2026-10-23/QUOTA.1] | `views/PrezziCorso`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -32,3 +32,7 @@ Rendere esplicito, nella conferma di iscrizione (email e PDF) e nel portale, che
 - Grassetto nei PDF: il generatore usa il font di base senza la variante grassetta (titoli e totali non sono mai stati in grassetto); per evidenziare la quota dovuta si usano righe più grandi su fondo grigio. Per avere il grassetto bisognerebbe incorporare un font (es. con licenza libera) nei PDF.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 217 test verdi; nuovo `scontoApplicato_listinoBarratoScontoEQuotaDovuta` (PDF ed email con sconto e motivo, caso pre-iscrizione senza motivo); i test di conferma e ricevuta verificano le nuove etichette. Controllo a vista del PDF di esempio (conferma e ricevuta) convertito in immagine: il segno meno tipografico "−" usciva come "#" (manca nel font) → trattino normale; il grassetto non è reso dal font del PDF (anche prima) → evidenza con righe più grandi su fondo grigio.
+- Passo 2: `./mvnw test` 218 test verdi; `allievo_vedePrezziDelCorsoEQuotaApplicata` e `genitore_vedeQuotaPagatoResiduoERate` aggiornati alle nuove colonne (quota dovuta con il badge dello sconto).
+- Il portale non è stato verificato nel browser. Nessuna modifica al database.
