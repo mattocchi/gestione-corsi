@@ -21,7 +21,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Schede per gruppo nel dialog "Gestisci Presenze" che filtrano la griglia; test browserless | `ElencoLezioni`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -29,4 +29,6 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati, compreso il nuovo test di `ViewAccessTest` (schede "Piccoli 10:00 (2)", "Grandi 11:00 (1)", "Senza gruppo (3)", "Tutti (6)", filtro per scheda, nessuna scheda il martedì).
+- Browser: non verificato (nei dati di sviluppo non ci sono gruppi).
+- Lasciato aperto: nessuno.
