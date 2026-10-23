@@ -1,6 +1,11 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.function.SerializableFunction;
 import it.attocchi.entity.Corso;
 import it.attocchi.service.PagamentoService.Situazione;
@@ -10,9 +15,9 @@ import java.util.Comparator;
 import java.util.Map;
 
 /**
- * Prezzi del corso nelle liste di allievi e genitori: costo totale, prezzo con pre-iscrizione e prezzo applicato
- * (quota dovuta dal partecipante), come colonne su desktop e come campi della card su mobile.
- * {@code situazioni} è indicizzata per id del corso.
+ * Prezzi del corso nelle liste di allievi e genitori: prezzo di listino, prezzo con pre-iscrizione e quota dovuta dal
+ * partecipante (l'importo che vale, in evidenza, con un badge se è scontata o maggiorata rispetto al listino), come
+ * colonne su desktop e come campi della card su mobile. {@code situazioni} è indicizzata per id del corso.
  */
 public final class PrezziCorso {
 
@@ -21,9 +26,12 @@ public final class PrezziCorso {
 
     /** Aggiunge alla griglia le colonne dei prezzi. */
     public static void aggiungiColonne(Grid<Corso> grid, Map<Long, Situazione> situazioni) {
-        euro(grid, "Costo totale", Corso::getCostoTotale);
+        euro(grid, "Prezzo di listino", Corso::getCostoTotale);
         euro(grid, "Pre-iscrizione", Corso::getPrezzoPreiscrizione);
-        euro(grid, "Applicato", applicato(situazioni));
+        SerializableFunction<Corso, BigDecimal> dovuta = applicato(situazioni);
+        grid.addComponentColumn(corso -> quotaDovuta(corso, dovuta.apply(corso))).setHeader("Quota dovuta")
+            .setComparator(Comparator.comparing(dovuta, Comparator.nullsFirst(Comparator.naturalOrder())))
+            .setAutoWidth(true).setFlexGrow(0);
     }
 
     /** Aggiunge alla card mobile gli stessi prezzi delle colonne. */
@@ -33,7 +41,23 @@ public final class PrezziCorso {
             .campo("Costo totale", corso -> Formati.euro(corso.getCostoTotale()))
             .campo("Pre-iscrizione", corso -> corso.getPrezzoPreiscrizione() != null
                 ? Formati.euro(corso.getPrezzoPreiscrizione()) : null)
-            .campo("Applicato", corso -> Formati.euro(applicato.apply(corso)));
+            .campo("Quota dovuta", corso -> applicato.apply(corso) != null ? quotaDovuta(corso, applicato.apply(corso)) : null);
+    }
+
+    /** Quota dovuta in evidenza, con il badge "Sconto -X €" (o "Maggiorazione +X €") rispetto al listino. */
+    private static Component quotaDovuta(Corso corso, BigDecimal dovuta) {
+        Span importo = new Span(Formati.euro(dovuta));
+        importo.addClassNames("font-(--aura-font-weight-semibold)");
+        Div cella = new Div(importo);
+        cella.addClassNames("flex flex-wrap items-center gap-1");
+        BigDecimal listino = corso.getCostoTotale();
+        if (dovuta != null && listino != null && dovuta.compareTo(listino) != 0) {
+            boolean sconto = dovuta.compareTo(listino) < 0;
+            Badge badge = new Badge((sconto ? "Sconto -" : "Maggiorazione +") + Formati.euro(listino.subtract(dovuta).abs()));
+            badge.addThemeVariants(sconto ? BadgeVariant.SUCCESS : BadgeVariant.WARNING);
+            cella.add(badge);
+        }
+        return cella;
     }
 
     private static SerializableFunction<Corso, BigDecimal> applicato(Map<Long, Situazione> situazioni) {

@@ -23,7 +23,7 @@ Rendere esplicito, nella conferma di iscrizione (email e PDF) e nel portale, che
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
 | 1 | Modello `importi` in `DocumentiService`; macro `importi.ftlh` in conferma e ricevuta (email e PDF); test | — | `service/DocumentiService`, `templates/…`, `DocumentiServiceTest` | `./mvnw test` | [x] |
-| 2 | Portale: colonne rinominate, quota dovuta in grassetto e badge dello sconto; test | [F-2026-10-23/QUOTA.1] | `views/PrezziCorso`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | Portale: colonne rinominate, quota dovuta in grassetto e badge dello sconto; test | [F-2026-10-23/QUOTA.1] | `views/PrezziCorso`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
 ## Fuori ambito

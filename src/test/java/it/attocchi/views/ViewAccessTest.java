@@ -3232,9 +3232,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
-            // Costo totale, pre-iscrizione e prezzo applicato (quota dovuta)
-            assertEquals(List.of("600,00 €", "510,00 €", "600,00 €"),
-                List.of(corsi.getCellText(0, 4), corsi.getCellText(0, 5), corsi.getCellText(0, 6)));
+            // Prezzo di listino, pre-iscrizione e quota dovuta (senza sconto: nessun badge)
+            assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 4), corsi.getCellText(0, 5)));
+            assertEquals(List.of("600,00 €"), corsi.getCellComponent(0, 6).getChildren()
+                .map(c -> c instanceof Badge b ? b.getText() : ((Span) c).getText()).toList());
             assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 7)).getText());
             test(pulsante(corsi.getCellComponent(0, 8), "Pagamenti")).click();
 
@@ -3268,8 +3269,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(MieiCorsiView.class);
             var corsi = test(find(Grid.class).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
-            assertEquals(List.of("600,00 €", "510,00 €", "510,00 €"),
-                List.of(corsi.getCellText(0, 6), corsi.getCellText(0, 7), corsi.getCellText(0, 8)));
+            // Prezzo di listino, pre-iscrizione e quota dovuta con il badge dello sconto
+            assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 6), corsi.getCellText(0, 7)));
+            assertEquals(List.of("510,00 €", "Sconto -90,00 €"), corsi.getCellComponent(0, 8).getChildren()
+                .map(c -> c instanceof Badge b ? b.getText() : ((Span) c).getText()).toList());
         } finally {
             pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
             Corso corso = corsoService.findById(canto.getId());
