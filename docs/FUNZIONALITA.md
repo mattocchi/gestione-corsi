@@ -259,3 +259,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] vorrei rendere piu esplcito in fase di conferma iscrizione sia email che pdf ma eventualmente anche visualizzione in portale che il PREZZO PREDEFINTO del CORSO non è quello appplicato ma che è quello "da pagare" quello veritiero e realmente applicato. questo per enfatizzare che c'e' uno sconto applicato e non generare dubbi su quale sia l'importo effettivo dovuto. _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: nella conferma e nella ricevuta (email e PDF), con uno sconto: prezzo di listino barrato, riga "Sconto applicato (motivo)" con l'importo, QUOTA DOVUTA in evidenza, già pagato, DA PAGARE, e la frase "L'importo dovuto è la quota indicata sopra, già scontata: il prezzo di listino è solo un riferimento."; senza sconto solo la quota dovuta; nel portale (I Miei Corsi, I Miei Figli) colonne "Prezzo di listino", "Pre-iscrizione", "Quota dovuta" in grassetto e badge "Sconto −X €"._
+
+### NUMERO LEZIONE
+
+* [ ] vorrei sistemare il conteggio del numero di lezione, esempio nel caso in cui un corso ha due gruppi, uno il lun e uno il ven la lezione numero 1 è sia per il gruppo 1 che il gruppo 2 quella settimana, se un gruppo salta la lezione, in modo che entrambi i gruppo hanno 30 lezioni, il gruppo che ha saltato dovrà valutare di recuperarle per arrivare a 30.
