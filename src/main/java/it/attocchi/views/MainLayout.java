@@ -18,7 +18,9 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import it.attocchi.security.SecurityService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.DashboardService;
+import it.attocchi.views.allievo.MieiPagamentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import jakarta.annotation.security.PermitAll;
 
@@ -40,10 +42,12 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private final SecurityService securityService;
     private final DashboardService dashboardService;
+    private final AllievoService allievoService;
 
-    public MainLayout(SecurityService securityService, DashboardService dashboardService) {
+    public MainLayout(SecurityService securityService, DashboardService dashboardService, AllievoService allievoService) {
         this.securityService = securityService;
         this.dashboardService = dashboardService;
+        this.allievoService = allievoService;
         setPrimarySection(Section.DRAWER);
         createHeader();
         addToDrawer(createDrawer());
@@ -102,7 +106,11 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private SideNav createSideNav() {
         SideNav nav = new SideNav();
-        MenuConfiguration.getMenuEntries().forEach(entry -> nav.addItem(createSideNavItem(entry)));
+        // "Pagamenti" dell'allievo solo per chi li gestisce da sé (allievo senza genitore)
+        boolean allievoAdulto = allievoService.gestisceDaSe(securityService.getUsername().orElse(null));
+        MenuConfiguration.getMenuEntries().stream()
+            .filter(entry -> allievoAdulto || !entry.path().replaceFirst("^/", "").equals(MieiPagamentiView.PERCORSO))
+            .forEach(entry -> nav.addItem(createSideNavItem(entry)));
         return nav;
     }
 

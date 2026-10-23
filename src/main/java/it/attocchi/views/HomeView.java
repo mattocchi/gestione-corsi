@@ -80,19 +80,17 @@ public class HomeView extends VerticalLayout {
             add(sezione);
         }
         if (securityService.hasRole("ALLIEVO")) {
-            add(sezione("I miei corsi",
-                indicatore(VaadinIcon.BOOK, "Corsi a cui sono iscritto", dashboardService.corsiAllievo(username))));
+            List<Card> corsi = new ArrayList<>();
+            corsi.add(indicatore(VaadinIcon.BOOK, "Corsi a cui sono iscritto", dashboardService.corsiAllievo(username)));
+            // Allievo adulto (senza genitore): i suoi pagamenti, come per il genitore
+            pagamentoService.situazionePropria(username).ifPresent(situazione -> corsi.addAll(pagamentiCard(situazione)));
+            add(sezione("I miei corsi", corsi.toArray(Card[]::new)));
         }
         if (securityService.hasRole("GENITORE")) {
             List<Card> figli = new ArrayList<>();
             figli.add(indicatore(VaadinIcon.BOOK, "Corsi dei figli", dashboardService.corsiDeiFigli(username)));
             // Pagamenti di tutti i figli sui corsi attivi
-            pagamentoService.situazioneDeiFigli(username).ifPresent(situazione -> {
-                figli.add(indicatore(VaadinIcon.CHECK, "Pagato", Formati.euro(situazione.pagato()),
-                    situazione.percentualePagata() + "% della quota"));
-                figli.add(indicatore(VaadinIcon.WALLET, "Da pagare", Formati.euro(situazione.residuo()),
-                    situazione.residuo().signum() == 0 ? "tutto saldato" : "su " + Formati.euro(situazione.quota()) + " di quota"));
-            });
+            pagamentoService.situazioneDeiFigli(username).ifPresent(situazione -> figli.addAll(pagamentiCard(situazione)));
             add(sezione("I miei figli", figli.toArray(Card[]::new)));
         }
     }
@@ -158,6 +156,14 @@ public class HomeView extends VerticalLayout {
         grid.addClassNames("mt-4");
         sezione.add(grid);
         return sezione;
+    }
+
+    /** Card "Pagato" e "Da pagare" (genitore per i figli, allievo adulto per sé). */
+    private static List<Card> pagamentiCard(PagamentoService.Situazione situazione) {
+        return List.of(
+            indicatore(VaadinIcon.CHECK, "Pagato", Formati.euro(situazione.pagato()), situazione.percentualePagata() + "% della quota"),
+            indicatore(VaadinIcon.WALLET, "Da pagare", Formati.euro(situazione.residuo()),
+                situazione.residuo().signum() == 0 ? "tutto saldato" : "su " + Formati.euro(situazione.quota()) + " di quota"));
     }
 
     /** Gruppi dei corsi attivi: riquadri con i conteggi e una riga per gruppo. */

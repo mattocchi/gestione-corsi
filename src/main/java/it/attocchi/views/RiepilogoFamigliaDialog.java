@@ -7,9 +7,11 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Genitore;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.DocumentiService.Pdf;
@@ -22,9 +24,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Scarico del riepilogo della famiglia in PDF: si sceglie l'anno scolastico tra quelli dei corsi dei figli.
- * I permessi sono verificati da {@link DocumentiService#riepilogoFamigliaPer}: admin e segreteria ogni famiglia,
- * il genitore solo la propria.
+ * Scarico del riepilogo in PDF: della famiglia (anni dei corsi dei figli) o di un allievo adulto senza genitore
+ * (anni dei suoi corsi). I permessi sono verificati da {@link DocumentiService#riepilogoFamigliaPer} e
+ * {@link DocumentiService#riepilogoAllievoPer}: admin e segreteria tutti, genitore e allievo adulto solo il proprio.
  */
 public final class RiepilogoFamigliaDialog {
 
@@ -35,18 +37,37 @@ public final class RiepilogoFamigliaDialog {
     }
 
     public static void apri(Genitore genitore) {
-        // Servizi Spring tramite l'Instantiator di Vaadin, come in Ricevute
-        PagamentoService pagamenti = VaadinService.getCurrent().getInstantiator().getOrCreate(PagamentoService.class);
-        DocumentiService documenti = VaadinService.getCurrent().getInstantiator().getOrCreate(DocumentiService.class);
-        Authentication autenticazione = SecurityContextHolder.getContext().getAuthentication();
-        String username = autenticazione != null ? autenticazione.getName() : "";
+        PagamentoService pagamenti = servizio(PagamentoService.class);
+        DocumentiService documenti = servizio(DocumentiService.class);
+        String username = username();
+        Long genitoreId = genitore.getId();
+        apri("Riepilogo famiglia", pagamenti.anniDellaFamiglia(genitoreId),
+            "Nessun figlio di " + genitore.getNomeCompleto() + " è iscritto a un corso.",
+            "Corsi dei figli di " + genitore.getNomeCompleto() + " nell'anno scelto, con quota, pagato, residuo e totale della spesa.",
+            anno -> documenti.riepilogoFamigliaPer(genitoreId, anno, username));
+    }
 
-        Dialog dialog = ViewSupport.dialog("Riepilogo famiglia", "420px");
-        List<String> anni = pagamenti.anniDellaFamiglia(genitore.getId()).stream()
+    /** Riepilogo dei corsi di un allievo adulto (senza genitore), per i suoi Pagamenti. */
+    public static void apri(Allievo allievo) {
+        PagamentoService pagamenti = servizio(PagamentoService.class);
+        DocumentiService documenti = servizio(DocumentiService.class);
+        String username = username();
+        Long allievoId = allievo.getId();
+        apri("Riepilogo pagamenti", pagamenti.anniDellAllievo(allievoId),
+            allievo.getNomeCompleto() + " non è iscritto a nessun corso.",
+            "Corsi di " + allievo.getNomeCompleto() + " nell'anno scelto, con quota, pagato, residuo e totale della spesa.",
+            anno -> documenti.riepilogoAllievoPer(allievoId, anno, username));
+    }
+
+    /** Dialog comune: scelta dell'anno scolastico e scarico del PDF ({@code pdf} riceve l'anno, {@code null} = senza anno). */
+    private static void apri(String titolo, List<String> anniDisponibili, String nessunCorso, String descrizione,
+                             SerializableFunction<String, Pdf> pdf) {
+        Dialog dialog = ViewSupport.dialog(titolo, "420px");
+        List<String> anni = anniDisponibili.stream()
             .map(anno -> Objects.requireNonNullElse(anno, SENZA_ANNO))
             .toList();
         if (anni.isEmpty()) {
-            dialog.add(new Paragraph("Nessun figlio di " + genitore.getNomeCompleto() + " è iscritto a un corso."));
+            dialog.add(new Paragraph(nessunCorso));
             dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
             dialog.open();
             return;
@@ -58,21 +79,19 @@ public final class RiepilogoFamigliaDialog {
         anno.setAllowCustomValue(false);
         anno.setRequired(true);
         anno.addClassNames("w-full");
-        Paragraph testo = new Paragraph("Corsi dei figli di " + genitore.getNomeCompleto()
-            + " nell'anno scelto, con quota, pagato, residuo e totale della spesa.");
+        Paragraph testo = new Paragraph(descrizione);
         testo.addClassNames(Stili.TESTO_SECONDARIO);
         dialog.add(testo, anno);
 
-        Long genitoreId = genitore.getId();
         DownloadHandler handler = DownloadHandler.fromInputStream(evento -> {
             String scelto = anno.getValue();
             if (scelto == null) {
                 return DownloadResponse.error(404);
             }
             try {
-                Pdf pdf = documenti.riepilogoFamigliaPer(genitoreId, scelto.isEmpty() ? null : scelto, username);
-                return new DownloadResponse(new ByteArrayInputStream(pdf.contenuto()), pdf.nomeFile(), "application/pdf",
-                    pdf.contenuto().length);
+                Pdf documento = pdf.apply(scelto.isEmpty() ? null : scelto);
+                return new DownloadResponse(new ByteArrayInputStream(documento.contenuto()), documento.nomeFile(),
+                    "application/pdf", documento.contenuto().length);
             } catch (IllegalArgumentException | IllegalStateException ex) {
                 return DownloadResponse.error(404);
             }
@@ -86,5 +105,15 @@ public final class RiepilogoFamigliaDialog {
 
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"), link);
         dialog.open();
+    }
+
+    private static <T> T servizio(Class<T> tipo) {
+        // Servizi Spring tramite l'Instantiator di Vaadin, come in Ricevute
+        return VaadinService.getCurrent().getInstantiator().getOrCreate(tipo);
+    }
+
+    private static String username() {
+        Authentication autenticazione = SecurityContextHolder.getContext().getAuthentication();
+        return autenticazione != null ? autenticazione.getName() : "";
     }
 }

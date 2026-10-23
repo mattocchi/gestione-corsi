@@ -23,6 +23,7 @@ import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PresenzeAllievoDialog;
 import it.attocchi.views.PrezziCorso;
+import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -72,15 +73,25 @@ public class MieiCorsiView extends VerticalLayout {
         Map<Long, Situazione> situazioni = allievoCorrente != null
             ? pagamentoService.situazioniDelloAllievo(allievoCorrente.getId()) : Map.of();
         PrezziCorso.aggiungiColonne(gridCorsi, situazioni);
+        // Stato del pagamento solo per l'allievo adulto, che gestisce da sé i pagamenti
+        boolean adulto = allievoCorrente != null && allievoCorrente.getGenitore() == null;
+        if (adulto) {
+            gridCorsi.addComponentColumn(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
+                .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
+        }
         ViewSupport.configureActionsColumn(gridCorsi.addComponentColumn(this::createAzioni));
 
         CardMobile<Corso> card = CardMobile.per(gridCorsi)
             .titolo(Corso::getNome)
+
             .campo("Insegnanti", MieiCorsiView::insegnante)
             .campo("Giorni", giorniDi)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti);
+        if (adulto) {
+            card.stato(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())));
+        }
         PrezziCorso.aggiungiCampi(card, situazioni).azioni(this::createAzioni).applica();
     }
 

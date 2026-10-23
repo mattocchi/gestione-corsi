@@ -96,6 +96,7 @@ import it.attocchi.views.ElencoLezioni.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
 import it.attocchi.views.genitore.PagamentiFigliView;
 import it.attocchi.views.allievo.MieiCorsiView;
+import it.attocchi.views.allievo.MieiPagamentiView;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -176,6 +177,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private BilancioService bilancioService;
+
+    @Autowired
+    private it.attocchi.service.DashboardService dashboardService;
+
+    @Autowired
+    private it.attocchi.security.SecurityService securityService;
 
     @Autowired
     private DocumentiService documentiService;
@@ -446,6 +453,51 @@ class ViewAccessTest extends SpringBrowserlessTest {
         // genitore3: Allievo Canto3 (Canto) e Allievo Chitarra1 (Chitarra), 600 € ciascuno, nessun pagamento
         assertEquals(List.of("Corsi dei figli: 2", "Pagato: 0,00 € (0% della quota)",
             "Da pagare: 1.200,00 € (su 1.200,00 € di quota)"), indicatori());
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievoConGenitore_nonVedeIPagamenti() {
+        assertFalse(find(SideNavItem.class).all().stream().anyMatch(i -> i.getLabel().equals("Pagamenti")));
+        navigate(MieiPagamentiView.class);
+        assertTrue(find(Span.class).withText("I pagamenti dei tuoi corsi sono gestiti dal genitore.").exists());
+        assertFalse(find(Grid.class).exists());
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    @SuppressWarnings("unchecked")
+    void allievoAdulto_vedeIPropriPagamentiComeUnGenitore() {
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        Genitore genitore = allievo.getGenitore();
+        allievo.setGenitore(null);
+        allievoService.save(allievo);
+        try {
+            // Menu (costruito al login): la voce Pagamenti compare
+            MainLayout layout = new MainLayout(securityService, dashboardService, allievoService);
+            assertTrue(find(SideNavItem.class).from(layout).all().stream().anyMatch(i -> i.getLabel().equals("Pagamenti")));
+
+            navigate(MieiPagamentiView.class);
+            var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
+            assertEquals(1, righe.size());
+            assertEquals("Corso di Canto", righe.getRow(0).corso().getNome());
+            assertTrue(find(Button.class).withText("Riepilogo").exists());
+
+            navigate(MieiCorsiView.class);
+            navigate(HomeView.class);
+            assertEquals(List.of("Corsi a cui sono iscritto: 1", "Pagato: 0,00 € (0% della quota)",
+                "Da pagare: 600,00 € (su 600,00 € di quota)"), indicatori());
+
+            navigate(MieiCorsiView.class);
+            Grid<Corso> corsi = find(Grid.class).single();
+            int colonna = IntStream.range(0, corsi.getColumns().size())
+                .filter(i -> "Pagamento".equals(corsi.getColumns().get(i).getHeaderText())).findFirst().orElseThrow();
+            assertEquals("Da pagare", ((Badge) test(corsi).getCellComponent(0, colonna)).getText());
+        } finally {
+            Allievo ripristino = allievoService.findById(allievo.getId());
+            ripristino.setGenitore(genitore);
+            allievoService.save(ripristino);
+        }
     }
 
     @Test
