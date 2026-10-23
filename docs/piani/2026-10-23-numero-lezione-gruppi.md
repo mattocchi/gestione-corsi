@@ -25,10 +25,14 @@ Nei corsi con due gruppi (es. lun e ven) la lezione numero 1 deve essere quella 
 |---|---|---|---|---|---|
 | 1 | `NumerazioneLezioni` (ricalcolo per giorno nei corsi con gruppi) chiamata da generazione, lezioni aggiunte/eliminate, gruppi e all'avvio; test | — | `service/NumerazioneLezioni`, `CorsoService`, `LezioneService`, avvio, test | `./mvnw test` | [x] |
 | 2 | Etichetta "N · gruppo/giorno" in Lezioni, Le Mie Lezioni e presenze dell'allievo; test | [F-2026-10-23/NUMERO.1] | `views/ElencoLezioni`, `views/PresenzeAllievoDialog`, `views/Formati`, test | `./mvnw test` | [x] |
-| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Numerazione per giorno nei corsi senza gruppi.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 217 test verdi; `generaLezioni_numeroLezioniPerOgniAllievoNelGiornoDelSuoGruppo` aggiornato (prima si aspettava 1..60 su tutte le date, ora martedì 1..30 e sabato 1..30) e ampliato: lezione 3 del martedì non effettuata e recuperata di giovedì → il recupero è la lezione 3; eliminati i gruppi si torna a 1..30 con un contatore unico.
+- Passo 2: `./mvnw test` 219 test verdi; nuovi `numeroLezione_conIlGruppoOIlGiornoNeiCorsiConGruppi` e `insegnante_numeroDellaLezioneConGruppoOGiorno` ("1 · mar", "1 · Principianti" in Le Mie Lezioni).
+- Non verificato nel browser. Nessuna modifica allo schema; in produzione all'avvio si rinumerano le lezioni dei corsi con gruppi (log "Lezioni rinumerate per giorno in N corsi con gruppi").
