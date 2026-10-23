@@ -25,10 +25,16 @@ Per admin, segreteria, insegnanti e allievi una vista "Calendario" mensile con i
 | 1 | `CalendarioService.lezioniDelMese(username, mese, corsoId)` secondo il ruolo; test | — | `service/CalendarioService`, test | `./mvnw test` | [x] |
 | 2 | Apertura delle presenze da `?lezione=ID` in Lezioni e Le Mie Lezioni; test | — | `views/ElencoLezioni`, `admin/LezioniView`, `insegnante/LezioniInsegnanteView`, test | `./mvnw test` | [x] |
 | 3 | `CalendarioView`: griglia mensile, elenco su mobile, filtro corso, festività, dettagli; test | [F-2026-10-23/CALENDARIO.1] | `views/CalendarioView`, test | `./mvnw test` (browser non riuscito, vedi registro) | [x] |
-| 4 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
+| 4 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Vista settimanale o giornaliera; trascinare le lezioni per spostarle.
 
 ## Registro
+
+- Passo 1: `./mvnw test` 226 test verdi; nuovo `CalendarioServiceTest` (ottobre 2024: admin/segreteria 14 lezioni, filtro Canto 5, insegnanti e allievi solo le proprie, genitore 14 con il nome dei figli).
+- Passo 2: `./mvnw test` 227 test verdi; nuovo `lezioni_conIlParametroApreLePresenzeDellaLezione`.
+- Passo 3: `./mvnw test` 229 test verdi; nuovi `admin_calendarioDelMeseConFiltroDettagliEPresenze` (voce di menu, mese, filtro, dettagli, "Gestisci presenze" che apre il registro sulla lezione) e `allievo_calendarioSoloLeSueLezioniSenzaPresenze`.
+- **Verifica nel browser non riuscita**: avviata l'app in sviluppo, l'automazione di Chrome è bloccata da un'altra estensione sulla pagina di accesso ("Cannot access a chrome-extension:// URL of different extension") anche per gli screenshot; interrotta dopo tre tentativi. Aspetto della griglia (desktop) e dell'elenco (smartphone a 390px) da controllare a mano.
+- Nessuna modifica al database; nessun componente Vaadin nuovo (il bundle di produzione non va rigenerato).
