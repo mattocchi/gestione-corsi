@@ -37,6 +37,9 @@ public final class MenuPdf {
     /** Pulsante con la sola icona (azioni nelle righe delle tabelle); {@code etichetta} è il nome accessibile. */
     public static MenuBar soloIcona(VaadinIcon icona, String etichetta, SerializableSupplier<Pdf> pdf) {
         MenuBar menu = new MenuBar();
+        // Larghezza fissa (icona + freccia del sottomenu di Aura): il menu disegna il pulsante dopo che la colonna
+        // "Azioni" ha calcolato la sua larghezza automatica, che altrimenti non lo conterebbe e lo taglierebbe
+        menu.addClassNames("flex-none w-[4.5rem]");
         MenuItem voce = menu.addItem(icona.create());
         voce.setAriaLabel(etichetta);
         menu.setTooltipText(voce, etichetta);

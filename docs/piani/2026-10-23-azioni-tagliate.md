@@ -17,7 +17,7 @@ Controllo UI di tutte le griglie desktop: in GENITORE alcuni pulsanti non si ved
 ## Passi
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Larghezza fissa del menu ricevuta nelle righe (`flex-none w-[4.5rem]`) | `views/MenuPdf.java` | compile, test, controllo headless delle griglie | [ ] |
+| 1 | Larghezza fissa del menu ricevuta nelle righe (`flex-none w-[4.5rem]`) | `views/MenuPdf.java` | compile, test, controllo headless delle griglie | [x] |
 | 2 | CLAUDE.md e registro | `CLAUDE.md`, piano | — | [ ] |
 
 ## Fuori ambito
