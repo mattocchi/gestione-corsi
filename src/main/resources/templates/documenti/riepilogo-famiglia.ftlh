@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8"/>
-<title>Riepilogo famiglia</title>
+<title>${titolo}</title>
 <@c.stile/>
 <style>
   table.dati.famiglia { margin-top: 4mm; }
@@ -15,9 +15,9 @@
 </style>
 </head>
 <body>
-<@c.intestazione titolo="Riepilogo famiglia"/>
+<@c.intestazione titolo=titolo/>
 <table class="dati famiglia">
-  <tr><td class="etichetta">Genitore</td><td>${genitore}</td></tr>
+  <tr><td class="etichetta">${etichettaIntestatario}</td><td>${intestatario}</td></tr>
   <tr><td class="etichetta">Periodo</td><td>${anno}</td></tr>
 </table>
 <#if figli?has_content>
@@ -38,7 +38,7 @@
 </#list>
 <div class="riquadro">
 <table class="totali">
-  <tr><td>Totale spesa della famiglia (${numeroCorsi} <#if numeroCorsi == 1>corso<#else>corsi</#if>)</td><td class="valore">${totali.quota}</td></tr>
+  <tr><td>${etichettaTotale} (${numeroCorsi} <#if numeroCorsi == 1>corso<#else>corsi</#if>)</td><td class="valore">${totali.quota}</td></tr>
   <tr><td>Totale pagato</td><td class="valore">${totali.pagato}</td></tr>
   <tr><td>Residuo da pagare</td><td class="valore">${totali.residuo}</td></tr>
 </table>

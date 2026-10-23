@@ -39,6 +39,14 @@ public class AllievoService {
         return allievoRepository.findByUserId(userId).orElse(null);
     }
 
+    /**
+     * {@code true} se l'utente è un allievo senza genitore (adulto): gestisce da sé i pagamenti, come un genitore di
+     * sé stesso. La stessa regola manda a lui email e documenti.
+     */
+    public boolean gestisceDaSe(String username) {
+        return username != null && allievoRepository.findByUserUsername(username).map(a -> a.getGenitore() == null).orElse(false);
+    }
+
     public Optional<Allievo> findByUsername(String username) {
         return allievoRepository.findByUserUsername(username);
     }

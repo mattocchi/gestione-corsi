@@ -118,7 +118,11 @@ public class DocumentiService {
         return new Pdf(nomeFile(TipoDocumento.RICEVUTA, iscrizione), documentoPdf(TipoDocumento.RICEVUTA, corsoId, allievoId));
     }
 
+    /** Come per il genitore; un allievo senza genitore (adulto) vede i propri documenti. */
     private boolean puoVedere(Allievo allievo, String username) {
+        if (allievo.getGenitore() == null && allievo.getUser() != null && username.equals(allievo.getUser().getUsername())) {
+            return true;
+        }
         return puoVedere(allievo.getGenitore(), username);
     }
 
@@ -152,6 +156,23 @@ public class DocumentiService {
         return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
     }
 
+    /**
+     * Riepilogo PDF dei corsi di un allievo per anno: admin e segreteria ogni allievo, l'allievo adulto (senza
+     * genitore) solo il proprio. Altrimenti {@link IllegalArgumentException}.
+     */
+    public Pdf riepilogoAllievoPer(Long allievoId, String anno, String username) {
+        RiepilogoFamiglia riepilogo;
+        try {
+            riepilogo = pagamentoService.riepilogoAllievo(allievoId, anno);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Riepilogo non trovato");
+        }
+        if (!puoVedere(riepilogo.allievo(), username)) {
+            throw new IllegalArgumentException("Riepilogo non trovato");
+        }
+        return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
+    }
+
     /** HTML (pagina A4) del riepilogo della famiglia: corsi dei figli nell'anno con quota, pagato e residuo. */
     public String riepilogoFamigliaHtml(Long genitoreId, String anno) {
         return riepilogoFamigliaHtml(pagamentoService.riepilogoFamiglia(genitoreId, anno));
@@ -164,7 +185,10 @@ public class DocumentiService {
             modello.put("logo", logo);
         }
         modello.put("emessa", Formati.dataCompleta(LocalDate.now()));
-        modello.put("genitore", riepilogo.genitore().getNomeCompleto());
+        modello.put("titolo", riepilogo.genitore() != null ? "Riepilogo famiglia" : "Riepilogo pagamenti");
+        modello.put("etichettaIntestatario", riepilogo.genitore() != null ? "Genitore" : "Allievo");
+        modello.put("intestatario", riepilogo.intestatario());
+        modello.put("etichettaTotale", riepilogo.genitore() != null ? "Totale spesa della famiglia" : "Totale spesa");
         modello.put("anno", riepilogo.anno() != null ? "Anno scolastico " + riepilogo.anno() : "Corsi senza anno scolastico");
         List<Map<String, Object>> figli = new ArrayList<>();
         riepilogo.perFiglio().forEach((allievo, righe) -> {
@@ -201,7 +225,7 @@ public class DocumentiService {
 
     /** Nome del file PDF del riepilogo, es. "riepilogo-famiglia-mario-rossi-2026-2027.pdf". */
     public String nomeFile(RiepilogoFamiglia riepilogo) {
-        String base = "riepilogo-famiglia-" + riepilogo.genitore().getNomeCompleto()
+        String base = (riepilogo.genitore() != null ? "riepilogo-famiglia-" : "riepilogo-pagamenti-") + riepilogo.intestatario()
             + (riepilogo.anno() != null ? "-" + riepilogo.anno() : "");
         return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
     }

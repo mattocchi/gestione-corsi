@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,6 +38,9 @@ class DocumentiServiceTest {
 
     @Autowired
     private GenitoreService genitoreService;
+
+    @Autowired
+    private AllievoService allievoService;
 
     @Test
     void ricevuta_htmlEPdfConIPagamenti() throws IOException {
@@ -161,6 +165,41 @@ class DocumentiServiceTest {
         String prova = documentiService.emailProvaHtml("Prova");
         assertTrue(prova.contains("Gentile Prova"));
         assertTrue(prova.contains("email di prova"));
+    }
+
+    @Test
+    void allievoAdulto_vedeIPropriPagamentiERiepilogo() throws IOException {
+        it.attocchi.entity.Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        it.attocchi.entity.Genitore genitore = allievo.getGenitore();
+        Long cantoId = iscrizione().getCorso().getId();
+        // Con il genitore: niente pagamenti propri, ricevuta solo al genitore
+        assertFalse(allievoService.gestisceDaSe("allievo_canto1"));
+        assertTrue(pagamentoService.righePagamentiPropri("allievo_canto1").isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> documentiService.ricevutaPer(cantoId, allievo.getId(), "allievo_canto1"));
+        allievo.setGenitore(null);
+        allievoService.save(allievo);
+        try {
+            assertTrue(allievoService.gestisceDaSe("allievo_canto1"));
+            assertEquals(1, pagamentoService.righePagamentiPropri("allievo_canto1").size());
+            assertEquals(0, new BigDecimal("600").compareTo(pagamentoService.situazionePropria("allievo_canto1").orElseThrow().quota()));
+            assertEquals(java.util.List.of("2024/2025"), pagamentoService.anniDellAllievo(allievo.getId()));
+            assertNotNull(documentiService.ricevutaPer(cantoId, allievo.getId(), "allievo_canto1"));
+            // Un altro allievo non vede i suoi documenti
+            assertThrows(IllegalArgumentException.class, () -> documentiService.ricevutaPer(cantoId, allievo.getId(), "allievo_canto2"));
+
+            DocumentiService.Pdf pdf = documentiService.riepilogoAllievoPer(allievo.getId(), "2024/2025", "allievo_canto1");
+            assertEquals("riepilogo-pagamenti-allievo-canto1-2024-2025.pdf", pdf.nomeFile());
+            String testo = testo(pdf.contenuto()).replaceAll("\\s+", " ");
+            assertTrue(testo.contains("Riepilogo pagamenti"), testo);
+            assertTrue(testo.contains("Allievo Allievo Canto1"), testo);
+            assertTrue(testo.contains("Totale spesa (1 corso)"), testo);
+            assertThrows(IllegalArgumentException.class,
+                () -> documentiService.riepilogoAllievoPer(allievo.getId(), "2024/2025", "allievo_canto2"));
+        } finally {
+            it.attocchi.entity.Allievo ripristino = allievoService.findById(allievo.getId());
+            ripristino.setGenitore(genitore);
+            allievoService.save(ripristino);
+        }
     }
 
     @Test

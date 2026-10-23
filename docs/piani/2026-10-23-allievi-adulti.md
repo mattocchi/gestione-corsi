@@ -25,7 +25,7 @@ Un allievo adulto non deve passare per un genitore: deve vedere sé stesso e i p
 
 | Passo | Cosa | Richiesta | File | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Servizi: `AllievoService.gestisceDaSe`, righe/situazione/anni/riepilogo dell'allievo in `PagamentoService`, permessi e riepilogo PDF in `DocumentiService`; test | — | `service/…`, `templates/documenti/riepilogo-famiglia.ftlh`, test | `./mvnw test` | [ ] |
+| 1 | Servizi: `AllievoService.gestisceDaSe`, righe/situazione/anni/riepilogo dell'allievo in `PagamentoService`, permessi e riepilogo PDF in `DocumentiService`; test | — | `service/…`, `templates/documenti/riepilogo-famiglia.ftlh`, test | `./mvnw test` | [x] |
 | 2 | Viste: "Pagamenti" dell'allievo con riepilogo, filtro del menu, card in dashboard, stato in I Miei Corsi; test | [F-2026-10-23/ADULTI.1] | `views/allievo/…`, `views/RiepilogoFamigliaDialog`, `views/MainLayout`, `views/HomeView`, test | `./mvnw test` | [ ] |
 | 3 | CLAUDE.md e registro | — | `CLAUDE.md`, questo piano | — | [ ] |
 
