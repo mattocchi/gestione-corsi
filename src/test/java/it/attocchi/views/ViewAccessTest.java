@@ -2824,6 +2824,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    void lezioni_conIlParametroApreLePresenzeDellaLezione() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Lezione lezione = lezioneService.findByCorso(canto.getId()).get(2);
+        navigate("lezioni?lezione=" + lezione.getId(), LezioniView.class);
+        String titolo = "Corso di Canto – Lezione " + lezione.getNumeroLezione() + " (" + Formati.data(lezione.getData()) + ")";
+        assertTrue(find(Dialog.class).all().stream().anyMatch(d -> titolo.equals(d.getHeaderTitle())));
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
     void insegnante_conUnSoloCorso_alLoginApreLeLezioni() {
         assertInstanceOf(LezioniInsegnanteView.class, getCurrentView());

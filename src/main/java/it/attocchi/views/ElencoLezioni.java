@@ -214,6 +214,27 @@ public class ElencoLezioni extends VerticalLayout {
         return badge;
     }
 
+    /** Parametro {@value #PARAMETRO_LEZIONE} dell'indirizzo che apre le presenze di una lezione. */
+    public static final String PARAMETRO_LEZIONE = "lezione";
+
+    /** Id della lezione dal parametro dell'indirizzo; vuoto se non è un numero. */
+    public static Optional<Long> idLezione(String valore) {
+        try {
+            return Optional.of(Long.valueOf(valore));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Apre le presenze della lezione indicata, se è nell'elenco (es. da "Gestisci presenze" del calendario, con il
+     * parametro {@code ?lezione=ID}); altrimenti un avviso.
+     */
+    public void apriPresenze(Long lezioneId) {
+        elenco.stream().filter(l -> l.getId().equals(lezioneId)).findFirst().ifPresentOrElse(this::openPresenzeDialog,
+            () -> Notification.show("Lezione non trovata tra le tue lezioni"));
+    }
+
     private void openPresenzeDialog(Lezione lezione) {
         Dialog dialog = ViewSupport.dialog(
             lezione.getCorso().getNome() + " – Lezione " + Formati.numeroLezione(lezione, gruppiPerCorso.get(lezione.getCorso().getId())) + " (" + Formati.data(lezione.getData()) + ")", "800px");

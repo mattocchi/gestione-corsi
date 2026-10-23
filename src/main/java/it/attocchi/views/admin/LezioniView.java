@@ -1,6 +1,8 @@
 package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -20,14 +22,24 @@ import jakarta.annotation.security.RolesAllowed;
 @PageTitle("Lezioni")
 @Menu(title = "Lezioni", order = 10.2, icon = "vaadin:calendar-clock")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class LezioniView extends VerticalLayout {
+public class LezioniView extends VerticalLayout implements BeforeEnterObserver {
+
+    private final ElencoLezioni elenco;
 
     public LezioniView(LezioneService lezioneService, PresenzaService presenzaService, CorsoService corsoService,
                        SecurityService securityService) {
         addClassNames("size-full");
-        ElencoLezioni elenco = new ElencoLezioni(lezioneService, presenzaService, lezioneService::findDeiCorsiAttivi,
+        elenco = new ElencoLezioni(lezioneService, presenzaService, lezioneService::findDeiCorsiAttivi,
             corsoService::findAllAttivi, securityService.getUsername().orElse(""), true);
         add(elenco);
         elenco.addClassNames("grow");
+    }
+
+    /** Con {@code ?lezione=ID} (da "Gestisci presenze" del calendario) apre subito le presenze di quella lezione. */
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        event.getLocation().getQueryParameters().getSingleParameter(ElencoLezioni.PARAMETRO_LEZIONE)
+            .flatMap(ElencoLezioni::idLezione)
+            .ifPresent(elenco::apriPresenze);
     }
 }
