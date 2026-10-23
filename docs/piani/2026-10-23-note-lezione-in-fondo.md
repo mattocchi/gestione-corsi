@@ -20,7 +20,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Note della lezione in fondo al dialog "Gestisci Presenze", con il titolo "Note della lezione" | `views/ElencoLezioni.java`, `CLAUDE.md` se serve | `./mvnw test` | [x] |
-| 2 | Registro finale | questo piano | build e test | [ ] |
+| 2 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -28,4 +28,6 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- `./mvnw test`: tutti i test superati (compreso il test delle note in `ViewAccessTest`, che cerca le caselle per etichetta).
+- Nessuna verifica visiva nel browser: l'estensione non riesce a fare screenshot in questa sessione; il cambiamento è solo l'ordine dei componenti nel dialog.
+- Lasciato aperto: nessuno.
