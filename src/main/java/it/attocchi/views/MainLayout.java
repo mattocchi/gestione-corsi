@@ -115,10 +115,17 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private SideNav createSideNav() {
         SideNav nav = new SideNav();
-        // "Pagamenti" dell'allievo solo per chi li gestisce da sé (allievo senza genitore)
+        // "Pagamenti" dell'allievo solo per chi li gestisce da sé (allievo senza genitore); "Documenti" a chi ne ha:
+        // staff, genitori e allievi senza genitore (non all'allievo con genitore: sono del genitore)
         boolean allievoAdulto = allievoService.gestisceDaSe(securityService.getUsername().orElse(null));
+        boolean conDocumenti = allievoAdulto || securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")
+            || securityService.hasRole("GENITORE");
         MenuConfiguration.getMenuEntries().stream()
-            .filter(entry -> allievoAdulto || !entry.path().replaceFirst("^/", "").equals(MieiPagamentiView.PERCORSO))
+            .filter(entry -> {
+                String percorso = entry.path().replaceFirst("^/", "");
+                return (allievoAdulto || !percorso.equals(MieiPagamentiView.PERCORSO))
+                    && (conDocumenti || !percorso.equals(DocumentiView.PERCORSO));
+            })
             .forEach(entry -> nav.addItem(createSideNavItem(entry)));
         return nav;
     }

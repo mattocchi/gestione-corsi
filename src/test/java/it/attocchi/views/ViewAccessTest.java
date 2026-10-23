@@ -32,6 +32,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.RouteNotFoundError;
+import it.attocchi.service.ElencoDocumentiService.DocumentoFamiglia;
 import it.attocchi.service.ElencoDocumentiService.DocumentoRiepilogo;
 import it.attocchi.service.ElencoDocumentiService.DocumentoIscrizione;
 import it.attocchi.views.DocumentiView;
@@ -2013,6 +2014,40 @@ class ViewAccessTest extends SpringBrowserlessTest {
         } finally {
             invioEmailRepository.deleteAll();
         }
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    @SuppressWarnings("unchecked")
+    void genitore_documenti_riepilogoEConfermeDeiFigliSenzaInvii() {
+        navigate(DocumentiView.class);
+        var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
+        // Riepilogo della famiglia per primo, poi le conferme dei due figli (nessun pagamento: niente ricevute)
+        assertEquals(3, documenti.size());
+        assertEquals("Riepilogo pagamenti", documenti.getCellText(0, 0));
+        assertEquals("Tutti i figli", documenti.getCellText(0, 1));
+        assertEquals("Conferma di iscrizione", documenti.getCellText(1, 0));
+        assertEquals("Allievo Canto3", documenti.getCellText(1, 1));
+        assertFalse(find(SegmentedControl.class).exists());
+        assertFalse(find(Button.class).all().stream()
+            .anyMatch(b -> "Invia per email".equals(b.getElement().getAttribute("aria-label"))));
+        // Un solo anno: niente filtro
+        assertFalse(find(ComboBox.class).exists());
+        assertTrue(voceDiMenu("Documenti"));
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto3")
+    void allievoConGenitore_documentiNellAreaDelGenitore() {
+        assertFalse(voceDiMenu("Documenti"));
+        navigate(DocumentiView.class);
+        assertTrue(find(Span.class).withText("I documenti dei tuoi corsi sono nell'area del genitore.").exists());
+        assertFalse(find(Grid.class).exists());
+    }
+
+    private boolean voceDiMenu(String titolo) {
+        return find(SideNavItem.class).all().stream()
+            .anyMatch(voce -> titolo.equals(voce.getLabel()));
     }
 
     @Test

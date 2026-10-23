@@ -7,6 +7,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -22,9 +23,11 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.security.SecurityService;
+import it.attocchi.service.AllievoService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.DocumentiService.Pdf;
 import it.attocchi.service.ElencoDocumentiService;
+import it.attocchi.service.ElencoDocumentiService.DocumentoFamiglia;
 import it.attocchi.service.ElencoDocumentiService.DocumentoIscrizione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoRiepilogo;
 import it.attocchi.service.EmailService.Destinatario;
@@ -44,14 +47,18 @@ import java.util.stream.Stream;
 /**
  * Documenti in PDF e loro invio per email. Admin e segreteria scelgono il tipo (conferme di iscrizione, ricevute,
  * riepiloghi annuali) e, su ogni riga, vedono o scaricano il PDF e lo inviano (con l'anteprima dell'email); scelto un
- * corso, inviano le conferme a tutti i suoi iscritti. Permessi di PDF e invii in {@link DocumentiService} e
- * {@code EmailService}.
+ * corso, inviano le conferme a tutti i suoi iscritti. Genitori e allievi senza genitore vedono o scaricano i propri
+ * documenti (dei figli o propri), senza invii; la voce è nascosta all'allievo con genitore ({@code MainLayout}).
+ * Permessi di PDF e invii in {@link DocumentiService} e {@code EmailService}.
  */
-@Route(value = "documenti", layout = MainLayout.class)
+@Route(value = DocumentiView.PERCORSO, layout = MainLayout.class)
 @PageTitle("Documenti")
 @Menu(title = "Documenti", order = 42, icon = "vaadin:file-text-o")
-@RolesAllowed({"ADMIN", "SEGRETERIA"})
+@RolesAllowed({"ADMIN", "SEGRETERIA", "GENITORE", "ALLIEVO"})
 public class DocumentiView extends VerticalLayout {
+
+    /** Percorso della vista, usato da {@code MainLayout} per nasconderla all'allievo con genitore. */
+    public static final String PERCORSO = "documenti";
 
     private final ElencoDocumentiService elencoDocumentiService;
     private final DocumentiService documentiService;
@@ -71,14 +78,24 @@ public class DocumentiView extends VerticalLayout {
     private boolean primaApertura = true;
 
     public DocumentiView(ElencoDocumentiService elencoDocumentiService, DocumentiService documentiService,
-                         SecurityService securityService) {
+                         AllievoService allievoService, SecurityService securityService) {
         this.elencoDocumentiService = elencoDocumentiService;
         this.documentiService = documentiService;
         this.username = securityService.getUsername().orElse("");
         addClassNames("size-full");
-
         tipo = new SegmentedControl<>("Tipo di documento", List.of(TipoDocumento.values()), TipoDocumento::getPlurale,
             t -> t == TipoDocumento.RIEPILOGO ? "Riepiloghi annuali dei pagamenti" : t.getTitolo(), null);
+        if (!securityService.hasRole("ADMIN") && !securityService.hasRole("SEGRETERIA")) {
+            if (!securityService.hasRole("GENITORE") && !allievoService.gestisceDaSe(username)) {
+                // Allievo con genitore (la voce di menu è nascosta, qui solo dall'indirizzo)
+                Span avviso = new Span("I documenti dei tuoi corsi sono nell'area del genitore.");
+                avviso.addClassNames(Stili.TESTO_SECONDARIO);
+                add(avviso);
+                return;
+            }
+            creaElencoFamiglia();
+            return;
+        }
         tipo.setValue(TipoDocumento.CONFERMA_ISCRIZIONE);
         tipo.addClassNames("max-w-xl");
         tipo.addValueChangeListener(e -> aggiorna());
@@ -156,6 +173,70 @@ public class DocumentiView extends VerticalLayout {
             .campo("Ultimo invio", r -> ultimoInvio(r.ultimoInvio()))
             .azioni(this::azioniRiepilogo)
             .applica();
+    }
+
+    /**
+     * Documenti del genitore (dei figli e della famiglia) o dell'allievo senza genitore: solo PDF, filtro per anno
+     * se ce n'è più di uno.
+     */
+    private void creaElencoFamiglia() {
+        List<DocumentoFamiglia> documenti = elencoDocumentiService.documentiDi(username);
+        Grid<DocumentoFamiglia> grid = new Grid<>();
+        grid.addColumn(d -> d.tipo().getTitolo()).setHeader("Documento").setAutoWidth(true);
+        grid.addColumn(DocumentiView::perChi).setHeader("Allievo");
+        grid.addColumn(DocumentiView::corso).setHeader("Corso");
+        grid.addColumn(d -> Objects.requireNonNullElse(d.anno(), "Senza anno")).setHeader("Anno").setAutoWidth(true).setFlexGrow(0);
+        grid.addComponentColumn(d -> datiMancanti(d.datiMancanti())).setHeader("Stato").setAutoWidth(true).setFlexGrow(0);
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::azioniFamiglia));
+        grid.setEmptyStateText("Nessun documento: compaiono con l'iscrizione a un corso");
+        CardMobile.per(grid)
+            .titolo(d -> d.tipo().getTitolo())
+            .sottotitolo(d -> Objects.requireNonNullElse(d.anno(), "Senza anno scolastico"))
+            .stato(d -> datiMancanti(d.datiMancanti()))
+            .campo("Allievo", DocumentiView::perChi)
+            .campo("Corso", DocumentiView::corso)
+            .azioni(this::azioniFamiglia)
+            .applica();
+        GridListDataView<DocumentoFamiglia> righe = grid.setItems(documenti);
+
+        List<String> anni = documenti.stream().map(DocumentoFamiglia::anno).filter(Objects::nonNull).distinct()
+            .sorted(Comparator.reverseOrder()).toList();
+        filtroAnno.setItems(anni);
+        filtroAnno.addValueChangeListener(e -> righe.setFilter(d -> e.getValue() == null || e.getValue().equals(d.anno())));
+        filtroAnno.setVisible(anni.size() > 1);
+        Span nota = new Span("Conferme di iscrizione, ricevute dei pagamenti e riepiloghi annuali, da vedere o scaricare in PDF.");
+        nota.addClassNames(Stili.TESTO_SECONDARIO);
+        add(nota, filtroAnno, grid);
+        grid.addClassNames("grow");
+    }
+
+    private HorizontalLayout azioniFamiglia(DocumentoFamiglia documento) {
+        SerializableSupplier<Pdf> pdf;
+        if (documento.iscrizione() != null) {
+            TipoDocumento tipoDocumento = documento.tipo();
+            Long corsoId = documento.iscrizione().getCorso().getId();
+            Long allievoId = documento.iscrizione().getAllievo().getId();
+            pdf = () -> documentiService.documentoPer(tipoDocumento, corsoId, allievoId, username);
+        } else {
+            String anno = documento.anno();
+            Long genitoreId = documento.genitore() != null ? documento.genitore().getId() : null;
+            Long allievoId = documento.allievo() != null ? documento.allievo().getId() : null;
+            pdf = genitoreId != null ? () -> documentiService.riepilogoFamigliaPer(genitoreId, anno, username)
+                : () -> documentiService.riepilogoAllievoPer(allievoId, anno, username);
+        }
+        VaadinIcon icona = documento.tipo() == TipoDocumento.RICEVUTA ? VaadinIcon.PRINT : VaadinIcon.FILE_TEXT_O;
+        HorizontalLayout azioni = ViewSupport.actions();
+        azioni.add(pulsantePdf(icona, documento.tipo().getTitolo(), documento.datiMancanti(), pdf));
+        return azioni;
+    }
+
+    private static String perChi(DocumentoFamiglia documento) {
+        return documento.iscrizione() != null ? documento.iscrizione().getAllievo().getNomeCompleto()
+            : documento.genitore() != null ? "Tutti i figli" : documento.allievo().getNomeCompleto();
+    }
+
+    private static String corso(DocumentoFamiglia documento) {
+        return documento.iscrizione() != null ? documento.iscrizione().getCorso().getNome() : "Tutti i corsi dell'anno";
     }
 
     /** PDF (anteprima o scarico) e invio; con i dati mancanti i pulsanti mostrano solo l'avviso. */
