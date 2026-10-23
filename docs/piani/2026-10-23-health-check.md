@@ -22,7 +22,7 @@ Un endpoint di health check della web application, per poterla monitorare.
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Actuator, configurazione dell'endpoint (solo `health`, dettagli agli admin, niente controllo SMTP), accesso libero in `SecurityConfig`; test con MockMvc (anonimo: 200 e solo lo stato; admin: dettagli; altri endpoint non esposti) | `pom.xml`, `application.properties`, `SecurityConfig`, `security/HealthCheckTest` | `./mvnw test`; `curl` sull'app avviata | [ ] |
+| 1 | Actuator, configurazione dell'endpoint (solo `health`, dettagli agli admin, niente controllo SMTP), accesso libero in `SecurityConfig`; test con MockMvc (anonimo: 200 e solo lo stato; admin: dettagli; altri endpoint non esposti) | `pom.xml`, `application.properties`, `SecurityConfig`, `security/HealthCheckTest` | `./mvnw test`; `curl` sull'app avviata | [x] Spring Boot 4 attiva di default i gruppi liveness/readiness: disattivati (`probes.enabled=false`) come deciso |
 | 2 | Documentazione: monitoraggio in `deploy/README.md` e `CLAUDE.md` | `deploy/README.md`, `CLAUDE.md` | rilettura | [ ] |
 | 3 | Registro finale | questo piano | build e test | [ ] |
 

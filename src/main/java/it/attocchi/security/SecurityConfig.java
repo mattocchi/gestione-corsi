@@ -74,6 +74,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers(HttpMethod.GET, "/styles.css").permitAll();
             auth.requestMatchers(HttpMethod.GET, "/images/*.png").permitAll();
+            // Health check per il monitoraggio: senza login solo lo stato (dettagli agli admin, vedi application.properties)
+            auth.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll();
         });
         http.rememberMe(ricordami -> ricordami.rememberMeServices(rememberMeServices));
         http.with(vaadin(), vaadin -> vaadin.loginView(LoginView.class));
