@@ -328,3 +328,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### DASHBOARD
 
 * [ ] in dashboard aggiunti la prossima lezione prevista come informazione prima delle card di riepilogo, se cliccata si va alla lezione, che per l'insegnante è il registro delle presenze
+* [ ] per gli insegnanti che sono senza tariffa, aggiungi in dashboard una card che mostra il totale delle ore che stanno donando, facendo un calcolo per tutti i suoi corsi attivi, per totale lezione, per durata lezione per tutti gli allievi
