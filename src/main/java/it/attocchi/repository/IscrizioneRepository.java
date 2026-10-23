@@ -21,6 +21,12 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
     @Query("SELECT i FROM Iscrizione i JOIN FETCH i.corso c WHERE c.attivo = true")
     List<Iscrizione> findByCorsoAttivo();
 
+    /** Partecipanti dei corsi attivi in cui l'utente è titolare o secondo insegnante. */
+    @Query("SELECT isc FROM Iscrizione isc JOIN FETCH isc.corso c JOIN FETCH isc.allievo a JOIN FETCH a.user"
+        + " LEFT JOIN c.insegnante i1 LEFT JOIN i1.user u1 LEFT JOIN c.secondoInsegnante i2 LEFT JOIN i2.user u2"
+        + " WHERE c.attivo = true AND (u1.username = :username OR u2.username = :username)")
+    List<Iscrizione> findDeiCorsiAttiviDellInsegnante(@Param("username") String username);
+
     /** Tutte le iscrizioni con corso, allievo e genitore (e i loro utenti), per la gestione pagamenti. */
     @Query("SELECT i FROM Iscrizione i JOIN FETCH i.corso JOIN FETCH i.allievo a JOIN FETCH a.user "
         + "LEFT JOIN FETCH a.genitore g LEFT JOIN FETCH g.user")
