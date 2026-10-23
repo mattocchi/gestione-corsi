@@ -173,11 +173,16 @@ public class CalendarioView extends VerticalLayout {
         return festivo;
     }
 
-    /** Lezione come pulsante (orario, corso, gruppo o giorno, figlio) colorato secondo lo stato; apre i dettagli. */
+    /**
+     * Lezione come pulsante (orario, corso, gruppo o giorno, figlio) colorato secondo lo stato; apre i dettagli. Nei
+     * corsi con gruppi una voce per gruppo, con l'orario del gruppo.
+     */
     private Button pulsante(VoceCalendario voce, boolean compatto) {
         Lezione lezione = voce.lezione();
-        String testo = (lezione.getOrarioInizio() != null ? Formati.ora(lezione.getOrarioInizio()) + " " : "")
-            + lezione.getCorso().getNome() + gruppoOGiorno(lezione)
+        String gruppo = voce.gruppo() != null ? " · " + nomeBreve(voce.gruppo())
+            : voce.senzaGruppo() ? " · Senza gruppo" : gruppoOGiorno(lezione);
+        String testo = (voce.orario() != null ? Formati.ora(voce.orario()) + " " : "")
+            + lezione.getCorso().getNome() + gruppo
             + (voce.perChi() != null ? " – " + voce.perChi() : "");
         Button pulsante = new Button(testo, e -> dettagli(voce));
         pulsante.addThemeVariants(ButtonVariant.TERTIARY);
@@ -191,6 +196,11 @@ public class CalendarioView extends VerticalLayout {
         pulsante.setAriaLabel(testo + ", " + stato(lezione) + ", " + Formati.data(lezione.getData()));
         pulsante.setTooltipText(testo + " (" + stato(lezione) + ")");
         return pulsante;
+    }
+
+    /** Nome del gruppo, o il suo giorno ("sab") se non ha un nome. */
+    private static String nomeBreve(GruppoCorso gruppo) {
+        return gruppo.getNome() != null && !gruppo.getNome().isBlank() ? gruppo.getNome() : Formati.giorno(gruppo.getGiorno());
     }
 
     /** Nei corsi con gruppi " · Piccoli" o " · lun" (la parte dopo il numero), altrimenti vuoto. */
@@ -210,6 +220,8 @@ public class CalendarioView extends VerticalLayout {
 
     /** Dettagli in sola lettura; "Gestisci presenze" per admin, segreteria e gli insegnanti del corso. */
     private void dettagli(VoceCalendario voce) {
-        DettaglioLezioneDialog.apri(voce.lezione(), voce.perChi(), null, numero(voce.lezione()), username, gestione);
+        String gruppo = voce.gruppo() != null ? Formati.gruppo(voce.gruppo()) : voce.senzaGruppo() ? "Senza gruppo" : null;
+        DettaglioLezioneDialog.apri(voce.lezione(), voce.perChi(), gruppo, voce.gruppo() != null ? voce.orario() : null,
+            numero(voce.lezione()), username, gestione);
     }
 }

@@ -3148,6 +3148,29 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertFalse(find(Button.class).withText("Gestisci presenze").exists());
     }
 
+    @Test
+    @WithUserDetails("insegnante2")
+    void insegnante_nelCalendarioUnaVocePerGruppoConIlSuoOrario() {
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        GruppoCorso piccoli = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), piccoli.getId());
+        try {
+            navigate(CalendarioView.class);
+            find(CalendarioView.class).single().vaiA(java.time.YearMonth.of(2024, 10));
+            List<Button> voci = lezioniNelCalendario("Corso di Chitarra");
+            // I 4 sabati di ottobre: il gruppo alle 10 e gli altri all'orario della lezione (griglia ed elenco)
+            assertEquals(4 * 2, voci.stream().filter(b -> b.getText().equals("10:00 Corso di Chitarra · Piccoli")).count());
+            assertTrue(voci.stream().anyMatch(b -> b.getText().endsWith("Corso di Chitarra · Senza gruppo")));
+            test(voci.stream().filter(b -> b.getText().equals("10:00 Corso di Chitarra · Piccoli")).findFirst().orElseThrow()).click();
+            List<String> testi = find(Span.class).from(find(Dialog.class).single()).all().stream().map(Span::getText).toList();
+            assertTrue(testi.contains("Piccoli – sab 10:00"), testi.toString());
+        } finally {
+            corsoService.eliminaGruppo(piccoli.getId());
+            corsoService.impostaOrario(chitarra.getId(), allievo.getId(), null);
+        }
+    }
+
     /** Pulsanti delle lezioni nel calendario (griglia ed elenco), eventualmente di un corso. */
     @Test
     @WithUserDetails("allievo_canto1")

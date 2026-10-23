@@ -37,6 +37,12 @@ public final class DettaglioLezioneDialog {
      * @param gestione admin o segreteria
      */
     public static void apri(Lezione lezione, String perChi, LocalTime orario, String numero, String username, boolean gestione) {
+        apri(lezione, perChi, null, orario, numero, username, gestione);
+    }
+
+    /** Come sopra, con il gruppo della voce del calendario ({@code gruppo} già formattato, {@code null} = nessuno). */
+    public static void apri(Lezione lezione, String perChi, String gruppo, LocalTime orario, String numero, String username,
+                            boolean gestione) {
         Dialog dialog = ViewSupport.dialog(lezione.getCorso().getNome(), "440px");
         String quando = orario != null ? ", " + Formati.ora(orario)
             : lezione.getOrarioInizio() != null ? ", " + Formati.ora(lezione.getOrarioInizio())
@@ -49,6 +55,9 @@ public final class DettaglioLezioneDialog {
                     .collect(Collectors.joining(", "))));
         if (lezione.isSpostata()) {
             contenuto.add(riga("Spostata dal", Formati.data(lezione.getDataOriginale())));
+        }
+        if (gruppo != null) {
+            contenuto.add(riga("Gruppo", gruppo));
         }
         if (perChi != null) {
             contenuto.add(riga("Allievo", perChi));

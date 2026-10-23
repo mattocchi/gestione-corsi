@@ -22,7 +22,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `CalendarioService`: `VoceCalendario` con gruppo e orario, una voce per gruppo con orario (staff) o per il gruppo dell'allievo (famiglie), voce in più senza gruppo; test | `CalendarioService`, `PresenzaRepository`, `CalendarioServiceTest` | `./mvnw test` | [x] Se nessuno dei presenti ha un gruppo con orario (es. il martedì quando i gruppi sono di sabato) resta la voce unica della lezione |
-| 2 | `CalendarioView`: orario e gruppo della voce; `DettaglioLezioneDialog` con la riga "Gruppo"; test browserless | `CalendarioView`, `DettaglioLezioneDialog`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | `CalendarioView`: orario e gruppo della voce; `DettaglioLezioneDialog` con la riga "Gruppo"; test browserless | `CalendarioView`, `DettaglioLezioneDialog`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito
