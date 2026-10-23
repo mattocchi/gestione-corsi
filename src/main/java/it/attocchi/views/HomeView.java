@@ -1,6 +1,9 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.card.Card;
@@ -12,23 +15,29 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.function.SerializableRunnable;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import it.attocchi.entity.GruppoCorso;
+import it.attocchi.entity.Lezione;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.DashboardService;
+import it.attocchi.service.DashboardService.ProssimaLezione;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
 import it.attocchi.service.DashboardService.RiepilogoGruppi;
 import it.attocchi.service.DashboardService.RigaGruppo;
 import it.attocchi.service.DashboardService.RiepilogoInsegnante;
+import it.attocchi.service.LezioneService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
 import it.attocchi.service.UserService;
 import jakarta.annotation.security.PermitAll;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +53,7 @@ import java.util.Map;
 public class HomeView extends VerticalLayout {
 
     public HomeView(SecurityService securityService, UserService userService, DashboardService dashboardService,
-                    PagamentoService pagamentoService, BilancioService bilancioService) {
+                    PagamentoService pagamentoService, BilancioService bilancioService, LezioneService lezioneService) {
         // Riquadri che vanno a capo, uno per riga sugli smartphone
         addClassNames("gap-6");
 
@@ -53,6 +62,29 @@ public class HomeView extends VerticalLayout {
         H1 title = new H1("Ciao " + (user != null ? user.getNome() : username) + "!");
         title.addClassNames("text-[length:clamp(1.5rem,1rem_+_2vw,2rem)] leading-[1.2] m-0");
         add(title);
+
+        // Prima dei riepiloghi la prossima lezione di ogni corso: dei corsi dell'insegnante (apre il registro delle
+        // presenze), propria dell'allievo e dei figli del genitore (aprono il dettaglio in sola lettura)
+        List<Card> prossime = new ArrayList<>();
+        Map<Long, List<GruppoCorso>> gruppiPerCorso = lezioneService.gruppiPerCorso();
+        if (securityService.hasRole("INSEGNANTE")) {
+            dashboardService.prossimeLezioniInsegnante(username)
+                .forEach(p -> prossime.add(prossimaLezione(p, gruppiPerCorso,
+                    () -> DettaglioLezioneDialog.apriPresenze(p.lezione(), false))));
+        }
+        List<ProssimaLezione> proprie = new ArrayList<>();
+        if (securityService.hasRole("ALLIEVO")) {
+            proprie.addAll(dashboardService.prossimeLezioniAllievo(username));
+        }
+        if (securityService.hasRole("GENITORE")) {
+            proprie.addAll(dashboardService.prossimeLezioniDeiFigli(username));
+        }
+        proprie.forEach(p -> prossime.add(prossimaLezione(p, gruppiPerCorso, () -> DettaglioLezioneDialog.apri(p.lezione(),
+            p.perChi(), p.orario(), Formati.numeroLezione(p.lezione(), gruppiPerCorso.get(p.lezione().getCorso().getId())),
+            username, false))));
+        if (!prossime.isEmpty()) {
+            add(sezione(prossime.size() == 1 ? "Prossima lezione" : "Prossime lezioni", prossime.toArray(Card[]::new)));
+        }
 
         if (securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")) {
             RiepilogoGenerale riepilogo = dashboardService.riepilogoGenerale();
@@ -156,6 +188,42 @@ public class HomeView extends VerticalLayout {
         grid.addClassNames("mt-4");
         sezione.add(grid);
         return sezione;
+    }
+
+    /**
+     * Riquadro cliccabile (anche con Invio da tastiera) della prossima lezione: corso, data e orario, numero, allievo
+     * per il genitore e "Oggi" o "Domani".
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Card prossimaLezione(ProssimaLezione prossima, Map<Long, List<GruppoCorso>> gruppi,
+                                        SerializableRunnable apri) {
+        Lezione lezione = prossima.lezione();
+        Card card = new Card();
+        Icon icon = VaadinIcon.CALENDAR_CLOCK.create();
+        icon.addClassNames("text-(--vaadin-text-color-secondary)");
+        card.setHeaderPrefix(icon);
+        card.setTitle(lezione.getCorso().getNome());
+        String quando = Formati.data(lezione.getData()) + (prossima.orario() != null ? ", " + Formati.ora(prossima.orario()) : "");
+        Span data = new Span(quando);
+        data.addClassNames("font-(--aura-font-weight-semibold) text-[1.25rem] leading-[1.2]");
+        String numero = "Lezione " + Formati.numeroLezione(lezione, gruppi.get(lezione.getCorso().getId()))
+            + (prossima.perChi() != null ? " · " + prossima.perChi() : "");
+        Span dettaglio = new Span(numero);
+        dettaglio.addClassNames("block", Stili.TESTO_SECONDARIO);
+        card.add(data, dettaglio);
+        LocalDate oggi = LocalDate.now();
+        if (lezione.getData().equals(oggi) || lezione.getData().equals(oggi.plusDays(1))) {
+            Badge badge = new Badge(lezione.getData().equals(oggi) ? "Oggi" : "Domani");
+            badge.addThemeVariants(lezione.getData().equals(oggi) ? BadgeVariant.FILLED : BadgeVariant.CONTRAST);
+            card.setHeaderSuffix(badge);
+        }
+        card.addClassNames("cursor-pointer");
+        card.getElement().setAttribute("role", "button");
+        card.getElement().setAttribute("tabindex", "0");
+        card.setAriaLabel(lezione.getCorso().getNome() + ": " + quando + ", " + numero);
+        ComponentUtil.addListener(card, ClickEvent.class, (ComponentEventListener) e -> apri.run());
+        card.getElement().addEventListener("keydown", e -> apri.run()).setFilter("event.key === 'Enter'");
+        return card;
     }
 
     /** Card "Pagato" e "Da pagare" (genitore per i figli, allievo adulto per sé). */

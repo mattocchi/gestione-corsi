@@ -28,7 +28,7 @@
 |---|---|---|---|---|
 | 1 | `DashboardService.prossimeLezioni(username)`: una per corso (insegnante), per corso (allievo), per figlio e corso (genitore), con l'orario dell'allievo; test | `DashboardService`, test | `./mvnw test` | [x] Tre metodi (insegnante, allievo, figli) chiamati da `HomeView` per ruolo: togliere un ruolo lascia la scheda |
 | 2 | Dettaglio della lezione del Calendario estratto in `views/DettaglioLezioneDialog` (nessun cambiamento visibile) | `CalendarioView`, `DettaglioLezioneDialog` | `./mvnw test` | [x] Il dialog accetta anche l'orario della lezione dell'allievo (dalla dashboard); il Calendario passa `null` e resta com'era |
-| 3 | `HomeView`: sezione delle prossime lezioni prima dei riepiloghi, riquadri cliccabili (registro per l'insegnante, dettaglio per allievo e genitore); test browserless | `HomeView`, `ViewAccessTest` | `./mvnw test`; browser | [ ] |
+| 3 | `HomeView`: sezione delle prossime lezioni prima dei riepiloghi, riquadri cliccabili (registro per l'insegnante, dettaglio per allievo e genitore); test browserless | `HomeView`, `ViewAccessTest` | `./mvnw test`; browser | [x] Riquadri con `role=button`, clic e Invio; verifica nel browser insieme al passo 5 |
 | 4 | `BilancioService.oreDonate(username)`: minuti svolti e previsti sui corsi attivi per l'insegnante senza tariffa; test | `BilancioService`, test | `./mvnw test` | [ ] |
 | 5 | `HomeView`: riquadro "Ore donate" nella sezione dell'insegnante; test browserless | `HomeView`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 6 | Documentazione in `CLAUDE.md` | `CLAUDE.md` | rilettura | [ ] |

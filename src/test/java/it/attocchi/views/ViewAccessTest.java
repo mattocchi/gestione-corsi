@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.browserless.SpringBrowserlessTest;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -1772,6 +1774,58 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         assertEquals(quante - 1, festivita.size());
         assertTrue(festivitaService.elenco().stream().noneMatch(f -> f.getNome().equals("Da eliminare")));
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_prossimaLezioneApreIlRegistro() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        apriLezioni();
+        navigate(HomeView.class);
+        // Le lezioni generate sono passate: nessuna prossima lezione
+        assertFalse(find(H2.class).all().stream().anyMatch(h -> h.getText().startsWith("Prossim")));
+        Lezione domani = lezioneService.aggiungi(canto.getId(), LocalDate.now().plusDays(1), LocalTime.of(18, 0), null, "insegnante1");
+        try {
+            apriLezioni();
+            navigate(HomeView.class);
+            assertTrue(find(H2.class).withText("Prossima lezione").exists());
+            Card card = prossimaLezione("Corso di Canto");
+            assertTrue(find(Badge.class).from(card).withText("Domani").exists());
+            ComponentUtil.fireEvent(card, new ClickEvent<>(card));
+            // Il registro delle presenze di quella lezione
+            assertTrue(find(Dialog.class).single().getHeaderTitle().startsWith("Corso di Canto – Lezione "));
+        } finally {
+            lezioneService.eliminaAggiunta(domani.getId(), "insegnante1");
+        }
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_prossimaLezioneDelFiglioApreIlDettaglio() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Lezione oggi = lezioneService.aggiungi(canto.getId(), LocalDate.now(), LocalTime.of(18, 0), null, "insegnante1");
+        try {
+            navigate(FigliView.class);
+            navigate(HomeView.class);
+            Card card = prossimaLezione("Corso di Canto");
+            assertTrue(card.getElement().getAttribute("aria-label").contains("Allievo Canto3"));
+            assertTrue(find(Badge.class).from(card).withText("Oggi").exists());
+            ComponentUtil.fireEvent(card, new ClickEvent<>(card));
+            Dialog dettaglio = find(Dialog.class).single();
+            assertEquals("Corso di Canto", dettaglio.getHeaderTitle());
+            // Sola lettura: niente registro per il genitore
+            assertFalse(find(Button.class).from(dettaglio).withText("Gestisci presenze").exists());
+        } finally {
+            lezioneService.eliminaAggiunta(oggi.getId(), "insegnante1");
+        }
+    }
+
+    /** Riquadro della prossima lezione del corso indicato, in dashboard. */
+    private Card prossimaLezione(String corso) {
+        return find(Card.class).all().stream()
+            .filter(c -> "button".equals(c.getElement().getAttribute("role"))
+                && c.getElement().getAttribute("aria-label").startsWith(corso + ":"))
+            .findFirst().orElseThrow();
     }
 
     @Test
