@@ -2,6 +2,8 @@ package it.attocchi.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -37,14 +39,21 @@ public class InvioEmail {
     @NotNull
     private LocalDateTime dataOra;
 
+    /** Testo e non enum nativo di MySQL: un nuovo tipo non richiede di modificare la colonna. */
     @NotNull
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 32)
     private TipoDocumento tipo;
 
     private Long corsoId;
     private String corsoNome;
     private Long allievoId;
     private String allievoNome;
+    /** Riepilogo della famiglia: il genitore ({@code allievoId} è invece l'allievo adulto). */
+    private Long genitoreId;
+    /** Riepilogo: anno scolastico ({@code null} = corsi senza anno). */
+    private String anno;
 
     @NotNull
     private String destinatario;
@@ -76,6 +85,10 @@ public class InvioEmail {
     public void setAllievoId(Long allievoId) { this.allievoId = allievoId; }
     public String getAllievoNome() { return allievoNome; }
     public void setAllievoNome(String allievoNome) { this.allievoNome = allievoNome; }
+    public Long getGenitoreId() { return genitoreId; }
+    public void setGenitoreId(Long genitoreId) { this.genitoreId = genitoreId; }
+    public String getAnno() { return anno; }
+    public void setAnno(String anno) { this.anno = anno; }
     public String getDestinatario() { return destinatario; }
     public void setDestinatario(String destinatario) { this.destinatario = destinatario; }
     public String getDestinatarioNome() { return destinatarioNome; }

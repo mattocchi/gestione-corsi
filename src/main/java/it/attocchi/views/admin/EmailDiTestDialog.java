@@ -70,9 +70,10 @@ public class EmailDiTestDialog extends Dialog {
         destinatario.setHelperText("Qualunque indirizzo: l'invio non è registrato tra le email inviate");
         List<Optional<TipoDocumento>> opzioni = new ArrayList<>();
         opzioni.add(Optional.empty());
-        Arrays.stream(TipoDocumento.values()).map(Optional::of).forEach(opzioni::add);
+        // I documenti dell'iscrizione hanno i dati di esempio (DocumentiService.ricevutaEsempio)
+        Arrays.stream(TipoDocumento.values()).filter(TipoDocumento::isDellIscrizione).map(Optional::of).forEach(opzioni::add);
         template = new SegmentedControl<>("Template", opzioni,
-            t -> t.map(d -> d == TipoDocumento.RICEVUTA ? "Ricevuta" : "Conferma").orElse("Solo testo"),
+            t -> t.map(TipoDocumento::getBreve).orElse("Solo testo"),
             t -> t.map(d -> d.getTitolo() + " con dati di esempio e PDF allegato").orElse("Messaggio di prova senza allegato"),
             null);
         template.setValue(Optional.empty());

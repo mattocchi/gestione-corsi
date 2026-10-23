@@ -44,7 +44,7 @@ public class EmailInviateView extends VerticalLayout {
         tipi.add(Optional.empty());
         Arrays.stream(TipoDocumento.values()).map(Optional::of).forEach(tipi::add);
         filtroTipo = new SegmentedControl<>("Filtra per tipo", tipi,
-            t -> t.map(d -> d == TipoDocumento.RICEVUTA ? "Ricevute" : "Conferme").orElse("Tutte"),
+            t -> t.map(TipoDocumento::getPlurale).orElse("Tutte"),
             t -> t.map(TipoDocumento::getTitolo).orElse("Tutte le email"), null);
         filtroTipo.setValue(Optional.empty());
         filtroTipo.addValueChangeListener(e -> applicaFiltri());
