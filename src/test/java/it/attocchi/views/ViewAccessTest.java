@@ -48,6 +48,7 @@ import it.attocchi.entity.RecuperoPassword;
 import it.attocchi.entity.User;
 import it.attocchi.entity.Presenza.StatoPresenza;
 import it.attocchi.repository.InsegnanteRepository;
+import it.attocchi.service.MieiAllieviService.AllievoDelCorso;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
@@ -93,6 +94,7 @@ import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.AllieviView;
 import it.attocchi.views.admin.UtentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
+import it.attocchi.views.insegnante.MieiAllieviView;
 import it.attocchi.views.insegnante.MieiRimborsiView;
 import it.attocchi.views.ElencoLezioni.FiltroLezioni;
 import it.attocchi.views.genitore.FigliView;
@@ -3255,6 +3257,48 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("insegnante1")
     void insegnante_nonAccedeAllaVistaLezioni() {
         navigate("lezioni", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_vedeISuoiAllieviELeLoroLezioni() {
+        navigate(MieiAllieviView.class);
+        var allievi = test((Grid<AllievoDelCorso>) find(Grid.class).single());
+        // Solo i 7 allievi di Canto, nell'ordine dei partecipanti; con un solo corso niente filtro per corso
+        assertEquals(7, allievi.size());
+        assertEquals("Allievo Canto5", allievi.getCellText(0, 0));
+        assertEquals("Corso di Canto", allievi.getCellText(0, 1));
+        assertEquals("0 su 30", allievi.getCellText(0, 4));
+        assertEquals("30", allievi.getCellText(0, 5));
+        assertEquals("30", allievi.getCellText(0, 6));
+        assertFalse(find(ComboBox.class).exists());
+
+        test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("canto3");
+        assertEquals(1, allievi.size());
+        assertEquals("Allievo Canto3", allievi.getCellText(0, 0));
+
+        test(pulsante(allievi.getCellComponent(0, 7), "Lezioni dell'allievo")).click();
+        Dialog dialog = find(Dialog.class).single();
+        assertEquals("Allievo Canto3 – Corso di Canto", dialog.getHeaderTitle());
+        assertTrue(find(Span.class).from(dialog).withText("Mancanti: 30").exists());
+        Grid<Presenza> lezioni = find(Grid.class).from(dialog).single();
+        assertEquals(30, test(lezioni).size());
+        // L'insegnante vede anche le note per lo staff
+        assertTrue(lezioni.getColumns().stream()
+            .anyMatch(c -> c.isVisible() && "Note per lo staff".equals(c.getHeaderText())));
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievo_nonAccedeAiMieiAllievi() {
+        navigate("miei-allievi", RouteNotFoundError.class);
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_nonAccedeAiMieiAllievi() {
+        navigate("miei-allievi", RouteNotFoundError.class);
     }
 
     @Test
