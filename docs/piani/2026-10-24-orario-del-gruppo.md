@@ -28,7 +28,7 @@
 | 2 | `DashboardService`: prossime lezioni dalle voci del calendario (insegnante: una per gruppo della prima lezione del corso; famiglie: con gruppo e orario); test | `DashboardService`, `DashboardServiceTest` | `./mvnw test` | [x] La regola di `orarioDi` cambiata: l'orario della lezione vale quando è diverso da quello del corso (non "spostata o aggiunta"), perché "Nuova lezione" e "Cambia data" propongono l'orario del corso e avrebbero riportato tutti alle 10; a pari orario la voce "Senza gruppo" dopo i gruppi |
 | 3 | `HomeView`: riquadro con il gruppo; registro aperto sulla scheda del gruppo (`?gruppo=ID`, anche dal calendario); dettaglio con la riga "Gruppo"; test browserless | `HomeView`, `DettaglioLezioneDialog`, `ElencoLezioni`, `LezioniView`, `LezioniInsegnanteView`, `CalendarioView`, `Formati`, `ViewAccessTest` | `./mvnw test` | [x] `DettaglioLezioneDialog.apri` / `apriPresenze` ricevono la `VoceCalendario`; numero con il gruppo in `Formati.numeroLezione(voce, …)` |
 | 4 | Orario dei gruppi in Le Mie Lezioni / Lezioni e in "I miei allievi"; colonna "Orario" nel dialog delle lezioni dell'allievo; test | `Iscrizione`, `ElencoLezioni`, `MieiAllieviView`, `PresenzeAllievoDialog`, `MieiCorsiView`, `FigliView`, `ViewAccessTest` | `./mvnw test` | [x] `Iscrizione.orarioAbituale()` (suo o del gruppo) per "I miei allievi"; in Le Mie Lezioni / Lezioni gli orari dei gruppi solo se la lezione è all'orario del corso, altrimenti il suo |
-| 5 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 5 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -37,3 +37,7 @@
 
 ## Registro
 
+- `./mvnw test`: 271 test, tutti superati. Nuovi: `IscrizioneTest` (orario suo, del gruppo, della lezione), `DashboardServiceTest.prossimaLezione_conDueGruppiOgnunoConIlSuoOrario`, in `CalendarioServiceTest` l'orario proprio dell'allievo, in `ViewAccessTest` un riquadro per gruppo per l'insegnante (apre la scheda "Grandi"), il riquadro del genitore con "· Piccoli" alle 10 e il dettaglio con il gruppo, gli orari "10:00 · 11:00" in Le Mie Lezioni e la colonna "Orario" nelle lezioni dell'allievo.
+- Cambio di regola durante l'esecuzione (passo 2): l'orario della lezione vince solo se diverso da quello del corso, perché "Nuova lezione" e "Cambia data" propongono l'orario del corso.
+- Browser: non verificato (nei dati di sviluppo non ci sono gruppi); coperto dai test browserless.
+- Nessuno script SQL. Lasciato aperto: l'orario che resta all'allievo quando il suo gruppo viene eliminato (già segnalato).
