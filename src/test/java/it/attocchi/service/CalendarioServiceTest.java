@@ -3,6 +3,7 @@ package it.attocchi.service;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.service.CalendarioService.VoceCalendario;
+import it.attocchi.service.CalendarioService.VoceSettimana;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -120,6 +121,48 @@ class CalendarioServiceTest {
                 corsoService.impostaOrario(chitarra.getId(), allievoService.findByUsername(username).orElseThrow().getId(), null);
             }
         }
+    }
+
+    @Test
+    void settimanaTipo_iCorsiPerGiornoEOrarioSecondoIlRuolo() {
+        // Chitarra martedì e sabato alle 18:00, Canto giovedì alle 17:00, lezioni da 40 minuti
+        List<VoceSettimana> admin = calendarioService.settimanaTipo("admin", null);
+        assertEquals(List.of("TUESDAY Corso di Chitarra 18:00-18:40", "THURSDAY Corso di Canto 17:00-17:40",
+            "SATURDAY Corso di Chitarra 18:00-18:40"), admin.stream().map(CalendarioServiceTest::testo).toList());
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        assertEquals(2, calendarioService.settimanaTipo("segreteria", chitarra.getId()).size());
+        // L'insegnante i suoi corsi
+        assertEquals(List.of("THURSDAY Corso di Canto 17:00-17:40"),
+            calendarioService.settimanaTipo("insegnante1", null).stream().map(CalendarioServiceTest::testo).toList());
+        // Il genitore i corsi dei figli, con il nome: genitore3 ha Canto3 (Canto) e Chitarra1 (Chitarra)
+        List<VoceSettimana> genitore = calendarioService.settimanaTipo("genitore3", null);
+        assertEquals(List.of("TUESDAY Allievo Chitarra1", "THURSDAY Allievo Canto3", "SATURDAY Allievo Chitarra1"),
+            genitore.stream().map(v -> v.giorno() + " " + v.perChi()).toList());
+
+        // Con i gruppi del sabato: lo staff una voce per gruppo più chi non ne ha, l'allievo solo il suo gruppo
+        GruppoCorso piccoli = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        GruppoCorso grandi = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Grandi", DayOfWeek.SATURDAY, LocalTime.of(11, 0)));
+        try {
+            assegna(chitarra, "allievo_chitarra1", piccoli);
+            assegna(chitarra, "allievo_chitarra3", grandi);
+            List<VoceSettimana> insegnante = calendarioService.settimanaTipo("insegnante2", null);
+            assertEquals(List.of("TUESDAY Corso di Chitarra 18:00-18:40", "SATURDAY Corso di Chitarra 10:00-10:40 Piccoli",
+                "SATURDAY Corso di Chitarra 11:00-11:40 Grandi", "SATURDAY Corso di Chitarra 18:00-18:40 senza gruppo"),
+                insegnante.stream().map(CalendarioServiceTest::testo).toList());
+            assertEquals(List.of("SATURDAY Corso di Chitarra 11:00-11:40 Grandi"),
+                calendarioService.settimanaTipo("allievo_chitarra3", null).stream().map(CalendarioServiceTest::testo).toList());
+        } finally {
+            corsoService.eliminaGruppo(piccoli.getId());
+            corsoService.eliminaGruppo(grandi.getId());
+            for (String username : List.of("allievo_chitarra1", "allievo_chitarra3")) {
+                corsoService.impostaOrario(chitarra.getId(), allievoService.findByUsername(username).orElseThrow().getId(), null);
+            }
+        }
+    }
+
+    private static String testo(VoceSettimana voce) {
+        return voce.giorno() + " " + voce.corso().getNome() + " " + voce.inizio() + "-" + voce.fine()
+            + (voce.gruppo() != null ? " " + voce.gruppo().getNome() : "") + (voce.senzaGruppo() ? " senza gruppo" : "");
     }
 
     private void assegna(Corso corso, String username, GruppoCorso gruppo) {

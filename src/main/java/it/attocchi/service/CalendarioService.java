@@ -1,13 +1,16 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.User;
 import it.attocchi.repository.AllievoRepository;
+import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.GenitoreRepository;
+import it.attocchi.repository.GruppoCorsoRepository;
 import it.attocchi.repository.InsegnanteRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
@@ -16,6 +19,7 @@ import it.attocchi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -54,6 +58,22 @@ public class CalendarioService {
         }
     }
 
+    /**
+     * Voce della settimana tipo: un corso (o un suo gruppo) in un giorno della settimana, dall'orario d'inizio
+     * ({@code null} se il corso non ne ha) alla fine secondo la durata; {@code senzaGruppo} la voce di chi non ha
+     * gruppo in un corso con gruppi quel giorno; {@code perChi} il figlio per il genitore.
+     */
+    public record VoceSettimana(DayOfWeek giorno, LocalTime inizio, LocalTime fine, Corso corso, GruppoCorso gruppo,
+                                boolean senzaGruppo, String perChi) {
+    }
+
+    private static final Comparator<VoceSettimana> PER_GIORNO_E_ORARIO = Comparator
+        .comparing(VoceSettimana::giorno)
+        .thenComparing(VoceSettimana::inizio, Comparator.nullsLast(Comparator.<LocalTime>naturalOrder()))
+        .thenComparing(v -> v.corso().getNome(), String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(VoceSettimana::senzaGruppo)
+        .thenComparing(v -> Objects.toString(v.perChi(), ""));
+
     private static final Comparator<VoceCalendario> PER_DATA_E_ORARIO = Comparator
         .comparing((VoceCalendario v) -> v.lezione().getData())
         .thenComparing(VoceCalendario::orario, Comparator.nullsLast(Comparator.<LocalTime>naturalOrder()))
@@ -68,11 +88,16 @@ public class CalendarioService {
     private final GenitoreRepository genitoreRepository;
     private final PresenzaRepository presenzaRepository;
     private final IscrizioneRepository iscrizioneRepository;
+    private final CorsoRepository corsoRepository;
+    private final GruppoCorsoRepository gruppoCorsoRepository;
 
     public CalendarioService(UserRepository userRepository, LezioneRepository lezioneRepository,
                              InsegnanteRepository insegnanteRepository, AllievoRepository allievoRepository,
                              GenitoreRepository genitoreRepository, PresenzaRepository presenzaRepository,
-                             IscrizioneRepository iscrizioneRepository) {
+                             IscrizioneRepository iscrizioneRepository, CorsoRepository corsoRepository,
+                             GruppoCorsoRepository gruppoCorsoRepository) {
+        this.corsoRepository = corsoRepository;
+        this.gruppoCorsoRepository = gruppoCorsoRepository;
         this.userRepository = userRepository;
         this.lezioneRepository = lezioneRepository;
         this.insegnanteRepository = insegnanteRepository;
@@ -115,6 +140,86 @@ public class CalendarioService {
                     vociDi(figlio, figlio.getNomeCompleto(), visibile).forEach(v -> aggiungi(voci, v))));
         }
         return voci.values().stream().sorted(PER_DATA_E_ORARIO).toList();
+    }
+
+    /**
+     * Settimana tipo dei corsi attivi visibili all'utente (stessi ruoli del calendario del mese), per giorno e orario;
+     * {@code corsoId} non nullo = solo quel corso. Staff: per ogni giorno del corso una voce, o una per gruppo di
+     * quel giorno (al suo orario) più "senza gruppo" se qualcuno non ne ha; allievo e genitore: il giorno del gruppo
+     * dell'allievo, o tutti i giorni del corso, al suo orario ({@link Iscrizione#orarioAbituale()}) o a quello del corso.
+     */
+    public List<VoceSettimana> settimanaTipo(String username, Long corsoId) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return List.of();
+        }
+        Set<String> ruoli = user.getRoles();
+        Predicate<Corso> visibile = c -> c.isAttivo() && (corsoId == null || c.getId().equals(corsoId));
+        Map<Long, Corso> delloStaff = new LinkedHashMap<>();
+        if (ruoli.contains("ADMIN") || ruoli.contains("SEGRETERIA")) {
+            corsoRepository.findByAttivoTrue().stream().filter(visibile).forEach(c -> delloStaff.putIfAbsent(c.getId(), c));
+        }
+        if (ruoli.contains("INSEGNANTE")) {
+            insegnanteRepository.findByUserId(user.getId()).ifPresent(insegnante ->
+                corsoRepository.findDellInsegnante(insegnante.getId()).stream().filter(visibile)
+                    .forEach(c -> delloStaff.putIfAbsent(c.getId(), c)));
+        }
+        Set<VoceSettimana> voci = new LinkedHashSet<>();
+        delloStaff.values().forEach(corso -> voci.addAll(settimanaDelCorso(corso)));
+        if (ruoli.contains("ALLIEVO")) {
+            allievoRepository.findByUserId(user.getId()).ifPresent(allievo ->
+                voci.addAll(settimanaDi(allievo, null, visibile)));
+        }
+        if (ruoli.contains("GENITORE")) {
+            genitoreRepository.findByUserId(user.getId()).ifPresent(genitore ->
+                allievoRepository.findByGenitoreIdWithCorsi(genitore.getId()).forEach(figlio ->
+                    voci.addAll(settimanaDi(figlio, figlio.getNomeCompleto(), visibile))));
+        }
+        return voci.stream().sorted(PER_GIORNO_E_ORARIO).toList();
+    }
+
+    /** Voci dello staff per un corso: per giorno, o per gruppo del giorno più chi non ha gruppo. */
+    private List<VoceSettimana> settimanaDelCorso(Corso corso) {
+        List<GruppoCorso> gruppi = gruppoCorsoRepository.findByCorsoId(corso.getId());
+        boolean qualcunoSenzaGruppo = iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId()).stream()
+            .anyMatch(i -> i.getGruppo() == null);
+        List<VoceSettimana> voci = new ArrayList<>();
+        for (DayOfWeek giorno : corso.getGiorniSettimana()) {
+            List<GruppoCorso> delGiorno = gruppi.stream().filter(g -> g.getGiorno() == giorno).toList();
+            if (delGiorno.isEmpty()) {
+                voci.add(voce(giorno, corso.getOrarioInizio(), corso, null, false, null));
+                continue;
+            }
+            delGiorno.forEach(g -> voci.add(voce(giorno,
+                g.getOrario() != null ? g.getOrario() : corso.getOrarioInizio(), corso, g, false, null)));
+            if (qualcunoSenzaGruppo) {
+                voci.add(voce(giorno, corso.getOrarioInizio(), corso, null, true, null));
+            }
+        }
+        return voci;
+    }
+
+    /** Voci dell'allievo: il giorno del suo gruppo, o tutti quelli del corso, al suo orario. */
+    private List<VoceSettimana> settimanaDi(Allievo allievo, String perChi, Predicate<Corso> visibile) {
+        List<VoceSettimana> voci = new ArrayList<>();
+        for (Iscrizione iscrizione : iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId())) {
+            Corso corso = iscrizione.getCorso();
+            if (!visibile.test(corso)) {
+                continue;
+            }
+            GruppoCorso gruppo = iscrizione.getGruppo();
+            LocalTime orario = Objects.requireNonNullElse(iscrizione.orarioAbituale(), corso.getOrarioInizio());
+            Collection<DayOfWeek> giorni = gruppo != null ? List.of(gruppo.getGiorno()) : corso.getGiorniSettimana();
+            giorni.forEach(giorno -> voci.add(voce(giorno, orario, corso, gruppo, false, perChi)));
+        }
+        return voci;
+    }
+
+    private static VoceSettimana voce(DayOfWeek giorno, LocalTime inizio, Corso corso, GruppoCorso gruppo,
+                                      boolean senzaGruppo, String perChi) {
+        Integer durata = corso.getDurataLezioneMinuti();
+        LocalTime fine = inizio != null && durata != null ? inizio.plusMinutes(durata) : null;
+        return new VoceSettimana(giorno, inizio, fine, corso, gruppo, senzaGruppo, perChi);
     }
 
     /**
