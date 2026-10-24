@@ -13,6 +13,7 @@ class IscrizioneTest {
     @Test
     void orarioDi_ilSuoPoiQuelloDelGruppoPoiQuelloDellaLezione() {
         Corso corso = new Corso();
+        corso.setOrarioInizio(LocalTime.of(10, 0));
         Iscrizione iscrizione = new Iscrizione(corso, new Allievo());
         Lezione lezione = new Lezione(corso, LocalDate.of(2026, 10, 24), 1);
         lezione.setOrarioInizio(LocalTime.of(10, 0));
@@ -24,11 +25,8 @@ class IscrizioneTest {
         iscrizione.setOrarioLezione(LocalTime.of(11, 30));
         assertEquals(LocalTime.of(11, 30), iscrizione.orarioDi(lezione));
 
-        // Lezione spostata o aggiunta a mano: il suo orario
-        lezione.setDataOriginale(LocalDate.of(2026, 10, 17));
-        assertEquals(LocalTime.of(10, 0), iscrizione.orarioDi(lezione));
-        lezione.setDataOriginale(null);
-        lezione.setAggiunta(true);
-        assertEquals(LocalTime.of(10, 0), iscrizione.orarioDi(lezione));
+        // Lezione a un orario diverso da quello del corso (spostata o aggiunta a un'altra ora): il suo orario
+        lezione.setOrarioInizio(LocalTime.of(15, 0));
+        assertEquals(LocalTime.of(15, 0), iscrizione.orarioDi(lezione));
     }
 }

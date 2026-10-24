@@ -26,7 +26,7 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.BilancioService;
 import it.attocchi.service.BilancioService.OreDonateTotali;
 import it.attocchi.service.DashboardService;
-import it.attocchi.service.DashboardService.ProssimaLezione;
+import it.attocchi.service.CalendarioService.VoceCalendario;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
 import it.attocchi.service.DashboardService.RiepilogoGruppi;
 import it.attocchi.service.DashboardService.RigaGruppo;
@@ -74,7 +74,7 @@ public class HomeView extends VerticalLayout {
                 .forEach(p -> prossime.add(prossimaLezione(p, gruppiPerCorso,
                     () -> DettaglioLezioneDialog.apriPresenze(p.lezione(), false))));
         }
-        List<ProssimaLezione> proprie = new ArrayList<>();
+        List<VoceCalendario> proprie = new ArrayList<>();
         if (securityService.hasRole("ALLIEVO")) {
             proprie.addAll(dashboardService.prossimeLezioniAllievo(username));
         }
@@ -208,7 +208,7 @@ public class HomeView extends VerticalLayout {
      * per il genitore e "Oggi" o "Domani".
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Card prossimaLezione(ProssimaLezione prossima, Map<Long, List<GruppoCorso>> gruppi,
+    private static Card prossimaLezione(VoceCalendario prossima, Map<Long, List<GruppoCorso>> gruppi,
                                         SerializableRunnable apri) {
         Lezione lezione = prossima.lezione();
         Card card = new Card();

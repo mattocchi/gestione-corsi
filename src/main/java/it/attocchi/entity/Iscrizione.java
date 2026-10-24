@@ -157,10 +157,11 @@ public class Iscrizione {
 
     /**
      * Orario della lezione per il partecipante: il suo orario se c'è, altrimenti quello del suo gruppo, altrimenti
-     * quello della lezione. Le lezioni spostate o aggiunte a mano hanno il loro orario, scelto per quella data.
+     * quello della lezione. Una lezione con un orario diverso da quello del corso (spostata o aggiunta a un'altra ora)
+     * ha il suo, scelto per quella data.
      */
     public LocalTime orarioDi(Lezione lezione) {
-        if (lezione.isSpostata() || lezione.isAggiunta()) {
+        if (lezione.getOrarioInizio() != null && !lezione.getOrarioInizio().equals(lezione.getCorso().getOrarioInizio())) {
             return lezione.getOrarioInizio();
         }
         if (orarioLezione != null) {

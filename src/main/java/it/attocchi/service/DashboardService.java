@@ -4,15 +4,14 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
-import it.attocchi.entity.Presenza;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.GenitoreRepository;
 import it.attocchi.repository.GruppoCorsoRepository;
 import it.attocchi.repository.InsegnanteRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
-import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.AllievoRepository;
+import it.attocchi.service.CalendarioService.VoceCalendario;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,12 +59,12 @@ public class DashboardService {
     private final IscrizioneRepository iscrizioneRepository;
     private final LezioneRepository lezioneRepository;
     private final GruppoCorsoRepository gruppoRepository;
-    private final PresenzaRepository presenzaRepository;
+    private final CalendarioService calendarioService;
 
     public DashboardService(CorsoRepository corsoRepository, AllievoRepository allievoRepository,
                             GenitoreRepository genitoreRepository, InsegnanteRepository insegnanteRepository,
                             IscrizioneRepository iscrizioneRepository, LezioneRepository lezioneRepository,
-                            GruppoCorsoRepository gruppoRepository, PresenzaRepository presenzaRepository) {
+                            GruppoCorsoRepository gruppoRepository, CalendarioService calendarioService) {
         this.corsoRepository = corsoRepository;
         this.allievoRepository = allievoRepository;
         this.genitoreRepository = genitoreRepository;
@@ -73,65 +72,61 @@ public class DashboardService {
         this.iscrizioneRepository = iscrizioneRepository;
         this.lezioneRepository = lezioneRepository;
         this.gruppoRepository = gruppoRepository;
-        this.presenzaRepository = presenzaRepository;
+        this.calendarioService = calendarioService;
     }
+
+    private static final Comparator<VoceCalendario> PER_DATA_E_ORARIO = Comparator
+        .comparing((VoceCalendario v) -> v.lezione().getData())
+        .thenComparing(VoceCalendario::orario, Comparator.nullsLast(Comparator.<LocalTime>naturalOrder()))
+        .thenComparing(v -> v.lezione().getCorso().getNome(), String.CASE_INSENSITIVE_ORDER)
+        .thenComparing(VoceCalendario::senzaGruppo)
+        .thenComparing(v -> Objects.toString(v.perChi(), ""));
 
     /**
-     * Prossima lezione di un corso: {@code perChi} è il figlio per il genitore ({@code null} negli altri casi),
-     * {@code orario} quello della lezione dell'allievo se ce l'ha, altrimenti quello della lezione.
+     * Prossima lezione di ogni corso attivo dell'insegnante (titolare o secondo): la prima da fare da oggi in poi,
+     * divisa per gruppo come nel calendario (una voce per gruppo con orario, più "Senza gruppo").
      */
-    public record ProssimaLezione(Lezione lezione, String perChi, LocalTime orario) {
-    }
-
-    private static final Comparator<ProssimaLezione> PER_DATA_E_ORARIO = Comparator
-        .comparing((ProssimaLezione p) -> p.lezione().getData())
-        .thenComparing(ProssimaLezione::orario, Comparator.nullsLast(Comparator.<LocalTime>naturalOrder()))
-        .thenComparing(p -> p.lezione().getCorso().getNome(), String.CASE_INSENSITIVE_ORDER)
-        .thenComparing(p -> Objects.toString(p.perChi(), ""));
-
-    /** Prossima lezione di ogni corso attivo dell'insegnante (titolare o secondo): la prima da fare da oggi in poi. */
-    public List<ProssimaLezione> prossimeLezioniInsegnante(String usernameInsegnante) {
+    public List<VoceCalendario> prossimeLezioniInsegnante(String usernameInsegnante) {
         return insegnanteRepository.findByUserUsername(usernameInsegnante)
-            .map(insegnante -> primaPerCorso(lezioneRepository.findDeiCorsiAttiviDellInsegnante(insegnante.getId()).stream()
-                .map(l -> new ProssimaLezione(l, null, l.getOrarioInizio())).toList()))
+            .map(insegnante -> {
+                Map<Long, Lezione> prime = new HashMap<>();
+                lezioneRepository.findDeiCorsiAttiviDellInsegnante(insegnante.getId()).stream()
+                    .filter(DashboardService::prossima)
+                    .sorted(Comparator.comparing(Lezione::getData).thenComparing(Lezione::getOrarioInizio,
+                        Comparator.nullsLast(Comparator.<LocalTime>naturalOrder())))
+                    .forEach(l -> prime.putIfAbsent(l.getCorso().getId(), l));
+                return calendarioService.perGruppo(prime.values()).stream().sorted(PER_DATA_E_ORARIO).toList();
+            })
             .orElse(List.of());
     }
 
-    /** Prossima lezione di ogni corso attivo dell'allievo (le sue lezioni, quindi solo il suo gruppo). */
-    public List<ProssimaLezione> prossimeLezioniAllievo(String usernameAllievo) {
+    /** Prossima lezione di ogni corso attivo dell'allievo, con il suo gruppo e il suo orario. */
+    public List<VoceCalendario> prossimeLezioniAllievo(String usernameAllievo) {
         return allievoRepository.findByUserUsername(usernameAllievo)
-            .map(allievo -> primaPerCorso(lezioniDi(allievo, null)))
+            .map(allievo -> primaPerCorso(calendarioService.vociDi(allievo, null)))
             .orElse(List.of());
     }
 
-    /** Prossima lezione di ogni figlio del genitore in ogni suo corso attivo, con il nome del figlio. */
-    public List<ProssimaLezione> prossimeLezioniDeiFigli(String usernameGenitore) {
+    /** Prossima lezione di ogni figlio del genitore in ogni suo corso attivo, con il nome, il gruppo e l'orario del figlio. */
+    public List<VoceCalendario> prossimeLezioniDeiFigli(String usernameGenitore) {
         return genitoreRepository.findByUserUsername(usernameGenitore)
             .map(genitore -> primaPerCorso(allievoRepository.findByGenitoreIdWithCorsi(genitore.getId()).stream()
-                .flatMap(figlio -> lezioniDi(figlio, figlio.getNomeCompleto()).stream()).toList()))
+                .flatMap(figlio -> calendarioService.vociDi(figlio, figlio.getNomeCompleto()).stream()).toList()))
             .orElse(List.of());
     }
 
-    /** Lezioni dell'allievo (le sue presenze) con l'orario della sua lezione nel corso, se ce l'ha. */
-    private List<ProssimaLezione> lezioniDi(Allievo allievo, String perChi) {
-        Map<Long, LocalTime> orari = new HashMap<>();
-        iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()).stream()
-            .filter(i -> i.getOrarioLezione() != null)
-            .forEach(i -> orari.put(i.getCorso().getId(), i.getOrarioLezione()));
-        return presenzaRepository.findByAllievoId(allievo.getId()).stream()
-            .map(Presenza::getLezione)
-            .map(l -> new ProssimaLezione(l, perChi, orari.getOrDefault(l.getCorso().getId(), l.getOrarioInizio())))
-            .toList();
+    /** Lezione da fare di un corso attivo, da oggi in poi. */
+    private static boolean prossima(Lezione lezione) {
+        return lezione.getCorso().isAttivo() && lezione.isDaFare() && !lezione.getData().isBefore(LocalDate.now());
     }
 
     /** Per corso (e figlio) la prima lezione da fare da oggi in poi, dei corsi attivi; per data e orario. */
-    private static List<ProssimaLezione> primaPerCorso(List<ProssimaLezione> lezioni) {
-        LocalDate oggi = LocalDate.now();
-        Map<String, ProssimaLezione> prime = new HashMap<>();
-        lezioni.stream()
-            .filter(p -> p.lezione().getCorso().isAttivo() && p.lezione().isDaFare() && !p.lezione().getData().isBefore(oggi))
+    private static List<VoceCalendario> primaPerCorso(List<VoceCalendario> voci) {
+        Map<String, VoceCalendario> prime = new HashMap<>();
+        voci.stream()
+            .filter(v -> prossima(v.lezione()))
             .sorted(PER_DATA_E_ORARIO)
-            .forEach(p -> prime.putIfAbsent(p.lezione().getCorso().getId() + "|" + Objects.toString(p.perChi(), ""), p));
+            .forEach(v -> prime.putIfAbsent(v.lezione().getCorso().getId() + "|" + Objects.toString(v.perChi(), ""), v));
         return prime.values().stream().sorted(PER_DATA_E_ORARIO).toList();
     }
 
