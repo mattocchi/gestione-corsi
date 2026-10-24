@@ -100,7 +100,10 @@ class DocumentiServiceTest {
         assertTrue(regole.contains("Lezioni, assenze e recuperi"), testo);
         assertTrue(regole.contains("Se l'insegnante non può fare lezione"), testo);
         assertTrue(regole.contains("al termine del corso: il numero di lezioni previsto è garantito"), testo);
-        assertTrue(regole.contains("Avvisate la segreteria dei corsi almeno una settimana prima"), testo);
+        assertTrue(regole.contains("Assenze dell’allievo (solo lezioni individuali)"), testo);
+        assertTrue(regole.contains("sempre tramite la community WhatsApp"), testo);
+        assertTrue(regole.contains("Con un preavviso di almeno una settimana, il recupero della lezione è garantito"), testo);
+        assertTrue(regole.contains("la lezione verrà comunque conteggiata e dovrà essere pagata"), testo);
         assertTrue(regole.contains("dalla segreteria dei corsi, a suo insindacabile giudizio"), testo);
 
         String email = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
@@ -109,7 +112,8 @@ class DocumentiServiceTest {
         assertTrue(email.contains("la seconda entro il 31 gennaio 2025"));
         String regoleEmail = email.replaceAll("\\s+", " ");
         assertTrue(regoleEmail.contains("Lezioni, assenze e recuperi"));
-        assertTrue(regoleEmail.contains("la lezione non potrà essere recuperata e resta dovuta"));
+        assertTrue(regoleEmail.contains("Assenze dell’allievo (solo lezioni individuali)"));
+        assertTrue(regoleEmail.contains("il recupero sarà difficilmente realizzabile"));
         assertTrue(regoleEmail.contains("Le lezioni non frequentate non vengono rimborsate"));
         assertFalse(email.contains("data:image"));
         assertEquals("conferma-iscrizione-corso-di-canto-" + iscrizione.getAllievo().getNomeCompleto().toLowerCase().replace(' ', '-') + ".pdf",

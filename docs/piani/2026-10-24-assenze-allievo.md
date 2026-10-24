@@ -22,7 +22,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Nuova regola con sotto-elenco nella macro (PDF ed email), stili del sotto-elenco, test sulle frasi nuove e sulla pagina unica | `regole-corso.ftlh`, `documenti/comune.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [ ] |
+| 1 | Nuova regola con sotto-elenco nella macro (PDF ed email), stili del sotto-elenco, test sulle frasi nuove e sulla pagina unica | `regole-corso.ftlh`, `documenti/comune.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [x] Sta in una pagina senza compattare il resto |
 | 2 | Tolto "a suo insindacabile giudizio" dalla regola sul ritiro; test | `regole-corso.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [ ] |
 | 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 

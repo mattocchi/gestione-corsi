@@ -36,6 +36,8 @@
   .riquadro { border: 1px solid #999; padding: 2mm 3mm; margin-top: 3mm; }
   ul.regole { margin: 0; padding-left: 5mm; }
   ul.regole li { margin-bottom: 1mm; }
+  ul.regole ul { margin: 0.5mm 0 0; padding-left: 4mm; }
+  ul.regole ul li { margin-bottom: 0.3mm; }
 </style>
 </#macro>
 
