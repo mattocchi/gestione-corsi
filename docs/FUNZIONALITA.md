@@ -364,3 +364,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-24: impaginazione compatta (margini e spazi ridotti, Allievo e Genitore affiancati, tolta "Quota dovuta" dalla tabella Corso perché è già in Importo), senza togliere altre informazioni, testo almeno 9,5 pt._
 * [x] nella conferma iscrizione rimuovi questa frase "L'importo dovuto è la quota indicata sopra, già scontata: il prezzo di listino è solo un riferimento." _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: tolta ovunque: conferma e ricevuta, PDF ed email, sia con lo sconto sia con la maggiorazione; restano listino barrato, riga della variazione e QUOTA DOVUTA in evidenza._
+* [ ] esplicita in questo modo la condizione, in confema di iscrizione, per il caso "se l'allievo non può venire":
+  "Assenze dell’allievo (solo lezioni individuali)
+  Le lezioni individuali sono organizzate su misura, riservando per ogni allievo il tempo dell’insegnante e gli spazi della scuola. Per questo, se l’allievo non può partecipare, è importante avvisare la segreteria il prima possibile e sempre tramite la community WhatsApp: più l’avviso è tempestivo, più è facile riorganizzare il calendario e trovare una data alternativa.
+  Con un preavviso di almeno una settimana, il recupero della lezione è garantito e verrà concordato con l’insegnante.
+  Con un preavviso inferiore, faremo il possibile per organizzare un recupero, ma solo se l’insegnante e gli spazi saranno disponibili. In caso di avviso a ridosso della lezione, il recupero sarà difficilmente realizzabile.
+  Se il recupero non può essere organizzato, la lezione verrà comunque conteggiata e dovrà essere pagata."
