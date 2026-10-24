@@ -20,7 +20,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `BilancioService.oreDonateTotali()`: somma di svolte e previste su tutti gli insegnanti senza tariffa, con il loro numero; test | `BilancioService`, `BilancioServiceTest` | `./mvnw test` | [ ] |
+| 1 | `BilancioService.oreDonateTotali()`: somma di svolte e previste su tutti gli insegnanti senza tariffa, con il loro numero; test | `BilancioService`, `BilancioServiceTest` | `./mvnw test` | [x] |
 | 2 | `HomeView`: riquadro dell'insegnante con le previste in grande e "di cui X già svolte"; riquadro del totale in "Pagamenti dei corsi attivi"; test browserless | `HomeView`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 

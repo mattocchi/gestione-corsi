@@ -181,12 +181,34 @@ public class BilancioService {
     public Optional<OreDonate> oreDonate(String usernameInsegnante) {
         return insegnanteRepository.findByUserUsername(usernameInsegnante)
             .filter(insegnante -> !haTariffa(insegnante))
-            .map(insegnante -> {
-                List<Lezione> lezioni = lezioneRepository.findConInsegnantePresente(insegnante.getId()).stream()
-                    .filter(l -> l.getCorso().isAttivo()).toList();
-                Map<Long, Long> presenze = presenzePerLezione(insegnante.getId());
-                return new OreDonate(minuti(lezioni, presenze, Lezione::isCompletata), minuti(lezioni, presenze, l -> true));
-            });
+            .map(this::oreDonate);
+    }
+
+    /** Ore donate da tutti gli insegnanti senza tariffa, con il loro numero. */
+    public record OreDonateTotali(long minutiSvolti, long minutiPrevisti, long insegnanti) {
+    }
+
+    /**
+     * Somma delle {@link #oreDonate} di tutti gli insegnanti senza tariffa oraria (dashboard di admin e segreteria).
+     * Vuoto se hanno tutti la tariffa.
+     */
+    public Optional<OreDonateTotali> oreDonateTotali() {
+        List<OreDonate> ore = insegnanteRepository.findAll().stream()
+            .filter(insegnante -> !haTariffa(insegnante))
+            .map(this::oreDonate)
+            .toList();
+        if (ore.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new OreDonateTotali(ore.stream().mapToLong(OreDonate::minutiSvolti).sum(),
+            ore.stream().mapToLong(OreDonate::minutiPrevisti).sum(), ore.size()));
+    }
+
+    private OreDonate oreDonate(Insegnante insegnante) {
+        List<Lezione> lezioni = lezioneRepository.findConInsegnantePresente(insegnante.getId()).stream()
+            .filter(l -> l.getCorso().isAttivo()).toList();
+        Map<Long, Long> presenze = presenzePerLezione(insegnante.getId());
+        return new OreDonate(minuti(lezioni, presenze, Lezione::isCompletata), minuti(lezioni, presenze, l -> true));
     }
 
     /** Prospetto per anno scolastico: una riga per insegnante, in ordine di nome. */
