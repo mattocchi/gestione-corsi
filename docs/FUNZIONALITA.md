@@ -392,3 +392,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] con profilo genitore, nei miei figli, evidenzia se mancano dati, attualmente non sta vedendo il badge che vede segreteria in caso di dati mancanti su un allievo _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: in "I miei figli" il badge "Dati mancanti" accanto al nome (su mobile nella card) con il tooltip che dice cosa manca, a cosa serve e di completarlo con Modifica; nel dialog "Dati di …" un avviso in alto con i dati mancanti (i campi restano facoltativi); niente in dashboard._
+
+### ETA DEGLI ALLIEVI
+
+* [ ] sull'elenco allievi la data di nascita è da mostrare nel formato gg/mm/aaaa (italiano) e calcola l'eta come anni compiuti alla data di visualizzazione
+* [ ] inoltre usa le date di nascita per mettere in dashboard admin e segreteria l'eta media degli allievi come card, il piu giovane e il pià anziano
