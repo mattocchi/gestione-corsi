@@ -2,6 +2,7 @@ package it.attocchi.service;
 
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.GruppoCorso;
+import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.User;
@@ -42,7 +43,8 @@ public class CalendarioService {
     /**
      * Lezione del calendario; {@code perChi} è il figlio per il genitore ({@code null} negli altri casi). Nei corsi con
      * gruppi una voce per gruppo: {@code gruppo} è il gruppo della voce, {@code senzaGruppo} la voce di chi non ne
-     * ha (o è in un gruppo senza orario); {@code orario} quello del gruppo, altrimenti quello della lezione.
+     * ha (o è in un gruppo senza orario); {@code orario} quello del gruppo, altrimenti quello della lezione (per
+     * allievi e genitori quello dell'allievo, {@code Iscrizione.orarioDi}).
      */
     public record VoceCalendario(Lezione lezione, String perChi, GruppoCorso gruppo, boolean senzaGruppo, LocalTime orario) {
 
@@ -120,7 +122,7 @@ public class CalendarioService {
      * all'orario della lezione per chi non ha gruppo (o è in un gruppo senza orario); se nessuno dei presenti ha un
      * gruppo con orario, o nei corsi senza gruppi, la lezione intera.
      */
-    private List<VoceCalendario> perGruppo(Collection<Lezione> lezioni) {
+    public List<VoceCalendario> perGruppo(Collection<Lezione> lezioni) {
         Map<Long, Map<Long, GruppoCorso>> gruppiPerCorso = new HashMap<>();
         Map<Long, List<Long>> presentiPerLezione = new HashMap<>();
         List<Lezione> conGruppi = new ArrayList<>();
@@ -174,19 +176,24 @@ public class CalendarioService {
         return gruppi;
     }
 
-    /** Lezioni dell'allievo (le sue presenze), con il suo gruppo e l'orario del gruppo, se ne ha uno. */
+    /**
+     * Tutte le lezioni dell'allievo (le sue presenze), con il suo gruppo e il suo orario ({@link Iscrizione#orarioDi}:
+     * il suo, poi quello del gruppo, poi quello della lezione); {@code perChi} è il nome del figlio per il genitore.
+     */
+    public List<VoceCalendario> vociDi(Allievo allievo, String perChi) {
+        return vociDi(allievo, perChi, l -> true);
+    }
+
     private List<VoceCalendario> vociDi(Allievo allievo, String perChi, Predicate<Lezione> visibile) {
-        Map<Long, GruppoCorso> gruppi = new HashMap<>();
-        iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()).stream()
-            .filter(i -> i.getGruppo() != null)
-            .forEach(i -> gruppi.put(i.getCorso().getId(), i.getGruppo()));
+        Map<Long, Iscrizione> iscrizioni = new HashMap<>();
+        iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()).forEach(i -> iscrizioni.put(i.getCorso().getId(), i));
         return presenzaRepository.findByAllievoId(allievo.getId()).stream()
             .map(Presenza::getLezione)
             .filter(visibile)
             .map(l -> {
-                GruppoCorso gruppo = gruppi.get(l.getCorso().getId());
-                return gruppo == null ? new VoceCalendario(l, perChi)
-                    : new VoceCalendario(l, perChi, gruppo, false, gruppo.getOrario() != null ? gruppo.getOrario() : l.getOrarioInizio());
+                Iscrizione iscrizione = iscrizioni.get(l.getCorso().getId());
+                return iscrizione == null ? new VoceCalendario(l, perChi)
+                    : new VoceCalendario(l, perChi, iscrizione.getGruppo(), false, iscrizione.orarioDi(l));
             })
             .toList();
     }

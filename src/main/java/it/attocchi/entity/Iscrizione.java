@@ -155,6 +155,20 @@ public class Iscrizione {
         return !corso.getGiorniSettimana().contains(giorno) || giorniEffettivi().contains(giorno);
     }
 
+    /**
+     * Orario della lezione per il partecipante: il suo orario se c'è, altrimenti quello del suo gruppo, altrimenti
+     * quello della lezione. Le lezioni spostate o aggiunte a mano hanno il loro orario, scelto per quella data.
+     */
+    public LocalTime orarioDi(Lezione lezione) {
+        if (lezione.isSpostata() || lezione.isAggiunta()) {
+            return lezione.getOrarioInizio();
+        }
+        if (orarioLezione != null) {
+            return orarioLezione;
+        }
+        return gruppo != null && gruppo.getOrario() != null ? gruppo.getOrario() : lezione.getOrarioInizio();
+    }
+
     /** Quota da pagare: quella personalizzata se impostata, altrimenti il costo totale del corso. */
     public BigDecimal getQuotaDovuta() {
         if (quotaPersonalizzata != null) {

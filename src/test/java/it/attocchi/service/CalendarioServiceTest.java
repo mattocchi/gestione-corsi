@@ -101,6 +101,17 @@ class CalendarioServiceTest {
             List<VoceCalendario> allievo = calendarioService.lezioniDelMese("allievo_chitarra3", OTTOBRE, null);
             assertEquals(4, allievo.size());
             assertTrue(allievo.stream().allMatch(v -> v.gruppo().getId().equals(grandi.getId()) && v.orario().equals(LocalTime.of(11, 0))));
+
+            // Senza un orario suo vale quello del gruppo, con un orario suo vale il suo
+            Long chitarra3 = allievoService.findByUsername("allievo_chitarra3").orElseThrow().getId();
+            corsoService.impostaOrario(chitarra.getId(), chitarra3, null);
+            assertTrue(calendarioService.lezioniDelMese("allievo_chitarra3", OTTOBRE, null).stream()
+                .allMatch(v -> v.orario().equals(LocalTime.of(11, 0))));
+            corsoService.impostaOrario(chitarra.getId(), chitarra3, LocalTime.of(11, 30));
+            List<VoceCalendario> suo = calendarioService.lezioniDelMese("allievo_chitarra3", OTTOBRE, null);
+            assertTrue(suo.stream().allMatch(v -> v.orario().equals(LocalTime.of(11, 30))));
+            // Lo staff vede sempre l'orario del gruppo
+            assertEquals(LocalTime.of(11, 0), delGiorno(calendarioService.lezioniDelMese("insegnante2", OTTOBRE, null), 5).get(1).orario());
         } finally {
             corsoService.eliminaGruppo(piccoli.getId());
             corsoService.eliminaGruppo(grandi.getId());

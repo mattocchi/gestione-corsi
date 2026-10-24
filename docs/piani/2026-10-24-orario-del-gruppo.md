@@ -24,7 +24,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `Iscrizione.orarioDi(lezione)`; `CalendarioService`: voci dell'allievo con quell'orario, voci dello staff e dell'allievo pubbliche per la dashboard; test | `Iscrizione`, `CalendarioService`, test | `./mvnw test` | [ ] |
+| 1 | `Iscrizione.orarioDi(lezione)`; `CalendarioService`: voci dell'allievo con quell'orario, voci dello staff e dell'allievo pubbliche per la dashboard; test | `Iscrizione`, `CalendarioService`, test | `./mvnw test` | [x] |
 | 2 | `DashboardService`: prossime lezioni dalle voci del calendario (insegnante: una per gruppo della prima lezione del corso; famiglie: con gruppo e orario); test | `DashboardService`, `DashboardServiceTest` | `./mvnw test` | [ ] |
 | 3 | `HomeView`: riquadro con il gruppo; registro aperto sulla scheda del gruppo (`?gruppo=ID`, anche dal calendario); dettaglio con la riga "Gruppo"; test browserless | `HomeView`, `DettaglioLezioneDialog`, `ElencoLezioni`, `LezioniView`, `LezioniInsegnanteView`, `CalendarioView`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 4 | Orario dei gruppi in Le Mie Lezioni / Lezioni e in "I miei allievi"; colonna "Orario" nel dialog delle lezioni dell'allievo; test | `ElencoLezioni`, `MieiAllieviView`, `PresenzeAllievoDialog`, `MieiCorsiView`, `FigliView`, `ViewAccessTest` | `./mvnw test` | [ ] |
