@@ -399,3 +399,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-24: in Gestione Allievi e in I miei figli "Data Nascita" 05/03/2012 e una colonna "Età" a parte (anni compiuti a oggi, ordinabile; campi della card su mobile)._
 * [x] inoltre usa le date di nascita per mettere in dashboard admin e segreteria l'eta media degli allievi come card, il piu giovane e il pià anziano _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: tre card ("Età media", "Più giovane", "Più anziano") con solo le età in anni (la media arrotondata), calcolate sugli allievi iscritti ad almeno un corso attivo con la data di nascita; nessuna card se nessuno ha la data._
+
+### SETTIMANA TIPO
+
+* [ ] aggiungi una visualizzazione nel calendario in cui si visualizza una settimana "tipo" con tutti i corsi, non è un vero e proprio calendario ma una rappresentazione della settimana dei corsi attivi
