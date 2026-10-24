@@ -7,6 +7,7 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import it.attocchi.config.AssociazioneProperties;
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Indirizzo;
@@ -378,6 +379,7 @@ public class DocumentiService {
             "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante",
             "quota", Formati.euro(situazione.quota()), "giorni", giorni(iscrizione)));
         modello.put("importi", importi(iscrizione, situazione));
+        modello.put("modalitaPagamento", modalitaPagamento(corso.getAnnoScolastico()));
         List<Map<String, String>> pagamenti = ricevuta.pagamenti().stream().map(DocumentiService::pagamento).toList();
         modello.put("pagamenti", pagamenti);
         modello.put("totali", Map.of("quota", Formati.euro(situazione.quota()), "pagato", Formati.euro(situazione.pagato()),
@@ -488,6 +490,22 @@ public class DocumentiService {
         } catch (IOException ex) {
             return null;
         }
+    }
+
+    /**
+     * Modalità di pagamento della conferma: unica soluzione entro il 30 novembre o due rate (30 novembre e 31
+     * gennaio), con gli anni dall'anno scolastico del corso ("2026/2027"); senza anno scolastico valido le date senza anno.
+     */
+    static String modalitaPagamento(String annoScolastico) {
+        String novembre = "30 novembre";
+        String gennaio = "31 gennaio";
+        if (AnnoScolastico.valido(annoScolastico)) {
+            int inizio = Integer.parseInt(annoScolastico.substring(0, 4));
+            novembre += " " + inizio;
+            gennaio += " " + (inizio + 1);
+        }
+        return "Il pagamento può avvenire in un'unica soluzione entro il " + novembre + " oppure in due rate: la prima entro il "
+            + novembre + " e la seconda entro il " + gennaio + ".";
     }
 
     /** Giorni di lezione per la conferma: "sabato alle 10:00" dal gruppo, altrimenti i giorni del corso. */

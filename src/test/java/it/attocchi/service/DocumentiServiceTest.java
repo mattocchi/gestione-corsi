@@ -92,6 +92,9 @@ class DocumentiServiceTest {
         assertTrue(testo.contains("600,00 €"), testo);
         assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
         assertTrue(testo.contains("Già pagato"), testo);
+        // Unica soluzione o due rate, con gli anni dell'anno scolastico 2024/2025
+        assertTrue(testo.replaceAll("\\s+", " ").contains("in un'unica soluzione entro il 30 novembre 2024 oppure in due rate: "
+            + "la prima entro il 30 novembre 2024 e la seconda entro il 31 gennaio 2025."), testo);
         // Regole su recuperi, assenze e rinuncia, uguali nel PDF e nell'email
         String regole = testo.replaceAll("\\s+", " ");
         assertTrue(regole.contains("Lezioni, assenze e recuperi"), testo);
@@ -102,6 +105,7 @@ class DocumentiServiceTest {
         String email = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
         assertTrue(email.contains("Gentile Mario Rossi"));
         assertTrue(email.contains("IT60X0542811101000000123456"));
+        assertTrue(email.contains("la seconda entro il 31 gennaio 2025"));
         String regoleEmail = email.replaceAll("\\s+", " ");
         assertTrue(regoleEmail.contains("Lezioni, assenze e recuperi"));
         assertTrue(regoleEmail.contains("la lezione non viene recuperata ed è comunque dovuta"));
@@ -109,6 +113,13 @@ class DocumentiServiceTest {
         assertFalse(email.contains("data:image"));
         assertEquals("conferma-iscrizione-corso-di-canto-" + iscrizione.getAllievo().getNomeCompleto().toLowerCase().replace(' ', '-') + ".pdf",
             documentiService.nomeFile(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione));
+    }
+
+    @Test
+    void modalitaPagamento_senzaAnnoScolasticoLeDateSenzaAnno() {
+        assertEquals("Il pagamento può avvenire in un'unica soluzione entro il 30 novembre oppure in due rate: la prima "
+            + "entro il 30 novembre e la seconda entro il 31 gennaio.", DocumentiService.modalitaPagamento(null));
+        assertTrue(DocumentiService.modalitaPagamento("2026/2027").endsWith("entro il 31 gennaio 2027."));
     }
 
     @Test

@@ -8,8 +8,9 @@
 <p>confermiamo l'iscrizione di <strong>${allievo.nome}</strong> al corso <strong>${corso.nome}</strong>
   (anno scolastico ${corso.anno}<#if corso.insegnante?has_content>, ${corso.etichettaInsegnante?lower_case} ${corso.insegnante}</#if>)<#if corso.giorni?has_content>, con lezione il ${corso.giorni}</#if>.</p>
 <@i.blocco email=true/>
+<p>${modalitaPagamento}</p>
 <#if associazione.iban?has_content>
-<p>Il pagamento può essere effettuato con bonifico intestato a ${associazione.nome}, IBAN <strong>${associazione.iban}</strong>,
+<p>Si può pagare con bonifico intestato a ${associazione.nome}, IBAN <strong>${associazione.iban}</strong>,
   indicando nella causale &quot;${corso.nome} ${corso.anno} – ${allievo.nome}&quot;.</p>
 </#if>
 <@r.regole email=true/>

@@ -15,13 +15,14 @@
 <@c.datiIscrizione/>
 <h2>Importo</h2>
 <@i.blocco/>
-<#if associazione.iban?has_content>
 <div class="riquadro">
-  Il pagamento può essere effettuato con bonifico intestato a <strong>${associazione.nome}</strong>,
+  ${modalitaPagamento}
+  <#if associazione.iban?has_content>
+  <br/>Si può pagare con bonifico intestato a <strong>${associazione.nome}</strong>,
   IBAN <strong>${associazione.iban}</strong>, indicando nella causale
   &quot;${corso.nome} ${corso.anno} – ${allievo.nome}&quot;.
+  </#if>
 </div>
-</#if>
 <@r.regole/>
 </body>
 </html>
