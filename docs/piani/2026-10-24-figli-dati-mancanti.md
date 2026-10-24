@@ -20,7 +20,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Badge nella lista e nella card, avviso nel dialog (badge condiviso `DocumentiView.datiMancanti` reso pubblico); test browserless | `FigliView`, `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -28,3 +28,6 @@
 
 ## Registro
 
+- `./mvnw test`: 284 test superati; nuovo `ViewAccessTest.genitore_vedeIDatiMancantiDeiFigli` (badge e tooltip solo sul figlio senza codice fiscale, avviso nel dialog).
+- Browser: non verificato (nei dati di sviluppo tutti i figli hanno i dati completi); l'avviso usa i token Aura `--aura-orange` / `--aura-orange-text`.
+- Lasciato aperto: nessuno.
