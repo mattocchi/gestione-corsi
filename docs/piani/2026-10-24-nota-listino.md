@@ -18,7 +18,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Tolta la nota da service, macro e stili; test aggiornato (la frase non c'è più) | `DocumentiService`, `importi.ftlh`, `documenti/comune.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [x] |
-| 2 | Registro finale | questo piano | build e test | [ ] |
+| 2 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -26,3 +26,6 @@
 
 ## Registro
 
+- `./mvnw test`: 276 test superati; `DocumentiServiceTest.scontoApplicato_…` verifica che la frase non ci sia più.
+- CLAUDE.md: nessuna modifica (non citava la nota).
+- Lasciato aperto: nessuno.
