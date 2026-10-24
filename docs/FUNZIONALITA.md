@@ -391,3 +391,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### I MIEI FIGLI
 
 * [ ] con profilo genitore, nei miei figli, evidenzia se mancano dati, attualmente non sta vedendo il badge che vede segreteria in caso di dati mancanti su un allievo
+  _Chiarimento 2026-10-24: in "I miei figli" il badge "Dati mancanti" accanto al nome (su mobile nella card) con il tooltip che dice cosa manca, a cosa serve e di completarlo con Modifica; nel dialog "Dati di …" un avviso in alto con i dati mancanti (i campi restano facoltativi); niente in dashboard._
