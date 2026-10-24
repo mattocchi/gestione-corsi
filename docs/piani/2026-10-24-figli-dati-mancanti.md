@@ -19,7 +19,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Badge nella lista e nella card, avviso nel dialog (badge condiviso `DocumentiView.datiMancanti` reso pubblico); test browserless | `FigliView`, `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | Badge nella lista e nella card, avviso nel dialog (badge condiviso `DocumentiView.datiMancanti` reso pubblico); test browserless | `FigliView`, `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito

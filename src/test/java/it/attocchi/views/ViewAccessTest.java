@@ -25,6 +25,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -3993,6 +3994,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals(2, grid.size());
         assertEquals("1", grid.getCellText(0, 2));
         assertEquals("1", grid.getCellText(1, 2));
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    @SuppressWarnings("unchecked")
+    void genitore_vedeIDatiMancantiDeiFigli() {
+        Allievo canto3 = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        String codiceFiscale = canto3.getCodiceFiscale();
+        canto3.setCodiceFiscale(null);
+        allievoService.save(canto3);
+        try {
+            navigate(FigliView.class);
+            var grid = test((Grid<Allievo>) find(Grid.class).single());
+            int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).equals(canto3)).findFirst().orElseThrow();
+            Badge badge = (Badge) grid.getCellComponent(riga, 0).getChildren().filter(Badge.class::isInstance).findFirst().orElseThrow();
+            assertEquals("Dati mancanti", badge.getText());
+            assertEquals("Manca codice fiscale di Allievo Canto3: serve per le ricevute. Completalo con il pulsante Modifica.",
+                Tooltip.forComponent(badge).getText());
+            // L'altro figlio ha i dati: niente badge
+            assertTrue(grid.getCellComponent(1 - riga, 0).getChildren().noneMatch(Badge.class::isInstance));
+
+            // Nel dialog di modifica l'avviso in alto
+            test(pulsante(grid.getCellComponent(riga, 3), "Modifica")).click();
+            Dialog dialog = find(Dialog.class).single();
+            assertTrue(find(Span.class).from(dialog).all().stream()
+                .anyMatch(s -> "Manca codice fiscale di Allievo Canto3: serve per le ricevute.".equals(s.getText())));
+        } finally {
+            canto3.setCodiceFiscale(codiceFiscale);
+            allievoService.save(canto3);
+        }
     }
 
     @Test

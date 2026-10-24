@@ -3,6 +3,7 @@ package it.attocchi.views.genitore;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.binder.Binder;
@@ -23,6 +24,7 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
+import it.attocchi.service.DocumentiService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.PagamentoService.Situazione;
@@ -31,6 +33,7 @@ import it.attocchi.service.AllievoService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
 import it.attocchi.views.CardMobile;
+import it.attocchi.views.DocumentiView;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.PagamentiAllievoDialog;
@@ -79,7 +82,8 @@ public class FigliView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        gridFigli.addColumn(Allievo::getNomeCompleto).setHeader("Nome").setSortable(true);
+        gridFigli.addComponentColumn(FigliView::nome).setHeader("Nome")
+            .setComparator(Allievo::getNomeCompleto).setSortable(true);
         gridFigli.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
             .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
         gridFigli.addColumn(allievo -> allievo.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
@@ -88,10 +92,32 @@ public class FigliView extends VerticalLayout {
 
         CardMobile.per(gridFigli)
             .titolo(Allievo::getNomeCompleto)
+            .stato(allievo -> DocumentiView.datiMancanti(avvisoDatiMancanti(allievo)))
             .campo("Data Nascita", allievo -> Formati.data(allievo.getDataNascita()))
             .campo("N. Corsi", allievo -> allievo.getCorsi().size())
             .azioni(this::createAzioni)
             .applica();
+    }
+
+    /** Nome con il badge "Dati mancanti" se mancano dati per i documenti (come in Gestione Allievi). */
+    private static HorizontalLayout nome(Allievo allievo) {
+        HorizontalLayout cella = new HorizontalLayout(new Span(allievo.getNomeCompleto()));
+        cella.addClassNames("items-center");
+        var badge = DocumentiView.datiMancanti(avvisoDatiMancanti(allievo));
+        if (badge != null) {
+            cella.add(badge);
+        }
+        return cella;
+    }
+
+    /** Cosa manca e a cosa serve, con l'invito a completarlo; {@code null} se i dati ci sono. */
+    private static String avvisoDatiMancanti(Allievo allievo) {
+        String avviso = DocumentiService.avvisoDatiMancanti(allievo);
+        if (avviso == null) {
+            return null;
+        }
+        boolean piu = allievo.getDatiMancantiPerDocumenti().size() > 1;
+        return avviso + ". " + (piu ? "Completali" : "Completalo") + " con il pulsante Modifica.";
     }
 
     private HorizontalLayout createAzioni(Allievo allievo) {
@@ -117,6 +143,14 @@ public class FigliView extends VerticalLayout {
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzo);
         content.addClassNames("p-0");
+        // In alto, cosa manca per conferme e ricevute (i campi restano facoltativi)
+        String mancanti = DocumentiService.avvisoDatiMancanti(allievo);
+        if (mancanti != null) {
+            Div avviso = new Div(VaadinIcon.WARNING.create(), new Span(mancanti + "."));
+            avviso.addClassNames("flex items-start gap-2 p-3 rounded-(--vaadin-radius-m) border border-(--aura-orange)"
+                + " text-(--aura-orange-text)");
+            content.addComponentAsFirst(avviso);
+        }
 
         Button salva = new Button("Salva", e -> {
             boolean valido = binder.validate().isOk() & utente.validate();

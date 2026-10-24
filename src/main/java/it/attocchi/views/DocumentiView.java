@@ -278,7 +278,7 @@ public class DocumentiView extends VerticalLayout {
     }
 
     /** Badge "Dati mancanti" con l'avviso nel tooltip, {@code null} se i dati ci sono. */
-    static Badge datiMancanti(String avviso) {
+    public static Badge datiMancanti(String avviso) {
         if (avviso == null) {
             return null;
         }
