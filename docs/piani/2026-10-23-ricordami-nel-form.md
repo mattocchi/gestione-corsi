@@ -19,7 +19,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Casella nello slot `custom-form-area` del `LoginForm`; test che sia figlia del form in quello slot; `CLAUDE.md` | `LoginView.java`, `security/LoginTest` o `ViewAccessTest`, `CLAUDE.md` | `./mvnw test`; browser | [x] Ripreso il 2026-10-24 dallo stash (lasciato a metà il 23/10) |
-| 2 | Registro finale | questo piano | build e test | [ ] |
+| 2 | Registro finale | questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -27,4 +27,7 @@
 
 ## Registro
 
-_(da compilare durante l'esecuzione)_
+- Il passo 1 era rimasto nello stash `stash@{0}` dal 23/10 (interrotto da un'altra richiesta) e non era mai stato committato: per questo in produzione la casella era ancora sotto il form. Ripreso il 2026-10-24, lo stash si applica senza conflitti.
+- `./mvnw test`: 277 test superati, nuovo `ViewAccessTest.login_ricordamiNelFormSopraAccedi`.
+- Browser (dev): casella sotto la password e sopra "Accedi", "Password dimenticata?" sotto; spuntandola si imposta il cookie `ricordami=1` e l'accesso con admin funziona.
+- Lasciato aperto: lo stash `stash@{0}` si può eliminare (contenuto ora committato).
