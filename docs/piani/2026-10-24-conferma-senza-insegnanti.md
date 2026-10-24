@@ -18,7 +18,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Parametro `insegnanti` della macro (falso nella conferma), frase dell'email senza insegnanti; test | `comune.ftlh`, `conferma.ftlh` (documenti ed email), `DocumentiServiceTest` | `./mvnw test` | [x] |
-| 2 | `CLAUDE.md` (se serve) e registro finale | questo piano | build e test | [ ] |
+| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -26,3 +26,5 @@
 
 ## Registro
 
+- `./mvnw test`: 281 test superati; `DocumentiServiceTest` verifica che conferma (PDF, email, esempio) non nomini gli insegnanti e che la ricevuta sì.
+- Lasciato aperto: nessuno.
