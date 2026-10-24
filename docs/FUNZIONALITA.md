@@ -351,7 +351,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### GESTIONE ALLIEVI
 
-* [ ] nella gestione dell'allievo da admin o segreteria dove posso assegnare il genitore sarebbe utile poterlo creare al volo inserendo nome cognome email e cellulare
+* [x] nella gestione dell'allievo da admin o segreteria dove posso assegnare il genitore sarebbe utile poterlo creare al volo inserendo nome cognome email e cellulare _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: nel campo "Genitore" del dialog dell'allievo si scrive un nome non presente e con Invio (o con il pulsante "+") si apre "Nuovo genitore": obbligatori nome e cognome, email e cellulare facoltativi; avviso sugli omonimi; utente creato disattivato, l'accesso si dà poi in Gestione Utenti._
 
 ### CONFERMA ISCRIZIONE

@@ -1066,6 +1066,57 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_creaIlGenitoreAlVoloDalDialogDellAllievo() {
+        navigate(AllieviView.class);
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Pietro");
+        test(find(TextField.class).withLabel("Cognome").single()).setValue("Gialli");
+        // Un nome non presente nel campo "Genitore" apre il dialog con nome e cognome già scritti
+        ComboBox<Genitore> campo = find(ComboBox.class).withLabel("Genitore").single();
+        com.vaadin.flow.component.ComponentUtil.fireEvent(campo,
+            new com.vaadin.flow.component.combobox.ComboBoxBase.CustomValueSetEvent<>(campo, true, "Laura Gialli"));
+        Dialog nuovoGenitore = find(Dialog.class).all().stream().filter(d -> "Nuovo genitore".equals(d.getHeaderTitle()))
+            .findFirst().orElseThrow();
+        assertEquals("Laura", find(TextField.class).from(nuovoGenitore).withLabel("Nome").single().getValue());
+        assertEquals("Gialli", find(TextField.class).from(nuovoGenitore).withLabel("Cognome").single().getValue());
+        test(find(TextField.class).from(nuovoGenitore).withLabel("Cellulare").single()).setValue("333 7654321");
+        test(find(Button.class).from(nuovoGenitore).withText("Crea").single()).click();
+
+        Genitore genitore = genitoreService.omonimi("Laura", "Gialli").getFirst();
+        Allievo nuovo = null;
+        try {
+            assertEquals(genitore, campo.getValue());
+            assertEquals("333 7654321", genitore.getUser().getTelefono());
+            assertFalse(genitore.getUser().isEnabled());
+            test(find(Button.class).withText("Salva").single()).click();
+            nuovo = allievoService.omonimi("Pietro", "Gialli").getFirst();
+            assertEquals(genitore, nuovo.getGenitore());
+
+            // Con il pulsante "+" il dialog si apre vuoto; un omonimo si può scegliere al posto di uno nuovo
+            test(find(Button.class).withText("Nuovo Allievo").single()).click();
+            test(find(Button.class).all().stream().filter(b -> "Nuovo genitore".equals(b.getElement().getAttribute("aria-label")))
+                .findFirst().orElseThrow()).click();
+            Dialog vuoto = find(Dialog.class).all().stream().filter(d -> "Nuovo genitore".equals(d.getHeaderTitle()))
+                .findFirst().orElseThrow();
+            assertEquals("", find(TextField.class).from(vuoto).withLabel("Nome").single().getValue());
+            test(find(TextField.class).from(vuoto).withLabel("Nome").single()).setValue("laura");
+            test(find(TextField.class).from(vuoto).withLabel("Cognome").single()).setValue("gialli");
+            test(find(Button.class).from(vuoto).withText("Scegli questo").single()).click();
+            assertEquals(genitore, find(ComboBox.class).withLabel("Genitore").single().getValue());
+            assertEquals(1, genitoreService.omonimi("Laura", "Gialli").size());
+        } finally {
+            if (nuovo != null) {
+                allievoService.delete(nuovo);
+                userService.delete(nuovo.getUser());
+            }
+            genitoreService.elimina(genitore.getId());
+            userService.delete(genitore.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
     void segreteria_creaAllievoSenzaUsername_utenteGeneratoEDisattivato() {
         navigate(AllieviView.class);
         test(find(Button.class).withText("Nuovo Allievo").single()).click();
@@ -1107,7 +1158,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Nuovo Allievo").single()).click();
         test(find(TextField.class).withLabel("Nome").single()).setValue("Anna");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Adulta");
-        assertEquals("Lascia vuoto per gli allievi adulti", find(ComboBox.class).withLabel("Genitore").single().getHelperText());
+        assertTrue(find(ComboBox.class).withLabel("Genitore").single().getHelperText().startsWith("Lascia vuoto per gli allievi adulti"));
         test(find(Button.class).withText("Salva").single()).click();
         assertFalse(find(Dialog.class).exists());
         Allievo adulta = allievoService.findAll().stream()

@@ -186,8 +186,16 @@ public class AllieviView extends VerticalLayout {
         genitore.setItemLabelGenerator(Genitore::getNomeCompleto);
         // Facoltativo: gli allievi adulti non hanno genitore (documenti ed email vanno all'allievo)
         genitore.setClearButtonVisible(true);
-        genitore.setHelperText("Lascia vuoto per gli allievi adulti");
+        genitore.setHelperText("Lascia vuoto per gli allievi adulti; scrivi un nome nuovo e premi Invio per crearlo");
         binder.forField(genitore).bind(Allievo::getGenitore, Allievo::setGenitore);
+        // Genitore non ancora presente: si crea al volo scrivendone il nome (Invio) o con il pulsante "+"
+        genitore.setAllowCustomValue(true);
+        genitore.addCustomValueSetListener(e -> nuovoGenitore(genitore, e.getDetail()));
+        Button nuovoGenitore = ViewSupport.iconButton(VaadinIcon.PLUS, "Nuovo genitore", e -> nuovoGenitore(genitore, ""));
+        nuovoGenitore.setTooltipText("Nuovo genitore");
+        genitore.addClassNames("grow");
+        HorizontalLayout sceltaGenitore = new HorizontalLayout(genitore, nuovoGenitore);
+        sceltaGenitore.addClassNames("w-full items-baseline gap-2");
         AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
         binder.readBean(allievo);
 
@@ -197,7 +205,7 @@ public class AllieviView extends VerticalLayout {
         mostraIndirizzoGenitore(indirizzoGenitore, genitore.getValue());
 
         FormLayout utenteForm = new FormLayout(utente.getComponents());
-        utenteForm.add(genitore);
+        utenteForm.add(sceltaGenitore);
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e genitore"), utenteForm,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzoGenitore);
@@ -223,6 +231,14 @@ public class AllieviView extends VerticalLayout {
         dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
         dialog.open();
+    }
+
+    /** Crea un genitore al volo ({@link NuovoGenitoreRapidoDialog}) e lo sceglie nel campo. */
+    private void nuovoGenitore(ComboBox<Genitore> campo, String testo) {
+        new NuovoGenitoreRapidoDialog(genitoreService, testo, scelto -> {
+            campo.setItems(genitoreService.findAll());
+            campo.setValue(scelto);
+        }).open();
     }
 
     /** Indirizzo del genitore, mostrato quando l'allievo non ne ha uno proprio. */
