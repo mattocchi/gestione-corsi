@@ -26,7 +26,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `GenitoreService.creaRapido` e `omonimi`; test | `GenitoreService`, test | `./mvnw test` | [ ] |
+| 1 | `GenitoreService.creaRapido` e `omonimi`; test | `GenitoreService`, `GenitoreServiceTest` | `./mvnw test` | [x] |
 | 2 | `NuovoGenitoreRapidoDialog`; in `AllieviView` valori personalizzati del campo "Genitore" e pulsante "+"; test browserless | `NuovoGenitoreRapidoDialog`, `AllieviView`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 3 | Modalità di pagamento (unica soluzione o due rate) nella conferma PDF ed email; test | `DocumentiService`, template, `DocumentiServiceTest` | `./mvnw test` | [ ] |
 | 4 | Regole "Lezioni, assenze e recuperi" riscritte; test | `regole-corso.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [ ] |

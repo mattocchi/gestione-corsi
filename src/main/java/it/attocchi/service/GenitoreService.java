@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -61,6 +62,33 @@ public class GenitoreService {
         }
         genitore.setUser(userService.save(user, rawPassword));
         return genitoreRepository.save(genitore);
+    }
+
+    /**
+     * Inserimento rapido di un genitore dal dialog dell'allievo: nome e cognome obbligatori, email e cellulare
+     * facoltativi; utente generato e disattivato come in {@link #salva} (l'accesso si dà poi in Gestione Utenti).
+     */
+    @Transactional
+    public Genitore creaRapido(String nome, String cognome, String email, String telefono) {
+        if (nome == null || nome.isBlank() || cognome == null || cognome.isBlank()) {
+            throw new IllegalArgumentException("Nome e cognome sono obbligatori");
+        }
+        User user = new User();
+        user.setNome(nome.strip());
+        user.setCognome(cognome.strip());
+        user.setEmail(email != null && !email.isBlank() ? email.strip() : null);
+        user.setTelefono(telefono != null && !telefono.isBlank() ? telefono.strip() : null);
+        return salva(new Genitore(), user, null);
+    }
+
+    /** Genitori con lo stesso nome e cognome (senza distinguere maiuscole e spazi ai lati), per evitare doppioni. */
+    public List<Genitore> omonimi(String nome, String cognome) {
+        String n = nome != null ? nome.strip() : "";
+        String c = cognome != null ? cognome.strip() : "";
+        return genitoreRepository.findAll().stream()
+            .filter(g -> g.getUser() != null && n.equalsIgnoreCase(Objects.toString(g.getUser().getNome(), "").strip())
+                && c.equalsIgnoreCase(Objects.toString(g.getUser().getCognome(), "").strip()))
+            .toList();
     }
 
     /**
