@@ -372,3 +372,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   Se il recupero non può essere organizzato, la lezione verrà comunque conteggiata e dovrà essere pagata."
   _Chiarimento 2026-10-24: titolo "Assenze dell'allievo (solo lezioni individuali)" al posto di "Se l'allievo non può venire"; testo dell'utente invariato, primo paragrafo intero e i tre casi (almeno una settimana, preavviso inferiore, recupero impossibile) in un sotto-elenco; nel PDF e nell'email; se la conferma non sta più su una pagina A4 si compatta ancora (fino a 9 pt)._
 * [ ] rimuovi "a suo insindacabile giudizio" che è troppo
+  _Chiarimento 2026-10-24: nella regola "Se decidete di ritirarvi" della conferma (PDF ed email) la frase diventa "Situazioni particolari saranno valutate caso per caso dalla segreteria dei corsi."; richiesta univoca, nessuna domanda._
