@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | 1 | `Allievo.getEta(oggi)`; colonne "Data Nascita" (gg/mm/aaaa) ed "Età" in Gestione Allievi e I miei figli; test | `Allievo`, `AllieviView`, `FigliView`, test | `./mvnw test` | [x] `Formati.eta` e `Formati.PER_ETA` condivisi |
 | 2 | `DashboardService.etaAllievi()` e card nel Riepilogo generale; test | `IscrizioneRepository`, `DashboardService`, `HomeView`, test | `./mvnw test` | [x] |
-| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,7 @@
 
 ## Registro
 
+- `./mvnw test`: 286 test superati. Nuovi: `FormatiTest.eta_anniCompiutiAOggi`, `DashboardServiceTest.etaAllievi_deiCorsiAttiviConLaDataDiNascita`; `ViewAccessTest` controlla data ed età in Gestione Allievi e le tre card nel Riepilogo generale (indici delle card e delle colonne aggiornati).
+- Nei dati di sviluppo, al 24/10/2026: età media 15, più giovane 12, più anziano 18.
+- Browser: non verificato (card e colonne coperte dai test browserless).
+- Lasciato aperto: nessuno.
