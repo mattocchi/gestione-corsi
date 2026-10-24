@@ -35,11 +35,12 @@ public class LezioniView extends VerticalLayout implements BeforeEnterObserver {
         elenco.addClassNames("grow");
     }
 
-    /** Con {@code ?lezione=ID} (da "Gestisci presenze" del calendario) apre subito le presenze di quella lezione. */
+    /**
+     * Con {@code ?lezione=ID} (da "Gestisci presenze" del calendario o dalla prossima lezione) apre subito le presenze
+     * di quella lezione, con {@code &gruppo=…} sulla scheda di quel gruppo.
+     */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        event.getLocation().getQueryParameters().getSingleParameter(ElencoLezioni.PARAMETRO_LEZIONE)
-            .flatMap(ElencoLezioni::idLezione)
-            .ifPresent(elenco::apriPresenze);
+        elenco.apriPresenze(event.getLocation().getQueryParameters());
     }
 }

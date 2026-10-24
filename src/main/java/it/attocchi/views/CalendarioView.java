@@ -220,8 +220,6 @@ public class CalendarioView extends VerticalLayout {
 
     /** Dettagli in sola lettura; "Gestisci presenze" per admin, segreteria e gli insegnanti del corso. */
     private void dettagli(VoceCalendario voce) {
-        String gruppo = voce.gruppo() != null ? Formati.gruppo(voce.gruppo()) : voce.senzaGruppo() ? "Senza gruppo" : null;
-        DettaglioLezioneDialog.apri(voce.lezione(), voce.perChi(), gruppo, voce.gruppo() != null ? voce.orario() : null,
-            numero(voce.lezione()), username, gestione);
+        DettaglioLezioneDialog.apri(voce, numero(voce.lezione()), username, gestione);
     }
 }

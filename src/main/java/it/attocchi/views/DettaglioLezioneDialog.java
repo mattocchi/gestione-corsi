@@ -14,16 +14,20 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.QueryParameters;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
+import it.attocchi.service.CalendarioService.VoceCalendario;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
 
 import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * Dettagli in sola lettura di una lezione (Calendario e prossima lezione della dashboard): numero, data e orario,
  * insegnanti, stato, note; le note per lo staff e "Gestisci presenze" solo ad admin, segreteria e insegnanti del
- * corso (la seconda porta a Lezioni o Le Mie Lezioni con {@code ?lezione=ID}).
+ * corso (la seconda porta a Lezioni o Le Mie Lezioni con {@code ?lezione=ID} e il gruppo della voce).
  */
 public final class DettaglioLezioneDialog {
 
@@ -31,18 +35,17 @@ public final class DettaglioLezioneDialog {
     }
 
     /**
-     * @param perChi   l'allievo per il genitore, {@code null} negli altri casi
-     * @param orario   l'orario della lezione dell'allievo; {@code null} = quello della lezione (con la fine)
+     * Dettagli di una voce del calendario o della prossima lezione: allievo per il genitore, gruppo ("Senza gruppo"
+     * per chi non ne ha) e orario della voce; "Gestisci presenze" apre il registro sulla scheda del gruppo.
+     *
      * @param numero   il numero della lezione già formattato ({@code Formati.numeroLezione})
      * @param gestione admin o segreteria
      */
-    public static void apri(Lezione lezione, String perChi, LocalTime orario, String numero, String username, boolean gestione) {
-        apri(lezione, perChi, null, orario, numero, username, gestione);
-    }
-
-    /** Come sopra, con il gruppo della voce del calendario ({@code gruppo} già formattato, {@code null} = nessuno). */
-    public static void apri(Lezione lezione, String perChi, String gruppo, LocalTime orario, String numero, String username,
-                            boolean gestione) {
+    public static void apri(VoceCalendario voce, String numero, String username, boolean gestione) {
+        Lezione lezione = voce.lezione();
+        String gruppo = voce.gruppo() != null ? Formati.gruppo(voce.gruppo()) : voce.senzaGruppo() ? "Senza gruppo" : null;
+        // Allo stesso orario della lezione si mostra anche la fine
+        LocalTime orario = Objects.equals(voce.orario(), lezione.getOrarioInizio()) ? null : voce.orario();
         Dialog dialog = ViewSupport.dialog(lezione.getCorso().getNome(), "440px");
         String quando = orario != null ? ", " + Formati.ora(orario)
             : lezione.getOrarioInizio() != null ? ", " + Formati.ora(lezione.getOrarioInizio())
@@ -59,8 +62,8 @@ public final class DettaglioLezioneDialog {
         if (gruppo != null) {
             contenuto.add(riga("Gruppo", gruppo));
         }
-        if (perChi != null) {
-            contenuto.add(riga("Allievo", perChi));
+        if (voce.perChi() != null) {
+            contenuto.add(riga("Allievo", voce.perChi()));
         }
         contenuto.add(riga("Stato", badge(lezione)));
         if (lezione.isNonEffettuata() && lezione.getMotivoNonEffettuata() != null) {
@@ -80,7 +83,7 @@ public final class DettaglioLezioneDialog {
         if (staff) {
             Button presenze = new Button("Gestisci presenze", VaadinIcon.CLIPBOARD_CHECK.create(), e -> {
                 dialog.close();
-                apriPresenze(lezione, gestione);
+                apriPresenze(voce, gestione);
             });
             presenze.addThemeVariants(ButtonVariant.PRIMARY);
             dialog.getFooter().add(presenze);
@@ -88,10 +91,26 @@ public final class DettaglioLezioneDialog {
         dialog.open();
     }
 
-    /** Registro delle presenze della lezione: Lezioni per admin e segreteria, Le Mie Lezioni per l'insegnante. */
-    public static void apriPresenze(Lezione lezione, boolean gestione) {
-        QueryParameters parametri = QueryParameters.of(ElencoLezioni.PARAMETRO_LEZIONE, String.valueOf(lezione.getId()));
-        UI.getCurrent().navigate(gestione ? LezioniView.class : LezioniInsegnanteView.class, parametri);
+    /** Registro delle presenze della lezione della voce, sulla scheda del suo gruppo. */
+    public static void apriPresenze(VoceCalendario voce, boolean gestione) {
+        apriPresenze(voce.lezione(), schedaDi(voce), gestione);
+    }
+
+    /**
+     * Registro delle presenze della lezione: Lezioni per admin e segreteria, Le Mie Lezioni per l'insegnante; con
+     * {@code scheda} (id del gruppo o {@link ElencoLezioni#SENZA_GRUPPO}) aperto sulla scheda di quel gruppo.
+     */
+    private static void apriPresenze(Lezione lezione, String scheda, boolean gestione) {
+        Map<String, String> valori = new HashMap<>();
+        valori.put(ElencoLezioni.PARAMETRO_LEZIONE, String.valueOf(lezione.getId()));
+        if (scheda != null) {
+            valori.put(ElencoLezioni.PARAMETRO_GRUPPO, scheda);
+        }
+        UI.getCurrent().navigate(gestione ? LezioniView.class : LezioniInsegnanteView.class, QueryParameters.simple(valori));
+    }
+
+    private static String schedaDi(VoceCalendario voce) {
+        return voce.gruppo() != null ? String.valueOf(voce.gruppo().getId()) : voce.senzaGruppo() ? ElencoLezioni.SENZA_GRUPPO : null;
     }
 
     private static Badge badge(Lezione lezione) {

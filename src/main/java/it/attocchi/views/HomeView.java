@@ -72,7 +72,7 @@ public class HomeView extends VerticalLayout {
         if (securityService.hasRole("INSEGNANTE")) {
             dashboardService.prossimeLezioniInsegnante(username)
                 .forEach(p -> prossime.add(prossimaLezione(p, gruppiPerCorso,
-                    () -> DettaglioLezioneDialog.apriPresenze(p.lezione(), false))));
+                    () -> DettaglioLezioneDialog.apriPresenze(p, false))));
         }
         List<VoceCalendario> proprie = new ArrayList<>();
         if (securityService.hasRole("ALLIEVO")) {
@@ -81,9 +81,8 @@ public class HomeView extends VerticalLayout {
         if (securityService.hasRole("GENITORE")) {
             proprie.addAll(dashboardService.prossimeLezioniDeiFigli(username));
         }
-        proprie.forEach(p -> prossime.add(prossimaLezione(p, gruppiPerCorso, () -> DettaglioLezioneDialog.apri(p.lezione(),
-            p.perChi(), p.orario(), Formati.numeroLezione(p.lezione(), gruppiPerCorso.get(p.lezione().getCorso().getId())),
-            username, false))));
+        proprie.forEach(p -> prossime.add(prossimaLezione(p, gruppiPerCorso, () -> DettaglioLezioneDialog.apri(p,
+            Formati.numeroLezione(p.lezione(), gruppiPerCorso.get(p.lezione().getCorso().getId())), username, false))));
         if (!prossime.isEmpty()) {
             add(sezione(prossime.size() == 1 ? "Prossima lezione" : "Prossime lezioni", prossime.toArray(Card[]::new)));
         }
@@ -204,8 +203,8 @@ public class HomeView extends VerticalLayout {
     }
 
     /**
-     * Riquadro cliccabile (anche con Invio da tastiera) della prossima lezione: corso, data e orario, numero, allievo
-     * per il genitore e "Oggi" o "Domani".
+     * Riquadro cliccabile (anche con Invio da tastiera) della prossima lezione: corso, data e orario (del gruppo o
+     * dell'allievo), numero con il gruppo, allievo per il genitore e "Oggi" o "Domani".
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Card prossimaLezione(VoceCalendario prossima, Map<Long, List<GruppoCorso>> gruppi,
@@ -219,7 +218,7 @@ public class HomeView extends VerticalLayout {
         String quando = Formati.data(lezione.getData()) + (prossima.orario() != null ? ", " + Formati.ora(prossima.orario()) : "");
         Span data = new Span(quando);
         data.addClassNames("font-(--aura-font-weight-semibold) text-[1.25rem] leading-[1.2]");
-        String numero = "Lezione " + Formati.numeroLezione(lezione, gruppi.get(lezione.getCorso().getId()))
+        String numero = "Lezione " + Formati.numeroLezione(prossima, gruppi.get(lezione.getCorso().getId()))
             + (prossima.perChi() != null ? " · " + prossima.perChi() : "");
         Span dettaglio = new Span(numero);
         dettaglio.addClassNames("block", Stili.TESTO_SECONDARIO);

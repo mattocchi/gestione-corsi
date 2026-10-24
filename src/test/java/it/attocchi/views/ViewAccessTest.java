@@ -1824,6 +1824,82 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("insegnante2")
+    @SuppressWarnings("unchecked")
+    void insegnante_prossimaLezioneUnRiquadroPerGruppo() {
+        // Chitarra il prossimo sabato: Piccoli alle 10 (Chitarra1), Grandi alle 11 (Chitarra3), gli altri senza gruppo
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        GruppoCorso piccoli = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        GruppoCorso grandi = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Grandi", DayOfWeek.SATURDAY, LocalTime.of(11, 0)));
+        List<Allievo> assegnati = List.of("allievo_chitarra1", "allievo_chitarra3").stream()
+            .map(u -> allievoService.findByUsername(u).orElseThrow()).toList();
+        corsoService.assegnaGruppo(chitarra.getId(), assegnati.get(0).getId(), piccoli.getId());
+        corsoService.assegnaGruppo(chitarra.getId(), assegnati.get(1).getId(), grandi.getId());
+        Lezione sabato = lezioneService.aggiungi(chitarra.getId(), prossimoSabato(), null, null, "insegnante2");
+        try {
+            apriLezioni();
+            navigate(HomeView.class);
+            List<String> riquadri = find(Card.class).all().stream()
+                .filter(c -> "button".equals(c.getElement().getAttribute("role")))
+                .map(c -> c.getElement().getAttribute("aria-label")).toList();
+            String data = Formati.data(sabato.getData());
+            int numero = sabato.getNumeroLezione();
+            assertEquals(List.of("Corso di Chitarra: " + data + ", 10:00, Lezione " + numero + " · Piccoli",
+                "Corso di Chitarra: " + data + ", 11:00, Lezione " + numero + " · Grandi",
+                "Corso di Chitarra: " + data + ", 18:00, Lezione " + numero + " · Senza gruppo"), riquadri);
+
+            // Il riquadro dei Grandi apre il registro sulla loro scheda
+            Card card = find(Card.class).all().stream()
+                .filter(c -> Objects.toString(c.getElement().getAttribute("aria-label"), "").endsWith("· Grandi")).findFirst().orElseThrow();
+            ComponentUtil.fireEvent(card, new ClickEvent<>(card));
+            Dialog registro = find(Dialog.class).single();
+            assertEquals("Grandi 11:00 (1)", find(Tabs.class).from(registro).single().getSelectedTab().getLabel());
+            assertEquals(1, test((Grid<Presenza>) find(Grid.class).from(registro).single()).size());
+        } finally {
+            lezioneService.eliminaAggiunta(sabato.getId(), "insegnante2");
+            corsoService.eliminaGruppo(piccoli.getId());
+            corsoService.eliminaGruppo(grandi.getId());
+            assegnati.forEach(a -> corsoService.impostaOrario(chitarra.getId(), a.getId(), null));
+        }
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_prossimaLezioneDelFiglioConIlSuoGruppo() {
+        // Chitarra1, figlio di genitore3, nei Piccoli alle 10 senza un orario suo
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        GruppoCorso piccoli = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
+        GruppoCorso grandi = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, "Grandi", DayOfWeek.SATURDAY, LocalTime.of(11, 0)));
+        Allievo figlio = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
+        corsoService.assegnaGruppo(chitarra.getId(), figlio.getId(), piccoli.getId());
+        corsoService.impostaOrario(chitarra.getId(), figlio.getId(), null);
+        Lezione sabato = lezioneService.aggiungi(chitarra.getId(), prossimoSabato(), null, null, "insegnante2");
+        try {
+            navigate(FigliView.class);
+            navigate(HomeView.class);
+            Card card = prossimaLezione("Corso di Chitarra");
+            assertEquals("Corso di Chitarra: " + Formati.data(sabato.getData()) + ", 10:00, Lezione " + sabato.getNumeroLezione()
+                + " · Piccoli · Allievo Chitarra1", card.getElement().getAttribute("aria-label"));
+            ComponentUtil.fireEvent(card, new ClickEvent<>(card));
+            Dialog dettaglio = find(Dialog.class).single();
+            assertTrue(find(Span.class).from(dettaglio).withText("Piccoli – sab 10:00").exists());
+            assertTrue(find(Span.class).from(dettaglio).withText(Formati.data(sabato.getData()) + ", 10:00").exists());
+        } finally {
+            lezioneService.eliminaAggiunta(sabato.getId(), "insegnante2");
+            corsoService.eliminaGruppo(piccoli.getId());
+            corsoService.eliminaGruppo(grandi.getId());
+        }
+    }
+
+    private static LocalDate prossimoSabato() {
+        LocalDate sabato = LocalDate.now().plusDays(1);
+        while (sabato.getDayOfWeek() != DayOfWeek.SATURDAY) {
+            sabato = sabato.plusDays(1);
+        }
+        return sabato;
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
     void insegnanteSenzaTariffa_vedeLeOreDonate() {
         apriLezioni();

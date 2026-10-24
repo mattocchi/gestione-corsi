@@ -24,6 +24,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.function.SerializablePredicate;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.VaadinService;
 import it.attocchi.entity.Corso;
@@ -229,6 +230,14 @@ public class ElencoLezioni extends VerticalLayout {
     /** Parametro {@value #PARAMETRO_LEZIONE} dell'indirizzo che apre le presenze di una lezione. */
     public static final String PARAMETRO_LEZIONE = "lezione";
 
+    /**
+     * Parametro {@value #PARAMETRO_GRUPPO} che, con {@link #PARAMETRO_LEZIONE}, apre il registro sulla scheda di un
+     * gruppo: il suo id, o {@value #SENZA_GRUPPO} per chi non ne ha.
+     */
+    public static final String PARAMETRO_GRUPPO = "gruppo";
+
+    public static final String SENZA_GRUPPO = "senza";
+
     /** Id della lezione dal parametro dell'indirizzo; vuoto se non è un numero. */
     public static Optional<Long> idLezione(String valore) {
         try {
@@ -243,11 +252,26 @@ public class ElencoLezioni extends VerticalLayout {
      * parametro {@code ?lezione=ID}); altrimenti un avviso.
      */
     public void apriPresenze(Long lezioneId) {
-        elenco.stream().filter(l -> l.getId().equals(lezioneId)).findFirst().ifPresentOrElse(this::openPresenzeDialog,
+        apriPresenze(lezioneId, null);
+    }
+
+    /** Come {@link #apriPresenze(Long)}, sulla scheda del gruppo indicato ({@link #PARAMETRO_GRUPPO}; {@code null} = la prima). */
+    public void apriPresenze(Long lezioneId, String scheda) {
+        elenco.stream().filter(l -> l.getId().equals(lezioneId)).findFirst().ifPresentOrElse(l -> openPresenzeDialog(l, scheda),
             () -> Notification.show("Lezione non trovata tra le tue lezioni"));
     }
 
+    /** Apre le presenze indicate dai parametri dell'indirizzo ({@code ?lezione=ID&gruppo=…}), se ci sono. */
+    public void apriPresenze(QueryParameters parametri) {
+        parametri.getSingleParameter(PARAMETRO_LEZIONE).flatMap(ElencoLezioni::idLezione)
+            .ifPresent(id -> apriPresenze(id, parametri.getSingleParameter(PARAMETRO_GRUPPO).orElse(null)));
+    }
+
     private void openPresenzeDialog(Lezione lezione) {
+        openPresenzeDialog(lezione, null);
+    }
+
+    private void openPresenzeDialog(Lezione lezione, String scheda) {
         Dialog dialog = ViewSupport.dialog(
             lezione.getCorso().getNome() + " – Lezione " + Formati.numeroLezione(lezione, gruppiPerCorso.get(lezione.getCorso().getId())) + " (" + Formati.data(lezione.getData()) + ")", "800px");
 
@@ -300,7 +324,7 @@ public class ElencoLezioni extends VerticalLayout {
             .applica();
         List<Presenza> presenze = lezioneService.presenzeInOrdine(lezione.getId());
         GridListDataView<Presenza> righe = gridPresenze.setItems(presenze);
-        schedePerGruppo(presenze, gruppi, righe).ifPresent(dialog::add);
+        schedePerGruppo(presenze, gruppi, righe, scheda).ifPresent(dialog::add);
         dialog.add(gridPresenze);
         // Le note in fondo, dopo le presenze e prima dei pulsanti
         dialog.add(ViewSupport.sezione("Note della lezione"), createNoteLezione(lezione));
@@ -503,11 +527,12 @@ public class ElencoLezioni extends VerticalLayout {
 
     /**
      * Schede che filtrano il registro per gruppo: una per ogni gruppo con allievi alla lezione (in ordine di giorno e
-     * orario, con il numero di allievi), "Senza gruppo" se c'è chi non ne ha e "Tutti"; si apre sul primo gruppo.
+     * orario, con il numero di allievi), "Senza gruppo" se c'è chi non ne ha e "Tutti"; si apre sulla scheda
+     * {@code scheda} ({@link #PARAMETRO_GRUPPO}) se c'è, altrimenti sul primo gruppo.
      * Vuoto se la lezione non ha almeno due schede di gruppo (corso senza gruppi o un solo gruppo per tutti).
      */
     private static Optional<Tabs> schedePerGruppo(List<Presenza> presenze, Map<Long, GruppoCorso> gruppi,
-                                                  GridListDataView<Presenza> righe) {
+                                                  GridListDataView<Presenza> righe, String scheda) {
         Map<GruppoCorso, Long> perGruppo = new TreeMap<>(GruppoCorso.PER_GIORNO.thenComparing(GruppoCorso::getId));
         long senzaGruppo = 0;
         for (Presenza presenza : presenze) {
@@ -524,19 +549,28 @@ public class ElencoLezioni extends VerticalLayout {
         Tabs schede = new Tabs();
         schede.getElement().setAttribute("aria-label", "Gruppi della lezione");
         Map<Tab, SerializablePredicate<Presenza>> filtri = new LinkedHashMap<>();
+        Tab[] iniziale = new Tab[1];
         perGruppo.forEach((gruppo, numero) -> {
             String nome = gruppo.getNome() != null && !gruppo.getNome().isBlank() ? gruppo.getNome() : Formati.giorno(gruppo.getGiorno());
-            Tab scheda = new Tab(nome + (gruppo.getOrario() != null ? " " + Formati.ora(gruppo.getOrario()) : "") + " (" + numero + ")");
-            filtri.put(scheda, p -> gruppo.equals(gruppi.get(p.getAllievo().getId())));
+            Tab tab = new Tab(nome + (gruppo.getOrario() != null ? " " + Formati.ora(gruppo.getOrario()) : "") + " (" + numero + ")");
+            filtri.put(tab, p -> gruppo.equals(gruppi.get(p.getAllievo().getId())));
+            if (String.valueOf(gruppo.getId()).equals(scheda)) {
+                iniziale[0] = tab;
+            }
         });
         if (senzaGruppo > 0) {
-            filtri.put(new Tab("Senza gruppo (" + senzaGruppo + ")"), p -> !gruppi.containsKey(p.getAllievo().getId()));
+            Tab tab = new Tab("Senza gruppo (" + senzaGruppo + ")");
+            filtri.put(tab, p -> !gruppi.containsKey(p.getAllievo().getId()));
+            if (SENZA_GRUPPO.equals(scheda)) {
+                iniziale[0] = tab;
+            }
         }
         filtri.put(new Tab("Tutti (" + presenze.size() + ")"), p -> true);
         filtri.keySet().forEach(schede::add);
         schede.addSelectedChangeListener(e -> righe.setFilter(filtri.get(e.getSelectedTab())));
-        schede.setSelectedIndex(0);
-        righe.setFilter(filtri.values().iterator().next());
+        Tab selezionata = iniziale[0] != null ? iniziale[0] : filtri.keySet().iterator().next();
+        schede.setSelectedTab(selezionata);
+        righe.setFilter(filtri.get(selezionata));
         return Optional.of(schede);
     }
 

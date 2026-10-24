@@ -4,6 +4,7 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Lezione;
+import it.attocchi.service.CalendarioService.VoceCalendario;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -106,6 +107,21 @@ public final class Formati {
         List<GruppoCorso> delGiorno = gruppiDelCorso.stream().filter(g -> g.getGiorno() == giorno).toList();
         boolean nome = delGiorno.size() == 1 && delGiorno.getFirst().getNome() != null && !delGiorno.getFirst().getNome().isBlank();
         return numero + " · " + (nome ? delGiorno.getFirst().getNome() : giorno(giorno));
+    }
+
+    /**
+     * Numero di una voce del calendario con il suo gruppo: "5 · Grandi" se il gruppo ha un nome, "5 · Senza gruppo"
+     * per chi non ne ha, altrimenti come {@link #numeroLezione(Lezione, List)} ("5 · sab").
+     */
+    public static String numeroLezione(VoceCalendario voce, List<GruppoCorso> gruppiDelCorso) {
+        GruppoCorso gruppo = voce.gruppo();
+        if (gruppo != null && gruppo.getNome() != null && !gruppo.getNome().isBlank()) {
+            return voce.lezione().getNumeroLezione() + " · " + gruppo.getNome();
+        }
+        if (voce.senzaGruppo()) {
+            return voce.lezione().getNumeroLezione() + " · Senza gruppo";
+        }
+        return numeroLezione(voce.lezione(), gruppiDelCorso);
     }
 
     /** Il gruppo del partecipante o, senza gruppo, i giorni del corso (es. "mar, sab"). */
