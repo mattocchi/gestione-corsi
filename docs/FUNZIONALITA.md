@@ -352,9 +352,13 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### GESTIONE ALLIEVI
 
 * [ ] nella gestione dell'allievo da admin o segreteria dove posso assegnare il genitore sarebbe utile poterlo creare al volo inserendo nome cognome email e cellulare
+  _Chiarimento 2026-10-24: nel campo "Genitore" del dialog dell'allievo si scrive un nome non presente e con Invio (o con il pulsante "+") si apre "Nuovo genitore": obbligatori nome e cognome, email e cellulare facoltativi; avviso sugli omonimi; utente creato disattivato, l'accesso si dà poi in Gestione Utenti._
 
 ### CONFERMA ISCRIZIONE
 
 * [ ] nella conferma iscrizione vorrei aggiungere l'informazione che si può pagare in unica soluzione oppure due rate entro il 30 novembre o 31 gennaio
+  _Chiarimento 2026-10-24: "Il pagamento può avvenire in un'unica soluzione entro il 30 novembre oppure in due rate: la prima entro il 30 novembre e la seconda entro il 31 gennaio", con gli anni dall'anno scolastico del corso, nel PDF e nell'email, senza importi delle rate._
 * [ ] Le frasi regolamento in sempre nella conferma nella sezione "Lezioni, assenze e recuperi" rendili piu "belle" seppure devono comunicare le disposizioni necessarie
+  _Chiarimento 2026-10-24: tono colloquiale con titoli "Se l'insegnante non può fare lezione", "Se l'allievo non può venire", "Se decidete di ritirarvi", stesse disposizioni, nel PDF e nell'email._
 * [ ] Ottimizza la conferma in PDF per stare su una pagina A4
+  _Chiarimento 2026-10-24: impaginazione compatta (margini e spazi ridotti, Allievo e Genitore affiancati, tolta "Quota dovuta" dalla tabella Corso perché è già in Importo), senza togliere altre informazioni, testo almeno 9,5 pt._
