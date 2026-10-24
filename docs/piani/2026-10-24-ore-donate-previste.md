@@ -22,7 +22,7 @@
 |---|---|---|---|---|
 | 1 | `BilancioService.oreDonateTotali()`: somma di svolte e previste su tutti gli insegnanti senza tariffa, con il loro numero; test | `BilancioService`, `BilancioServiceTest` | `./mvnw test` | [x] |
 | 2 | `HomeView`: riquadro dell'insegnante con le previste in grande e "di cui X già svolte"; riquadro del totale in "Pagamenti dei corsi attivi"; test browserless | `HomeView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -30,3 +30,6 @@
 
 ## Registro
 
+- `./mvnw test`: 267 test, tutti superati. Nuovi o aggiornati: `BilancioServiceTest.oreDonate_…` (totale con un insegnante senza tariffa), `ViewAccessTest.insegnanteSenzaTariffa_vedeLeOreDonate` (previste in grande) e `segreteria_vedeIlTotaleDelleOreDonate`.
+- Browser: non verificato (nei dati di sviluppo gli insegnanti hanno tutti la tariffa); coperto dai test browserless.
+- Nessuno script SQL. Lasciato aperto: nessuno.
