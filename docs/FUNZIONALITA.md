@@ -331,6 +331,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-24: la vedono insegnanti, allievi e genitori (non admin e segreteria); una per corso (per il genitore una per figlio e corso): la prima lezione ancora da fare da oggi in poi, con "Oggi" o "Domani"; cliccando, l'insegnante apre il registro delle presenze di quella lezione, allievi e genitori il dettaglio in sola lettura del Calendario._
 * [x] per gli insegnanti che sono senza tariffa, aggiungi in dashboard una card che mostra il totale delle ore che stanno donando, facendo un calcolo per tutti i suoi corsi attivi, per totale lezione, per durata lezione per tutti gli allievi _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: riquadro "Ore donate" nella dashboard dell'insegnante senza tariffa oraria (anche se ha il rimborso forfettario), visibile solo a lui: in grande le ore delle lezioni già svolte dei corsi attivi, sotto le ore previste (tutte tranne le non effettuate); ogni allievo atteso conta, anche se assente, come nel bilancio, e solo le lezioni a cui l'insegnante era presente._
+* [ ] per il calcolo delle ore donate in dashboard insegnante modifica il calcolo e non basarti su quelle fatte mostriamo il contrario, come donazione tutte quelle calcolate, e come descrizione della card quelle gia fatte. mostra questa informazione anche in admin e segreteria come totale di tutti gli insegnanti
 
 ### CALENDARIO
 
