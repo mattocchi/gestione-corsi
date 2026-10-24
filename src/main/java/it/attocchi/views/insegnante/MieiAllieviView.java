@@ -72,7 +72,7 @@ public class MieiAllieviView extends VerticalLayout {
         grid.addColumn(a -> allievo(a).getCorso().getNome()).setHeader("Corso")
             .setComparator(a -> allievo(a).getCorso().getNome());
         grid.addColumn(MieiAllieviView::giorniOGruppo).setHeader("Giorni / Gruppo").setAutoWidth(true);
-        grid.addColumn(a -> Formati.ora(allievo(a).getOrarioLezione())).setHeader("Orario")
+        grid.addColumn(a -> Formati.ora(allievo(a).orarioAbituale())).setHeader("Orario")
             .setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(MieiAllieviView::svolte).setHeader("Svolte").setAutoWidth(true).setFlexGrow(0)
             .setComparator(a -> a.conteggio().svolte());
@@ -85,7 +85,7 @@ public class MieiAllieviView extends VerticalLayout {
             .titolo(a -> allievo(a).getAllievo().getNomeCompleto())
             .sottotitolo(a -> allievo(a).getCorso().getNome())
             .campo("Giorni / Gruppo", MieiAllieviView::giorniOGruppo)
-            .campo("Orario", a -> Formati.ora(allievo(a).getOrarioLezione()))
+            .campo("Orario", a -> Formati.ora(allievo(a).orarioAbituale()))
             .campo("Svolte", MieiAllieviView::svolte)
             .campo("Da fare", a -> a.conteggio().daFare())
             .campo("Mancanti", a -> a.conteggio().mancanti())
@@ -121,7 +121,7 @@ public class MieiAllieviView extends VerticalLayout {
         Corso corso = riga.iscrizione().getCorso();
         Long allievoId = riga.iscrizione().getAllievo().getId();
         aperto = new PresenzeAllievoDialog(riga.iscrizione().getAllievo().getNomeCompleto() + " – " + corso.getNome(),
-            mieiAllieviService.lezioniDellAllievo(corso.getId(), allievoId, username), corsoService.gruppi(corso.getId()),
+            mieiAllieviService.lezioniDellAllievo(corso.getId(), allievoId, username), riga.iscrizione(), corsoService.gruppi(corso.getId()),
             corso.getNumeroLezioni(), true);
         aperto.open();
     }

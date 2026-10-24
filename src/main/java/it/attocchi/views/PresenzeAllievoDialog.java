@@ -6,6 +6,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import it.attocchi.entity.GruppoCorso;
+import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Presenza;
 import it.attocchi.service.ConteggioLezioni;
@@ -21,11 +22,12 @@ import java.util.List;
 public class PresenzeAllievoDialog extends Dialog {
 
     /**
+     * @param iscrizione     l'iscrizione dell'allievo al corso, per l'orario di ogni lezione ({@code Iscrizione.orarioDi})
      * @param gruppiDelCorso i gruppi del corso, per il numero della lezione con il gruppo o il giorno
      * @param previste       lezioni previste per partecipante ({@code Corso.numeroLezioni})
      * @param noteStaff      mostra anche le note della lezione per lo staff (solo agli insegnanti)
      */
-    public PresenzeAllievoDialog(String title, List<Presenza> presenze, List<GruppoCorso> gruppiDelCorso,
+    public PresenzeAllievoDialog(String title, List<Presenza> presenze, Iscrizione iscrizione, List<GruppoCorso> gruppiDelCorso,
                                  Integer previste, boolean noteStaff) {
         setHeaderTitle(title);
         setWidth("800px");
@@ -33,6 +35,8 @@ public class PresenzeAllievoDialog extends Dialog {
 
         Grid<Presenza> grid = new Grid<>(Presenza.class, false);
         grid.addColumn(presenza -> Formati.data(presenza.getLezione().getData())).setHeader("Data")
+            .setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(presenza -> Formati.ora(iscrizione.orarioDi(presenza.getLezione()))).setHeader("Orario")
             .setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(presenza -> Formati.numeroLezione(presenza.getLezione(), gruppiDelCorso)).setHeader("N. Lezione")
             .setAutoWidth(true).setFlexGrow(0);
@@ -45,6 +49,7 @@ public class PresenzeAllievoDialog extends Dialog {
         grid.setItems(presenze);
         CardMobile<Presenza> card = CardMobile.per(grid)
             .titolo(presenza -> Formati.data(presenza.getLezione().getData()))
+            .campo("Orario", presenza -> Formati.ora(iscrizione.orarioDi(presenza.getLezione())))
             .campo("N. Lezione", presenza -> Formati.numeroLezione(presenza.getLezione(), gruppiDelCorso))
             .campo("Stato", PresenzeAllievoDialog::stato)
             .campo("Note", presenza -> presenza.getLezione().isNonEffettuata()

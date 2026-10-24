@@ -42,9 +42,11 @@ import it.attocchi.service.LezioneService;
 import it.attocchi.service.PresenzaService;
 import it.attocchi.views.insegnante.QuandoLezione;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -149,7 +151,7 @@ public class ElencoLezioni extends VerticalLayout {
             .setComparator(Lezione::getData).setSortable(true).setWidth("17rem").setFlexGrow(0);
         gridLezioni.addColumn(this::numero).setHeader("N. Lezione")
             .setComparator(Lezione::getNumeroLezione);
-        gridLezioni.addColumn(Lezione::getOrarioInizio).setHeader("Orario");
+        gridLezioni.addColumn(this::orario).setHeader("Orario");
         // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
         // verrebbe calcolata sulle sole righe visibili all'apertura ("Da fare") e troncherebbe "Completata".
         gridLezioni.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
@@ -163,9 +165,27 @@ public class ElencoLezioni extends VerticalLayout {
             .campo("Data", this::createData)
             .campo("Insegnanti", l -> tuttiICorsi ? insegnante(l) : null)
             .campo("N. Lezione", this::numero)
-            .campo("Orario", Lezione::getOrarioInizio)
+            .campo("Orario", this::orario)
             .azioni(this::createAzioni)
             .applica();
+    }
+
+    /**
+     * Orario della lezione; nei corsi con gruppi, se la lezione è all'orario del corso, quelli dei gruppi del suo
+     * giorno ("10:00 · 11:00").
+     */
+    private String orario(Lezione lezione) {
+        if (Objects.equals(lezione.getOrarioInizio(), lezione.getCorso().getOrarioInizio())) {
+            DayOfWeek giorno = (lezione.getRecuperoDi() != null ? lezione.getRecuperoDi() : lezione).getDataDelCalendario().getDayOfWeek();
+            String orari = gruppiPerCorso.getOrDefault(lezione.getCorso().getId(), List.of()).stream()
+                .filter(g -> g.getGiorno() == giorno && g.getOrario() != null)
+                .map(GruppoCorso::getOrario).distinct().sorted().map(Formati::ora)
+                .collect(Collectors.joining(" · "));
+            if (!orari.isEmpty()) {
+                return orari;
+            }
+        }
+        return Formati.ora(lezione.getOrarioInizio());
     }
 
     private HorizontalLayout createAzioni(Lezione lezione) {

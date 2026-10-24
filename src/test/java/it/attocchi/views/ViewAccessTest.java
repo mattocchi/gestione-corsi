@@ -3290,7 +3290,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .filter(l -> l.getData().getDayOfWeek() == DayOfWeek.SATURDAY).findFirst().orElseThrow();
             Lezione martedi = lezioneService.findByCorso(chitarra.getId()).stream()
                 .filter(l -> l.getData().getDayOfWeek() == DayOfWeek.TUESDAY).findFirst().orElseThrow();
-            navigate(LezioniInsegnanteView.class);
+            apriLezioni();
+            // Orario delle lezioni: il sabato quelli dei due gruppi, il martedì quello del corso
+            Grid<Lezione> griglia = find(Grid.class).all().stream()
+                .filter(g -> g.getColumns().stream().anyMatch(c -> "Orario".equals(((Grid.Column<?>) c).getHeaderText())))
+                .findFirst().orElseThrow();
+            List<Grid.Column<Lezione>> visibili = griglia.getColumns().stream().filter(Grid.Column::isVisible).toList();
+            int colonna = IntStream.range(0, visibili.size()).filter(i -> "Orario".equals(visibili.get(i).getHeaderText()))
+                .findFirst().orElseThrow();
+            var elenco = test(griglia);
+            List<String> orari = IntStream.range(0, elenco.size()).mapToObj(r -> elenco.getCellText(r, colonna)).distinct().toList();
+            assertEquals(Set.of("10:00 · 11:00", "18:00"), Set.copyOf(orari));
             find(ElencoLezioni.class).single().apriPresenze(sabato.getId());
             Dialog registro = find(Dialog.class).single();
             Tabs schede = find(Tabs.class).from(registro).single();
@@ -3670,6 +3680,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(Span.class).from(dialog).withText("Mancanti: 30").exists());
         Grid<Presenza> lezioni = find(Grid.class).from(dialog).single();
         assertEquals(30, test(lezioni).size());
+        // L'orario di ogni lezione è quello dell'allievo
+        assertEquals("18:20", test(lezioni).getCellText(0, 1));
         // L'insegnante vede anche le note per lo staff
         assertTrue(lezioni.getColumns().stream()
             .anyMatch(c -> c.isVisible() && "Note per lo staff".equals(c.getHeaderText())));
@@ -3706,9 +3718,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).from(dialog).withText("Presenze: 0").exists());
             Grid<Presenza> gridPresenze = find(Grid.class).from(dialog).single();
             var presenze = test(gridPresenze);
-            assertEquals("Lezione non effettuata", presenze.getCellText(0, 2));
+            assertEquals("Lezione non effettuata", presenze.getCellText(0, 3));
             // Le lezioni future non risultano "Presente" e le note per lo staff restano nascoste
-            assertEquals("Da fare", presenze.getCellText(1, 2));
+            assertEquals("Da fare", presenze.getCellText(1, 3));
             assertFalse(gridPresenze.getColumns().stream()
                 .anyMatch(c -> c.isVisible() && "Note per lo staff".equals(c.getHeaderText())));
         } finally {

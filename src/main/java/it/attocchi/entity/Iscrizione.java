@@ -164,10 +164,16 @@ public class Iscrizione {
         if (lezione.getOrarioInizio() != null && !lezione.getOrarioInizio().equals(lezione.getCorso().getOrarioInizio())) {
             return lezione.getOrarioInizio();
         }
+        LocalTime abituale = orarioAbituale();
+        return abituale != null ? abituale : lezione.getOrarioInizio();
+    }
+
+    /** Orario delle lezioni del partecipante: il suo se c'è, altrimenti quello del suo gruppo; {@code null} se nessuno dei due. */
+    public LocalTime orarioAbituale() {
         if (orarioLezione != null) {
             return orarioLezione;
         }
-        return gruppo != null && gruppo.getOrario() != null ? gruppo.getOrario() : lezione.getOrarioInizio();
+        return gruppo != null ? gruppo.getOrario() : null;
     }
 
     /** Quota da pagare: quella personalizzata se impostata, altrimenti il costo totale del corso. */
