@@ -47,7 +47,7 @@ public final class InvioEmailDialog {
     public static void apri(TipoDocumento tipo, Corso corso, Allievo allievo, Runnable dopoInvio) {
         EmailService emailService = emailService();
         String username = username();
-        String impedimento = DocumentiService.avvisoDatiMancanti(allievo);
+        String impedimento = DocumentiService.avvisoDatiMancanti(allievo, tipo);
         if (impedimento == null && tipo == TipoDocumento.RICEVUTA && !emailService.haPagamenti(corso.getId(), allievo.getId())) {
             impedimento = "Nessun pagamento registrato: non c'è una ricevuta da inviare";
         }
@@ -168,7 +168,7 @@ public final class InvioEmailDialog {
                 dialog.close();
                 Notification.show("Conferme: " + r.inviate() + " inviate, " + r.simulate() + " simulate, " + r.errori()
                     + " con errore, " + r.senzaEmail() + " senza email"
-                    + (r.datiMancanti() > 0 ? ", " + r.datiMancanti() + " senza codice fiscale o data di nascita" : ""));
+                    + (r.datiMancanti() > 0 ? ", " + r.datiMancanti() + " senza data di nascita" : ""));
                 dopoInvio.run();
             } catch (RuntimeException ex) {
                 Notification.show("Invio non riuscito: " + ex.getMessage());

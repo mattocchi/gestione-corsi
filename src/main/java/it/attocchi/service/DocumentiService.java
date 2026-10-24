@@ -91,9 +91,23 @@ public class DocumentiService {
             + allievo.getNomeCompleto() + ": completa i dati nella scheda dell'allievo per stampare o inviare ricevute e conferme";
     }
 
+    /**
+     * Avviso per l'allievo a cui mancano i dati del documento (la data di nascita, e per la ricevuta anche il codice
+     * fiscale), es. "Manca data di nascita di Mario Rossi: … la conferma di iscrizione"; {@code null} se ci sono.
+     */
+    public static String avvisoDatiMancanti(Allievo allievo, TipoDocumento tipo) {
+        List<String> mancanti = allievo.getDatiMancantiPer(tipo);
+        if (mancanti.isEmpty()) {
+            return null;
+        }
+        return (mancanti.size() > 1 ? "Mancano " : "Manca ") + String.join(" e ", mancanti) + " di "
+            + allievo.getNomeCompleto() + ": completa i dati nella scheda dell'allievo per stampare o inviare la "
+            + tipo.getTitolo().toLowerCase();
+    }
+
     /** HTML del documento (pagina A4) dell'iscrizione. */
     public String documentoHtml(TipoDocumento tipo, Long corsoId, Long allievoId) {
-        return render("documenti/" + tipo.getTemplate() + ".ftlh", modello(conDati(pagamentoService.ricevuta(corsoId, allievoId))));
+        return render("documenti/" + tipo.getTemplate() + ".ftlh", modello(conDati(pagamentoService.ricevuta(corsoId, allievoId), tipo)));
     }
 
     /** PDF del documento dell'iscrizione. */
@@ -265,7 +279,7 @@ public class DocumentiService {
 
     /** Corpo HTML dell'email che accompagna il documento; {@code saluto} è il nome del destinatario. */
     public String emailHtml(TipoDocumento tipo, Long corsoId, Long allievoId, String saluto) {
-        Map<String, Object> modello = modello(conDati(pagamentoService.ricevuta(corsoId, allievoId)));
+        Map<String, Object> modello = modello(conDati(pagamentoService.ricevuta(corsoId, allievoId), tipo));
         modello.put("saluto", saluto);
         return render("email/" + tipo.getTemplate() + ".ftlh", modello);
     }
@@ -324,9 +338,9 @@ public class DocumentiService {
         return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
     }
 
-    /** Rifiuta i documenti dell'allievo senza codice fiscale o data di nascita ({@link IllegalStateException}). */
-    private static Ricevuta conDati(Ricevuta ricevuta) {
-        String avviso = avvisoDatiMancanti(ricevuta.iscrizione().getAllievo());
+    /** Rifiuta il documento dell'allievo senza i dati che servono ({@link IllegalStateException}). */
+    private static Ricevuta conDati(Ricevuta ricevuta, TipoDocumento tipo) {
+        String avviso = avvisoDatiMancanti(ricevuta.iscrizione().getAllievo(), tipo);
         if (avviso != null) {
             throw new IllegalStateException(avviso);
         }

@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,8 +119,8 @@ class EmailServiceTest {
     @Test
     void destinatariConferme_chiLaRiceveEChiESaltato() {
         Allievo allievo = allievoService.findByUsername("allievo_canto6").orElseThrow();
-        String codiceFiscale = allievo.getCodiceFiscale();
-        allievo.setCodiceFiscale(null);
+        java.time.LocalDate dataNascita = allievo.getDataNascita();
+        allievo.setDataNascita(null);
         allievoService.save(allievo);
         try {
             List<EmailService.DestinatarioConferma> destinatari = emailService.destinatariConferme(canto().getId(), "segreteria");
@@ -130,12 +131,12 @@ class EmailServiceTest {
             EmailService.DestinatarioConferma saltato = destinatari.stream()
                 .filter(d -> d.allievo().equals("Allievo Canto6")).findFirst().orElseThrow();
             assertFalse(saltato.riceve());
-            assertEquals("senza codice fiscale o data di nascita", saltato.motivoEsclusione());
+            assertEquals("senza data di nascita", saltato.motivoEsclusione());
             assertEquals(6, destinatari.stream().filter(EmailService.DestinatarioConferma::riceve).count());
             assertEquals(0, emailService.tuttiGliInvii().size());
         } finally {
             Allievo ripristino = allievoService.findById(allievo.getId());
-            ripristino.setCodiceFiscale(codiceFiscale);
+            ripristino.setDataNascita(dataNascita);
             allievoService.save(ripristino);
         }
     }
@@ -148,22 +149,46 @@ class EmailServiceTest {
     }
 
     @Test
-    void senzaCodiceFiscale_niente_documentiNeEmail() {
+    void senzaCodiceFiscale_confermaSiRicevutaNo() {
         Corso canto = canto();
         Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
         String codiceFiscale = allievo.getCodiceFiscale();
         allievo.setCodiceFiscale(null);
         allievoService.save(allievo);
         try {
+            // La conferma chiede solo la data di nascita
+            assertNotNull(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId()));
+            assertEquals(new EmailService.Riepilogo(0, 7, 0, 0, 0), emailService.inviaConferme(canto.getId(), "segreteria"));
+            // La ricevuta anche il codice fiscale
             IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> emailService.invia(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(), "segreteria"));
+                () -> documentiService.documentoPdf(TipoDocumento.RICEVUTA, canto.getId(), allievo.getId()));
             assertEquals("Manca codice fiscale di Allievo Canto3: completa i dati nella scheda dell'allievo per stampare o inviare"
-                + " ricevute e conferme", ex.getMessage());
-            assertThrows(IllegalStateException.class,
-                () -> documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId()));
-            assertEquals(new EmailService.Riepilogo(0, 6, 0, 0, 1), emailService.inviaConferme(canto.getId(), "segreteria"));
+                + " la ricevuta di pagamento", ex.getMessage());
         } finally {
             allievo.setCodiceFiscale(codiceFiscale);
+            allievoService.save(allievo);
+        }
+    }
+
+    @Test
+    void senzaDataDiNascita_niente_documentiNeEmail() {
+        Corso canto = canto();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        java.time.LocalDate dataNascita = allievo.getDataNascita();
+        allievo.setDataNascita(null);
+        allievoService.save(allievo);
+        try {
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> emailService.invia(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(), "segreteria"));
+            assertEquals("Manca data di nascita di Allievo Canto3: completa i dati nella scheda dell'allievo per stampare o"
+                + " inviare la conferma di iscrizione", ex.getMessage());
+            assertThrows(IllegalStateException.class,
+                () -> documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId()));
+            assertThrows(IllegalStateException.class,
+                () -> documentiService.documentoPdf(TipoDocumento.RICEVUTA, canto.getId(), allievo.getId()));
+            assertEquals(new EmailService.Riepilogo(0, 6, 0, 0, 1), emailService.inviaConferme(canto.getId(), "segreteria"));
+        } finally {
+            allievo.setDataNascita(dataNascita);
             allievoService.save(allievo);
         }
     }

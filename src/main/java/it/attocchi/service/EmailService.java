@@ -324,7 +324,7 @@ public class EmailService {
             .map(iscrizione -> {
                 Allievo allievo = iscrizione.getAllievo();
                 Destinatario destinatario = destinatarioDi(allievo).orElse(null);
-                String motivo = !allievo.isDatiPerDocumenti() ? "senza codice fiscale o data di nascita"
+                String motivo = !allievo.isDatiPer(TipoDocumento.CONFERMA_ISCRIZIONE) ? "senza data di nascita"
                     : destinatario == null ? "senza email" : null;
                 return new DestinatarioConferma(allievo.getId(), allievo.getNomeCompleto(), destinatario, motivo);
             })
@@ -333,7 +333,7 @@ public class EmailService {
 
     /**
      * Invia la conferma di iscrizione a tutti i partecipanti del corso che hanno un destinatario e i dati per i
-     * documenti (codice fiscale e data di nascita); gli altri sono solo contati.
+     * documenti (la data di nascita); gli altri sono solo contati.
      */
     @Transactional
     public Riepilogo inviaConferme(Long corsoId, String username) {
@@ -344,7 +344,7 @@ public class EmailService {
         int senzaEmail = 0;
         int datiMancanti = 0;
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(corsoId)) {
-            if (!iscrizione.getAllievo().isDatiPerDocumenti()) {
+            if (!iscrizione.getAllievo().isDatiPer(TipoDocumento.CONFERMA_ISCRIZIONE)) {
                 datiMancanti++;
                 continue;
             }
@@ -427,7 +427,7 @@ public class EmailService {
                 && !haPagamenti(iscrizione.getCorso().getId(), iscrizione.getAllievo().getId())) {
             throw new IllegalStateException("Nessun pagamento registrato: non c'è una ricevuta da inviare");
         }
-        String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo());
+        String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo(), tipo);
         if (datiMancanti != null) {
             throw new IllegalStateException(datiMancanti);
         }

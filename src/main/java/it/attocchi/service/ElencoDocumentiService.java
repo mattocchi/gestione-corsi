@@ -44,8 +44,8 @@ public class ElencoDocumentiService {
 
     /**
      * Conferma o ricevuta di un'iscrizione per lo staff: {@code destinatario} vuoto se nessuno ha un'email,
-     * {@code datiMancanti} l'avviso se mancano codice fiscale o data di nascita, {@code ultimoInvio} l'ultima email
-     * non in errore di quel documento ({@code null} se mai inviato).
+     * {@code datiMancanti} l'avviso se mancano i dati del documento (data di nascita; per la ricevuta anche il codice
+     * fiscale), {@code ultimoInvio} l'ultima email non in errore di quel documento ({@code null} se mai inviato).
      */
     public record DocumentoIscrizione(TipoDocumento tipo, Iscrizione iscrizione, Optional<Destinatario> destinatario,
                                       String datiMancanti, InvioEmail ultimoInvio) {
@@ -112,7 +112,7 @@ public class ElencoDocumentiService {
                 .thenComparing(i -> i.getCorso().getId())
                 .thenComparing(Iscrizione.ORDINE))
             .map(i -> new DocumentoIscrizione(tipo, i, EmailService.destinatarioDi(i.getAllievo()),
-                DocumentiService.avvisoDatiMancanti(i.getAllievo()), ultimi.get(i.getId())))
+                DocumentiService.avvisoDatiMancanti(i.getAllievo(), tipo), ultimi.get(i.getId())))
             .toList();
     }
 
@@ -176,10 +176,11 @@ public class ElencoDocumentiService {
         Set<String> anni = new HashSet<>();
         for (Iscrizione iscrizione : iscrizioni) {
             String anno = iscrizione.getCorso().getAnnoScolastico();
-            String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo());
-            documenti.add(new DocumentoFamiglia(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione, null, null, anno, datiMancanti));
+            documenti.add(new DocumentoFamiglia(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione, null, null, anno,
+                DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo(), TipoDocumento.CONFERMA_ISCRIZIONE)));
             if (conPagamenti.contains(iscrizione.getId())) {
-                documenti.add(new DocumentoFamiglia(TipoDocumento.RICEVUTA, iscrizione, null, null, anno, datiMancanti));
+                documenti.add(new DocumentoFamiglia(TipoDocumento.RICEVUTA, iscrizione, null, null, anno,
+                    DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo(), TipoDocumento.RICEVUTA)));
             }
             if (anni.add(Objects.requireNonNullElse(anno, ""))) {
                 documenti.add(new DocumentoFamiglia(TipoDocumento.RIEPILOGO, null, genitore, allievo, anno, null));

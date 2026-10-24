@@ -20,7 +20,7 @@ public class Allievo implements Anagrafica {
     @JoinColumn(name = "user_id")
     private User user;
 
-    /** Facoltativo, ma necessario per ricevute e conferme di iscrizione ({@link #getDatiMancantiPerDocumenti()}). */
+    /** Facoltativo, ma necessario per le ricevute ({@link #getDatiMancantiPer(TipoDocumento)}). */
     private String codiceFiscale;
 
     /** Facoltativa, ma necessaria per ricevute e conferme di iscrizione. */
@@ -105,10 +105,13 @@ public class Allievo implements Anagrafica {
         return isIndirizzoDelGenitore() ? genitore.getIndirizzo() : getIndirizzo();
     }
 
-    /** Dati necessari per ricevute e conferme che mancano ("codice fiscale", "data di nascita"); vuota se completi. */
-    public List<String> getDatiMancantiPerDocumenti() {
+    /**
+     * Dati necessari al documento che mancano: la data di nascita per conferma e ricevuta, il codice fiscale solo per
+     * la ricevuta ("codice fiscale", "data di nascita"); vuota se completi.
+     */
+    public List<String> getDatiMancantiPer(TipoDocumento tipo) {
         List<String> mancanti = new ArrayList<>();
-        if (codiceFiscale == null || codiceFiscale.isBlank()) {
+        if (tipo == TipoDocumento.RICEVUTA && (codiceFiscale == null || codiceFiscale.isBlank())) {
             mancanti.add("codice fiscale");
         }
         if (dataNascita == null) {
@@ -117,9 +120,14 @@ public class Allievo implements Anagrafica {
         return mancanti;
     }
 
-    /** {@code true} se ci sono i dati per stampare ricevute e conferme. */
-    public boolean isDatiPerDocumenti() {
-        return getDatiMancantiPerDocumenti().isEmpty();
+    /** Dati mancanti per almeno un documento (quelli della ricevuta, che comprendono quelli della conferma). */
+    public List<String> getDatiMancantiPerDocumenti() {
+        return getDatiMancantiPer(TipoDocumento.RICEVUTA);
+    }
+
+    /** {@code true} se ci sono i dati per stampare il documento. */
+    public boolean isDatiPer(TipoDocumento tipo) {
+        return getDatiMancantiPer(tipo).isEmpty();
     }
 
     public Set<Iscrizione> getIscrizioni() {

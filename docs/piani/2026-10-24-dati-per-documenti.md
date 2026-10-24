@@ -21,7 +21,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Dati mancanti per tipo (`Allievo.getDatiMancantiPer(tipo)`, `DocumentiService.avvisoDatiMancanti(allievo, tipo)`) usati da PDF, email, invio a tutti, dialog e Documenti; test | `Allievo`, `DocumentiService`, `EmailService`, `ElencoDocumentiService`, `InvioEmailDialog`, test | `./mvnw test` | [ ] |
+| 1 | Dati mancanti per tipo (`Allievo.getDatiMancantiPer(tipo)`, `DocumentiService.avvisoDatiMancanti(allievo, tipo)`) usati da PDF, email, invio a tutti, dialog e Documenti; test | `Allievo`, `DocumentiService`, `EmailService`, `ElencoDocumentiService`, `InvioEmailDialog`, test | `./mvnw test` | [x] |
 | 2 | Riquadro Allievo: data di nascita, codice fiscale solo se presente; test sul PDF | `comune.ftlh`, `DocumentiService`, `Formati`, `DocumentiServiceTest` | `./mvnw test` | [ ] |
 | 3 | Gestione Allievi: tooltip del badge con i documenti bloccati; test | `AllieviView`, `DocumentiService`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 4 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
