@@ -19,7 +19,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `LezioneService.puoSpostare(username)` usato da `sposta` e da `ElencoLezioni`; test (servizio: insegnante rifiutato; vista: insegnante senza pulsante, segreteria sposta) | `LezioneService`, `ElencoLezioni`, `LezioneServiceTest`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -27,3 +27,6 @@
 
 ## Registro
 
+- `./mvnw test`: 283 test superati. `LezioneServiceTest.sposta_…` verifica il rifiuto all'insegnante del corso; in `ViewAccessTest` `insegnante_nonVedeCambiaData` e `segreteria_cambiaLaDataDiUnaLezione` (al posto del vecchio test dell'insegnante).
+- Browser: non verificato (solo visibilità di un pulsante, coperta dai test browserless).
+- Lasciato aperto: nessuno.
