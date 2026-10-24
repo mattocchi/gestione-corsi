@@ -24,7 +24,7 @@
 | 1 | Dati mancanti per tipo (`Allievo.getDatiMancantiPer(tipo)`, `DocumentiService.avvisoDatiMancanti(allievo, tipo)`) usati da PDF, email, invio a tutti, dialog e Documenti; test | `Allievo`, `DocumentiService`, `EmailService`, `ElencoDocumentiService`, `InvioEmailDialog`, test | `./mvnw test` | [x] |
 | 2 | Riquadro Allievo: data di nascita, codice fiscale solo se presente; test sul PDF | `comune.ftlh`, `DocumentiService`, `Formati`, `DocumentiServiceTest` | `./mvnw test` | [x] Anche nel PDF di prova (data di nascita fittizia) |
 | 3 | Gestione Allievi: tooltip del badge con i documenti bloccati; test | `AllieviView`, `DocumentiService`, `ViewAccessTest` | `./mvnw test` | [x] Anche i testi di aiuto dei campi in `AnagraficaFields` |
-| 4 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 4 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -32,3 +32,6 @@
 
 ## Registro
 
+- `./mvnw test`: 281 test superati. Nuovi: `EmailServiceTest.senzaCodiceFiscale_confermaSiRicevutaNo` e `senzaDataDiNascita_niente_documentiNeEmail`, `DocumentiServiceTest.conferma_senzaCodiceFiscaleDellAllievo_senzaLaRiga` e `avvisoDatiMancanti_diceACosaServono`, `FormatiTest.dataNumerica_inCifre`; la conferma più lunga resta su una pagina con la riga "Data di nascita".
+- Browser: non verificato (modifiche a servizi e template, coperte dai test sul PDF).
+- Lasciato aperto: nessuno.
