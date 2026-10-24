@@ -396,4 +396,6 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### ETA DEGLI ALLIEVI
 
 * [ ] sull'elenco allievi la data di nascita è da mostrare nel formato gg/mm/aaaa (italiano) e calcola l'eta come anni compiuti alla data di visualizzazione
+  _Chiarimento 2026-10-24: in Gestione Allievi e in I miei figli "Data Nascita" 05/03/2012 e una colonna "Età" a parte (anni compiuti a oggi, ordinabile; campi della card su mobile)._
 * [ ] inoltre usa le date di nascita per mettere in dashboard admin e segreteria l'eta media degli allievi come card, il piu giovane e il pià anziano
+  _Chiarimento 2026-10-24: tre card ("Età media", "Più giovane", "Più anziano") con solo le età in anni (la media arrotondata), calcolate sugli allievi iscritti ad almeno un corso attivo con la data di nascita; nessuna card se nessuno ha la data._
