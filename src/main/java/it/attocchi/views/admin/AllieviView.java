@@ -17,6 +17,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.function.SerializablePredicate;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -49,7 +51,7 @@ import java.util.stream.Stream;
 @PageTitle("Gestione Allievi")
 @Menu(title = "Gestione Allievi", order = 11, icon = "vaadin:academy-cap")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class AllieviView extends VerticalLayout {
+public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
 
     private final AllievoService allievoService;
     private final UserService userService;
@@ -170,6 +172,13 @@ public class AllieviView extends VerticalLayout {
         badge.addThemeVariants(BadgeVariant.WARNING);
         Tooltip.forComponent(badge).setText(avviso);
         return badge;
+    }
+
+    /** Con {@code ?id=…} (link dalla scheda del genitore) apre il dialog di quell'allievo. */
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        SchedaCollegata.id(event).flatMap(id -> tutti.stream().filter(a -> a.getId().equals(id)).findFirst())
+            .ifPresent(this::openDialog);
     }
 
     private void openDialog(Allievo allievo) {

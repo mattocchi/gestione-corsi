@@ -12,6 +12,8 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -42,7 +44,7 @@ import java.util.stream.Collectors;
 @PageTitle("Genitori")
 @Menu(title = "Genitori", order = 14, icon = "vaadin:family")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class GenitoriView extends VerticalLayout {
+public class GenitoriView extends VerticalLayout implements BeforeEnterObserver {
 
     private final GenitoreService genitoreService;
     private final UserService userService;
@@ -115,6 +117,13 @@ public class GenitoriView extends VerticalLayout {
         elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
         conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);
         conferma.open();
+    }
+
+    /** Con {@code ?id=…} (link dalla scheda dell'allievo) apre il dialog di quel genitore. */
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        SchedaCollegata.id(event).flatMap(id -> grid.getListDataView().getItems().filter(g -> g.getId().equals(id)).findFirst())
+            .ifPresent(this::openDialog);
     }
 
     private void openDialog(Genitore genitore) {

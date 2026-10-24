@@ -72,6 +72,11 @@ public class UtenteFields {
         return binder.writeBeanIfValid(user);
     }
 
+    /** {@code true} se un campo è cambiato rispetto all'utente letto (o è stata scritta una password). */
+    public boolean hasChanges() {
+        return binder.hasChanges() || !password.isEmpty();
+    }
+
     /** Password inserita (solo per un utente nuovo; vuota altrimenti). */
     public String getPassword() {
         return password.getValue();
