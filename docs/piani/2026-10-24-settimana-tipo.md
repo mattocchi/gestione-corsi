@@ -23,7 +23,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `CalendarioService.settimanaTipo(username, corsoId)` con le voci per ruolo; test | `CalendarioService`, `CalendarioServiceTest` | `./mvnw test` | [x] |
-| 2 | `CalendarioView`: selettore e vista della settimana (griglia e elenco su mobile); test browserless; browser | `CalendarioView`, `ViewAccessTest` | `./mvnw test`; browser | [ ] |
+| 2 | `CalendarioView`: selettore e vista della settimana (griglia e elenco su mobile); test browserless; browser | `CalendarioView`, `ViewAccessTest` | `./mvnw test`; browser | [x] Il `SegmentedControl` ha già `w-full`: tolto per dargli una larghezza fissa nella barra |
 | 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito

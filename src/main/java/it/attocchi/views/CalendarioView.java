@@ -20,6 +20,7 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.CalendarioFestivita;
 import it.attocchi.service.CalendarioService;
 import it.attocchi.service.CalendarioService.VoceCalendario;
+import it.attocchi.service.CalendarioService.VoceSettimana;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.FestivitaService;
 import it.attocchi.service.LezioneService;
@@ -52,6 +53,23 @@ public class CalendarioView extends VerticalLayout {
     /** Admin e segreteria: filtro per corso e gestione delle presenze di tutte le lezioni. */
     private final boolean gestione;
 
+    /** Calendario del mese o settimana tipo dei corsi attivi (solo orari, senza date). */
+    enum Vista {
+        MESE("Mese"), SETTIMANA("Settimana tipo");
+
+        private final String etichetta;
+
+        Vista(String etichetta) {
+            this.etichetta = etichetta;
+        }
+    }
+
+    private final SegmentedControl<Vista> vista = new SegmentedControl<>("Vista del calendario", List.of(Vista.values()),
+        v -> v.etichetta, v -> v.etichetta, null);
+    private final Div vistaMese = new Div();
+    private final Div vistaSettimana = new Div();
+    private final Div settimanaGriglia = new Div();
+    private final Div settimanaElenco = new Div();
     private final H2 titolo = new H2();
     private final ComboBox<Corso> filtroCorso = new ComboBox<>();
     private final Div griglia = new Div();
@@ -72,7 +90,19 @@ public class CalendarioView extends VerticalLayout {
         Button successivo = ViewSupport.iconButton(VaadinIcon.ANGLE_RIGHT, "Mese successivo", e -> vaiA(mese.plusMonths(1)));
         Button oggi = new Button("Oggi", e -> vaiA(YearMonth.now()));
         titolo.addClassNames("text-(length:--aura-font-size-xl) m-0 min-w-44 first-letter:uppercase");
-        HorizontalLayout barra = new HorizontalLayout(precedente, titolo, successivo, oggi);
+        vista.setValue(Vista.MESE);
+        // Il SegmentedControl occupa tutta la riga (w-full): qui una larghezza fissa
+        vista.removeClassName("w-full");
+        vista.addClassNames("w-64 max-w-full");
+        // Nella settimana tipo non ci sono mesi da scorrere
+        vista.addValueChangeListener(e -> {
+            boolean mensile = e.getValue() != Vista.SETTIMANA;
+            List.of(precedente, titolo, successivo, oggi).forEach(c -> c.setVisible(mensile));
+            vistaMese.setVisible(mensile);
+            vistaSettimana.setVisible(!mensile);
+            aggiorna();
+        });
+        HorizontalLayout barra = new HorizontalLayout(vista, precedente, titolo, successivo, oggi);
         barra.addClassNames("flex-wrap w-full items-center");
         if (gestione) {
             filtroCorso.setPlaceholder("Tutti i corsi");
@@ -89,7 +119,16 @@ public class CalendarioView extends VerticalLayout {
         griglia.addClassNames("hidden sm:grid grid-cols-7 gap-px w-full bg-(--vaadin-border-color-secondary)"
             + " border border-(--vaadin-border-color-secondary) rounded-(--vaadin-radius-m) overflow-hidden");
         elenco.addClassNames("flex flex-col gap-4 w-full sm:hidden");
-        add(barra, griglia, elenco);
+        settimanaGriglia.addClassNames("hidden sm:grid grid-cols-7 gap-px w-full bg-(--vaadin-border-color-secondary)"
+            + " border border-(--vaadin-border-color-secondary) rounded-(--vaadin-radius-m) overflow-hidden");
+        settimanaElenco.addClassNames("flex flex-col gap-4 w-full sm:hidden");
+        // Contenitori senza classi di display: la visibilità si cambia con setVisible
+        vistaMese.add(griglia, elenco);
+        vistaMese.addClassNames("w-full");
+        vistaSettimana.add(settimanaGriglia, settimanaElenco);
+        vistaSettimana.addClassNames("w-full");
+        vistaSettimana.setVisible(false);
+        add(barra, vistaMese, vistaSettimana);
         aggiorna();
     }
 
@@ -99,7 +138,17 @@ public class CalendarioView extends VerticalLayout {
         aggiorna();
     }
 
+    /** Mostra la vista indicata (anche dai test). */
+    void mostra(Vista nuova) {
+        vista.setValue(nuova);
+    }
+
     private void aggiorna() {
+        if (vista.getValue() == Vista.SETTIMANA) {
+            riempiSettimana(calendarioService.settimanaTipo(username,
+                filtroCorso.getValue() != null ? filtroCorso.getValue().getId() : null));
+            return;
+        }
         titolo.setText(Formati.mese(mese));
         List<VoceCalendario> voci = calendarioService.lezioniDelMese(username, mese,
             filtroCorso.getValue() != null ? filtroCorso.getValue().getId() : null);
@@ -165,6 +214,55 @@ public class CalendarioView extends VerticalLayout {
             vuoto.addClassNames(Stili.TESTO_SECONDARIO);
             elenco.add(vuoto);
         }
+    }
+
+    /** Settimana tipo: griglia lun–dom e, su mobile, l'elenco dei soli giorni con corsi. */
+    private void riempiSettimana(List<VoceSettimana> voci) {
+        settimanaGriglia.removeAll();
+        settimanaElenco.removeAll();
+        Map<DayOfWeek, List<VoceSettimana>> perGiorno = voci.stream().collect(Collectors.groupingBy(VoceSettimana::giorno));
+        for (DayOfWeek giorno : DayOfWeek.values()) {
+            Span intestazione = new Span(giorno.getDisplayName(TextStyle.SHORT, ViewSupport.LOCALE));
+            intestazione.addClassNames("p-1 text-center bg-(--aura-surface-color)", Stili.TESTO_SECONDARIO);
+            settimanaGriglia.add(intestazione);
+        }
+        for (DayOfWeek giorno : DayOfWeek.values()) {
+            List<VoceSettimana> delGiorno = perGiorno.getOrDefault(giorno, List.of());
+            Div cella = new Div();
+            cella.addClassNames("flex flex-col gap-1 min-h-28 min-w-0 p-1 bg-(--aura-surface-color)");
+            delGiorno.forEach(voce -> cella.add(voceSettimana(voce)));
+            settimanaGriglia.add(cella);
+            if (!delGiorno.isEmpty()) {
+                H3 nome = new H3(giorno.getDisplayName(TextStyle.FULL, ViewSupport.LOCALE));
+                nome.addClassNames("text-(length:--aura-font-size-m) m-0 first-letter:uppercase");
+                Div blocco = new Div(nome);
+                blocco.addClassNames("flex flex-col gap-1");
+                delGiorno.forEach(voce -> blocco.add(voceSettimana(voce)));
+                settimanaElenco.add(blocco);
+            }
+        }
+        if (voci.isEmpty()) {
+            Span vuoto = new Span("Nessun corso attivo");
+            vuoto.addClassNames(Stili.TESTO_SECONDARIO);
+            settimanaElenco.add(vuoto);
+        }
+    }
+
+    /** Corso nella settimana tipo, in sola lettura: orario, corso e gruppo (o figlio), insegnanti, cadenza. */
+    private static Div voceSettimana(VoceSettimana voce) {
+        String orario = voce.inizio() == null ? "Senza orario"
+            : Formati.ora(voce.inizio()) + (voce.fine() != null ? "–" + Formati.ora(voce.fine()) : "");
+        Span ora = new Span(orario);
+        ora.addClassNames("font-(--aura-font-weight-semibold)");
+        String gruppo = voce.gruppo() != null ? " · " + nomeBreve(voce.gruppo()) : voce.senzaGruppo() ? " · Senza gruppo" : "";
+        Span corso = new Span(voce.corso().getNome() + gruppo + (voce.perChi() != null ? " – " + voce.perChi() : ""));
+        Span insegnanti = new Span(voce.corso().getNomiInsegnanti()
+            + (voce.corso().getCadenzaSettimane() == 2 ? " · ogni 2 sett." : ""));
+        insegnanti.addClassNames("text-(--vaadin-text-color-secondary)");
+        Div blocco = new Div(ora, corso, insegnanti);
+        blocco.addClassNames("flex flex-col min-w-0 px-1.5 py-1 rounded-(--vaadin-radius-s) bg-(--aura-accent-surface)"
+            + " border-l-2 border-(--aura-accent-color) text-(length:--aura-font-size-xs) break-words");
+        return blocco;
     }
 
     private static Span festivita(String nome) {

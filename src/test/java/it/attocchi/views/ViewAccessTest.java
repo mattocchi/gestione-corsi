@@ -23,6 +23,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridTester;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.shared.Tooltip;
@@ -3324,6 +3325,33 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate("lezioni?lezione=" + lezione.getId(), LezioniView.class);
         String titolo = "Corso di Canto – Lezione " + lezione.getNumeroLezione() + " (" + Formati.data(lezione.getData()) + ")";
         assertTrue(find(Dialog.class).all().stream().anyMatch(d -> titolo.equals(d.getHeaderTitle())));
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_settimanaTipoDeiCorsiAttivi() {
+        navigate(CalendarioView.class);
+        CalendarioView calendario = find(CalendarioView.class).single();
+        calendario.mostra(CalendarioView.Vista.SETTIMANA);
+        // Niente mese da scorrere; voci in sola lettura (nessun pulsante), nella griglia e nell'elenco mobile
+        assertFalse(find(Button.class).withText("Oggi").exists());
+        List<String> orari = find(Span.class).all().stream().map(Span::getText)
+            .filter(t -> t.matches("\\d\\d:\\d\\d–\\d\\d:\\d\\d")).toList();
+        assertEquals(List.of("18:00–18:40", "17:00–17:40", "18:00–18:40", "18:00–18:40", "17:00–17:40", "18:00–18:40"), orari);
+        assertEquals(2 * 2, find(Span.class).withText("Corso di Chitarra").all().size());
+        assertTrue(find(H3.class).withText("giovedì").exists());
+        assertTrue(find(Button.class).all().stream().noneMatch(b -> b.getText().contains("Corso di")));
+
+        // Filtro per corso anche qui
+        test((ComboBox<Corso>) find(ComboBox.class).withPlaceholder("Tutti i corsi").single()).selectItem("Corso di Canto");
+        assertEquals(2, find(Span.class).withText("Corso di Canto").all().size());
+        assertFalse(find(Span.class).withText("Corso di Chitarra").exists());
+
+        // Di nuovo il mese
+        calendario.mostra(CalendarioView.Vista.MESE);
+        assertTrue(find(Button.class).withText("Oggi").exists());
+        assertFalse(find(Span.class).withText("Corso di Canto").exists());
     }
 
     @Test

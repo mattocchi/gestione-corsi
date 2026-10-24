@@ -402,5 +402,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### SETTIMANA TIPO
 
-* [ ] aggiungi una visualizzazione nel calendario in cui si visualizza una settimana "tipo" con tutti i corsi, non è un vero e proprio calendario ma una rappresentazione della settimana dei corsi attivi
+* [x] aggiungi una visualizzazione nel calendario in cui si visualizza una settimana "tipo" con tutti i corsi, non è un vero e proprio calendario ma una rappresentazione della settimana dei corsi attivi _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: ogni ruolo vede i suoi corsi attivi come nel calendario del mese (admin e segreteria tutti, con il filtro per corso; insegnante i suoi; allievo i propri; genitore quelli dei figli); selettore "Mese | Settimana tipo" nella barra del Calendario; per ogni giorno lun–dom le voci ordinate per orario con orario inizio–fine, corso, gruppo (una voce per gruppo di quel giorno al suo orario), insegnanti e "ogni 2 sett." per i corsi quindicinali; voci in sola lettura, non cliccabili._
