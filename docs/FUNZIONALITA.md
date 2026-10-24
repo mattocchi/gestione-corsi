@@ -377,3 +377,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-24: conferma (PDF, email, invio a tutti) con la sola data di nascita, ricevuta con data di nascita e codice fiscale; nella conferma senza codice fiscale la riga non compare; "Data di nascita" stampata nel riquadro Allievo di conferma e ricevuta; badge "Dati mancanti" in Gestione Allievi se manca uno dei due, con il tooltip che dice per quali documenti servono; in Documenti l'avviso tiene conto del tipo._
 * [x] nella conferma, rimuovere la riga che riporta gli insegnanti _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: tolti dalla conferma sia la riga "Insegnante/Insegnanti" del PDF sia il nome nella frase dell'email; la ricevuta resta com'è._
+
+### COLLEGAMENTI ALLIEVO GENITORE
+
+* [ ] sarebbe utile in consultazione dell'allievo o del genitore un link per poter saltare al genitore o allievo se sono collegati
