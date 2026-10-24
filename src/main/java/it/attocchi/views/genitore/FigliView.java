@@ -84,8 +84,11 @@ public class FigliView extends VerticalLayout {
     private void configureGrid() {
         gridFigli.addComponentColumn(FigliView::nome).setHeader("Nome")
             .setComparator(Allievo::getNomeCompleto).setSortable(true);
-        gridFigli.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
+        gridFigli.addColumn(allievo -> Formati.dataNumerica(allievo.getDataNascita())).setHeader("Data Nascita")
             .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
+        // Anni compiuti a oggi
+        gridFigli.addColumn(Formati::eta).setHeader("Età")
+            .setComparator(Formati.PER_ETA).setAutoWidth(true).setFlexGrow(0);
         gridFigli.addColumn(allievo -> allievo.getCorsi().size()).setHeader("N. Corsi").setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(gridFigli.addComponentColumn(this::createAzioni));
@@ -93,7 +96,8 @@ public class FigliView extends VerticalLayout {
         CardMobile.per(gridFigli)
             .titolo(Allievo::getNomeCompleto)
             .stato(allievo -> DocumentiView.datiMancanti(avvisoDatiMancanti(allievo)))
-            .campo("Data Nascita", allievo -> Formati.data(allievo.getDataNascita()))
+            .campo("Data Nascita", allievo -> Formati.dataNumerica(allievo.getDataNascita()))
+            .campo("Età", Formati::eta)
             .campo("N. Corsi", allievo -> allievo.getCorsi().size())
             .azioni(this::createAzioni)
             .applica();

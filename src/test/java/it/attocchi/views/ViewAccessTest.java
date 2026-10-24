@@ -1020,7 +1020,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
         Long userId = allievi.getRow(riga).getUser().getId();
 
-        test((Button) allievi.getCellComponent(riga, 6).getChildren().findFirst().orElseThrow()).click();
+        test((Button) allievi.getCellComponent(riga, 7).getChildren().findFirst().orElseThrow()).click();
         test(find(TextField.class).withLabel("Nome").single()).setValue("Giulia");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Neri");
         test(find(Button.class).withText("Salva").single()).click();
@@ -1413,8 +1413,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(FigliView.class);
             var figli = test(find(Grid.class).single());
-            assertEquals("1", figli.getCellText(0, 2));
-            assertEquals("1", figli.getCellText(1, 2));
+            assertEquals("1", figli.getCellText(0, 3));
+            assertEquals("1", figli.getCellText(1, 3));
         } finally {
             riattiva(chitarra);
         }
@@ -2571,11 +2571,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var grid = test(find(Grid.class).single());
         assertEquals(13, grid.size());
         for (int row = 0; row < grid.size(); row++) {
-            assertEquals("1", grid.getCellText(row, 5));
-            grid.getCellText(row, 3);
+            assertEquals("1", grid.getCellText(row, 6));
+            // Data di nascita gg/mm/aaaa ed età in anni compiuti
+            Allievo allievo = (Allievo) grid.getRow(row);
+            assertEquals(Formati.dataNumerica(allievo.getDataNascita()), grid.getCellText(row, 2));
+            assertEquals(String.valueOf(java.time.Period.between(allievo.getDataNascita(), LocalDate.now()).getYears()),
+                grid.getCellText(row, 3));
+            grid.getCellText(row, 4);
             // Nessuno allievo di esempio ha un indirizzo proprio: si mostra quello del genitore
-            assertTrue(grid.getCellText(row, 4).matches("Via Roma \\d, 00184 Roma \\(RM\\) \\(del genitore\\)"),
-                grid.getCellText(row, 4));
+            assertTrue(grid.getCellText(row, 5).matches("Via Roma \\d, 00184 Roma \\(RM\\) \\(del genitore\\)"),
+                grid.getCellText(row, 5));
         }
     }
 
@@ -2627,7 +2632,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());
         assertEquals(13, allievi.size());
-        assertAzioni(allievi.getCellComponent(0, 6), "Modifica");
+        assertAzioni(allievi.getCellComponent(0, 7), "Modifica");
     }
 
     @Test
@@ -3992,8 +3997,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         var grid = test(find(Grid.class).single());
         assertEquals(2, grid.size());
-        assertEquals("1", grid.getCellText(0, 2));
-        assertEquals("1", grid.getCellText(1, 2));
+        assertEquals("1", grid.getCellText(0, 3));
+        assertEquals("1", grid.getCellText(1, 3));
     }
 
     @Test
@@ -4016,7 +4021,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(grid.getCellComponent(1 - riga, 0).getChildren().noneMatch(Badge.class::isInstance));
 
             // Nel dialog di modifica l'avviso in alto
-            test(pulsante(grid.getCellComponent(riga, 3), "Modifica")).click();
+            test(pulsante(grid.getCellComponent(riga, 4), "Modifica")).click();
             Dialog dialog = find(Dialog.class).single();
             assertTrue(find(Span.class).from(dialog).all().stream()
                 .anyMatch(s -> "Manca codice fiscale di Allievo Canto3: serve per le ricevute.".equals(s.getText())));
@@ -4044,7 +4049,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var figli = test((Grid<Allievo>) find(Grid.class).single());
             int riga = IntStream.range(0, figli.size())
                 .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
-            test(pulsante(figli.getCellComponent(riga, 3), "Visualizza Dettagli")).click();
+            test(pulsante(figli.getCellComponent(riga, 4), "Visualizza Dettagli")).click();
 
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
@@ -4119,7 +4124,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var figli = test((Grid<Allievo>) find(Grid.class).single());
         int riga = IntStream.range(0, figli.size())
             .filter(r -> figli.getCellText(r, 0).equals("Allievo Canto3")).findFirst().orElseThrow();
-        test(pulsante(figli.getCellComponent(riga, 3), "Modifica")).click();
+        test(pulsante(figli.getCellComponent(riga, 4), "Modifica")).click();
 
         Dialog dialog = find(Dialog.class).single();
         assertTrue(find(TextField.class).from(dialog).withLabel("Username").single().isReadOnly());

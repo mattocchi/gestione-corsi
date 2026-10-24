@@ -17,6 +17,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -148,6 +149,16 @@ public final class Formati {
     /** Data con il giorno della settimana e sempre l'anno, es. "mer 7 ottobre 2026" (documenti PDF). */
     public static String dataCompleta(LocalDate data) {
         return data != null ? DATA_CON_ANNO.format(data) : "";
+    }
+
+    /** Ordine per età: dal più giovane, senza data di nascita in fondo. */
+    public static final Comparator<Allievo> PER_ETA = Comparator.comparing(Allievo::getDataNascita,
+        Comparator.nullsLast(Comparator.<LocalDate>reverseOrder()));
+
+    /** Età in anni compiuti a oggi, es. "14"; vuota senza data di nascita. */
+    public static String eta(Allievo allievo) {
+        Integer eta = allievo.getEta(LocalDate.now());
+        return eta != null ? String.valueOf(eta) : "";
     }
 
     /** Data in cifre, es. "05/03/2012" (data di nascita nei documenti); stringa vuota se nulla. */

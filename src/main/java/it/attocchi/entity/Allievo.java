@@ -67,6 +67,11 @@ public class Allievo implements Anagrafica {
         this.codiceFiscale = codiceFiscale;
     }
 
+    /** Età in anni compiuti alla data indicata; {@code null} senza data di nascita. */
+    public Integer getEta(LocalDate oggi) {
+        return dataNascita != null ? java.time.Period.between(dataNascita, oggi).getYears() : null;
+    }
+
     public LocalDate getDataNascita() {
         return dataNascita;
     }

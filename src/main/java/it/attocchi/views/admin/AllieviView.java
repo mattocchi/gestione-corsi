@@ -122,8 +122,11 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
         grid.addComponentColumn(AllieviView::nome).setHeader("Nome")
             .setComparator(Allievo::getNomeCompleto);
         grid.addColumn(Allievo::getCodiceFiscale).setHeader("Codice Fiscale");
-        grid.addColumn(allievo -> Formati.data(allievo.getDataNascita())).setHeader("Data Nascita")
+        grid.addColumn(allievo -> Formati.dataNumerica(allievo.getDataNascita())).setHeader("Data Nascita")
             .setComparator(Allievo::getDataNascita).setAutoWidth(true).setFlexGrow(0);
+        // Anni compiuti a oggi
+        grid.addColumn(Formati::eta).setHeader("Età")
+            .setComparator(Formati.PER_ETA).setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(allievo -> allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : "")
             .setHeader("Genitore");
         grid.addColumn(Formati::indirizzo).setHeader("Indirizzo");
@@ -135,7 +138,8 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
             .titolo(Allievo::getNomeCompleto)
             .stato(AllieviView::datiMancanti)
             .campo("Codice Fiscale", Allievo::getCodiceFiscale)
-            .campo("Data Nascita", allievo -> Formati.data(allievo.getDataNascita()))
+            .campo("Data Nascita", allievo -> Formati.dataNumerica(allievo.getDataNascita()))
+            .campo("Età", Formati::eta)
             .campo("Genitore", allievo -> allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : null)
             .campo("Indirizzo", Formati::indirizzo)
             .campo("N. Corsi", allievo -> allievo.getCorsi().size())

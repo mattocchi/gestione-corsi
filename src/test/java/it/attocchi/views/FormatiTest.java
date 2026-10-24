@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Lezione;
@@ -29,6 +30,17 @@ class FormatiTest {
     void dataNumerica_inCifre() {
         assertEquals("05/03/2012", Formati.dataNumerica(LocalDate.of(2012, 3, 5)));
         assertEquals("", Formati.dataNumerica(null));
+    }
+
+    @Test
+    void eta_anniCompiutiAOggi() {
+        Allievo allievo = new Allievo();
+        assertEquals("", Formati.eta(allievo));
+        allievo.setDataNascita(LocalDate.now().minusYears(14));
+        assertEquals("14", Formati.eta(allievo));
+        // Il compleanno è domani: ancora 13
+        allievo.setDataNascita(LocalDate.now().minusYears(14).plusDays(1));
+        assertEquals("13", Formati.eta(allievo));
     }
 
     @Test
