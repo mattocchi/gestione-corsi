@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | 1 | Parametro `id` nelle due viste (apre il dialog); helper del link con conferma delle modifiche; `UtenteFields.hasChanges()` | `AllieviView`, `GenitoriView`, nuovo `admin/SchedaCollegata`, `UtenteFields` | `./mvnw test` | [x] |
 | 2 | Link nei dialog; test browserless (allievo → genitore, genitore → figlio, conferma con modifiche) | `AllieviView`, `GenitoriView`, `ViewAccessTest` | `./mvnw test`; browser | [x] Il dialog di una vista si chiude lasciando la pagina (`onDetach`): con Indietro restava aperto sopra l'altra |
-| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,7 @@
 
 ## Registro
 
+- `./mvnw test`: 282 test superati; nuovo `ViewAccessTest.segreteria_dallaSchedaDellAllievoAQuellaDelGenitoreEViceversa` (link, ordine dei figli, conferma con modifiche, dialog chiuso lasciando la pagina).
+- Browser (dev, segreteria): genitori?id=3 apre Genitore3 con i link ai due figli; link → allievi?id=3 con la scheda di Allievo Canto3 e il link al genitore; con il telefono modificato compare "Lasciare le modifiche?"; Indietro torna alla scheda del genitore. Problema trovato e corretto: con Indietro il dialog del genitore restava aperto sopra la pagina degli allievi.
+- Nota: in questa sessione i clic del mouse dello strumento di automazione non arrivavano alla pagina (nemmeno su "Annulla"); i link sono stati provati con clic via JavaScript.
+- Lasciato aperto: nessuno.
