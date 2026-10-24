@@ -117,6 +117,29 @@ class DocumentiServiceTest {
     }
 
     @Test
+    void conferma_suUnaSolaPaginaAncheConScontoGenitoreEBonifico() throws IOException {
+        // Il caso più lungo: sconto con motivo (listino, sconto e nota), genitore, IBAN, rate e regole
+        Iscrizione iscrizione = iscrizione();
+        Long corsoId = iscrizione.getCorso().getId();
+        Long allievoId = iscrizione.getAllievo().getId();
+        pagamentoService.impostaQuota(corsoId, allievoId, new BigDecimal("450"), "fratelli iscritti allo stesso corso");
+        try {
+            byte[] pdf = documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId);
+            if (System.getProperty("conferma.pdf") != null) {
+                java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("conferma.pdf")), pdf);
+            }
+            try (PDDocument documento = Loader.loadPDF(pdf)) {
+                assertEquals(1, documento.getNumberOfPages());
+            }
+            String testo = testo(pdf);
+            assertTrue(testo.contains("Genitore"), testo);
+            assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
+        } finally {
+            pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+        }
+    }
+
+    @Test
     void modalitaPagamento_senzaAnnoScolasticoLeDateSenzaAnno() {
         assertEquals("Il pagamento può avvenire in un'unica soluzione entro il 30 novembre oppure in due rate: la prima "
             + "entro il 30 novembre e la seconda entro il 31 gennaio.", DocumentiService.modalitaPagamento(null));
@@ -301,7 +324,10 @@ class DocumentiServiceTest {
     private static String testo(byte[] pdf) throws IOException {
         assertEquals("%PDF", new String(pdf, 0, 4));
         try (PDDocument documento = Loader.loadPDF(pdf)) {
-            return new PDFTextStripper().getText(documento);
+            // In ordine di posizione: senza, i tratti in grassetto finiscono in fondo alla riga
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            return stripper.getText(documento);
         }
     }
 }

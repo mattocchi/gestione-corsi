@@ -30,7 +30,7 @@
 | 2 | `NuovoGenitoreRapidoDialog`; in `AllieviView` valori personalizzati del campo "Genitore" e pulsante "+"; test browserless | `NuovoGenitoreRapidoDialog`, `AllieviView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | Modalità di pagamento (unica soluzione o due rate) nella conferma PDF ed email; test | `DocumentiService`, template, `DocumentiServiceTest` | `./mvnw test` | [x] Il riquadro del PDF c'è sempre (rate) e contiene anche il bonifico se c'è l'IBAN |
 | 4 | Regole "Lezioni, assenze e recuperi" riscritte; test | `regole-corso.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [x] |
-| 5 | Conferma PDF compatta su una pagina A4; test sul numero di pagine | `comune.ftlh`, `conferma.ftlh`, `DocumentiServiceTest` | `./mvnw test`, PDF guardato | [ ] |
+| 5 | Conferma PDF compatta su una pagina A4; test sul numero di pagine | `comune.ftlh`, `DocumentiServiceTest`, `ViewAccessTest` | `./mvnw test`, PDF guardato | [x] Prima: 2 pagine nel caso più lungo, ora 1 con spazio libero. Margini 12×15 mm, testo 10 pt, Allievo e Genitore affiancati (anche nella ricevuta, stessa macro), tolta "Quota dovuta" dalla tabella Corso. Nei test il testo del PDF è letto in ordine di posizione (PDFBox metteva i grassetti in fondo alla riga) |
 | 6 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito

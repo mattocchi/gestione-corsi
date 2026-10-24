@@ -4072,7 +4072,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 testo = new org.apache.pdfbox.text.PDFTextStripper().getText(documento);
             }
             assertTrue(testo.contains("Allievo Canto3"), testo);
-            assertTrue(testo.contains("Via Roma 3, 00184 Roma (RM) (del genitore)"), testo);
+            // L'indirizzo può andare a capo nella colonna dell'allievo
+            assertTrue(testo.replaceAll("\\s+", " ").contains("Via Roma 3, 00184 Roma (RM) (del genitore)"), testo);
             assertTrue(testo.contains("200,00 €"), testo);
             assertTrue(testo.contains("400,00 €"), testo);
             // Ricevuta di un allievo che non è suo figlio: come se non esistesse
