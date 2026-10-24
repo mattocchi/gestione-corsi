@@ -3540,12 +3540,23 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("insegnante1")
     @SuppressWarnings("unchecked")
-    void insegnante_cambiaLaDataDiUnaLezione() {
+    void insegnante_nonVedeCambiaData() {
         apriLezioni();
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        assertTrue(find(Button.class).withText("Segna Completata").exists());
+        assertFalse(find(Button.class).withText("Cambia data").exists());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_cambiaLaDataDiUnaLezione() {
+        navigate(LezioniView.class);
         var grid = test((Grid<Lezione>) find(Grid.class).single());
         Lezione lezione = grid.getRow(0);
         LocalDate nuova = lezione.getData().plusDays(1);
-        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        navigate("lezioni?lezione=" + lezione.getId(), LezioniView.class);
         test(find(Button.class).withText("Cambia data").single()).click();
         assertEquals(lezione.getData(), find(DatePicker.class).withLabel("Data").single().getValue());
         test(find(DatePicker.class).withLabel("Data").single()).setValue(nuova);
@@ -3557,10 +3568,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(lezione.getData(), spostata.getDataOriginale());
             assertEquals(LocalTime.of(16, 0), spostata.getOrarioInizio());
             assertFalse(find(Button.class).withText("Cambia data").exists());
-            assertTrue(grid.getCellComponent(0, 1).getChildren()
+            // Colonne su desktop: Corso, Insegnante, Data, …
+            var elenco = test((Grid<Lezione>) find(Grid.class).single());
+            int riga = IntStream.range(0, elenco.size()).filter(r -> elenco.getRow(r).equals(lezione)).findFirst().orElseThrow();
+            assertTrue(elenco.getCellComponent(riga, 2).getChildren()
                 .anyMatch(c -> c instanceof Badge b && "Spostata".equals(b.getText())));
         } finally {
-            lezioneService.sposta(lezione.getId(), lezione.getData(), lezione.getOrarioInizio(), "insegnante1");
+            lezioneService.sposta(lezione.getId(), lezione.getData(), lezione.getOrarioInizio(), "segreteria");
         }
     }
 

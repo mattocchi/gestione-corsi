@@ -252,12 +252,15 @@ public class LezioneService {
      * Sposta una lezione da fare a un'altra data e orario (senza orario la lezione resta senza; la fine segue la durata
      * del corso). Tiene partecipanti e numero; la data originale resta memorizzata, così "Genera Lezioni" non la
      * ricrea; riportata alla data originale torna una lezione normale. Rifiutata se il corso ha già una lezione quel
-     * giorno. Insegnante del corso, segreteria o admin.
+     * giorno. Solo admin e segreteria ({@link #puoSpostare}), non l'insegnante del corso.
      */
     @Transactional
     public void sposta(Long lezioneId, LocalDate data, LocalTime orario, String username) {
         if (data == null) {
             throw new IllegalArgumentException("Inserisci la data della lezione");
+        }
+        if (!puoSpostare(username)) {
+            throw new IllegalStateException("Solo admin e segreteria possono cambiare la data di una lezione");
         }
         Lezione lezione = gestibile(lezioneId, username, false);
         if (!lezione.isDaFare()) {
@@ -288,6 +291,12 @@ public class LezioneService {
         lezioneRepository.delete(lezione);
         lezioneRepository.flush();
         numerazioneLezioni.rinumera(lezione.getCorso().getId());
+    }
+
+    /** {@code true} se l'utente può cambiare la data delle lezioni ({@link #sposta}): admin o segreteria. */
+    public boolean puoSpostare(String username) {
+        Set<String> ruoli = userRepository.findByUsername(username).map(User::getRoles).orElse(Set.of());
+        return ruoli.contains("ADMIN") || ruoli.contains("SEGRETERIA");
     }
 
     /** {@code true} se l'utente può eliminare le lezioni aggiunte del corso (il suo insegnante o un admin). */

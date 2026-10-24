@@ -18,7 +18,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | `LezioneService.puoSpostare(username)` usato da `sposta` e da `ElencoLezioni`; test (servizio: insegnante rifiutato; vista: insegnante senza pulsante, segreteria sposta) | `LezioneService`, `ElencoLezioni`, `LezioneServiceTest`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 1 | `LezioneService.puoSpostare(username)` usato da `sposta` e da `ElencoLezioni`; test (servizio: insegnante rifiutato; vista: insegnante senza pulsante, segreteria sposta) | `LezioneService`, `ElencoLezioni`, `LezioneServiceTest`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito

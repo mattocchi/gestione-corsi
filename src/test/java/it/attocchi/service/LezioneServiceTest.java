@@ -147,7 +147,12 @@ class LezioneServiceTest {
         assertThrows(IllegalStateException.class,
             () -> lezioneService.sposta(lezione.getId(), successiva.getData(), null, "segreteria"));
 
-        lezioneService.sposta(lezione.getId(), nuova, LocalTime.of(16, 30), "insegnante2");
+        // Nemmeno l'insegnante del corso
+        assertThrows(IllegalStateException.class, () -> lezioneService.sposta(lezione.getId(), nuova, null, "insegnante2"));
+        assertFalse(lezioneService.puoSpostare("insegnante2"));
+        assertTrue(lezioneService.puoSpostare("segreteria"));
+
+        lezioneService.sposta(lezione.getId(), nuova, LocalTime.of(16, 30), "segreteria");
         try {
             Lezione spostata = lezioneService.findById(lezione.getId());
             assertEquals(nuova, spostata.getData());

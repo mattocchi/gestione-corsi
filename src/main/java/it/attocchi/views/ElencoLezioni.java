@@ -355,8 +355,11 @@ public class ElencoLezioni extends VerticalLayout {
             Button completaButton = new Button("Segna Completata",
                 e -> esegui(dialog, () -> lezioneService.completa(lezione.getId(), username), "Lezione completata"));
             completaButton.addThemeVariants(ButtonVariant.SUCCESS);
-            dialog.getFooter().add(new Button("Cambia data", VaadinIcon.CALENDAR.create(),
-                e -> apriCambiaData(lezione, dialog)));
+            // Il cambio data solo ad admin e segreteria
+            if (lezioneService.puoSpostare(username)) {
+                dialog.getFooter().add(new Button("Cambia data", VaadinIcon.CALENDAR.create(),
+                    e -> apriCambiaData(lezione, dialog)));
+            }
             if (lezione.isAggiunta()) {
                 // Le lezioni aggiunte a mano non si segnano non effettuate: si eliminano (insegnante o admin)
                 if (lezioneService.puoEliminare(lezione.getCorso(), username)) {
