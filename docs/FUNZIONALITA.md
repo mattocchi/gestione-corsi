@@ -343,3 +343,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] quando l'insegnante consula il registro presenze della lezione deve vedere gli allievi per gruppo in modo da selezionare il gruppo, come fosse una tab e inseire le presenze o altro _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: nel dialog "Gestisci Presenze" una scheda per ogni gruppo con allievi alla lezione, in ordine di orario, più "Senza gruppo" se serve e "Tutti"; si apre sul primo gruppo; le schede filtrano l'elenco degli allievi, mentre "Segna Completata" e "Non effettuata" restano per tutta la lezione; vale per insegnanti, admin e segreteria, solo nelle lezioni con più gruppi (o un gruppo e chi è senza)._
+
+### ORARIO DEL GRUPPO
+
+* [ ] vorrei apportare una miglioria, nella prossima lezione ad esempio se è un corso propedeutica con due gruppi uno alle 10 e uno alle 11, e un genitore ha un allievo su un gruppo e uno su una altro gruppo, risulta che la lezione è alle 10 vorrei invece fare in modo che si vedesse correttamente che la prossima lezione, o la lezione a calendario, è si di propedeutica, ma del gruppo delle 10 o del gruppo delle 11, sopratutto dove non è specificato un orario specifico per l'allievo, questo aiuterebbe la visualizzazione, verifica anche altri punti dove è utile questa miglioria
