@@ -2010,6 +2010,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithAnonymousUser
+    void login_ricordamiNelFormSopraAccedi() {
+        navigate(LoginView.class);
+        Checkbox ricordami = find(Checkbox.class).withLabel("Ricordami su questo dispositivo").single();
+        // Dentro il form, nello slot tra la password e il pulsante di invio (prima di "Password dimenticata?")
+        assertTrue(ricordami.getParent().orElseThrow() instanceof LoginForm);
+        assertEquals("custom-form-area", ricordami.getElement().getAttribute("slot"));
+    }
+
+    @Test
+    @WithAnonymousUser
     void login_mostraNomeESottotitolo() {
         navigate(LoginView.class);
         assertEquals("Area Corsi Mosson", find(H1.class).single().getText());

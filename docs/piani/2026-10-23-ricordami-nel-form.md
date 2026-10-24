@@ -18,7 +18,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Casella nello slot `custom-form-area` del `LoginForm`; test che sia figlia del form in quello slot; `CLAUDE.md` | `LoginView.java`, `security/LoginTest` o `ViewAccessTest`, `CLAUDE.md` | `./mvnw test`; browser | [ ] |
+| 1 | Casella nello slot `custom-form-area` del `LoginForm`; test che sia figlia del form in quello slot; `CLAUDE.md` | `LoginView.java`, `security/LoginTest` o `ViewAccessTest`, `CLAUDE.md` | `./mvnw test`; browser | [x] Ripreso il 2026-10-24 dallo stash (lasciato a metà il 23/10) |
 | 2 | Registro finale | questo piano | build e test | [ ] |
 
 ## Fuori ambito

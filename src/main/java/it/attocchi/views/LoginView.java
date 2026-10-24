@@ -32,7 +32,12 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
         add(ScorciatoiaHome.banner());
         add(PaginaPubblica.intestazione());
-        add(login, ricordami());
+        // La casella sta dentro il form, sotto la password e sopra "Accedi" (prima di "Password dimenticata?"): slot
+        // del componente web per i campi in più, che l'API Java del LoginForm non espone
+        Checkbox ricordami = ricordami();
+        ricordami.getElement().setAttribute("slot", "custom-form-area");
+        login.getElement().appendChild(ricordami.getElement());
+        add(login);
     }
 
     /**
