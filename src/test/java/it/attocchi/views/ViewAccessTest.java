@@ -1836,8 +1836,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             apriLezioni();
             navigate(HomeView.class);
-            // Canto: 30 lezioni × 7 allievi × 40 minuti = 140 ore previste, nessuna svolta
-            assertEquals("Ore donate: 0 h (su 140 h previste)", oreDonate().orElseThrow().getElement().getAttribute("aria-label"));
+            // Canto: 30 lezioni × 7 allievi × 40 minuti = 140 ore previste in grande, nessuna svolta
+            assertEquals("Ore donate: 140 h (di cui 0 h già svolte)", oreDonate().orElseThrow().getElement().getAttribute("aria-label"));
+        } finally {
+            Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
+            ripristino.setTariffaOraria(new BigDecimal("25.00"));
+            insegnanteService.save(ripristino);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_vedeIlTotaleDelleOreDonate() {
+        navigate(CorsiView.class);
+        navigate(HomeView.class);
+        // Tutti gli insegnanti hanno la tariffa: nessun riquadro
+        assertFalse(oreDonate().isPresent());
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        insegnante.setTariffaOraria(null);
+        insegnanteService.save(insegnante);
+        try {
+            navigate(CorsiView.class);
+            navigate(HomeView.class);
+            // Il solo insegnante senza tariffa: le 140 ore previste di Canto
+            assertEquals("Ore donate: 140 h (di cui 0 h già svolte · 1 insegnante)",
+                oreDonate().orElseThrow().getElement().getAttribute("aria-label"));
         } finally {
             Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
             ripristino.setTariffaOraria(new BigDecimal("25.00"));

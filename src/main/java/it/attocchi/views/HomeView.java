@@ -24,6 +24,7 @@ import it.attocchi.entity.Lezione;
 import it.attocchi.entity.User;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.BilancioService;
+import it.attocchi.service.BilancioService.OreDonateTotali;
 import it.attocchi.service.DashboardService;
 import it.attocchi.service.DashboardService.ProssimaLezione;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
@@ -41,6 +42,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Dashboard iniziale: riquadri di riepilogo in funzione dei ruoli dell'utente
@@ -94,7 +96,8 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti()),
                 indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
                 indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
-            add(pagamenti(pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso()));
+            add(pagamenti(pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso(),
+                bilancioService.oreDonateTotali()));
             add(gruppi(dashboardService.riepilogoGruppi()));
         }
         if (securityService.hasRole("INSEGNANTE")) {
@@ -104,9 +107,9 @@ public class HomeView extends VerticalLayout {
                 indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
                 indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare()),
                 indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate())));
-            // Insegnante senza tariffa oraria: le ore di lezione che sta donando sui corsi attivi
+            // Insegnante senza tariffa oraria: le ore di lezione che sta donando sui corsi attivi (previste, di cui svolte)
             bilancioService.oreDonate(username).ifPresent(ore -> corsi.add(indicatore(VaadinIcon.HEART, "Ore donate",
-                Formati.durata(ore.minutiSvolti()), "su " + Formati.durata(ore.minutiPrevisti()) + " previste")));
+                Formati.durata(ore.minutiPrevisti()), "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte")));
             Div sezione = sezione("I miei corsi", corsi.toArray(Card[]::new));
             // I gruppi dei suoi corsi, solo se ce ne sono
             List<RigaGruppo> gruppi = dashboardService.gruppiDellInsegnante(username);
@@ -134,9 +137,10 @@ public class HomeView extends VerticalLayout {
     /**
      * Pagamenti dei corsi attivi: riquadri con i totali e una riga per corso (l'ultimo elemento è il totale), con il
      * costo previsto degli insegnanti ({@code costi} per id del corso, assente se nessuno ha la tariffa oraria) e il
-     * margine = quote dovute − costo.
+     * margine = quote dovute − costo; con insegnanti senza tariffa anche il totale delle loro ore donate.
      */
-    private static Div pagamenti(List<RiepilogoPagamenti> riepilogo, Map<Long, BigDecimal> costi) {
+    private static Div pagamenti(List<RiepilogoPagamenti> riepilogo, Map<Long, BigDecimal> costi,
+                                 Optional<OreDonateTotali> oreDonate) {
         RiepilogoPagamenti totale = riepilogo.getLast();
         List<RiepilogoPagamenti> corsi = riepilogo.subList(0, riepilogo.size() - 1);
         // Totali di costo e margine solo sui corsi con un costo (almeno un insegnante con tariffa)
@@ -154,7 +158,7 @@ public class HomeView extends VerticalLayout {
         }
         String esclusi = senzaTariffa == 0 ? null
             : senzaTariffa + (senzaTariffa == 1 ? " corso senza tariffa escluso" : " corsi senza tariffa esclusi");
-        Div sezione = sezione("Pagamenti dei corsi attivi",
+        List<Card> riquadri = new ArrayList<>(List.of(
             indicatore(VaadinIcon.CHECK, "Saldati", totale.saldati()),
             indicatore(VaadinIcon.HOURGLASS, "Pagamento parziale", totale.parziali()),
             indicatore(VaadinIcon.CLOCK, "Senza pagamenti", totale.senzaPagamenti()),
@@ -165,7 +169,12 @@ public class HomeView extends VerticalLayout {
             indicatore(VaadinIcon.USER_STAR, "Costo insegnanti previsto", Formati.euro(costoTotale),
                 esclusi != null ? esclusi : "lezioni programmate"),
             indicatore(VaadinIcon.SCALE, "Margine previsto", Formati.euro(margineTotale),
-                esclusi != null ? esclusi : "quote − costo insegnanti"));
+                esclusi != null ? esclusi : "quote − costo insegnanti")));
+        // Insegnanti senza tariffa: il totale delle ore che donano (previste, di cui svolte)
+        oreDonate.ifPresent(ore -> riquadri.add(indicatore(VaadinIcon.HEART, "Ore donate", Formati.durata(ore.minutiPrevisti()),
+            "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte · " + ore.insegnanti()
+                + (ore.insegnanti() == 1 ? " insegnante" : " insegnanti"))));
+        Div sezione = sezione("Pagamenti dei corsi attivi", riquadri.toArray(Card[]::new));
 
         Grid<RiepilogoPagamenti> grid = new Grid<>(RiepilogoPagamenti.class, false);
         grid.addColumn(RiepilogoPagamenti::corso).setHeader("Corso");
