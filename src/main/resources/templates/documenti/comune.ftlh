@@ -65,7 +65,9 @@
       <h2>Allievo</h2>
       <table class="dati">
         <tr><td class="etichetta">Nome</td><td>${allievo.nome}</td></tr>
-        <tr><td class="etichetta">Codice fiscale</td><td>${allievo.codiceFiscale}</td></tr>
+        <#if allievo.dataNascita?has_content><tr><td class="etichetta">Data di nascita</td><td>${allievo.dataNascita}</td></tr></#if>
+        <#-- Facoltativo nella conferma: senza codice fiscale la riga non c'è -->
+        <#if allievo.codiceFiscale?has_content><tr><td class="etichetta">Codice fiscale</td><td>${allievo.codiceFiscale}</td></tr></#if>
         <tr><td class="etichetta">Indirizzo</td><td>${allievo.indirizzo}</td></tr>
       </table>
     </td>

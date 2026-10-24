@@ -29,6 +29,7 @@ public final class Formati {
     private static final Locale ITALIANO = Locale.ITALIAN;
     private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("EEE d MMMM", ITALIANO);
     private static final DateTimeFormatter DATA_CON_ANNO = DateTimeFormatter.ofPattern("EEE d MMMM yyyy", ITALIANO);
+    private static final DateTimeFormatter DATA_NUMERICA = DateTimeFormatter.ofPattern("dd/MM/yyyy", ITALIANO);
     private static final DateTimeFormatter ORA = DateTimeFormatter.ofPattern("HH:mm", ITALIANO);
     private static final DateTimeFormatter MESE = DateTimeFormatter.ofPattern("LLLL yyyy", ITALIANO);
 
@@ -147,6 +148,11 @@ public final class Formati {
     /** Data con il giorno della settimana e sempre l'anno, es. "mer 7 ottobre 2026" (documenti PDF). */
     public static String dataCompleta(LocalDate data) {
         return data != null ? DATA_CON_ANNO.format(data) : "";
+    }
+
+    /** Data in cifre, es. "05/03/2012" (data di nascita nei documenti); stringa vuota se nulla. */
+    public static String dataNumerica(LocalDate data) {
+        return data != null ? DATA_NUMERICA.format(data) : "";
     }
 
     /** Data e ora, es. "mer 7 ottobre, 10:35" (anno come in {@link #data(LocalDate)}); stringa vuota se nulla. */

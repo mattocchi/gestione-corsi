@@ -1,10 +1,12 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.TipoDocumento;
+import it.attocchi.views.Formati;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -139,8 +141,28 @@ class DocumentiServiceTest {
             String testo = testo(pdf);
             assertTrue(testo.contains("Genitore"), testo);
             assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
+            assertTrue(testo.contains("Data di nascita " + Formati.dataNumerica(iscrizione.getAllievo().getDataNascita())), testo);
         } finally {
             pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+        }
+    }
+
+    @Test
+    void conferma_senzaCodiceFiscaleDellAllievo_senzaLaRiga() throws IOException {
+        Iscrizione iscrizione = iscrizione();
+        Allievo allievo = allievoService.findById(iscrizione.getAllievo().getId());
+        String codiceFiscale = allievo.getCodiceFiscale();
+        allievo.setCodiceFiscale(null);
+        allievoService.save(allievo);
+        try {
+            String testo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE,
+                iscrizione.getCorso().getId(), allievo.getId()));
+            assertFalse(testo.contains(codiceFiscale), testo);
+            // Resta solo il codice fiscale del genitore
+            assertEquals(1, testo.split("Codice fiscale", -1).length - 1, testo);
+        } finally {
+            allievo.setCodiceFiscale(codiceFiscale);
+            allievoService.save(allievo);
         }
     }
 

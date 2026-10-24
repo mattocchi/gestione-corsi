@@ -26,6 +26,12 @@ class FormatiTest {
     }
 
     @Test
+    void dataNumerica_inCifre() {
+        assertEquals("05/03/2012", Formati.dataNumerica(LocalDate.of(2012, 3, 5)));
+        assertEquals("", Formati.dataNumerica(null));
+    }
+
+    @Test
     void data_diAltroAnno_conAnno() {
         assertEquals("gio 3 ottobre 2024", Formati.data(LocalDate.of(2024, 10, 3), ANNO_CORRENTE));
     }

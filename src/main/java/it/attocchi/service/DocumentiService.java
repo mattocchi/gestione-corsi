@@ -384,7 +384,7 @@ public class DocumentiService {
         }
         modello.put("emessa", Formati.dataCompleta(LocalDate.now()));
         modello.put("allievo", Map.of("nome", allievo.getNomeCompleto(), "codiceFiscale", testo(allievo.getCodiceFiscale()),
-            "indirizzo", testo(Formati.indirizzo(allievo))));
+            "dataNascita", Formati.dataNumerica(allievo.getDataNascita()), "indirizzo", testo(Formati.indirizzo(allievo))));
         if (genitore != null) {
             modello.put("genitore", Map.of("nome", genitore.getNomeCompleto(), "codiceFiscale", testo(genitore.getCodiceFiscale())));
         }
@@ -455,6 +455,7 @@ public class DocumentiService {
         Allievo allievo = new Allievo();
         allievo.setUser(new User("esempio.allievo", null, "Anna", "Esempio", null));
         allievo.setCodiceFiscale("SMPNNA12C45H501Y");
+        allievo.setDataNascita(LocalDate.of(2012, 3, 5));
         Indirizzo indirizzo = new Indirizzo();
         indirizzo.setVia("Via di Prova 1");
         indirizzo.setCap("00100");
