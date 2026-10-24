@@ -6,7 +6,7 @@
 <body style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; color: #222;">
 <p>Gentile ${saluto},</p>
 <p>confermiamo l'iscrizione di <strong>${allievo.nome}</strong> al corso <strong>${corso.nome}</strong>
-  (anno scolastico ${corso.anno}<#if corso.insegnante?has_content>, ${corso.etichettaInsegnante?lower_case} ${corso.insegnante}</#if>)<#if corso.giorni?has_content>, con lezione il ${corso.giorni}</#if>.</p>
+  (anno scolastico ${corso.anno})<#if corso.giorni?has_content>, con lezione il ${corso.giorni}</#if>.</p>
 <@i.blocco email=true/>
 <p>${modalitaPagamento}</p>
 <#if associazione.iban?has_content>

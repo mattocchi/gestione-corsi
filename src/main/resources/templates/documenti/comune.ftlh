@@ -57,8 +57,9 @@
 <p class="emessa">Emessa il ${emessa}</p>
 </#macro>
 
-<#-- Allievo e genitore affiancati, poi il corso (la quota è negli importi) -->
-<#macro datiIscrizione>
+<#-- Allievo e genitore affiancati, poi il corso (la quota è negli importi); gli insegnanti solo con insegnanti=true
+     (ricevuta, non la conferma) -->
+<#macro datiIscrizione insegnanti=true>
 <table class="colonne">
   <tr>
     <td class="colonna">
@@ -86,6 +87,6 @@
 <table class="dati">
   <tr><td class="etichetta">Corso</td><td>${corso.nome}</td></tr>
   <tr><td class="etichetta">Anno scolastico</td><td>${corso.anno}</td></tr>
-  <tr><td class="etichetta">${corso.etichettaInsegnante}</td><td>${corso.insegnante}</td></tr>
+  <#if insegnanti><tr><td class="etichetta">${corso.etichettaInsegnante}</td><td>${corso.insegnante}</td></tr></#if>
 </table>
 </#macro>

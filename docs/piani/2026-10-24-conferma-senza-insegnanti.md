@@ -17,7 +17,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Parametro `insegnanti` della macro (falso nella conferma), frase dell'email senza insegnanti; test | `comune.ftlh`, `conferma.ftlh` (documenti ed email), `DocumentiServiceTest` | `./mvnw test` | [ ] |
+| 1 | Parametro `insegnanti` della macro (falso nella conferma), frase dell'email senza insegnanti; test | `comune.ftlh`, `conferma.ftlh` (documenti ed email), `DocumentiServiceTest` | `./mvnw test` | [x] |
 | 2 | `CLAUDE.md` (se serve) e registro finale | questo piano | build e test | [ ] |
 
 ## Fuori ambito

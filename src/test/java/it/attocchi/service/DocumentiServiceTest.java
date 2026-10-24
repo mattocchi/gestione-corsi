@@ -74,6 +74,8 @@ class DocumentiServiceTest {
             assertTrue(testo.contains("DA PAGARE"), testo);
             assertTrue(testo.contains("150,00 €"), testo);
             assertTrue(testo.contains("450,00 €"), testo);
+            // La ricevuta riporta gli insegnanti, la conferma no
+            assertTrue(testo.contains("Insegnante " + iscrizione.getCorso().getNomiInsegnanti()), testo);
         } finally {
             pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
         }
@@ -87,6 +89,7 @@ class DocumentiServiceTest {
 
         String testo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId));
         assertTrue(testo.contains("Conferma di iscrizione"), testo);
+        assertFalse(testo.contains(iscrizione.getCorso().getNomiInsegnanti()), testo);
         assertTrue(testo.replaceAll("\\s+", " ").contains("con lezione il giovedì"), testo);
         assertTrue(testo.contains("DA PAGARE"), testo);
         assertTrue(testo.contains("QUOTA DOVUTA"), testo);
@@ -120,6 +123,7 @@ class DocumentiServiceTest {
         assertTrue(regoleEmail.contains("il recupero sarà difficilmente realizzabile"));
         assertTrue(regoleEmail.contains("Le lezioni non frequentate non vengono rimborsate"));
         assertFalse(email.contains("data:image"));
+        assertFalse(email.contains(iscrizione.getCorso().getNomiInsegnanti()));
         assertEquals("conferma-iscrizione-corso-di-canto-" + iscrizione.getAllievo().getNomeCompleto().toLowerCase().replace(' ', '-') + ".pdf",
             documentiService.nomeFile(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione));
     }
@@ -228,7 +232,9 @@ class DocumentiServiceTest {
         assertTrue(email.contains("350,00 €"));
 
         String conferma = documentiService.emailEsempioHtml(TipoDocumento.CONFERMA_ISCRIZIONE, "Prova");
-        assertTrue(conferma.contains("Luca Esempio"));
+        assertTrue(conferma.contains("Anna Esempio"));
+        // L'insegnante non è nella conferma
+        assertFalse(conferma.contains("Luca Esempio"));
         assertTrue(conferma.contains("190,00 €"));
 
         String testo = testo(documentiService.documentoEsempioPdf(TipoDocumento.RICEVUTA));
