@@ -332,6 +332,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 * [x] per gli insegnanti che sono senza tariffa, aggiungi in dashboard una card che mostra il totale delle ore che stanno donando, facendo un calcolo per tutti i suoi corsi attivi, per totale lezione, per durata lezione per tutti gli allievi _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: riquadro "Ore donate" nella dashboard dell'insegnante senza tariffa oraria (anche se ha il rimborso forfettario), visibile solo a lui: in grande le ore delle lezioni già svolte dei corsi attivi, sotto le ore previste (tutte tranne le non effettuate); ogni allievo atteso conta, anche se assente, come nel bilancio, e solo le lezioni a cui l'insegnante era presente._
 * [ ] per il calcolo delle ore donate in dashboard insegnante modifica il calcolo e non basarti su quelle fatte mostriamo il contrario, come donazione tutte quelle calcolate, e come descrizione della card quelle gia fatte. mostra questa informazione anche in admin e segreteria come totale di tutti gli insegnanti
+  _Chiarimento 2026-10-24: l'insegnante vede in grande le ore previste (tutte tranne le lezioni non effettuate) e sotto "di cui X già svolte"; admin e segreteria vedono un riquadro "Ore donate" nella sezione "Pagamenti dei corsi attivi" della dashboard con il totale di tutti gli insegnanti senza tariffa (previste in grande, sotto le già svolte e il numero di insegnanti), senza elenco per insegnante e solo se c'è almeno un insegnante senza tariffa._
 
 ### CALENDARIO
 
