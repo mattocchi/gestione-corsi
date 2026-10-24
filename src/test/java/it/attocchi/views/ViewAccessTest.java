@@ -129,6 +129,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -2739,6 +2740,44 @@ class ViewAccessTest extends SpringBrowserlessTest {
         }
         assertEquals("Allievo Canto3, Allievo Chitarra1", grid.getCellText(genitore3, 3));
         assertEquals("2", grid.getCellText(genitore3, 4));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_dallaSchedaDellAllievoAQuellaDelGenitoreEViceversa() {
+        Allievo canto3 = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Genitore genitore3 = genitoreService.findByUsername("genitore3").orElseThrow();
+        // ?id=… apre la scheda dell'allievo, con il link al genitore collegato
+        navigate("allievi?id=" + canto3.getId(), AllieviView.class);
+        Dialog allievo = find(Dialog.class).single();
+        assertEquals("Modifica Allievo", allievo.getHeaderTitle());
+        test(find(Button.class).from(allievo).withText("Apri la scheda di Genitore3 Cognome3").single()).click();
+
+        assertInstanceOf(GenitoriView.class, getCurrentView());
+        assertFalse(allievo.isOpened());
+        Dialog genitore = find(Dialog.class).single();
+        assertEquals("Modifica Genitore", genitore.getHeaderTitle());
+        assertEquals(genitore3.getUser().getNome(), find(TextField.class).from(genitore).withLabel("Nome").single().getValue());
+        // Un link per figlio, in ordine di nome
+        assertEquals(List.of("Apri la scheda di Allievo Canto3", "Apri la scheda di Allievo Chitarra1"),
+            find(Button.class).from(genitore).all().stream().map(Button::getText).filter(t -> t.startsWith("Apri la scheda")).toList());
+
+        // Con modifiche non salvate chiede conferma
+        test(find(TextField.class).from(genitore).withLabel("Telefono").single()).setValue("333 0000000");
+        test(find(Button.class).from(genitore).withText("Apri la scheda di Allievo Chitarra1").single()).click();
+        assertInstanceOf(GenitoriView.class, getCurrentView());
+        Dialog conferma = find(Dialog.class).all().stream()
+            .filter(d -> "Lasciare le modifiche?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+        test(find(Button.class).from(conferma).withText("Apri senza salvare").single()).click();
+        assertInstanceOf(AllieviView.class, getCurrentView());
+        assertEquals("Allievo", find(TextField.class).from(find(Dialog.class).single()).withLabel("Nome").single().getValue());
+        assertNotEquals("333 0000000", genitoreService.findByUsername("genitore3").orElseThrow().getUser().getTelefono());
+
+        // Lasciando la pagina (es. Indietro) il dialog della scheda si chiude
+        Dialog scheda = find(Dialog.class).single();
+        navigate("genitori?id=" + genitore3.getId(), GenitoriView.class);
+        assertFalse(scheda.isOpened());
+        assertEquals("Modifica Genitore", find(Dialog.class).single().getHeaderTitle());
     }
 
     @Test

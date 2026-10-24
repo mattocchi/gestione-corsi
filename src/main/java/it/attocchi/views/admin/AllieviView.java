@@ -2,6 +2,7 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -58,6 +59,8 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
     private final GenitoreService genitoreService;
     /** L'eliminazione degli allievi è riservata all'admin. */
     private final boolean puoEliminare;
+    /** Dialog di modifica aperto, chiuso lasciando la pagina (es. Indietro dopo un link a un'altra scheda). */
+    private Dialog dialogAperto;
 
     private final Grid<Allievo> grid = new Grid<>(Allievo.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
@@ -181,6 +184,13 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
             .ifPresent(this::openDialog);
     }
 
+    @Override
+    protected void onDetach(DetachEvent event) {
+        if (dialogAperto != null) {
+            dialogAperto.close();
+        }
+    }
+
     private void openDialog(Allievo allievo) {
         boolean nuovo = allievo.getId() == null;
         Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Allievo" : "Modifica Allievo", "700px");
@@ -214,7 +224,16 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
         mostraIndirizzoGenitore(indirizzoGenitore, genitore.getValue());
 
         FormLayout utenteForm = new FormLayout(utente.getComponents());
-        utenteForm.add(sceltaGenitore);
+        // Link alla scheda del genitore già collegato (non a quello appena scelto nel campo)
+        if (!nuovo && allievo.getGenitore() != null) {
+            VerticalLayout genitoreECollegamento = new VerticalLayout(sceltaGenitore, SchedaCollegata.link(
+                allievo.getGenitore().getNomeCompleto(), dialog, () -> binder.hasChanges() || utente.hasChanges(),
+                GenitoriView.class, allievo.getGenitore().getId()));
+            genitoreECollegamento.addClassNames("p-0 gap-0 items-start");
+            utenteForm.add(genitoreECollegamento);
+        } else {
+            utenteForm.add(sceltaGenitore);
+        }
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e genitore"), utenteForm,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzoGenitore);
@@ -239,6 +258,7 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
 
         dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
+        dialogAperto = dialog;
         dialog.open();
     }
 

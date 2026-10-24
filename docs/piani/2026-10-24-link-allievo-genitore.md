@@ -22,7 +22,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Parametro `id` nelle due viste (apre il dialog); helper del link con conferma delle modifiche; `UtenteFields.hasChanges()` | `AllieviView`, `GenitoriView`, nuovo `admin/SchedaCollegata`, `UtenteFields` | `./mvnw test` | [x] |
-| 2 | Link nei dialog; test browserless (allievo → genitore, genitore → figlio, conferma con modifiche) | `AllieviView`, `GenitoriView`, `ViewAccessTest` | `./mvnw test`; browser | [ ] |
+| 2 | Link nei dialog; test browserless (allievo → genitore, genitore → figlio, conferma con modifiche) | `AllieviView`, `GenitoriView`, `ViewAccessTest` | `./mvnw test`; browser | [x] Il dialog di una vista si chiude lasciando la pagina (`onDetach`): con Indietro restava aperto sopra l'altra |
 | 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito

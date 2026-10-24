@@ -380,5 +380,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### COLLEGAMENTI ALLIEVO GENITORE
 
-* [ ] sarebbe utile in consultazione dell'allievo o del genitore un link per poter saltare al genitore o allievo se sono collegati
+* [x] sarebbe utile in consultazione dell'allievo o del genitore un link per poter saltare al genitore o allievo se sono collegati _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: nei dialog di modifica (Gestione Allievi: sotto il campo Genitore; Genitori: sotto il campo Figli, uno per figlio) un link "Apri la scheda di …" che porta alla pagina dell'altra persona con il suo dialog già aperto (indirizzo `?id=…`, il tasto Indietro torna alla pagina di prima); con modifiche non salvate chiede conferma prima di lasciarle._

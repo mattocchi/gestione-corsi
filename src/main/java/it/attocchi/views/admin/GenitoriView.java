@@ -1,5 +1,6 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
@@ -51,6 +52,8 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
     private final AllievoService allievoService;
     /** Eliminare una scheda genitore è riservato all'admin. */
     private final boolean puoEliminare;
+    /** Dialog di modifica aperto, chiuso lasciando la pagina (es. Indietro dopo un link a un'altra scheda). */
+    private Dialog dialogAperto;
     private final Grid<Genitore> grid = new Grid<>(Genitore.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
 
@@ -126,6 +129,13 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
             .ifPresent(this::openDialog);
     }
 
+    @Override
+    protected void onDetach(DetachEvent event) {
+        if (dialogAperto != null) {
+            dialogAperto.close();
+        }
+    }
+
     private void openDialog(Genitore genitore) {
         boolean nuovo = genitore.getId() == null;
         Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo Genitore" : "Modifica Genitore", "700px");
@@ -145,12 +155,22 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
         figli.setItemLabelGenerator(allievo -> allievo.getGenitore() != null && !allievo.getGenitore().equals(genitore)
             ? allievo.getNomeCompleto() + " (figlio di " + allievo.getGenitore().getNomeCompleto() + ")"
             : allievo.getNomeCompleto());
-        figli.setValue(nuovo ? Set.of() : Set.copyOf(allievoService.findByGenitore(genitore.getId())));
+        Set<Allievo> figliSalvati = nuovo ? Set.of() : Set.copyOf(allievoService.findByGenitore(genitore.getId()));
+        figli.setValue(figliSalvati);
         figli.addClassNames("w-full");
+
+        // Link alle schede dei figli già collegati (non di quelli appena scelti nel campo)
+        HorizontalLayout collegamenti = new HorizontalLayout();
+        collegamenti.addClassNames("flex-wrap gap-x-2 gap-y-0");
+        figliSalvati.stream().sorted(Comparator.comparing(Allievo::getNomeCompleto, String.CASE_INSENSITIVE_ORDER))
+            .forEach(figlio -> collegamenti.add(SchedaCollegata.link(figlio.getNomeCompleto(), dialog,
+                () -> binder.hasChanges() || utente.hasChanges() || !figli.getValue().equals(figliSalvati),
+                AllieviView.class, figlio.getId())));
+        collegamenti.setVisible(!figliSalvati.isEmpty());
 
         VerticalLayout content = new VerticalLayout(
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
-            ViewSupport.sezione("Figli"), figli,
+            ViewSupport.sezione("Figli"), figli, collegamenti,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
         content.addClassNames("p-0");
 
@@ -175,6 +195,7 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
 
         dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
+        dialogAperto = dialog;
         dialog.open();
     }
 
