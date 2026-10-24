@@ -387,3 +387,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] solo admin e segreteria vedono il cambio data, e possono cambiare data, su una lezione programmata _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: richiesta univoca, nessuna domanda: il pulsante "Cambia data" di Gestisci Presenze compare solo ad admin e segreteria (anche in Le Mie Lezioni l'insegnante non lo vede) e il servizio rifiuta lo spostamento agli altri; resta solo per le lezioni ancora da fare, come oggi._
+
+### I MIEI FIGLI
+
+* [ ] con profilo genitore, nei miei figli, evidenzia se mancano dati, attualmente non sta vedendo il badge che vede segreteria in caso di dati mancanti su un allievo
