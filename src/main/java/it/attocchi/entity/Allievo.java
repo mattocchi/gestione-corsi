@@ -23,7 +23,7 @@ public class Allievo implements Anagrafica {
     /** Facoltativo, ma necessario per le ricevute ({@link #getDatiMancantiPer(TipoDocumento)}). */
     private String codiceFiscale;
 
-    /** Facoltativa, ma necessaria per ricevute e conferme di iscrizione. */
+    /** Facoltativa, ma necessaria per conferme di iscrizione e ricevute. */
     private LocalDate dataNascita;
 
     private String luogoNascita;

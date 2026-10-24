@@ -27,8 +27,8 @@ public class AnagraficaFields<T extends Anagrafica> {
     /**
      * Tutti i campi sono facoltativi; il codice fiscale, se inserito, deve essere valido.
      *
-     * @param perDocumenti codice fiscale e data di nascita servono per ricevute e conferme (allievi): lo dice il
-     *                     testo di aiuto dei due campi
+     * @param perDocumenti la data di nascita serve per conferme e ricevute, il codice fiscale per le ricevute
+     *                     (allievi): lo dice il testo di aiuto dei due campi
      */
     public AnagraficaFields(Binder<T> binder, boolean perDocumenti) {
         codiceFiscale.setMaxLength(16);
@@ -40,8 +40,8 @@ public class AnagraficaFields<T extends Anagrafica> {
         provincia.setPlaceholder("es. RM");
 
         if (perDocumenti) {
-            codiceFiscale.setHelperText("Necessario per ricevute e conferme");
-            dataNascita.setHelperText("Necessaria per ricevute e conferme");
+            codiceFiscale.setHelperText("Necessario per le ricevute");
+            dataNascita.setHelperText("Necessaria per conferme e ricevute");
         }
         binder.forField(codiceFiscale).withConverter(CodiceFiscale::normalizza, v -> v != null ? v : "")
             .withValidator(v -> v == null || CodiceFiscale.isValido(v), "Codice fiscale non valido")

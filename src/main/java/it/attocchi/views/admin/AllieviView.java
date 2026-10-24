@@ -149,7 +149,7 @@ public class AllieviView extends VerticalLayout {
         return actions;
     }
 
-    /** Nome con il badge "Dati mancanti" se non ci sono codice fiscale o data di nascita (servono ai documenti). */
+    /** Nome con il badge "Dati mancanti" se manca il codice fiscale (ricevute) o la data di nascita (ogni documento). */
     private static HorizontalLayout nome(Allievo allievo) {
         HorizontalLayout cella = new HorizontalLayout(new Span(allievo.getNomeCompleto()));
         cella.addClassNames("items-center");

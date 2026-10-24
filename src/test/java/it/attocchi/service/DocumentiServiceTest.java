@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -164,6 +165,18 @@ class DocumentiServiceTest {
             allievo.setCodiceFiscale(codiceFiscale);
             allievoService.save(allievo);
         }
+    }
+
+    @Test
+    void avvisoDatiMancanti_diceACosaServono() {
+        Allievo allievo = allievoService.findById(iscrizione().getAllievo().getId());
+        allievo.setCodiceFiscale(null);
+        assertEquals("Manca codice fiscale di " + allievo.getNomeCompleto() + ": serve per le ricevute",
+            DocumentiService.avvisoDatiMancanti(allievo));
+        assertNull(DocumentiService.avvisoDatiMancanti(allievo, TipoDocumento.CONFERMA_ISCRIZIONE));
+        allievo.setDataNascita(null);
+        assertEquals("Mancano codice fiscale e data di nascita di " + allievo.getNomeCompleto() + ": la data di nascita "
+            + "serve per conferme e ricevute, il codice fiscale per le ricevute", DocumentiService.avvisoDatiMancanti(allievo));
     }
 
     @Test

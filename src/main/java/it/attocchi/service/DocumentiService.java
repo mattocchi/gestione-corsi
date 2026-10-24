@@ -79,16 +79,18 @@ public class DocumentiService {
     }
 
     /**
-     * Avviso per l'allievo a cui mancano i dati per ricevute e conferme, es. "Mancano codice fiscale e data di
-     * nascita di Mario Rossi: …"; {@code null} se i dati ci sono.
+     * Avviso per l'allievo a cui mancano dati per almeno un documento, con i documenti per cui servono, es. "Manca
+     * codice fiscale di Mario Rossi: serve per le ricevute"; {@code null} se i dati ci sono.
      */
     public static String avvisoDatiMancanti(Allievo allievo) {
         List<String> mancanti = allievo.getDatiMancantiPerDocumenti();
         if (mancanti.isEmpty()) {
             return null;
         }
+        String perChi = mancanti.size() > 1 ? "la data di nascita serve per conferme e ricevute, il codice fiscale per le ricevute"
+            : mancanti.contains("codice fiscale") ? "serve per le ricevute" : "serve per conferme e ricevute";
         return (mancanti.size() > 1 ? "Mancano " : "Manca ") + String.join(" e ", mancanti) + " di "
-            + allievo.getNomeCompleto() + ": completa i dati nella scheda dell'allievo per stampare o inviare ricevute e conferme";
+            + allievo.getNomeCompleto() + ": " + perChi;
     }
 
     /**

@@ -1044,7 +1044,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(TextField.class).withLabel("Nome").single()).setValue("Sara");
         test(find(TextField.class).withLabel("Cognome").single()).setValue("Neri");
         test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
-        assertEquals("Necessario per ricevute e conferme", find(TextField.class).withLabel("Codice fiscale").single().getHelperText());
+        assertEquals("Necessario per le ricevute", find(TextField.class).withLabel("Codice fiscale").single().getHelperText());
         test(find(Button.class).withText("Salva").single()).click();
 
         Allievo nuovo = allievoService.findByUsername("allievo_senza_dati").orElseThrow();
