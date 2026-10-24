@@ -98,9 +98,10 @@ class DocumentiServiceTest {
         // Regole su recuperi, assenze e rinuncia, uguali nel PDF e nell'email
         String regole = testo.replaceAll("\\s+", " ");
         assertTrue(regole.contains("Lezioni, assenze e recuperi"), testo);
-        assertTrue(regole.contains("in coda al corso: il numero di lezioni previsto è garantito"), testo);
-        assertTrue(regole.contains("Se avvisate la segreteria dei corsi almeno una settimana prima"), testo);
-        assertTrue(regole.contains("a giudizio insindacabile della segreteria dei corsi"), testo);
+        assertTrue(regole.contains("Se l'insegnante non può fare lezione"), testo);
+        assertTrue(regole.contains("al termine del corso: il numero di lezioni previsto è garantito"), testo);
+        assertTrue(regole.contains("Avvisate la segreteria dei corsi almeno una settimana prima"), testo);
+        assertTrue(regole.contains("dalla segreteria dei corsi, a suo insindacabile giudizio"), testo);
 
         String email = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
         assertTrue(email.contains("Gentile Mario Rossi"));
@@ -108,8 +109,8 @@ class DocumentiServiceTest {
         assertTrue(email.contains("la seconda entro il 31 gennaio 2025"));
         String regoleEmail = email.replaceAll("\\s+", " ");
         assertTrue(regoleEmail.contains("Lezioni, assenze e recuperi"));
-        assertTrue(regoleEmail.contains("la lezione non viene recuperata ed è comunque dovuta"));
-        assertTrue(regoleEmail.contains("Non è previsto il rimborso delle lezioni non frequentate"));
+        assertTrue(regoleEmail.contains("la lezione non potrà essere recuperata e resta dovuta"));
+        assertTrue(regoleEmail.contains("Le lezioni non frequentate non vengono rimborsate"));
         assertFalse(email.contains("data:image"));
         assertEquals("conferma-iscrizione-corso-di-canto-" + iscrizione.getAllievo().getNomeCompleto().toLowerCase().replace(' ', '-') + ".pdf",
             documentiService.nomeFile(TipoDocumento.CONFERMA_ISCRIZIONE, iscrizione));

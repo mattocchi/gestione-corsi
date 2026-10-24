@@ -8,12 +8,12 @@
 <h2>Lezioni, assenze e recuperi</h2>
 <ul class="regole">
 </#if>
-  <li><strong>Lezione annullata dall'insegnante</strong> – Viene sempre recuperata, in un altro giorno o in coda al
-    corso: il numero di lezioni previsto è garantito.</li>
-  <li><strong>Assenza dell'allievo</strong> – Se avvisate la segreteria dei corsi almeno una settimana prima,
-    l'assenza è giustificata e, se possibile, si concorda con l'insegnante un recupero. Con un preavviso più breve
-    (o senza avviso) l'assenza non è giustificata: la lezione non viene recuperata ed è comunque dovuta.</li>
-  <li><strong>Rinuncia al corso</strong> – Non è previsto il rimborso delle lezioni non frequentate. Eventuali
-    eccezioni sono valutate caso per caso, a giudizio insindacabile della segreteria dei corsi.</li>
+  <li><strong>Se l'insegnante non può fare lezione</strong> – La lezione viene sempre recuperata, in un altro giorno o
+    al termine del corso: il numero di lezioni previsto è garantito.</li>
+  <li><strong>Se l'allievo non può venire</strong> – Avvisate la segreteria dei corsi almeno una settimana prima:
+    l'assenza sarà giustificata e, quando possibile, concorderemo un recupero con l'insegnante. Con un preavviso più
+    breve, o senza avviso, la lezione non potrà essere recuperata e resta dovuta.</li>
+  <li><strong>Se decidete di ritirarvi</strong> – Le lezioni non frequentate non vengono rimborsate. Situazioni
+    particolari saranno valutate caso per caso dalla segreteria dei corsi, a suo insindacabile giudizio.</li>
 </ul>
 </#macro>
