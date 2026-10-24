@@ -348,3 +348,13 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] vorrei apportare una miglioria, nella prossima lezione ad esempio se è un corso propedeutica con due gruppi uno alle 10 e uno alle 11, e un genitore ha un allievo su un gruppo e uno su una altro gruppo, risulta che la lezione è alle 10 vorrei invece fare in modo che si vedesse correttamente che la prossima lezione, o la lezione a calendario, è si di propedeutica, ma del gruppo delle 10 o del gruppo delle 11, sopratutto dove non è specificato un orario specifico per l'allievo, questo aiuterebbe la visualizzazione, verifica anche altri punti dove è utile questa miglioria _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: orario della lezione di un allievo = il suo se c'è, altrimenti quello del suo gruppo, altrimenti quello della lezione (dashboard, calendario e altri elenchi); il riquadro della prossima lezione mostra il nome del gruppo ("Lezione 5 · Grandi · Mario Rossi"); l'insegnante ha un riquadro per gruppo che apre il registro sulla scheda di quel gruppo; in più: orario del gruppo in "I miei allievi", orari dei gruppi del giorno in Le Mie Lezioni / Lezioni, riga "Gruppo" nel dettaglio dalla dashboard, colonna "Orario" nelle lezioni dell'allievo._
+
+### GESTIONE ALLIEVI
+
+* [ ] nella gestione dell'allievo da admin o segreteria dove posso assegnare il genitore sarebbe utile poterlo creare al volo inserendo nome cognome email e cellulare
+
+### CONFERMA ISCRIZIONE
+
+* [ ] nella conferma iscrizione vorrei aggiungere l'informazione che si può pagare in unica soluzione oppure due rate entro il 30 novembre o 31 gennaio
+* [ ] Le frasi regolamento in sempre nella conferma nella sezione "Lezioni, assenze e recuperi" rendili piu "belle" seppure devono comunicare le disposizioni necessarie
+* [ ] Ottimizza la conferma in PDF per stare su una pagina A4
