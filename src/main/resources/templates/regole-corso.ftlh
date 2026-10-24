@@ -25,6 +25,6 @@
       <li>Se il recupero non può essere organizzato, la lezione verrà comunque conteggiata e dovrà essere pagata.</li>
     </ul></li>
   <li><strong>Se decidete di ritirarvi</strong> – Le lezioni non frequentate non vengono rimborsate. Situazioni
-    particolari saranno valutate caso per caso dalla segreteria dei corsi, a suo insindacabile giudizio.</li>
+    particolari saranno valutate caso per caso dalla segreteria dei corsi.</li>
 </ul>
 </#macro>

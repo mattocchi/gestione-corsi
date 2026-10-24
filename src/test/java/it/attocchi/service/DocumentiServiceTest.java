@@ -104,7 +104,8 @@ class DocumentiServiceTest {
         assertTrue(regole.contains("sempre tramite la community WhatsApp"), testo);
         assertTrue(regole.contains("Con un preavviso di almeno una settimana, il recupero della lezione è garantito"), testo);
         assertTrue(regole.contains("la lezione verrà comunque conteggiata e dovrà essere pagata"), testo);
-        assertTrue(regole.contains("dalla segreteria dei corsi, a suo insindacabile giudizio"), testo);
+        assertTrue(regole.contains("valutate caso per caso dalla segreteria dei corsi."), testo);
+        assertFalse(regole.contains("insindacabile"), testo);
 
         String email = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
         assertTrue(email.contains("Gentile Mario Rossi"));
