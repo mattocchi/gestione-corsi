@@ -1,5 +1,5 @@
 <#-- Importi di conferma e ricevuta, uguali nell'email e nel PDF: con uno sconto (o maggiorazione) il prezzo di
-     listino barrato, la variazione con il motivo e la quota dovuta in evidenza, con la nota su quale importo vale.
+     listino barrato, la variazione con il motivo e la quota dovuta in evidenza.
      XHTML ben formato (lo usa anche OpenHTMLtoPDF); con email=true gli stili sono in linea per i client di posta. -->
 <#macro blocco email=false>
 <#if email>
@@ -13,7 +13,6 @@
   <tr><td style="${cella}">Già pagato</td><td style="text-align: right;">${importi.pagato}</td></tr>
   <tr><td style="${cella}"><strong>DA PAGARE</strong></td><td style="text-align: right;"><strong>${importi.residuo}</strong></td></tr>
 </table>
-<#if importi.conVariazione><p style="color: #555;">${importi.nota}</p></#if>
 <#else>
 <table class="totali importi">
   <#if importi.conVariazione>
@@ -24,6 +23,5 @@
   <tr><td class="normale">Già pagato</td><td class="valore normale">${importi.pagato}</td></tr>
   <tr class="evidenza"><td>DA PAGARE</td><td class="valore">${importi.residuo}</td></tr>
 </table>
-<#if importi.conVariazione><p class="nota">${importi.nota}</p></#if>
 </#if>
 </#macro>

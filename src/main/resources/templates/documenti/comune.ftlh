@@ -33,7 +33,6 @@
   .importi tr.evidenza td { font-size: 12.5pt; background: #eeeeee; padding: 1.5mm 2mm; }
   .importi tr.separa td { border-top: 1px solid #999; }
   .importi td.normale { font-weight: normal; padding: 1mm 2mm; }
-  p.nota { color: #555; margin: 1.5mm 0 0; }
   .riquadro { border: 1px solid #999; padding: 2mm 3mm; margin-top: 3mm; }
   ul.regole { margin: 0; padding-left: 5mm; }
   ul.regole li { margin-bottom: 1mm; }

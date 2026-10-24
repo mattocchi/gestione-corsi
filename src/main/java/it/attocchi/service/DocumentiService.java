@@ -412,8 +412,6 @@ public class DocumentiService {
                 + (motivo != null ? " (" + motivo + ")" : ""));
             // Trattino normale: il segno meno tipografico non è nel font del PDF
             importi.put("variazione", (sconto ? "-" : "+") + Formati.euro(differenza.abs()));
-            importi.put("nota", "L'importo dovuto è la quota indicata sopra" + (sconto ? ", già scontata" : "")
-                + ": il prezzo di listino è solo un riferimento.");
         }
         return importi;
     }

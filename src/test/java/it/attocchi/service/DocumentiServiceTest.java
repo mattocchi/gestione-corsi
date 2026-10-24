@@ -158,7 +158,7 @@ class DocumentiServiceTest {
             assertTrue(testo.contains("Prezzo di listino del corso 600,00 €"), testo);
             assertTrue(testo.contains("Sconto applicato (fratelli) -150,00 €"), testo);
             assertTrue(testo.contains("QUOTA DOVUTA 450,00 €"), testo);
-            assertTrue(testo.contains("già scontata: il prezzo di listino è solo un riferimento"), testo);
+            assertFalse(testo.contains("solo un riferimento"), testo);
 
             String email = documentiService.emailHtml(TipoDocumento.RICEVUTA, corsoId, allievoId, "Mario Rossi");
             assertTrue(email.contains("<s>600,00 €</s>"));

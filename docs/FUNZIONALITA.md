@@ -362,5 +362,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-24: tono colloquiale con titoli "Se l'insegnante non può fare lezione", "Se l'allievo non può venire", "Se decidete di ritirarvi", stesse disposizioni, nel PDF e nell'email._
 * [x] Ottimizza la conferma in PDF per stare su una pagina A4 _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: impaginazione compatta (margini e spazi ridotti, Allievo e Genitore affiancati, tolta "Quota dovuta" dalla tabella Corso perché è già in Importo), senza togliere altre informazioni, testo almeno 9,5 pt._
-* [ ] nella conferma iscrizione rimuovi questa frase "L'importo dovuto è la quota indicata sopra, già scontata: il prezzo di listino è solo un riferimento."
+* [x] nella conferma iscrizione rimuovi questa frase "L'importo dovuto è la quota indicata sopra, già scontata: il prezzo di listino è solo un riferimento." _(completata 2026-10-24)_
   _Chiarimento 2026-10-24: tolta ovunque: conferma e ricevuta, PDF ed email, sia con lo sconto sia con la maggiorazione; restano listino barrato, riga della variazione e QUOTA DOVUTA in evidenza._

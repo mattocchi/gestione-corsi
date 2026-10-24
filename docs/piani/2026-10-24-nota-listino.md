@@ -17,7 +17,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Tolta la nota da service, macro e stili; test aggiornato (la frase non c'è più) | `DocumentiService`, `importi.ftlh`, `documenti/comune.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [ ] |
+| 1 | Tolta la nota da service, macro e stili; test aggiornato (la frase non c'è più) | `DocumentiService`, `importi.ftlh`, `documenti/comune.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [x] |
 | 2 | Registro finale | questo piano | build e test | [ ] |
 
 ## Fuori ambito
