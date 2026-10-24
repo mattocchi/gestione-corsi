@@ -24,7 +24,7 @@
 |---|---|---|---|---|
 | 1 | `CalendarioService.settimanaTipo(username, corsoId)` con le voci per ruolo; test | `CalendarioService`, `CalendarioServiceTest` | `./mvnw test` | [x] |
 | 2 | `CalendarioView`: selettore e vista della settimana (griglia e elenco su mobile); test browserless; browser | `CalendarioView`, `ViewAccessTest` | `./mvnw test`; browser | [x] Il `SegmentedControl` ha già `w-full`: tolto per dargli una larghezza fissa nella barra |
-| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
+| 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [x] |
 
 ## Fuori ambito
 
@@ -32,3 +32,7 @@
 
 ## Registro
 
+- `./mvnw test`: 288 test superati. Nuovi: `CalendarioServiceTest.settimanaTipo_iCorsiPerGiornoEOrarioSecondoIlRuolo` (admin, filtro, insegnante, genitore con i nomi, gruppi per lo staff e per l'allievo) e `ViewAccessTest.admin_settimanaTipoDeiCorsiAttivi`.
+- Browser (dev, segreteria, desktop): selettore nella barra, griglia lun–dom con Chitarra mar/sab 18:00–18:40 (Marco Rossi) e Canto gio 17:00–17:40 (Maria Verdi). Problema trovato e corretto: il selettore occupava tutta la riga.
+- Non verificato a 390px: in questa sessione la finestra del browser non si ridimensiona; l'elenco mobile segue lo schema di quello del mese ed è coperto dal test browserless.
+- Lasciato aperto: nessuno.
