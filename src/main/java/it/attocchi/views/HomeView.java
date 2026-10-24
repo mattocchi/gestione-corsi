@@ -89,12 +89,18 @@ public class HomeView extends VerticalLayout {
 
         if (securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")) {
             RiepilogoGenerale riepilogo = dashboardService.riepilogoGenerale();
-            add(sezione("Riepilogo generale",
+            List<Card> generale = new ArrayList<>(List.of(
                 indicatore(VaadinIcon.MUSIC, "Corsi", riepilogo.corsi()),
                 indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi()),
-                indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti()),
-                indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()),
-                indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti())));
+                indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti())));
+            // Età degli allievi dei corsi attivi (solo di chi ha la data di nascita)
+            dashboardService.etaAllievi(LocalDate.now()).ifPresent(eta -> generale.addAll(List.of(
+                indicatore(VaadinIcon.CHART, "Età media", eta.media()),
+                indicatore(VaadinIcon.CHILD, "Più giovane", eta.minima()),
+                indicatore(VaadinIcon.USER, "Più anziano", eta.massima()))));
+            generale.add(indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()));
+            generale.add(indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti()));
+            add(sezione("Riepilogo generale", generale.toArray(Card[]::new)));
             add(pagamenti(pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso(),
                 bilancioService.oreDonateTotali()));
             add(gruppi(dashboardService.riepilogoGruppi()));

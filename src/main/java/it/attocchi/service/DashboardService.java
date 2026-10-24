@@ -17,11 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Period;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +40,10 @@ public class DashboardService {
     }
 
     /** Riepilogo dell'insegnante sui propri corsi. */
+    /** Età in anni compiuti degli allievi dei corsi attivi: media arrotondata, più giovane, più anziano. */
+    public record EtaAllievi(long media, long minima, long massima, int allievi) {
+    }
+
     public record RiepilogoInsegnante(long corsi, long lezioniFatte, long lezioniDaFare, long lezioniNonEffettuate) {
     }
 
@@ -133,6 +139,21 @@ public class DashboardService {
     public RiepilogoGenerale riepilogoGenerale() {
         return new RiepilogoGenerale(corsoRepository.count(), allievoRepository.count(),
             iscrizioneRepository.countByCorsoAttivoTrue(), genitoreRepository.count(), insegnanteRepository.count());
+    }
+
+    /**
+     * Età degli allievi iscritti ad almeno un corso attivo con la data di nascita, in anni compiuti a {@code oggi};
+     * vuoto se nessuno ha la data.
+     */
+    public Optional<EtaAllievi> etaAllievi(LocalDate oggi) {
+        List<Integer> eta = iscrizioneRepository.dateNascitaIscrittiCorsiAttivi().stream()
+            .map(nascita -> Period.between(nascita, oggi).getYears()).toList();
+        if (eta.isEmpty()) {
+            return Optional.empty();
+        }
+        var statistiche = eta.stream().mapToInt(Integer::intValue).summaryStatistics();
+        return Optional.of(new EtaAllievi(Math.round(statistiche.getAverage()), statistiche.getMin(),
+            statistiche.getMax(), eta.size()));
     }
 
     /** Corsi attivi dell'insegnante (titolare o secondo) e lezioni completate / da fare / non effettuate di quei corsi. */

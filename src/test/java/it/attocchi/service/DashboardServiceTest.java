@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Lezione;
@@ -35,6 +36,29 @@ class DashboardServiceTest {
 
     @Autowired
     private AllievoService allievoService;
+
+    @Test
+    void etaAllievi_deiCorsiAttiviConLaDataDiNascita() {
+        // Canto: nati il 15/3 dal 2008 al 2014; Chitarra: il 20/5 dal 2009 al 2014. Al 24/10/2026: 18..12 e 17..12
+        LocalDate oggi = LocalDate.of(2026, 10, 24);
+        assertEquals(new DashboardService.EtaAllievi(15, 12, 18, 13), dashboardService.etaAllievi(oggi).orElseThrow());
+        // Il giorno prima del compleanno non è ancora compiuto: il più anziano ha 17 anni il 14/3/2026
+        assertEquals(17, dashboardService.etaAllievi(LocalDate.of(2026, 3, 14)).orElseThrow().massima());
+
+        // Chi non ha la data di nascita non conta
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        LocalDate nascita = allievo.getDataNascita();
+        allievo.setDataNascita(null);
+        allievoService.save(allievo);
+        try {
+            DashboardService.EtaAllievi eta = dashboardService.etaAllievi(oggi).orElseThrow();
+            assertEquals(12, eta.allievi());
+            assertEquals(17, eta.massima());
+        } finally {
+            allievo.setDataNascita(nascita);
+            allievoService.save(allievo);
+        }
+    }
 
     @Test
     void prossimaLezione_laPrimaDaFareDaOggiPerCorso() {

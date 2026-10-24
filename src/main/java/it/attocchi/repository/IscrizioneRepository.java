@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -48,6 +49,11 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
     long countByAllievoUserUsernameAndCorsoAttivoTrue(String username);
 
     long countByCorsoAttivoTrue();
+
+    /** Date di nascita degli allievi iscritti ad almeno un corso attivo (una per allievo, solo se presente). */
+    @Query("SELECT a.dataNascita FROM Allievo a WHERE a.dataNascita IS NOT NULL AND EXISTS"
+        + " (SELECT i FROM Iscrizione i WHERE i.allievo = a AND i.corso.attivo = true)")
+    List<LocalDate> dateNascitaIscrittiCorsiAttivi();
 
     /** Numero di iscritti per corso: righe [id del corso, conteggio]. */
     @Query("SELECT i.corso.id, COUNT(i) FROM Iscrizione i GROUP BY i.corso.id")

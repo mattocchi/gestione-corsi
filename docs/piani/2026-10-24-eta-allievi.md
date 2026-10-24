@@ -22,7 +22,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `Allievo.getEta(oggi)`; colonne "Data Nascita" (gg/mm/aaaa) ed "Età" in Gestione Allievi e I miei figli; test | `Allievo`, `AllieviView`, `FigliView`, test | `./mvnw test` | [x] `Formati.eta` e `Formati.PER_ETA` condivisi |
-| 2 | `DashboardService.etaAllievi()` e card nel Riepilogo generale; test | `IscrizioneRepository`, `DashboardService`, `HomeView`, test | `./mvnw test` | [ ] |
+| 2 | `DashboardService.etaAllievi()` e card nel Riepilogo generale; test | `IscrizioneRepository`, `DashboardService`, `HomeView`, test | `./mvnw test` | [x] |
 | 3 | `CLAUDE.md` e registro finale | `CLAUDE.md`, questo piano | build e test | [ ] |
 
 ## Fuori ambito
