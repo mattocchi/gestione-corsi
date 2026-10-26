@@ -74,3 +74,24 @@ Per admin e segreteria nella sezione aggiungi dei filtri per poter filtrare per 
 
 * [x] Rinomina Studente in Allievo che ritengo più adeguato per questo contesto _(completata 2026-10-11; in produzione eseguire prima docs/migrazioni/2026-10-11-studenti-allievi.sql)_
   _Chiarimento 2026-10-11: rinomina completa come per Insegnanti: interfaccia, codice, route /allievi, ruolo ALLIEVO, dati di esempio e database (allievi, corso_allievi, allievo_id); in produzione eseguire prima docs/migrazioni/2026-10-11-studenti-allievi.sql. Username esistenti invariati._
+
+## RICHIESTE del 26 OTTOBRE 2026
+
+
+* [ ] Quando inserisco un rimborso riferimento al mese dell'insegnante vorrei avere un calco preventivo che é dato dalle lezioni programmate nel mese, ore al giorno e totale del mese. In questo modo ho già il riferimento teorico del mese per procedere al pagamento che poi inserisco come importo effettivamente rimborsato e in che data.
+Sarebbe utile per il mese oggetto di rimborso vedere un effettivo riepilogo delle lezioni del mese, come elenco di date, totale ore per ogni data e totale ore del mese.
+
+* [ ] Aggiungere oltre ai corsi anche in tipo servizi, di default é Corso ma esiste anche il tipo servizio. Ha tutte le caratteristiche del corso é solo un tipo diverso. Un esempio é il servizio Pulizia che viene svolto tre giorni a settimana il mart merc e ven dalle 6 alle 8.
+
+* [ ] Sarebbe opportuno aggiungere anche il luogo dove viene svolto il corso. Ogni corso ha un luogo predefinito ma ogni lezione può essere specificato in modo puntuale se differisce dal luogo predefinito. Ad esempio un corso può essere svolto in aula1, aula2 o palestra o all'esterno. I luogo devono poter essere gestito da admin.
+Gli insegnanti possono specificare sulla lezione quale é il luogo effettivo se differisce da quelli opzionali per il corso. Quindi ogni corso ha dei luoghi abilitati ad essere usati.
+
+* [ ] Attestazione spese anno totali. A prescindere dagli anni scolastici serve un totale delle spese per allievo sostenuto dalla famiglia che sono state registrate nell'anno solare 
+
+* [ ] Sarebbe ideale creare una procedura, per cui un account viene notificato che ha una specie di invito per rientrare nella piattaforma. Quando clicca sul link, imposta una password. In questo modo abilita il suo account e entra già nell'applicazione senza dover fare per forza la procedura di ripristino password. Questo per velocizzare l'accesso e renderlo molto più user friendly inoltre, potremmo indicare del footer delle comunicazioni via email che è possibile accedere alla piattaforma per la consultazione della documentazione e stato pagamenti. 
+
+* [ ] Fai una procedura per rendere disattivato in modo automatico un account che non viene utilizzato per più di 6 mesi. L'utente può sbloccarsi l'account con la procedura di recupero password. Sarebbe ideale che all'accesso in caso di account bloccato venisse indicato che è possibile fare quella procedura. 
+
+* [ ] Vorrei riorganizzare graficamente la scheda di un allievo. In pratica, se un allievo è senza genitore, è importante che i dati compilati siano i suoi personali. Se invece non è un allievo adulto e quindi ha associato un genitore. I dati di riferimento sono quelli del genitore ad esclusione della data di nascita e del codice fiscale, ma a quel punto indirizzo numero di telefono e email sono in qualche modo facoltativi. Vorrei rendere questa visualizzazione più efficace lato interfaccia. 
+
+* [ ] Sezione documenti deve essere disponibile anche agli insegnanti in cui devono trovare il documento che si chiama lettera di incarico. È un tipo di documento nuovo in cui incarichiamo l'insegnante a svolgere il corso per il costo, orario o una tantum concordato. Come rimborso spesa, la lettera di incarico e valida per l'anno scolastico. È un corso specifico, quindi ce ne saranno diverse percorsi diversi o anni scolastici. Passati l'insegnante può sempre visionare lettere di incarico degli anni scolastici precedenti.
