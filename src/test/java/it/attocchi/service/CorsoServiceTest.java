@@ -91,6 +91,28 @@ class CorsoServiceTest {
     }
 
     @Test
+    void duplica_impostazioniPerLAnnoSuccessivoSenzaPersone() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Corso copia = corsoService.duplica(canto.getId());
+        try {
+            assertEquals("Corso di Canto", copia.getNome());
+            assertEquals("2025/2026", copia.getAnnoScolastico());
+            assertEquals(canto.getDataInizio().getDayOfWeek(), copia.getDataInizio().getDayOfWeek());
+            assertEquals(canto.getDataInizio().plusWeeks(52), copia.getDataInizio());
+            assertEquals(canto.getNumeroLezioni(), copia.getNumeroLezioni());
+            assertEquals(canto.getGiorniSettimana(), copia.getGiorniSettimana());
+            assertEquals(canto.getInsegnante(), copia.getInsegnante());
+            assertEquals("Aula 1", copia.getLuogo().getNome());
+            assertTrue(copia.isAttivo());
+            assertFalse(copia.isPubblicato());
+            assertTrue(corsoService.findPartecipanti(copia.getId()).isEmpty());
+            assertTrue(lezioneService.findByCorso(copia.getId()).isEmpty());
+        } finally {
+            corsoService.delete(corsoService.findById(copia.getId()));
+        }
+    }
+
+    @Test
     void dataFine_lezioniFinoAllaFineOAlPrimoLimite() {
         Corso pulizia = new Corso();
         pulizia.setNome("Pulizia");

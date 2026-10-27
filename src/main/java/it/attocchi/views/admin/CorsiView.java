@@ -212,7 +212,9 @@ public class CorsiView extends VerticalLayout {
         Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Aggiorna lezioni",
             e -> AggiornaLezioniDialog.apri(corso, this::updateGrid));
         generateButton.setEnabled(corso.isAttivo());
-        HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
+        Button duplicaButton = ViewSupport.iconButton(VaadinIcon.COPY, "Duplica", e -> duplica(corso));
+        duplicaButton.setTooltipText("Duplica per l'anno successivo (senza partecipanti, non pubblicato)");
+        HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton, duplicaButton);
         if (puoEliminare) {
             Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteCorso(corso));
             deleteButton.addThemeVariants(ButtonVariant.ERROR);
@@ -428,6 +430,19 @@ public class CorsiView extends VerticalLayout {
             }
         });
         dialog.open();
+    }
+
+    /** Copia del corso per l'anno successivo, poi il dialog per le modifiche di dettaglio. */
+    private void duplica(Corso corso) {
+        try {
+            Corso copia = corsoService.duplica(corso.getId());
+            updateGrid();
+            Notification.show("Copia di " + corso.getNome() + " per il " + copia.getAnnoScolastico()
+                + ": non pubblicata, senza partecipanti");
+            openDialog(corsoService.findById(copia.getId()));
+        } catch (RuntimeException ex) {
+            Notification.show("Duplicazione non riuscita: " + ex.getMessage());
+        }
     }
 
     /**

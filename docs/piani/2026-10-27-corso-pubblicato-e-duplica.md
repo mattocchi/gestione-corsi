@@ -23,12 +23,18 @@
 |---|---|---|---|---|---|
 | 1 | `Corso.pubblicato` (null = pubblicato, nuovi no); campo nel dialog, badge "Non pubblicato" e filtro in Gestione Corsi; test | `Corso`, `CorsiView`, test | — | `./mvnw test` | [x] Badge "Non pubblicato" accanto al nome (`TipoCorsoUI.nome`), quindi anche nelle viste degli insegnanti; corsi di esempio pubblicati |
 | 2 | Corsi non pubblicati esclusi da tutto ciò che vedono genitori e allievi e dagli invii alle famiglie; badge per gli insegnanti; test | service e viste di allievi/genitori, `EmailService`, test | PUBBLICAZIONE.1 | `./mvnw test` | [x] Filtri in corsi, calendario e settimana tipo, dashboard, pagamenti, riepiloghi, attestazioni (anche il totale per lo staff), documenti; invii bloccati |
-| 3 | `CorsoService.duplica` e azione "Duplica" in Gestione Corsi; test | `CorsoService`, `CorsiView`, test | PUBBLICAZIONE.2 | `./mvnw test` | [ ] |
-| 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [ ] |
+| 3 | `CorsoService.duplica` e azione "Duplica" in Gestione Corsi; test | `CorsoService`, `CorsiView`, test | PUBBLICAZIONE.2 | `./mvnw test` | [x] Date spostate di 52 settimane (stesso giorno della settimana); stesso nome |
+| 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [x] |
 
 ## Fuori ambito
 
 - Pubblicazione programmata a una data.
 
 ## Registro
+
+- `./mvnw test`: 325 test superati. Nuovi: `PubblicazioneTest` (corsi, pagamenti, dashboard, calendario, documenti e invii delle famiglie senza il corso non pubblicato, lo staff lo vede), `CorsoServiceTest.duplica_impostazioniPerLAnnoSuccessivoSenzaPersone`, `ViewAccessTest.segreteria_duplicaUnCorsoEApreIlDialog`; esteso il test del servizio in Gestione Corsi (badge e filtro "Solo non pubblicati").
+- Scelte tecniche: i totali delle attestazioni per lo staff escludono i pagamenti dei corsi non pubblicati, come il PDF; i documenti di un corso non pubblicato li scarica solo lo staff.
+- Non verificato nel browser: coperto dai test browserless e di servizio.
+- Produzione: nessuno script (colonna `pubblicato` nullable, null = pubblicato).
+- Lasciato aperto: nessuno.
 

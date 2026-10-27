@@ -614,7 +614,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             }
         }
 
-        assertAzioni(grid.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni", "Elimina");
+        assertAzioni(grid.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni", "Duplica", "Elimina");
 
         // Apre il dialog di modifica: i giorni della settimana devono essere già caricati
         Button modifica = (Button) grid.getCellComponent(0, AZIONI_CORSO).getChildren().findFirst().orElseThrow();
@@ -622,6 +622,23 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(modifica).click();
         CheckboxGroup<?> giorni = find(CheckboxGroup.class).single();
         assertFalse(giorni.getValue().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_duplicaUnCorsoEApreIlDialog() {
+        navigate(CorsiView.class);
+        var corsi = test((Grid<Corso>) find(Grid.class).single());
+        test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Chitarra"), AZIONI_CORSO), "Duplica")).click();
+        Corso copia = corsoService.findAll().stream()
+            .filter(c -> c.getNome().equals("Corso di Chitarra") && !c.isPubblicato()).findFirst().orElseThrow();
+        try {
+            assertEquals("Modifica Corso", find(Dialog.class).single().getHeaderTitle());
+            assertFalse(find(Checkbox.class).withLabel("Pubblicato").single().getValue());
+        } finally {
+            corsoService.delete(corsoService.findById(copia.getId()));
+        }
     }
 
     @Test
@@ -2881,7 +2898,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         assertEquals(2, corsi.size());
-        assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni");
+        assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni", "Duplica");
 
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());

@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
@@ -358,6 +359,52 @@ public class CorsoService {
                 .forEach(lezione -> lezione.setInsegnantiPresenti(new HashSet<>(salvato.getInsegnanti())));
         }
         return salvato;
+    }
+
+    /**
+     * Copia del corso per l'anno successivo: tipo, nome, descrizione, insegnanti, giorni, cadenza, orario, durata,
+     * numero di lezioni, costi, luoghi e gruppi; anno scolastico successivo, date di inizio e fine spostate di 52
+     * settimane (stesso giorno della settimana); attivo e non pubblicato; nessun partecipante, lezione o pagamento.
+     */
+    @Transactional
+    public Corso duplica(Long corsoId) {
+        Corso origine = corsoRepository.findById(corsoId)
+            .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoId));
+        Corso copia = new Corso();
+        copia.setTipo(origine.getTipo());
+        copia.setNome(origine.getNome());
+        copia.setDescrizione(origine.getDescrizione());
+        copia.setInsegnante(origine.getInsegnante());
+        copia.setInsegnantiFacoltativi(origine.getInsegnantiFacoltativi());
+        copia.setGiorniSettimana(new HashSet<>(origine.getGiorniSettimana()));
+        copia.setCadenzaSettimane(origine.getCadenzaSettimane());
+        copia.setOrarioInizio(origine.getOrarioInizio());
+        copia.setDurataLezioneMinuti(origine.getDurataLezioneMinuti());
+        copia.setNumeroLezioni(origine.getNumeroLezioni());
+        copia.setDataInizio(origine.getDataInizio() != null ? origine.getDataInizio().plusWeeks(52) : null);
+        copia.setDataFine(origine.getDataFine() != null ? origine.getDataFine().plusWeeks(52) : null);
+        copia.setAnnoScolastico(annoSuccessivo(origine.getAnnoScolastico(), copia.getDataInizio()));
+        copia.setCostoTotale(origine.getCostoTotale());
+        copia.setPrezzoPreiscrizione(origine.getPrezzoPreiscrizione());
+        copia.setCostoPerLezione(origine.getCostoPerLezione());
+        copia.setLuogo(origine.getLuogo());
+        copia.setLuoghiAbilitati(origine.getLuoghiAbilitati());
+        copia.setAttivo(true);
+        copia.setPubblicato(false);
+        Corso salvata = corsoRepository.save(copia);
+        for (GruppoCorso gruppo : gruppoRepository.findByCorsoId(corsoId)) {
+            gruppoRepository.save(new GruppoCorso(salvata, gruppo.getNome(), gruppo.getGiorno(), gruppo.getOrario()));
+        }
+        return salvata;
+    }
+
+    /** "2025/2026" → "2026/2027"; senza un anno valido quello della nuova data di inizio. */
+    private static String annoSuccessivo(String anno, LocalDate dataInizio) {
+        if (AnnoScolastico.valido(anno)) {
+            int inizio = Integer.parseInt(anno.substring(0, 4)) + 1;
+            return inizio + "/" + (inizio + 1);
+        }
+        return dataInizio != null ? AnnoScolastico.di(dataInizio) : anno;
     }
 
     @Transactional
