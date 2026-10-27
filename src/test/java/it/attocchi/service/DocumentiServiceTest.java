@@ -368,8 +368,19 @@ class DocumentiServiceTest {
             DocumentiService.Pdf pdf = documentiService.attestazionePer(allievoId, 2025, "genitore3");
             assertEquals("attestazione-spese-2025-allievo-chitarra1.pdf", pdf.nomeFile());
             String testo = testo(pdf.contenuto());
-            assertTrue(testo.contains("Attestazione delle spese 2025"), testo);
-            assertTrue(testo.contains("Allievo Chitarra1"), testo);
+            // Secondo il fac-simile del vademecum: intestatario, minore con nascita, codice fiscale e residenza, periodo,
+            // importo tracciabile in numeri e lettere, requisiti dell'associazione
+            assertTrue(testo.contains("Ricevuta spese per corsi musicali"), testo);
+            assertTrue(testo.contains("per ragazzi di età compresa tra 5 e 18 anni"), testo);
+            assertTrue(testo.contains("il minore"), testo);
+            assertTrue(testo.contains("nato a Roma il"), testo);
+            assertTrue(testo.contains("nel periodo 2025"), testo);
+            assertTrue(testo.contains("modalità tracciabile"), testo);
+            assertTrue(testo.contains("duecentocinquanta/00 euro"), testo);
+            assertTrue(testo.contains("detrazioni d'imposta del 19%"), testo);
+            assertFalse(testo.contains("70,00"), testo);
+            assertTrue(testo.contains("il minore Chitarra1 Allievo"), testo);
+            assertTrue(testo.contains("importo complessivo di 250,00 €"), testo);
             assertTrue(testo.contains("Genitore3 Cognome3"), testo);
             assertTrue(testo.contains("20/01/2025"), testo);
             assertFalse(testo.contains("15/12/2024"), testo);

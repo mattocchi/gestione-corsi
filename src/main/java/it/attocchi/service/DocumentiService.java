@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.config.RecuperoPasswordProperties;
+import java.util.stream.Collectors;
 import java.util.Objects;
 import it.attocchi.entity.LetteraIncarico;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -409,13 +410,32 @@ public class DocumentiService {
             modello.put("logo", logo);
         }
         modello.put("emessa", Formati.dataCompleta(LocalDate.now()));
+        modello.put("data", Formati.dataNumerica(LocalDate.now()));
         modello.put("anno", String.valueOf(attestazione.anno()));
+        // Fascia 5-18 anni: il testo del fac-simile ("il minore", detrazione del 19%); fuori fascia un testo generico
+        modello.put("minore", attestazione.inEta());
         Allievo allievo = attestazione.allievo();
-        modello.put("allievo", persona(allievo.getNomeCompleto(), allievo.getCodiceFiscale(), allievo.getDataNascita()));
+        Indirizzo residenza = allievo.getIndirizzoEffettivo();
+        Map<String, String> datiAllievo = new HashMap<>();
+        datiAllievo.put("nome", allievo.getUser() != null
+            ? (testo(allievo.getUser().getCognome()) + " " + testo(allievo.getUser().getNome())).strip() : allievo.getNomeCompleto());
+        datiAllievo.put("luogoNascita", testo(allievo.getLuogoNascita()));
+        datiAllievo.put("nascita", allievo.getDataNascita() != null ? Formati.dataNumerica(allievo.getDataNascita()) : "");
+        datiAllievo.put("codiceFiscale", testo(allievo.getCodiceFiscale()));
+        datiAllievo.put("comune", testo(residenza.getComune()));
+        datiAllievo.put("provincia", testo(residenza.getProvincia()));
+        datiAllievo.put("via", testo(residenza.getVia()));
+        datiAllievo.put("cap", testo(residenza.getCap()));
+        modello.put("allievo", datiAllievo);
+        // Intestatario (Spett.): il genitore che sostiene le spese, o l'allievo adulto
         Genitore genitore = attestazione.genitore();
-        if (genitore != null) {
-            modello.put("genitore", persona(genitore.getNomeCompleto(), genitore.getCodiceFiscale(), null));
-        }
+        Map<String, String> intestatario = new HashMap<>();
+        intestatario.put("nome", genitore != null ? genitore.getNomeCompleto() : allievo.getNomeCompleto());
+        intestatario.put("indirizzo", testo((genitore != null ? genitore.getIndirizzo() : residenza).getFormattato()));
+        intestatario.put("codiceFiscale", testo(genitore != null ? genitore.getCodiceFiscale() : allievo.getCodiceFiscale()));
+        modello.put("intestatario", intestatario);
+        modello.put("corsi", attestazione.pagamenti().stream().map(p -> p.getIscrizione().getCorso().getNome())
+            .distinct().collect(Collectors.joining(", ")));
         modello.put("pagamenti", attestazione.pagamenti().stream().map(p -> Map.of(
             "data", Formati.dataNumerica(p.getData()),
             "corso", p.getIscrizione().getCorso().getNome()
@@ -423,16 +443,10 @@ public class DocumentiService {
             "metodo", p.getMetodo().getDescrizione(),
             "importo", Formati.euro(p.getImporto()))).toList());
         modello.put("totale", Formati.euro(attestazione.totale()));
+        modello.put("totaleInLettere", Formati.inLettere(attestazione.totale()));
         return render("documenti/" + TipoDocumento.ATTESTAZIONE.getTemplate() + ".ftlh", modello);
     }
 
-    private static Map<String, String> persona(String nome, String codiceFiscale, LocalDate nascita) {
-        Map<String, String> persona = new HashMap<>();
-        persona.put("nome", nome);
-        persona.put("codiceFiscale", codiceFiscale != null ? codiceFiscale : "");
-        persona.put("nascita", nascita != null ? Formati.dataNumerica(nascita) : "");
-        return persona;
-    }
 
     /** Nome del file PDF dell'attestazione, es. "attestazione-spese-2026-mario-rossi.pdf". */
     public String nomeFile(Attestazione attestazione) {
