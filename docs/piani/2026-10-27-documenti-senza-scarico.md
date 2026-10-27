@@ -34,7 +34,7 @@ email, un invio più formale di un semplice download — [F-2026-10-27/SCARICO.1
 |---|---|---|---|---|---|
 | 1 | `EmailService`: invio dei propri documenti all'email del profilo (iscrizione, riepilogo, attestazione, lettera) con i permessi dell'anteprima; `Modalita.EMAIL` e badge in `GrigliaAperture` | `EmailService`, `AperturaDocumento`, `GrigliaAperture`, `EmailServiceTest` | `./mvnw test` | [x] | — |
 | 2 | Documenti: menu "Anteprima" + "Invia alla mia email" per famiglie e insegnanti (conferma, cronologia anche per gli insegnanti), scarico solo per lo staff; CLAUDE.md | `MenuPdf`, `DocumentiView`, `ViewAccessTest`, `CLAUDE.md` | `./mvnw test` | [x] | F-2026-10-27/SCARICO.1 |
-| 3 | Registro | piano | — | [ ] | — |
+| 3 | Registro | piano | — | [x] | — |
 
 ## Fuori ambito
 
@@ -43,3 +43,12 @@ email, un invio più formale di un semplice download — [F-2026-10-27/SCARICO.1
 
 ## Registro
 
+- Passo 1: `EmailService.inviaAMe` e varianti (riepilogo, attestazione, lettera), `Modalita.EMAIL` con badge
+  `ENVELOPE` in "Documenti aperti". Test `EmailServiceTest.inviaAMe_…`.
+- Passo 2: `MenuPdf.anteprimaEInvio`; in Documenti l'elenco famiglia e le lettere dell'insegnante non hanno più "Scarica
+  PDF"; conferma con l'indirizzo prima dell'invio, avviso se il profilo non ha email, errore SMTP notificato senza
+  registrarlo in cronologia (resta in Email inviate con esito Errore). Test `ViewAccessTest`
+  (`genitore_anteprimaEInvioFinisconoNellaCronologia`, `insegnante_anteprimaEInvioDellaLetteraDiIncarico`, controlli
+  del menu di famiglie e allievo adulto).
+- `./mvnw test`: 336 test, tutti verdi. Non verificato nel browser (menu e dialog a 390px, apertura reale del PDF).
+- Le righe "Scaricato" già presenti nella cronologia restano.
