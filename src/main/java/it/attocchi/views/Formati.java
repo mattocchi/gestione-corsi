@@ -67,6 +67,19 @@ public final class Formati {
     }
 
     /**
+     * Luogo della lezione: "Aula 1", o "Palestra (invece di Aula 1)" se differisce da quello del corso; {@code null}
+     * se né la lezione né il corso ne hanno uno.
+     */
+    public static String luogo(Lezione lezione) {
+        if (lezione.getLuogoEffettivo() == null) {
+            return null;
+        }
+        String nome = lezione.getLuogoEffettivo().getNome();
+        return lezione.isLuogoDiverso() && lezione.getCorso().getLuogo() != null
+            ? nome + " (invece di " + lezione.getCorso().getLuogo().getNome() + ")" : nome;
+    }
+
+    /**
      * Gruppo del corso: "Martedì 17:00" o, con il nome, "Principianti – mar 17:00"; stringa vuota se {@code null}.
      */
     public static String gruppo(GruppoCorso gruppo) {

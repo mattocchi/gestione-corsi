@@ -1,7 +1,10 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Corso;
+import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Luogo;
 import it.attocchi.repository.CorsoRepository;
+import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.LuogoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +27,13 @@ public class LuogoService {
 
     private final LuogoRepository luogoRepository;
     private final CorsoRepository corsoRepository;
+    private final LezioneRepository lezioneRepository;
 
-    public LuogoService(LuogoRepository luogoRepository, CorsoRepository corsoRepository) {
+    public LuogoService(LuogoRepository luogoRepository, CorsoRepository corsoRepository,
+                        LezioneRepository lezioneRepository) {
         this.luogoRepository = luogoRepository;
         this.corsoRepository = corsoRepository;
+        this.lezioneRepository = lezioneRepository;
     }
 
     /** Tutti i luoghi, in ordine di nome. */
@@ -44,7 +50,26 @@ public class LuogoService {
     public Set<Long> usati() {
         Set<Long> usati = new HashSet<>(corsoRepository.findLuoghiPredefinitiUsati());
         usati.addAll(corsoRepository.findLuoghiAbilitatiUsati());
+        usati.addAll(lezioneRepository.findLuoghiUsati());
         return usati;
+    }
+
+    /**
+     * Scelte per una lezione: prima i luoghi abilitati del corso (predefinito in testa), poi gli altri luoghi attivi;
+     * comprende il luogo già assegnato alla lezione anche se non è più attivo.
+     */
+    public List<Luogo> sceltePerLezione(Lezione lezione) {
+        Corso corso = lezione.getCorso();
+        Map<Long, Luogo> scelte = new LinkedHashMap<>();
+        if (corso.getLuogo() != null) {
+            scelte.put(corso.getLuogo().getId(), corso.getLuogo());
+        }
+        corso.getLuoghiAbilitati().stream().sorted(PER_NOME).forEach(l -> scelte.putIfAbsent(l.getId(), l));
+        if (lezione.getLuogo() != null) {
+            scelte.putIfAbsent(lezione.getLuogo().getId(), lezione.getLuogo());
+        }
+        attivi().forEach(l -> scelte.putIfAbsent(l.getId(), l));
+        return List.copyOf(scelte.values());
     }
 
     /** Scelte per un corso: i luoghi attivi più quelli che ha già (anche se non più attivi), in ordine di nome. */

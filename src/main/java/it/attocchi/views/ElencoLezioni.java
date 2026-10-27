@@ -1,5 +1,8 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.Text;
+import it.attocchi.entity.Luogo;
+import it.attocchi.service.LuogoService;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.badge.Badge;
@@ -153,6 +156,8 @@ public class ElencoLezioni extends VerticalLayout {
         gridLezioni.addColumn(this::numero).setHeader("N. Lezione")
             .setComparator(Lezione::getNumeroLezione);
         gridLezioni.addColumn(this::orario).setHeader("Orario");
+        gridLezioni.addComponentColumn(ElencoLezioni::createLuogo).setHeader("Luogo")
+            .setComparator(l -> l.getLuogoEffettivo() != null ? l.getLuogoEffettivo().getNome() : "");
         // Stato come badge, non ordinabile (il filtro separa già gli stati). Larghezza fissa: quella automatica
         // verrebbe calcolata sulle sole righe visibili all'apertura ("Da fare") e troncherebbe "Completata".
         gridLezioni.addComponentColumn(this::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
@@ -168,6 +173,7 @@ public class ElencoLezioni extends VerticalLayout {
             .campo("Insegnanti", l -> tuttiICorsi ? insegnante(l) : null)
             .campo("N. Lezione", this::numero)
             .campo("Orario", this::orario)
+            .campo("Luogo", l -> l.getLuogoEffettivo() != null ? createLuogo(l) : null)
             .azioni(this::createAzioni)
             .applica();
     }
@@ -176,6 +182,18 @@ public class ElencoLezioni extends VerticalLayout {
      * Orario della lezione; nei corsi con gruppi, se la lezione è all'orario del corso, quelli dei gruppi del suo
      * giorno ("10:00 · 11:00").
      */
+    /** Luogo della lezione, con il badge "Cambiato" se non è quello del corso. */
+    private static Span createLuogo(Lezione lezione) {
+        Span luogo = new Span(lezione.getLuogoEffettivo() != null ? lezione.getLuogoEffettivo().getNome() : "");
+        if (lezione.isLuogoDiverso()) {
+            Badge badge = new Badge("Cambiato", VaadinIcon.MAP_MARKER.create());
+            badge.addThemeVariants(BadgeVariant.WARNING);
+            badge.getElement().setAttribute("title", Formati.luogo(lezione));
+            luogo.add(new Text(" "), badge);
+        }
+        return luogo;
+    }
+
     private String orario(Lezione lezione) {
         if (Objects.equals(lezione.getOrarioInizio(), lezione.getCorso().getOrarioInizio())) {
             DayOfWeek giorno = (lezione.getRecuperoDi() != null ? lezione.getRecuperoDi() : lezione).getDataDelCalendario().getDayOfWeek();
@@ -348,8 +366,8 @@ public class ElencoLezioni extends VerticalLayout {
         GridListDataView<Presenza> righe = gridPresenze.setItems(presenze);
         schedePerGruppo(presenze, gruppi, righe, scheda).ifPresent(dialog::add);
         dialog.add(gridPresenze);
-        // Le note in fondo, dopo le presenze e prima dei pulsanti
-        dialog.add(ViewSupport.sezione("Note della lezione"), createNoteLezione(lezione));
+        // Luogo e note in fondo, dopo le presenze e prima dei pulsanti
+        dialog.add(ViewSupport.sezione("Luogo e note della lezione"), createLuogoLezione(lezione), createNoteLezione(lezione));
 
         if (!lezione.isCompletata()) {
             Button nonEffettuata = new Button("Non effettuata", VaadinIcon.BAN.create(),
@@ -627,6 +645,40 @@ public class ElencoLezioni extends VerticalLayout {
         FormLayout form = new FormLayout(staff, pubbliche);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("500px", 2));
         return form;
+    }
+
+    /**
+     * Luogo della lezione, salvato subito: proposti prima i luoghi abilitati del corso, poi gli altri attivi; vuoto =
+     * il luogo del corso. In caso di errore un avviso e il campo torna al valore precedente.
+     */
+    private ComboBox<Luogo> createLuogoLezione(Lezione lezione) {
+        ComboBox<Luogo> campo = new ComboBox<>("Luogo");
+        // Come InvioEmailDialog: il service senza passarlo ai costruttori delle due viste
+        LuogoService luogoService = VaadinService.getCurrent().getInstantiator().getOrCreate(LuogoService.class);
+        campo.setItems(luogoService.sceltePerLezione(lezione));
+        campo.setItemLabelGenerator(Luogo::getNome);
+        campo.setClearButtonVisible(true);
+        Luogo delCorso = lezione.getCorso().getLuogo();
+        campo.setPlaceholder(delCorso != null ? delCorso.getNome() : "Nessun luogo");
+        campo.setHelperText(delCorso != null ? "Vuoto = luogo del corso (" + delCorso.getNome() + ")"
+            : "Il corso non ha un luogo predefinito");
+        campo.setValue(lezione.getLuogo());
+        campo.addClassNames("w-full sm:w-80");
+        campo.addValueChangeListener(e -> {
+            if (!e.isFromClient()) {
+                return;
+            }
+            try {
+                lezioneService.impostaLuogo(lezione.getId(), e.getValue() != null ? e.getValue().getId() : null, username);
+                // Come per le note: la lezione in memoria tiene il luogo e l'elenco ne mostra il nuovo valore
+                lezione.setLuogo(e.getValue() == null || e.getValue().equals(delCorso) ? null : e.getValue());
+                gridLezioni.getDataProvider().refreshItem(lezione);
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio del luogo: " + ex.getMessage());
+                campo.setValue(e.getOldValue());
+            }
+        });
+        return campo;
     }
 
     private static TextArea areaNote(String etichetta, String aiuto, String valore) {

@@ -67,6 +67,7 @@ public class MieiCorsiView extends VerticalLayout {
             ? corsoService.gruppiDellAllievo(allievoCorrente.getId()) : Map.of();
         SerializableFunction<Corso, String> giorniDi = corso -> Formati.gruppoOGiorni(corso, gruppi.get(corso.getId()));
         gridCorsi.addColumn(giorniDi::apply).setHeader("Giorni");
+        gridCorsi.addColumn(Corso::getNomeLuogo).setHeader("Luogo");
         gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
@@ -88,6 +89,7 @@ public class MieiCorsiView extends VerticalLayout {
 
             .campo("Insegnanti", MieiCorsiView::insegnante)
             .campo("Giorni", giorniDi)
+            .campo("Luogo", Corso::getNomeLuogo)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti);

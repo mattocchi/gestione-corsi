@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Luogo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Lezione;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,38 @@ class LezioneServiceTest {
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private LuogoService luogoService;
+
+    @Test
+    void impostaLuogo_insegnanteDelCorsoQualsiasiLuogoAttivo() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Lezione lezione = lezioneService.findByCorso(canto.getId()).getFirst();
+        Luogo aula2 = luogoService.elenco().stream().filter(l -> l.getNome().equals("Aula 2")).findFirst().orElseThrow();
+        Luogo aula1 = canto.getLuogo();
+        // Le scelte: prima i luoghi del corso (predefinito in testa), poi gli altri attivi
+        assertEquals(List.of("Aula 1", "Palestra", "Aula 2"),
+            luogoService.sceltePerLezione(lezione).stream().map(Luogo::getNome).toList());
+        assertThrows(IllegalStateException.class, () -> lezioneService.impostaLuogo(lezione.getId(), aula2.getId(), "insegnante2"));
+        try {
+            // Aula 2 non è tra gli abilitati di Canto ma è attivo: permesso
+            lezioneService.impostaLuogo(lezione.getId(), aula2.getId(), "insegnante1");
+            Lezione spostata = lezioneService.findById(lezione.getId());
+            assertEquals(aula2, spostata.getLuogoEffettivo());
+            assertTrue(spostata.isLuogoDiverso());
+            assertTrue(luogoService.usati().contains(aula2.getId()));
+
+            // Il luogo del corso equivale a nessun luogo sulla lezione
+            lezioneService.impostaLuogo(lezione.getId(), aula1.getId(), "segreteria");
+            Lezione ripristinata = lezioneService.findById(lezione.getId());
+            assertNull(ripristinata.getLuogo());
+            assertEquals(aula1, ripristinata.getLuogoEffettivo());
+            assertFalse(ripristinata.isLuogoDiverso());
+        } finally {
+            lezioneService.impostaLuogo(lezione.getId(), null, "admin");
+        }
+    }
 
     @Test
     void nonEffettuata_insegnanteDelCorsoOSegreteria_eRipristino() {

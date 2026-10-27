@@ -261,6 +261,7 @@ public class CalendarioView extends VerticalLayout {
             corso.add(new Text(" "), TipoCorsoUI.badge(voce.corso()));
         }
         Span insegnanti = new Span(voce.corso().getNomiInsegnanti()
+            + (voce.corso().getNomeLuogo() != null ? " · " + voce.corso().getNomeLuogo() : "")
             + (voce.corso().getCadenzaSettimane() == 2 ? " · ogni 2 sett." : ""));
         insegnanti.addClassNames("text-(--vaadin-text-color-secondary)");
         Div blocco = new Div(ora, corso, insegnanti);
@@ -301,7 +302,8 @@ public class CalendarioView extends VerticalLayout {
             pulsante.addClassNames("text-(--aura-red-text) line-through");
         }
         pulsante.setAriaLabel(testo + ", " + stato(lezione) + ", " + Formati.data(lezione.getData()));
-        pulsante.setTooltipText(testo + " (" + stato(lezione) + ")");
+        String luogo = Formati.luogo(lezione);
+        pulsante.setTooltipText(testo + " (" + stato(lezione) + ")" + (luogo != null ? " – " + luogo : ""));
         return pulsante;
     }
 

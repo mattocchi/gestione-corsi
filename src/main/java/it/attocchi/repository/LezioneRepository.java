@@ -11,6 +11,10 @@ import java.util.List;
 
 @Repository
 public interface LezioneRepository extends JpaRepository<Lezione, Long> {
+
+    @Query("SELECT DISTINCT l.luogo.id FROM Lezione l WHERE l.luogo IS NOT NULL")
+    List<Long> findLuoghiUsati();
+
     List<Lezione> findByCorsoIdOrderByDataAsc(Long corsoId);
 
     /** Lezioni senza insegnanti presenti registrati (create prima dei due insegnanti per corso). */

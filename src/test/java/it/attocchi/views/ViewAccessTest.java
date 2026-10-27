@@ -1945,13 +1945,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .map(c -> c.getElement().getAttribute("aria-label")).toList();
             String data = Formati.data(sabato.getData());
             int numero = sabato.getNumeroLezione();
-            assertEquals(List.of("Corso di Chitarra: " + data + ", 10:00, Lezione " + numero + " · Piccoli",
-                "Corso di Chitarra: " + data + ", 11:00, Lezione " + numero + " · Grandi",
-                "Corso di Chitarra: " + data + ", 18:00, Lezione " + numero + " · Senza gruppo"), riquadri);
+            assertEquals(List.of("Corso di Chitarra: " + data + ", 10:00, Lezione " + numero + " · Piccoli · Aula 2",
+                "Corso di Chitarra: " + data + ", 11:00, Lezione " + numero + " · Grandi · Aula 2",
+                "Corso di Chitarra: " + data + ", 18:00, Lezione " + numero + " · Senza gruppo · Aula 2"), riquadri);
 
             // Il riquadro dei Grandi apre il registro sulla loro scheda
             Card card = find(Card.class).all().stream()
-                .filter(c -> Objects.toString(c.getElement().getAttribute("aria-label"), "").endsWith("· Grandi")).findFirst().orElseThrow();
+                .filter(c -> Objects.toString(c.getElement().getAttribute("aria-label"), "").endsWith("· Grandi · Aula 2")).findFirst().orElseThrow();
             ComponentUtil.fireEvent(card, new ClickEvent<>(card));
             Dialog registro = find(Dialog.class).single();
             assertEquals("Grandi 11:00 (1)", find(Tabs.class).from(registro).single().getSelectedTab().getLabel());
@@ -1980,7 +1980,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(HomeView.class);
             Card card = prossimaLezione("Corso di Chitarra");
             assertEquals("Corso di Chitarra: " + Formati.data(sabato.getData()) + ", 10:00, Lezione " + sabato.getNumeroLezione()
-                + " · Piccoli · Allievo Chitarra1", card.getElement().getAttribute("aria-label"));
+                + " · Piccoli · Allievo Chitarra1 · Aula 2", card.getElement().getAttribute("aria-label"));
             ComponentUtil.fireEvent(card, new ClickEvent<>(card));
             Dialog dettaglio = find(Dialog.class).single();
             assertTrue(find(Span.class).from(dettaglio).withText("Piccoli – sab 10:00").exists());
@@ -3575,7 +3575,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         apriLezioni();
         var grid = test((Grid<Lezione>) find(Grid.class).single());
         Lezione lezione = grid.getRow(0);
-        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
         try {
             test(find(TextArea.class).withLabel("Note per lo staff").single()).setValue("Ripassare la scala");
             test(find(TextArea.class).withLabel("Note per allievi e genitori").single()).setValue("Portare lo spartito");
@@ -3584,10 +3584,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Portare lo spartito", salvata.getNotePubbliche());
             // Riaperta, il dialog mostra le note salvate
             find(Dialog.class).single().close();
-            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
             assertEquals("Ripassare la scala", find(TextArea.class).withLabel("Note per lo staff").single().getValue());
         } finally {
             lezioneService.impostaNote(lezione.getId(), null, null, "admin");
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_cambiaIlLuogoDellaLezione() {
+        apriLezioni();
+        var grid = test((Grid<Lezione>) find(Grid.class).single());
+        Lezione lezione = grid.getRow(0);
+        test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
+        try {
+            ComboBox<Luogo> luogo = find(ComboBox.class).withLabel("Luogo").single();
+            assertEquals("Aula 1", luogo.getPlaceholder());
+            test(luogo).selectItem("Palestra");
+            assertEquals("Palestra", lezioneService.findById(lezione.getId()).getLuogo().getNome());
+            // L'elenco mostra il nuovo luogo con il badge "Cambiato" (colonna Luogo, dopo Orario)
+            assertTrue(find(Badge.class).from(grid.getCellComponent(0, 4)).all().stream()
+                .anyMatch(b -> "Cambiato".equals(b.getText())));
+        } finally {
+            lezioneService.impostaLuogo(lezione.getId(), null, "admin");
         }
     }
 
@@ -3647,7 +3668,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             apriLezioni();
             var grid = test((Grid<Lezione>) find(Grid.class).single());
-            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
             Grid<Presenza> presenze = (Grid<Presenza>) find(Grid.class).from(find(Dialog.class).single()).single();
             assertEquals("Gruppo", presenze.getColumns().get(1).getHeaderText());
             assertTrue(presenze.getColumns().get(1).isVisible());
@@ -3666,7 +3687,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void insegnante_nonVedeCambiaData() {
         apriLezioni();
         var grid = test((Grid<Lezione>) find(Grid.class).single());
-        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
         assertTrue(find(Button.class).withText("Segna Completata").exists());
         assertFalse(find(Button.class).withText("Cambia data").exists());
     }
@@ -3736,7 +3757,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         apriLezioni();
         var grid = test((Grid<Lezione>) find(Grid.class).single());
         Lezione lezione = grid.getRow(0);
-        test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+        test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
         test(find(Button.class).withText("Non effettuata").single()).click();
         test(find(TextField.class).withLabel("Motivo").single()).setValue("insegnante assente");
         test(find(Button.class).withText("Segna non effettuata").single()).click();
@@ -3749,10 +3770,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
             test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
             assertEquals(1, grid.size());
-            assertEquals("Non effettuata", ((Badge) grid.getCellComponent(0, 4)).getText());
+            assertEquals("Non effettuata", ((Badge) grid.getCellComponent(0, 5)).getText());
 
             // Il dialog della lezione non effettuata non mostra il registro: solo il ripristino
-            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
             assertFalse(find(Button.class).withText("Segna Completata").exists());
             test(find(Button.class).withText("Ripristina").single()).click();
             assertEquals(0, grid.size());
@@ -3776,7 +3797,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var grid = test((Grid<Lezione>) find(Grid.class).single());
             SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
             test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
-            test(pulsante(grid.getCellComponent(0, 5), "Gestisci Presenze")).click();
+            test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
             test(find(Button.class).withText("Recupera").single()).click();
 
             // Un solo corso: la scelta del corso è nascosta, l'orario è quello del corso; la data è obbligatoria
@@ -3804,7 +3825,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             // L'insegnante elimina le lezioni aggiunte non completate
             for (Lezione aggiunta : List.of(grid.getRow(rigaExtra), recupero)) {
                 int r = IntStream.range(0, grid.size()).filter(i -> grid.getRow(i).getId().equals(aggiunta.getId())).findFirst().orElseThrow();
-                test(pulsante(grid.getCellComponent(r, 5), "Gestisci Presenze")).click();
+                test(pulsante(grid.getCellComponent(r, 6), "Gestisci Presenze")).click();
                 test(find(Button.class).withText("Elimina").single()).click();
                 test(find(Button.class).withText("Elimina").all().getLast()).click();
                 assertNull(lezioneService.findById(aggiunta.getId()));
@@ -3831,7 +3852,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals("Maria Verdi", grid.getCellText(0, 1));
 
         Lezione lezione = grid.getRow(0);
-        test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
+        test(pulsante(grid.getCellComponent(0, 7), "Gestisci Presenze")).click();
         test(find(Button.class).withText("Non effettuata").single()).click();
         test(find(Button.class).withText("Segna non effettuata").single()).click();
         Lezione recupero = null;
@@ -3839,7 +3860,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(lezioneService.findById(lezione.getId()).isNonEffettuata());
             SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
             test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
-            test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
+            test(pulsante(grid.getCellComponent(0, 7), "Gestisci Presenze")).click();
             test(find(Button.class).withText("Recupera").single()).click();
             test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
             test(find(Button.class).withText("Salva").single()).click();
@@ -3850,7 +3871,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
             Long idRecupero = recupero.getId();
             int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getId().equals(idRecupero)).findFirst().orElseThrow();
-            test(pulsante(grid.getCellComponent(riga, 6), "Gestisci Presenze")).click();
+            test(pulsante(grid.getCellComponent(riga, 7), "Gestisci Presenze")).click();
             assertFalse(find(Button.class).withText("Elimina").exists());
         } finally {
             if (recupero != null) {
@@ -3878,7 +3899,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).isAggiunta()).findFirst().orElseThrow();
         Lezione aggiunta = grid.getRow(riga);
-        test(pulsante(grid.getCellComponent(riga, 6), "Gestisci Presenze")).click();
+        test(pulsante(grid.getCellComponent(riga, 7), "Gestisci Presenze")).click();
         test(find(Button.class).withText("Elimina").single()).click();
         test(find(Button.class).withText("Elimina").all().getLast()).click();
         assertNull(lezioneService.findById(aggiunta.getId()));
@@ -3974,7 +3995,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(MieiCorsiView.class);
             var corsi = test(find(Grid.class).single());
-            test(pulsante(corsi.getCellComponent(0, 9), "Visualizza Presenze")).click();
+            test(pulsante(corsi.getCellComponent(0, 10), "Visualizza Presenze")).click();
             Dialog dialog = find(Dialog.class).single();
             // La non effettuata non conta: 29 da fare, nessuna svolta, 30 mancanti
             assertTrue(find(Span.class).from(dialog).withText("Da fare: 29").exists());
@@ -4005,7 +4026,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             apriLezioni();
             var lezioni = test((Grid<Lezione>) find(Grid.class).single());
             Lezione lezione = lezioni.getRow(0);
-            test((Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow()).click();
+            test((Button) lezioni.getCellComponent(0, 6).getChildren().findFirst().orElseThrow()).click();
 
             assertTrue(find(Button.class).withText("Entrambi").exists());
             test(find(Button.class).withText("Solo Rossi").single()).click();
@@ -4022,7 +4043,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void insegnante_conUnSoloInsegnanteNonVedeLaSceltaDegliInsegnanti() {
         apriLezioni();
         var lezioni = test((Grid<Lezione>) find(Grid.class).single());
-        test((Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow()).click();
+        test((Button) lezioni.getCellComponent(0, 6).getChildren().findFirst().orElseThrow()).click();
         assertFalse(find(Button.class).withText("Entrambi").exists());
     }
 
@@ -4031,7 +4052,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void insegnante_segnaAssenzaGiustificataConUnTocco() {
         apriLezioni();
         var lezioni = test(find(Grid.class).single());
-        Button gestisciPresenze = (Button) lezioni.getCellComponent(0, 5).getChildren().findFirst().orElseThrow();
+        Button gestisciPresenze = (Button) lezioni.getCellComponent(0, 6).getChildren().findFirst().orElseThrow();
         test(gestisciPresenze).click();
 
         @SuppressWarnings("unchecked")
@@ -4070,7 +4091,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             test(filtro.getPulsante(FiltroLezioni.COMPLETATE)).click();
             assertEquals(1, grid.size());
-            Badge badge = (Badge) grid.getCellComponent(0, 4);
+            Badge badge = (Badge) grid.getCellComponent(0, 5);
             assertEquals("Completata", badge.getText());
             assertTrue(badge.getThemeNames().contains(BadgeVariant.SUCCESS.getVariantName()));
 
@@ -4079,7 +4100,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
             assertEquals(29, grid.size());
-            assertEquals("Da fare", ((Badge) grid.getCellComponent(0, 4)).getText());
+            assertEquals("Da fare", ((Badge) grid.getCellComponent(0, 5)).getText());
         } finally {
             completata.setCompletata(false);
             lezioneService.save(completata);
@@ -4199,11 +4220,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var corsi = test((Grid<Corso>) find(Grid.class).from(find(Dialog.class).single()).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
             // Prezzo di listino, pre-iscrizione e quota dovuta (senza sconto: nessun badge)
-            assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 4), corsi.getCellText(0, 5)));
-            assertEquals(List.of("600,00 €"), corsi.getCellComponent(0, 6).getChildren()
+            assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 5), corsi.getCellText(0, 6)));
+            assertEquals(List.of("600,00 €"), corsi.getCellComponent(0, 7).getChildren()
                 .map(c -> c instanceof Badge b ? b.getText() : ((Span) c).getText()).toList());
-            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 7)).getText());
-            test(pulsante(corsi.getCellComponent(0, 8), "Pagamenti")).click();
+            assertEquals("Parziale 33%", ((Badge) corsi.getCellComponent(0, 8)).getText());
+            test(pulsante(corsi.getCellComponent(0, 9), "Pagamenti")).click();
 
             PagamentiAllievoDialog dialog = find(PagamentiAllievoDialog.class).single();
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 600,00 €").exists());
@@ -4236,8 +4257,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var corsi = test(find(Grid.class).single());
             assertEquals("Corso di Canto", corsi.getCellText(0, 0));
             // Prezzo di listino, pre-iscrizione e quota dovuta con il badge dello sconto
-            assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 6), corsi.getCellText(0, 7)));
-            assertEquals(List.of("510,00 €", "Sconto -90,00 €"), corsi.getCellComponent(0, 8).getChildren()
+            assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 7), corsi.getCellText(0, 8)));
+            assertEquals(List.of("510,00 €", "Sconto -90,00 €"), corsi.getCellComponent(0, 9).getChildren()
                 .map(c -> c instanceof Badge b ? b.getText() : ((Span) c).getText()).toList());
         } finally {
             pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);

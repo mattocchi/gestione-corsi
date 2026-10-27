@@ -225,7 +225,8 @@ public class HomeView extends VerticalLayout {
         Span data = new Span(quando);
         data.addClassNames("font-(--aura-font-weight-semibold) text-[1.25rem] leading-[1.2]");
         String numero = "Lezione " + Formati.numeroLezione(prossima, gruppi.get(lezione.getCorso().getId()))
-            + (prossima.perChi() != null ? " · " + prossima.perChi() : "");
+            + (prossima.perChi() != null ? " · " + prossima.perChi() : "")
+            + (Formati.luogo(lezione) != null ? " · " + Formati.luogo(lezione) : "");
         Span dettaglio = new Span(numero);
         dettaglio.addClassNames("block", Stili.TESTO_SECONDARIO);
         card.add(data, dettaglio);

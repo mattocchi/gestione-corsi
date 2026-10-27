@@ -86,8 +86,8 @@ Sarebbe utile per il mese oggetto di rimborso vedere un effettivo riepilogo dell
   _Chiarimento 2026-10-27: campo "Tipo" del corso, Corso (default) o Servizio, con tutte le funzioni del corso; badge e filtro in Gestione Corsi, badge "Servizio" ovunque compare il corso; chi svolge un servizio è un Insegnante, mostrato come "Incaricato"._
   _Chiarimento 2026-10-27: per i servizi ogni lezione vale la sua durata una volta, senza contare gli iscritti (costo = ore × tariffa dell'incaricato); i corsi restano allievi × durata._
 
-* [ ] Sarebbe opportuno aggiungere anche il luogo dove viene svolto il corso. Ogni corso ha un luogo predefinito ma ogni lezione può essere specificato in modo puntuale se differisce dal luogo predefinito. Ad esempio un corso può essere svolto in aula1, aula2 o palestra o all'esterno. I luogo devono poter essere gestito da admin.
-Gli insegnanti possono specificare sulla lezione quale é il luogo effettivo se differisce da quelli opzionali per il corso. Quindi ogni corso ha dei luoghi abilitati ad essere usati.
+* [x] Sarebbe opportuno aggiungere anche il luogo dove viene svolto il corso. Ogni corso ha un luogo predefinito ma ogni lezione può essere specificato in modo puntuale se differisce dal luogo predefinito. Ad esempio un corso può essere svolto in aula1, aula2 o palestra o all'esterno. I luogo devono poter essere gestito da admin.
+Gli insegnanti possono specificare sulla lezione quale é il luogo effettivo se differisce da quelli opzionali per il corso. Quindi ogni corso ha dei luoghi abilitati ad essere usati. _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: vista "Luoghi" per admin e segreteria (elimina solo admin, se il luogo non è usato). Il corso ha luoghi abilitati e un predefinito, facoltativi; sulla lezione l'insegnante del corso, admin e segreteria scelgono qualsiasi luogo attivo (prima gli abilitati; vuoto = predefinito). Il luogo compare ovunque c'è la lezione, con un badge se diverso dal predefinito._
 
 * [ ] Attestazione spese anno totali. A prescindere dagli anni scolastici serve un totale delle spese per allievo sostenuto dalla famiglia che sono state registrate nell'anno solare 

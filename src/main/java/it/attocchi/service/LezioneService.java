@@ -5,11 +5,13 @@ import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Lezione;
+import it.attocchi.entity.Luogo;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.User;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LezioneRepository;
+import it.attocchi.repository.LuogoRepository;
 import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.UserRepository;
 import it.attocchi.views.Formati;
@@ -36,10 +38,13 @@ public class LezioneService {
     private final PresenzaRepository presenzaRepository;
     private final UserRepository userRepository;
     private final NumerazioneLezioni numerazioneLezioni;
+    private final LuogoRepository luogoRepository;
 
     public LezioneService(LezioneRepository lezioneRepository, CorsoRepository corsoRepository,
                           IscrizioneRepository iscrizioneRepository, PresenzaRepository presenzaRepository,
-                          UserRepository userRepository, NumerazioneLezioni numerazioneLezioni) {
+                          UserRepository userRepository, NumerazioneLezioni numerazioneLezioni,
+                          LuogoRepository luogoRepository) {
+        this.luogoRepository = luogoRepository;
         this.lezioneRepository = lezioneRepository;
         this.corsoRepository = corsoRepository;
         this.iscrizioneRepository = iscrizioneRepository;
@@ -138,6 +143,22 @@ public class LezioneService {
         }
         lezione.setNote(testo(noteStaff));
         lezione.setNotePubbliche(testo(notePubbliche));
+    }
+
+    /**
+     * Luogo della lezione ({@code null} o quello del corso = il luogo del corso), in qualsiasi stato della lezione:
+     * un insegnante del corso, la segreteria o l'admin, sui corsi attivi. Si sceglie tra i luoghi attivi; quello già
+     * assegnato resta anche se non è più attivo.
+     */
+    @Transactional
+    public void impostaLuogo(Long lezioneId, Long luogoId, String username) {
+        Lezione lezione = gestibile(lezioneId, username, false);
+        Luogo luogo = luogoId != null ? luogoRepository.findById(luogoId)
+            .orElseThrow(() -> new IllegalArgumentException("Luogo non trovato: " + luogoId)) : null;
+        if (luogo != null && !luogo.isAttivo() && !luogo.equals(lezione.getLuogoEffettivo())) {
+            throw new IllegalArgumentException("Il luogo " + luogo.getNome() + " non è attivo");
+        }
+        lezione.setLuogo(luogo == null || luogo.equals(lezione.getCorso().getLuogo()) ? null : luogo);
     }
 
     private static boolean lunga(String valore) {

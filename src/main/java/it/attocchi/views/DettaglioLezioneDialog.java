@@ -59,6 +59,9 @@ public final class DettaglioLezioneDialog {
         if (lezione.getCorso().isServizio()) {
             contenuto.addComponentAsFirst(riga("Tipo", TipoCorsoUI.badge(lezione.getCorso())));
         }
+        if (Formati.luogo(lezione) != null) {
+            contenuto.add(riga("Luogo", Formati.luogo(lezione)));
+        }
         if (lezione.isSpostata()) {
             contenuto.add(riga("Spostata dal", Formati.data(lezione.getDataOriginale())));
         }

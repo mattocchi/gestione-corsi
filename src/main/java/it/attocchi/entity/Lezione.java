@@ -49,6 +49,11 @@ public class Lezione {
     @Column(name = "note_pubbliche", length = Lezione.LUNGHEZZA_NOTE)
     private String notePubbliche;
 
+    /** Luogo della singola lezione quando differisce da quello del corso; null = il luogo del corso. */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "luogo_id")
+    private Luogo luogo;
+
     @OneToMany(mappedBy = "lezione", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Presenza> presenze = new HashSet<>();
 
@@ -163,6 +168,24 @@ public class Lezione {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public Luogo getLuogo() {
+        return luogo;
+    }
+
+    public void setLuogo(Luogo luogo) {
+        this.luogo = luogo;
+    }
+
+    /** Dove si svolge la lezione: il suo luogo, altrimenti quello del corso (può essere {@code null}). */
+    public Luogo getLuogoEffettivo() {
+        return luogo != null ? luogo : corso.getLuogo();
+    }
+
+    /** {@code true} se la lezione ha un luogo diverso da quello predefinito del corso. */
+    public boolean isLuogoDiverso() {
+        return luogo != null && !luogo.equals(corso.getLuogo());
     }
 
     public String getNotePubbliche() {

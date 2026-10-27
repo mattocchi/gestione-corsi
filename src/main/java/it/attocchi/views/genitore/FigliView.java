@@ -188,6 +188,7 @@ public class FigliView extends VerticalLayout {
         Map<Long, GruppoCorso> gruppi = corsoService.gruppiDellAllievo(allievo.getId());
         SerializableFunction<Corso, String> giorniDi = corso -> Formati.gruppoOGiorni(corso, gruppi.get(corso.getId()));
         gridCorsi.addColumn(giorniDi::apply).setHeader("Giorni");
+        gridCorsi.addColumn(Corso::getNomeLuogo).setHeader("Luogo");
         gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         Map<Long, Situazione> situazioni = pagamentoService.situazioniDelloAllievo(allievo.getId());
         PrezziCorso.aggiungiColonne(gridCorsi, situazioni);
@@ -208,6 +209,7 @@ public class FigliView extends VerticalLayout {
             .campo("Tipo", TipoCorsoUI::badge)
             .campo("Insegnanti", FigliView::insegnante)
             .campo("Giorni", giorniDi)
+            .campo("Luogo", Corso::getNomeLuogo)
             .campo("N. Lezioni", Corso::getNumeroLezioni);
         PrezziCorso.aggiungiCampi(card, situazioni).azioni(azioni).applica();
 
