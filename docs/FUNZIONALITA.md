@@ -448,3 +448,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] mi piacerebbe aggiungere in basso, nel menu slider, sopra il logo o sotto, la data di release del software, presa se possibile dalla data del jar _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: data della build scritta nel JAR (build-info di Spring Boot, non cambia con le copie del file); sotto il logo "Versione 1.1.0 · 27/10/2026"; visibile solo ad admin e segreteria._
+
+### ANNI SCOLASTICI
+
+* [ ] nella finestra attestazione e filtri sarebbe opportuno verificare se ci sono anni scolastici "precedenti". anche se non attivi ma ci sono dei dati, è importante che nel filtro rimanga come opzione, quindi se disabilitato non posso usare l'anno scolastico per nuovi inserimenti ma per ricercare nello storico direi che è oppotuno poterlo usare.
+  _Chiarimento 2026-10-27: in tutti i filtri per anno scolastico (Documenti, Rimborsi e I miei rimborsi, Gestione Pagamenti, Gestione Corsi, Riepilogo Iscritti) compaiono gli anni dell'elenco Anni scolastici, attivi o no, più quelli presenti nei dati, dal più recente, con "(archivio)" per i non attivi; solo il dialog del corso propone i soli anni attivi per i nuovi inserimenti. Le attestazioni restano per anno solare con tutti gli anni passati con pagamenti._
