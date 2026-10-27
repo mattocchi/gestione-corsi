@@ -446,7 +446,8 @@ public class EmailService {
             .map(iscrizione -> {
                 Allievo allievo = iscrizione.getAllievo();
                 Destinatario destinatario = destinatarioDi(allievo).orElse(null);
-                String motivo = !allievo.isDatiPer(TipoDocumento.CONFERMA_ISCRIZIONE) ? "senza data di nascita"
+                String motivo = !iscrizione.getCorso().isPubblicato() ? "corso non pubblicato"
+                    : !allievo.isDatiPer(TipoDocumento.CONFERMA_ISCRIZIONE) ? "senza data di nascita"
                     : destinatario == null ? "senza email" : null;
                 return new DestinatarioConferma(allievo.getId(), allievo.getNomeCompleto(), destinatario, motivo);
             })
@@ -460,6 +461,9 @@ public class EmailService {
     @Transactional
     public Riepilogo inviaConferme(Long corsoId, String username) {
         verificaPermesso(username);
+        if (iscrizioneRepository.findByCorsoIdWithAllievo(corsoId).stream().anyMatch(i -> !i.getCorso().isPubblicato())) {
+            throw new IllegalStateException("Il corso non è pubblicato: le famiglie non lo vedono ancora");
+        }
         int inviate = 0;
         int simulate = 0;
         int errori = 0;
@@ -543,6 +547,9 @@ public class EmailService {
 
     /** Destinatario dell'email, se l'iscrizione la può ricevere; altrimenti {@link IllegalStateException}. */
     private Destinatario verificaInviabile(TipoDocumento tipo, Iscrizione iscrizione) {
+        if (!iscrizione.getCorso().isPubblicato()) {
+            throw new IllegalStateException("Il corso non è pubblicato: le famiglie non lo vedono ancora");
+        }
         Destinatario destinatario = destinatarioDi(iscrizione.getAllievo())
             .orElseThrow(() -> new IllegalStateException("Né il genitore né l'allievo hanno un indirizzo email"));
         if (tipo == TipoDocumento.RICEVUTA

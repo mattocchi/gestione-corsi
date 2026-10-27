@@ -89,14 +89,14 @@ public class CorsoService {
         return corsoRepository.findDellInsegnante(insegnanteId);
     }
 
-    /** Tutti i corsi dell'allievo, anche non attivi (consultazione del genitore). */
+    /** Corsi pubblicati dell'allievo, anche non attivi (consultazione del genitore). */
     public List<Corso> findByAllievo(Long allievoId) {
-        return corsoRepository.findByAllievoId(allievoId);
+        return corsoRepository.findByAllievoId(allievoId).stream().filter(Corso::isPubblicato).toList();
     }
 
-    /** Solo i corsi attivi dell'allievo: l'allievo non vede i corsi non attivi. */
+    /** Solo i corsi attivi e pubblicati dell'allievo: l'allievo non vede i corsi non attivi né quelli in preparazione. */
     public List<Corso> findAttiviByAllievo(Long allievoId) {
-        return corsoRepository.findByAllievoId(allievoId).stream().filter(Corso::isAttivo).toList();
+        return corsoRepository.findByAllievoId(allievoId).stream().filter(c -> c.isAttivo() && c.isPubblicato()).toList();
     }
 
     /**

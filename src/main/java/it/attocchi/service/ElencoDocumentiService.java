@@ -192,9 +192,9 @@ public class ElencoDocumentiService {
         Set<IscrizioneId> conPagamenti = conPagamenti();
         List<DocumentoFamiglia> documenti = new ArrayList<>();
         genitoreRepository.findByUserUsername(username).ifPresent(genitore -> aggiungi(documenti,
-            iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(username), genitore, null, conPagamenti));
+            pubblicate(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(username)), genitore, null, conPagamenti));
         allievoRepository.findByUserUsername(username).filter(a -> a.getGenitore() == null).ifPresent(allievo -> aggiungi(documenti,
-            iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()), null, allievo, conPagamenti));
+            pubblicate(iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId())), null, allievo, conPagamenti));
         // Attestazioni delle spese per anno solare: dei figli, o dell'allievo adulto
         Map<Long, Allievo> propri = new HashMap<>();
         documenti.stream().filter(d -> d.iscrizione() != null).map(d -> d.iscrizione().getAllievo())
@@ -229,6 +229,11 @@ public class ElencoDocumentiService {
                 documenti.add(new DocumentoFamiglia(TipoDocumento.RIEPILOGO, null, genitore, allievo, anno, null));
             }
         }
+    }
+
+    /** Solo i corsi pubblicati: quelli in preparazione le famiglie non li vedono. */
+    private static List<Iscrizione> pubblicate(List<Iscrizione> iscrizioni) {
+        return iscrizioni.stream().filter(i -> i.getCorso().isPubblicato()).toList();
     }
 
     private Set<IscrizioneId> conPagamenti() {

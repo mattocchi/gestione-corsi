@@ -168,12 +168,12 @@ public class CalendarioService {
         delloStaff.values().forEach(corso -> voci.addAll(settimanaDelCorso(corso)));
         if (ruoli.contains("ALLIEVO")) {
             allievoRepository.findByUserId(user.getId()).ifPresent(allievo ->
-                voci.addAll(settimanaDi(allievo, null, visibile)));
+                voci.addAll(settimanaDi(allievo, null, visibile.and(Corso::isPubblicato))));
         }
         if (ruoli.contains("GENITORE")) {
             genitoreRepository.findByUserId(user.getId()).ifPresent(genitore ->
                 allievoRepository.findByGenitoreIdWithCorsi(genitore.getId()).forEach(figlio ->
-                    voci.addAll(settimanaDi(figlio, figlio.getNomeCompleto(), visibile))));
+                    voci.addAll(settimanaDi(figlio, figlio.getNomeCompleto(), visibile.and(Corso::isPubblicato)))));
         }
         return voci.stream().sorted(PER_GIORNO_E_ORARIO).toList();
     }
@@ -292,8 +292,10 @@ public class CalendarioService {
     private List<VoceCalendario> vociDi(Allievo allievo, String perChi, Predicate<Lezione> visibile) {
         Map<Long, Iscrizione> iscrizioni = new HashMap<>();
         iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()).forEach(i -> iscrizioni.put(i.getCorso().getId(), i));
+        // Allievi e genitori non vedono i corsi in preparazione (non pubblicati)
         return presenzaRepository.findByAllievoId(allievo.getId()).stream()
             .map(Presenza::getLezione)
+            .filter(l -> l.getCorso().isPubblicato())
             .filter(visibile)
             .map(l -> {
                 Iscrizione iscrizione = iscrizioni.get(l.getCorso().getId());

@@ -152,7 +152,9 @@ public class DocumentiService {
         } catch (RuntimeException ex) {
             throw new IllegalArgumentException(tipo.getBreve() + " non trovata");
         }
-        if (!puoVedere(iscrizione.getAllievo(), username)) {
+        // Il corso in preparazione (non pubblicato) lo vede solo lo staff
+        if (!puoVedere(iscrizione.getAllievo(), username)
+                || (!iscrizione.getCorso().isPubblicato() && !staff(username))) {
             throw new IllegalArgumentException(tipo.getBreve() + " non trovata");
         }
         return new Pdf(nomeFile(tipo, iscrizione), documentoPdf(tipo, corsoId, allievoId));
@@ -167,6 +169,11 @@ public class DocumentiService {
     }
 
     /** Admin e segreteria sempre; altrimenti solo il genitore stesso. */
+    private boolean staff(String username) {
+        return userRepository.findByUsername(username).map(User::getRoles)
+            .filter(ruoli -> ruoli.contains("ADMIN") || ruoli.contains("SEGRETERIA")).isPresent();
+    }
+
     private boolean puoVedere(Genitore genitore, String username) {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {

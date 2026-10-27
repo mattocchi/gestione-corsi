@@ -339,7 +339,7 @@ public class PagamentoService {
      */
     public List<RigaPagamento> righePagamentiPropri(String usernameAllievo) {
         return allievoAdulto(usernameAllievo)
-            .map(allievo -> righe(iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId())).stream()
+            .map(allievo -> righe(pubblicate(iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()))).stream()
                 .sorted(PER_CORSO_E_ALLIEVO).toList())
             .orElse(List.of());
     }
@@ -352,7 +352,7 @@ public class PagamentoService {
 
     /** Anni scolastici dei corsi dell'allievo, dal più recente; {@code null} in fondo per i corsi senza anno. */
     public List<String> anniDellAllievo(Long allievoId) {
-        return iscrizioneRepository.findByAllievoIdWithCorso(allievoId).stream()
+        return pubblicate(iscrizioneRepository.findByAllievoIdWithCorso(allievoId)).stream()
             .map(i -> i.getCorso().getAnnoScolastico())
             .distinct()
             .sorted(Comparator.nullsLast(Comparator.<String>reverseOrder()))
@@ -380,7 +380,8 @@ public class PagamentoService {
         Allievo allievo = allievoRepository.findById(allievoId)
             .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));
         return new Attestazione(allievo, anno, pagamentoRepository.findDellAllievoNelPeriodo(allievoId,
-            LocalDate.of(anno, 1, 1), LocalDate.of(anno, 12, 31)));
+            LocalDate.of(anno, 1, 1), LocalDate.of(anno, 12, 31)).stream()
+            .filter(p -> p.getIscrizione().getCorso().isPubblicato()).toList());
     }
 
     /** Anni solari con almeno un pagamento, per allievo (dal più recente). */
@@ -396,7 +397,7 @@ public class PagamentoService {
     public RiepilogoFamiglia riepilogoAllievo(Long allievoId, String anno) {
         Allievo allievo = allievoRepository.findById(allievoId)
             .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));
-        List<Iscrizione> iscrizioni = iscrizioneRepository.findByAllievoIdWithCorso(allievoId).stream()
+        List<Iscrizione> iscrizioni = pubblicate(iscrizioneRepository.findByAllievoIdWithCorso(allievoId)).stream()
             .filter(i -> Objects.equals(i.getCorso().getAnnoScolastico(), anno))
             .toList();
         return new RiepilogoFamiglia(null, allievo, anno, righe(iscrizioni).stream().sorted(PER_CORSO_E_ALLIEVO).toList());
@@ -416,7 +417,7 @@ public class PagamentoService {
 
     /** Le righe dei soli figli del genitore indicato, anche nei corsi non attivi, per corso e nome del figlio. */
     public List<RigaPagamento> righePagamentiDeiFigli(String usernameGenitore) {
-        return righe(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(usernameGenitore)).stream()
+        return righe(pubblicate(iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(usernameGenitore))).stream()
             .sorted(PER_CORSO_E_ALLIEVO).toList();
     }
 
@@ -425,7 +426,7 @@ public class PagamentoService {
      * qualche corso non ha l'anno.
      */
     public List<String> anniDellaFamiglia(Long genitoreId) {
-        return iscrizioneRepository.findByGenitoreIdWithCorsoAllievo(genitoreId).stream()
+        return pubblicate(iscrizioneRepository.findByGenitoreIdWithCorsoAllievo(genitoreId)).stream()
             .map(i -> i.getCorso().getAnnoScolastico())
             .distinct()
             .sorted(Comparator.nullsLast(Comparator.<String>reverseOrder()))
@@ -436,10 +437,18 @@ public class PagamentoService {
     public RiepilogoFamiglia riepilogoFamiglia(Long genitoreId, String anno) {
         Genitore genitore = genitoreRepository.findById(genitoreId)
             .orElseThrow(() -> new IllegalArgumentException("Genitore non trovato: " + genitoreId));
-        List<Iscrizione> iscrizioni = iscrizioneRepository.findByGenitoreIdWithCorsoAllievo(genitoreId).stream()
+        List<Iscrizione> iscrizioni = pubblicate(iscrizioneRepository.findByGenitoreIdWithCorsoAllievo(genitoreId)).stream()
             .filter(i -> Objects.equals(i.getCorso().getAnnoScolastico(), anno))
             .toList();
         return new RiepilogoFamiglia(genitore, anno, righe(iscrizioni).stream().sorted(PER_ALLIEVO_E_CORSO).toList());
+    }
+
+    /**
+     * Solo le iscrizioni dei corsi pubblicati: ciò che genitori e allievi vedono (e che si invia loro: riepiloghi,
+     * attestazioni) non comprende i corsi in preparazione.
+     */
+    private static List<Iscrizione> pubblicate(List<Iscrizione> iscrizioni) {
+        return iscrizioni.stream().filter(i -> i.getCorso().isPubblicato()).toList();
     }
 
     private List<RigaPagamento> righe(List<Iscrizione> iscrizioni) {
