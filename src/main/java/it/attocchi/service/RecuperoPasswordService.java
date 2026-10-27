@@ -122,21 +122,55 @@ public class RecuperoPasswordService {
         return user.getUltimoAccesso() == null && user.getEmail() != null && !user.getEmail().isBlank();
     }
 
+    /** Invito per chi non è mai entrato, o reimpostazione dell'accesso (solo admin) per chi è già entrato. */
+    public enum TipoInvito {
+        INVITO, REIMPOSTAZIONE
+    }
+
+    /** Email d'invito come verrebbe inviata (con un link d'esempio), senza inviarla né cambiare l'account. */
+    public record AnteprimaInvito(TipoInvito tipo, String destinatario, String oggetto, String corpoHtml) {
+    }
+
+    /**
+     * Cosa può fare l'utente {@code username} su un altro account con email: invitarlo (admin e segreteria, se non è mai
+     * entrato) o reimpostarne l'accesso (solo admin, se è già entrato); vuoto altrimenti e sul proprio account.
+     */
+    public Optional<TipoInvito> tipoInvito(User user, String username) {
+        Set<String> ruoli = userRepository.findByUsername(username).map(User::getRoles).orElse(Set.of());
+        // Mai sul proprio account (si cambia la password dal profilo)
+        if (user.getEmail() == null || user.getEmail().isBlank() || user.getUsername().equals(username)) {
+            return Optional.empty();
+        }
+        if (invitabile(user)) {
+            return ruoli.contains("ADMIN") || ruoli.contains("SEGRETERIA") ? Optional.of(TipoInvito.INVITO) : Optional.empty();
+        }
+        return ruoli.contains("ADMIN") ? Optional.of(TipoInvito.REIMPOSTAZIONE) : Optional.empty();
+    }
+
+    /** Anteprima dell'email di {@link #invita}, con gli stessi controlli. */
+    public AnteprimaInvito anteprimaInvito(Long userId, String username) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
+        TipoInvito tipo = verificaInvito(user, username);
+        return new AnteprimaInvito(tipo, user.getEmail(), oggettoInvito(tipo),
+            corpoInvito(user, tipo, proprieta.linkNuovaPassword("…")));
+    }
+
     /**
      * Invita l'utente ad accedere: email con il link per impostare la password, valido {@link #VALIDITA_INVITO_GIORNI}
-     * giorni (annulla i link precedenti); impostata la password l'account si attiva e l'utente entra subito. Solo admin
-     * e segreteria; un account non {@link #invitabile} dà {@link IllegalStateException}.
+     * giorni (annulla i link precedenti); impostata la password l'account si attiva e l'utente entra subito. Per chi non
+     * è mai entrato admin e segreteria; per chi è già entrato è una reimpostazione, solo dell'admin e non sul proprio
+     * account: l'account si blocca subito (disattivato, password vecchia non più valida, anche per il "Ricordami") fino
+     * al nuovo accesso dal link; le sessioni aperte le chiude chi chiama. Altrimenti {@link IllegalStateException}.
      */
     @Transactional
-    public void invita(Long userId, String username) {
-        Set<String> ruoli = userRepository.findByUsername(username).map(User::getRoles).orElse(Set.of());
-        if (!ruoli.contains("ADMIN") && !ruoli.contains("SEGRETERIA")) {
-            throw new IllegalStateException("Gli inviti li mandano admin e segreteria");
-        }
+    public TipoInvito invita(Long userId, String username) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
-        if (!invitabile(user)) {
-            throw new IllegalStateException(user.getUltimoAccesso() != null
-                ? user.getUsername() + " è già entrato nell'app" : user.getUsername() + " non ha un indirizzo email");
+        TipoInvito tipo = verificaInvito(user, username);
+        if (tipo == TipoInvito.REIMPOSTAZIONE) {
+            user.setEnabled(false);
+            user.setSospesoPerInattivita(false);
+            user.setPassword(passwordEncoder.encode(nuovoToken()));
+            log.info("Accesso di {} reimpostato da {}", user.getUsername(), username);
         }
         String token = nuovoToken();
         recuperoPasswordRepository.deleteByUserId(user.getId());
@@ -144,14 +178,31 @@ public class RecuperoPasswordService {
             LocalDateTime.now().plusDays(VALIDITA_INVITO_GIORNI), true));
         user.setInvitatoIl(LocalDateTime.now());
         String link = proprieta.linkNuovaPassword(token);
-        var esito = emailService.inviaMessaggio(user.getEmail(), "Invito ad accedere all'Area Corsi",
-            documentiService.emailInvitoHtml(saluto(user), user.getUsername(), link, VALIDITA_INVITO_GIORNI));
+        var esito = emailService.inviaMessaggio(user.getEmail(), oggettoInvito(tipo), corpoInvito(user, tipo, link));
         if (esito == Esito.ERRORE) {
             throw new IllegalStateException("Invio dell'email non riuscito per " + user.getUsername());
         }
         if (esito == Esito.SIMULATA && environment.acceptsProfiles(Profiles.of("dev"))) {
             log.info("Link d'invito per {} (solo dev): {}", user.getUsername(), link);
         }
+        return tipo;
+    }
+
+    private TipoInvito verificaInvito(User user, String username) {
+        return tipoInvito(user, username).orElseThrow(() -> new IllegalStateException(
+            user.getEmail() == null || user.getEmail().isBlank() ? user.getUsername() + " non ha un indirizzo email"
+                : user.getUltimoAccesso() != null ? "Solo l'admin può reimpostare l'accesso di chi è già entrato (non il proprio)"
+                : "Gli inviti li mandano admin e segreteria"));
+    }
+
+    private static String oggettoInvito(TipoInvito tipo) {
+        return tipo == TipoInvito.REIMPOSTAZIONE ? "Il tuo accesso all'Area Corsi è stato reimpostato"
+            : "Invito ad accedere all'Area Corsi";
+    }
+
+    private String corpoInvito(User user, TipoInvito tipo, String link) {
+        return documentiService.emailInvitoHtml(saluto(user), user.getUsername(), link, VALIDITA_INVITO_GIORNI,
+            tipo == TipoInvito.REIMPOSTAZIONE);
     }
 
     /** Invita ogni utente {@link #invitabile} tra quelli indicati; gli altri sono saltati. */
@@ -222,7 +273,8 @@ public class RecuperoPasswordService {
         }
         return recuperoPasswordRepository.findByTokenHash(hash(token))
             .filter(recupero -> recupero.getScadenza().isAfter(LocalDateTime.now()))
-            .filter(recupero -> puoRecuperare(recupero.getUser()));
+            // Un invito lo emette lo staff: vale anche per un account disattivato dopo l'uso (reimpostazione)
+            .filter(recupero -> recupero.isInvito() || puoRecuperare(recupero.getUser()));
     }
 
     /**

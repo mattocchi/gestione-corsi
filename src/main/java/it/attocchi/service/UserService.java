@@ -1,6 +1,7 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.User;
+import it.attocchi.repository.RecuperoPasswordRepository;
 import it.attocchi.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,11 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RecuperoPasswordRepository recuperoPasswordRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       RecuperoPasswordRepository recuperoPasswordRepository) {
+        this.recuperoPasswordRepository = recuperoPasswordRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -56,6 +60,11 @@ public class UserService {
         // Riattivato a mano (o disattivato a mano): non è più una sospensione per inattività
         if (user.isEnabled() || user.getId() == null) {
             user.setSospesoPerInattivita(false);
+        }
+        // Disattivato a mano: i link aperti (recupero, invito) non lo riattivano più
+        if (!user.isEnabled() && user.getId() != null
+                && userRepository.findById(user.getId()).map(User::isEnabled).orElse(false)) {
+            recuperoPasswordRepository.deleteByUserId(user.getId());
         }
         if (rawPassword != null && !rawPassword.isBlank()) {
             user.setPassword(passwordEncoder.encode(rawPassword));

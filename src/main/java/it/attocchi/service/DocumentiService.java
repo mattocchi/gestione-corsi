@@ -464,14 +464,18 @@ public class DocumentiService {
         return render("email/recupero-password.ftlh", modello);
     }
 
-    /** Invito ad accedere: link per impostare la password, valido {@code giorni} giorni. */
-    public String emailInvitoHtml(String saluto, String username, String link, int giorni) {
+    /**
+     * Invito ad accedere, o reimpostazione dell'accesso ({@code reimpostazione}): link per impostare la password,
+     * valido {@code giorni} giorni.
+     */
+    public String emailInvitoHtml(String saluto, String username, String link, int giorni, boolean reimpostazione) {
         Map<String, Object> modello = new HashMap<>();
         modello.put("associazione", associazione());
         modello.put("saluto", saluto);
         modello.put("username", username);
         modello.put("link", link);
         modello.put("giorni", giorni);
+        modello.put("reimpostazione", reimpostazione);
         return render("email/invito.ftlh", modello);
     }
 

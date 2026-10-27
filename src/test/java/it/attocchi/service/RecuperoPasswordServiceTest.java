@@ -99,14 +99,59 @@ class RecuperoPasswordServiceTest {
         assertTrue(link.getScadenza().isAfter(LocalDateTime.now().plusDays(6)));
         assertNotNull(utente().getInvitatoIl());
 
-        // Già entrato: non si invita più (usa il login o il recupero)
+        // Già entrato: la segreteria non lo invita più (l'admin ne reimposta l'accesso); gli inviti multipli lo saltano
         User entrato = utente();
         entrato.setUltimoAccesso(LocalDateTime.now());
         userRepository.save(entrato);
         assertFalse(RecuperoPasswordService.invitabile(entrato));
-        assertThrows(IllegalStateException.class, () -> recuperoPasswordService.invita(entrato.getId(), "admin"));
+        assertThrows(IllegalStateException.class, () -> recuperoPasswordService.invita(entrato.getId(), "segreteria"));
         assertEquals(new RecuperoPasswordService.EsitoInviti(0, 1),
             recuperoPasswordService.invitaTutti(List.of(entrato.getId()), "admin"));
+    }
+
+    @Test
+    void reimpostazione_soloAdminBloccaLAccountFinoAlNuovoAccesso() {
+        User user = utente();
+        user.setUltimoAccesso(LocalDateTime.now().minusDays(2));
+        userRepository.save(user);
+        User entrato = utente();
+        assertEquals(Optional.empty(), recuperoPasswordService.tipoInvito(entrato, "segreteria"));
+        assertEquals(Optional.of(RecuperoPasswordService.TipoInvito.REIMPOSTAZIONE),
+            recuperoPasswordService.tipoInvito(entrato, "admin"));
+        // Non sul proprio utente
+        assertEquals(Optional.empty(), recuperoPasswordService.tipoInvito(
+            userRepository.findByUsername("admin").orElseThrow(), "admin"));
+        assertThrows(IllegalStateException.class, () -> recuperoPasswordService.invita(entrato.getId(), "segreteria"));
+
+        var anteprima = recuperoPasswordService.anteprimaInvito(entrato.getId(), "admin");
+        assertEquals("Il tuo accesso all'Area Corsi è stato reimpostato", anteprima.oggetto());
+        assertTrue(utente().isEnabled(), "L'anteprima non cambia l'account");
+
+        assertEquals(RecuperoPasswordService.TipoInvito.REIMPOSTAZIONE, recuperoPasswordService.invita(entrato.getId(), "admin"));
+        User bloccato = utente();
+        assertFalse(bloccato.isEnabled());
+        assertFalse(passwordEncoder.matches("insegnante2", bloccato.getPassword()));
+        RecuperoPassword link = recuperoPasswordRepository.findAll().getFirst();
+        assertTrue(link.isInvito());
+
+        // Il link d'invito vale anche se l'account è disattivato dopo l'uso: riattiva con la nuova password
+        String token = "reimpostazione-di-prova";
+        recuperoPasswordRepository.deleteAll();
+        recuperoPasswordRepository.save(new RecuperoPassword(bloccato, RecuperoPasswordService.hash(token),
+            LocalDateTime.now().plusDays(7), true));
+        assertEquals(Optional.of("insegnante2"), recuperoPasswordService.verifica(token));
+        recuperoPasswordService.reimposta(token, "nuovaPassword1");
+        assertTrue(utente().isEnabled());
+    }
+
+    @Test
+    void disattivazioneManuale_annullaILinkAperti() {
+        recuperoPasswordService.invita(utente().getId(), "admin");
+        assertEquals(1, recuperoPasswordRepository.count());
+        User user = utente();
+        user.setEnabled(false);
+        userService.save(user, null);
+        assertEquals(0, recuperoPasswordRepository.count());
     }
 
     @Test
