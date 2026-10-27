@@ -44,7 +44,7 @@ public class GrigliaAperture extends Grid<AperturaDocumento> {
             .campo("Anno", AperturaDocumento::getAnno)
             .azioni(azioni)
             .applica();
-        setEmptyStateText("Nessun documento aperto da genitori o allievi");
+        setEmptyStateText("Nessun documento aperto da genitori, allievi o insegnanti");
     }
 
     private static Button eliminaButton(AperturaDocumento apertura, SerializableConsumer<AperturaDocumento> elimina) {
@@ -60,9 +60,12 @@ public class GrigliaAperture extends Grid<AperturaDocumento> {
     }
 
     private static Badge modalita(AperturaDocumento apertura) {
-        Badge badge = apertura.getModalita() == AperturaDocumento.Modalita.ANTEPRIMA
-            ? new Badge(apertura.getModalita().getDescrizione(), VaadinIcon.EYE.create())
-            : new Badge(apertura.getModalita().getDescrizione(), VaadinIcon.DOWNLOAD.create());
+        VaadinIcon icona = switch (apertura.getModalita()) {
+            case ANTEPRIMA -> VaadinIcon.EYE;
+            case SCARICO -> VaadinIcon.DOWNLOAD;
+            case EMAIL -> VaadinIcon.ENVELOPE;
+        };
+        Badge badge = new Badge(apertura.getModalita().getDescrizione(), icona.create());
         badge.addThemeVariants(BadgeVariant.CONTRAST);
         return badge;
     }

@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Cronologia dei PDF aperti da genitori e allievi adulti in Documenti (anteprima o scarico), per admin e segreteria;
+ * Cronologia dei PDF aperti da genitori, allievi adulti e insegnanti in Documenti (anteprima, scarico o invio alla
+ * propria email), per admin e segreteria;
  * eliminare una registrazione è solo dell'admin.
  */
 @Service

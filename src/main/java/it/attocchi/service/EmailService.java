@@ -501,6 +501,109 @@ public class EmailService {
         return invioEmailRepository.findAllByOrderByDataOraDesc();
     }
 
+    /** Email del profilo dell'utente, l'unico indirizzo a cui genitori, allievi adulti e insegnanti si inviano i documenti. */
+    public Optional<Destinatario> destinatarioProprio(String username) {
+        return userRepository.findByUsername(username).filter(EmailService::conEmail)
+            .map(user -> new Destinatario(user.getNomeCompleto(), user.getEmail().strip()));
+    }
+
+    /**
+     * Invia all'email del profilo dell'utente un documento dell'iscrizione che può vedere (stessi permessi
+     * dell'anteprima, {@link DocumentiService#documentoPer}) e registra il tentativo come {@link #invia}, con
+     * l'utente come mittente. Senza email nel profilo, ricevuta senza pagamenti o dati mancanti {@link IllegalStateException}.
+     */
+    @Transactional
+    public InvioEmail inviaAMe(TipoDocumento tipo, Long corsoId, Long allievoId, String username) {
+        Pdf pdf = documentiService.documentoPer(tipo, corsoId, allievoId, username);
+        Iscrizione iscrizione = pagamentoService.findIscrizione(corsoId, allievoId);
+        if (tipo == TipoDocumento.RICEVUTA && !haPagamenti(corsoId, allievoId)) {
+            throw new IllegalStateException("Nessun pagamento registrato: non c'è una ricevuta da inviare");
+        }
+        String datiMancanti = DocumentiService.avvisoDatiMancanti(iscrizione.getAllievo(), tipo);
+        if (datiMancanti != null) {
+            throw new IllegalStateException(datiMancanti);
+        }
+        Destinatario destinatario = verificaDestinatarioProprio(username);
+        InvioEmail invio = nuovoInvio(tipo, destinatario, oggetto(tipo, iscrizione), pdf, username);
+        invio.setCorsoId(corsoId);
+        invio.setCorsoNome(iscrizione.getCorso().getNome());
+        invio.setAllievoId(allievoId);
+        invio.setAllievoNome(iscrizione.getAllievo().getNomeCompleto());
+        return spedisciERegistra(invio, () -> documentiService.emailHtml(tipo, corsoId, allievoId, destinatario.nome()),
+            pdf::contenuto);
+    }
+
+    /** Come {@link #inviaAMe} per il riepilogo annuale del genitore ({@code genitoreId}) o dell'allievo adulto. */
+    @Transactional
+    public InvioEmail inviaRiepilogoAMe(Long genitoreId, Long allievoId, String anno, String username) {
+        Pdf pdf = genitoreId != null ? documentiService.riepilogoFamigliaPer(genitoreId, anno, username)
+            : documentiService.riepilogoAllievoPer(allievoId, anno, username);
+        RiepilogoFamiglia riepilogo = riepilogo(genitoreId, allievoId, anno);
+        if (riepilogo.righe().isEmpty()) {
+            throw new IllegalStateException("Nessun corso nell'anno scolastico scelto");
+        }
+        Destinatario destinatario = verificaDestinatarioProprio(username);
+        InvioEmail invio = nuovoInvio(TipoDocumento.RIEPILOGO, destinatario, oggetto(riepilogo), pdf, username);
+        invio.setGenitoreId(genitoreId);
+        invio.setAllievoId(allievoId);
+        invio.setAllievoNome(riepilogo.intestatario());
+        invio.setAnno(anno);
+        invio.setCorsoNome(anno != null ? "Anno " + anno : "Senza anno scolastico");
+        return spedisciERegistra(invio, () -> documentiService.emailRiepilogoHtml(riepilogo, destinatario.nome()),
+            pdf::contenuto);
+    }
+
+    /** Come {@link #inviaAMe} per l'attestazione delle spese dell'allievo nell'anno solare. */
+    @Transactional
+    public InvioEmail inviaAttestazioneAMe(Long allievoId, int anno, String username) {
+        Pdf pdf = documentiService.attestazionePer(allievoId, anno, username);
+        Attestazione attestazione = pagamentoService.attestazione(allievoId, anno);
+        if (attestazione.pagamenti().isEmpty()) {
+            throw new IllegalStateException("Nessun pagamento con bonifico nell'anno " + anno);
+        }
+        Destinatario destinatario = verificaDestinatarioProprio(username);
+        InvioEmail invio = nuovoInvio(TipoDocumento.ATTESTAZIONE, destinatario, oggetto(attestazione), pdf, username);
+        invio.setGenitoreId(attestazione.genitore() != null ? attestazione.genitore().getId() : null);
+        invio.setAllievoId(allievoId);
+        invio.setAllievoNome(attestazione.allievo().getNomeCompleto());
+        invio.setAnno(String.valueOf(anno));
+        invio.setCorsoNome("Anno solare " + anno);
+        return spedisciERegistra(invio, () -> documentiService.emailAttestazioneHtml(attestazione, destinatario.nome()),
+            pdf::contenuto);
+    }
+
+    /** Come {@link #inviaAMe} per la lettera di incarico (l'insegnante le proprie, {@link LetteraIncaricoService#lettera}). */
+    @Transactional
+    public InvioEmail inviaLetteraAMe(Long letteraId, String username) {
+        LetteraIncarico lettera = letteraIncaricoService.lettera(letteraId, username);
+        Pdf pdf = documentiService.letteraPdf(lettera);
+        Destinatario destinatario = verificaDestinatarioProprio(username);
+        InvioEmail invio = nuovoInvio(TipoDocumento.LETTERA_INCARICO, destinatario, oggetto(lettera), pdf, username);
+        invio.setCorsoId(lettera.getCorso().getId());
+        invio.setCorsoNome(lettera.getCorso().getNome());
+        invio.setAllievoNome(lettera.getInsegnante().getNomeCompleto());
+        invio.setAnno(lettera.getAnnoScolastico());
+        return spedisciERegistra(invio, () -> documentiService.emailLetteraHtml(lettera, destinatario.nome()), pdf::contenuto);
+    }
+
+    private Destinatario verificaDestinatarioProprio(String username) {
+        return destinatarioProprio(username).orElseThrow(() -> new IllegalStateException(
+            "Nel tuo profilo non c'è un indirizzo email a cui inviare il documento"));
+    }
+
+    private static InvioEmail nuovoInvio(TipoDocumento tipo, Destinatario destinatario, String oggetto, Pdf pdf,
+                                         String username) {
+        InvioEmail invio = new InvioEmail();
+        invio.setDataOra(LocalDateTime.now());
+        invio.setTipo(tipo);
+        invio.setDestinatario(destinatario.email());
+        invio.setDestinatarioNome(destinatario.nome());
+        invio.setOggetto(oggetto);
+        invio.setAllegato(pdf.nomeFile());
+        invio.setInviatoDa(username);
+        return invio;
+    }
+
     /** Messaggio HTML con l'eventuale PDF allegato ({@code allegato} null = nessun allegato). */
     private void spedisci(JavaMailSender sender, String a, String oggetto, String corpo, String allegato, byte[] pdf)
             throws MessagingException {

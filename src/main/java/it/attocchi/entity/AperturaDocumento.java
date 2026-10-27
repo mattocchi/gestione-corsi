@@ -8,8 +8,9 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 
 /**
- * Un PDF aperto da un genitore o da un allievo adulto in Documenti (anteprima o scarico): solo metadati, con i nomi
- * senza chiavi esterne, così la cronologia resta anche se utenti, allievi o corsi vengono eliminati.
+ * Un PDF aperto da un genitore, da un allievo adulto o da un insegnante in Documenti (anteprima, scarico o invio
+ * alla propria email): solo metadati, con i nomi senza chiavi esterne, così la cronologia resta anche se utenti,
+ * allievi o corsi vengono eliminati.
  */
 @Entity
 @Table(name = "aperture_documenti")
@@ -18,7 +19,8 @@ public class AperturaDocumento {
     /** Come è stato aperto il PDF. */
     public enum Modalita {
         ANTEPRIMA("Anteprima"),
-        SCARICO("Scaricato");
+        SCARICO("Scaricato"),
+        EMAIL("Inviato per email");
 
         private final String descrizione;
 

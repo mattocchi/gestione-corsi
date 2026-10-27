@@ -225,6 +225,34 @@ class EmailServiceTest {
     }
 
     @Test
+    void inviaAMe_soloAllaPropriaEmailEConIPermessiDellAnteprima() {
+        Corso canto = canto();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        assertEquals("genitore3@example.com", emailService.destinatarioProprio("genitore3").orElseThrow().email());
+
+        InvioEmail invio = emailService.inviaAMe(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(), "genitore3");
+        assertEquals(Esito.SIMULATA, invio.getEsito());
+        assertEquals("genitore3@example.com", invio.getDestinatario());
+        assertEquals("genitore3", invio.getInviatoDa());
+        assertEquals("Allievo Canto3", invio.getAllievoNome());
+        assertEquals("Conferma di iscrizione – Corso di Canto 2024/2025 – Allievo Canto3", invio.getOggetto());
+
+        Long genitoreId = genitoreService.findByUsername("genitore3").orElseThrow().getId();
+        InvioEmail riepilogo = emailService.inviaRiepilogoAMe(genitoreId, null, "2024/2025", "genitore3");
+        assertEquals(TipoDocumento.RIEPILOGO, riepilogo.getTipo());
+        assertEquals("genitore3@example.com", riepilogo.getDestinatario());
+        assertEquals(2, emailService.tuttiGliInvii().size());
+
+        // Documenti non suoi: come per l'anteprima, "non trovato"; ricevuta senza pagamenti: niente da inviare
+        assertThrows(IllegalArgumentException.class,
+            () -> emailService.inviaAMe(TipoDocumento.CONFERMA_ISCRIZIONE, canto.getId(), allievo.getId(), "genitore1"));
+        assertThrows(IllegalArgumentException.class, () -> emailService.inviaRiepilogoAMe(genitoreId, null, "2024/2025", "genitore1"));
+        assertThrows(IllegalStateException.class,
+            () -> emailService.inviaAMe(TipoDocumento.RICEVUTA, canto.getId(), allievo.getId(), "genitore3"));
+        assertEquals(2, emailService.tuttiGliInvii().size());
+    }
+
+    @Test
     void test_soloAdminSimulataENonRegistrata() {
         EmailService.EsitoTest esito = emailService.inviaTest(" prova@example.org ", TipoDocumento.RICEVUTA, "admin");
         assertEquals(Esito.SIMULATA, esito.esito());
