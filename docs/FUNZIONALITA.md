@@ -478,3 +478,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] tutte le volte che un genitore o un allievo produce un documento sia in anteprima che in pdf scaricabile è possibile registrare l'operazione e darne visibiltià ad admin e segreteria come una "cronologia" o altra forma utile? _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: si registra ogni anteprima e ogni scarico dei PDF fatti da genitori e allievi adulti in Documenti (conferme, ricevute, riepiloghi, attestazioni), solo metadati, conservati senza scadenza. Admin e segreteria li vedono nella vista "Email inviate", rinominata "Cronologia documenti", in una seconda scheda "Documenti aperti" con gli stessi filtri; l'admin può eliminare le righe._
+
+### DOCUMENTI SENZA SCARICO
+
+* [ ] nella sezione documenti, lascia solo per admin e segreteria la possibiita di scaricare PDF, mentre lascia per allievi, genitori, insegnanti la possibilita di anteprima o invio via email, questo permette un invio piu formale del pdf che non sia un semplice download.
