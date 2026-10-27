@@ -201,6 +201,7 @@ public class RecuperoPasswordService {
         user.setPassword(passwordEncoder.encode(nuovaPassword));
         if (!user.isEnabled()) {
             user.setEnabled(true);
+            user.setSospesoPerInattivita(false);
             log.info("Account {} attivato con il link di recupero password", user.getUsername());
         }
         recuperoPasswordRepository.deleteByUserId(user.getId());
@@ -225,11 +226,11 @@ public class RecuperoPasswordService {
     }
 
     /**
-     * Un account può usare il recupero password se è attivo, oppure se è disattivato ma non è mai entrato (creato
-     * bloccato): chi è stato disattivato dopo aver usato l'app resta bloccato.
+     * Un account può usare il recupero password se è attivo, se è disattivato ma non è mai entrato (creato
+     * bloccato) o se è sospeso per inattività: chi è stato disattivato a mano dopo aver usato l'app resta bloccato.
      */
     static boolean puoRecuperare(User user) {
-        return user.isEnabled() || user.getUltimoAccesso() == null;
+        return user.isEnabled() || user.getUltimoAccesso() == null || user.isSospesoPerInattivita();
     }
 
     private static String saluto(User user) {

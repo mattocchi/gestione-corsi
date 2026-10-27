@@ -33,6 +33,8 @@ class RecuperoPasswordServiceTest {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserService userService;
 
     private String passwordOriginale;
 
@@ -48,8 +50,40 @@ class RecuperoPasswordServiceTest {
         user.setEnabled(true);
         user.setUltimoAccesso(null);
         user.setInvitatoIl(null);
+        user.setSospesoPerInattivita(false);
         userRepository.save(user);
         recuperoPasswordRepository.deleteAll();
+    }
+
+    @Test
+    void inattivi_sospesiDopoSeiMesiTranneAdminERiattivatiDalRecupero() {
+        LocalDateTime adesso = LocalDateTime.now();
+        User user = utente();
+        user.setUltimoAccesso(adesso.minusMonths(7));
+        userRepository.save(user);
+        User admin = userRepository.findByUsername("admin").orElseThrow();
+        LocalDateTime accessoAdmin = admin.getUltimoAccesso();
+        admin.setUltimoAccesso(adesso.minusYears(1));
+        userRepository.save(admin);
+        try {
+            // Gli altri non sono mai entrati (ultimo accesso vuoto): restano attivi
+            assertEquals(List.of("insegnante2"), userService.sospendiInattivi(adesso));
+            User sospeso = utente();
+            assertFalse(sospeso.isEnabled());
+            assertTrue(sospeso.isSospesoPerInattivita());
+            assertTrue(userRepository.findByUsername("admin").orElseThrow().isEnabled());
+
+            // Si riattiva da solo con il recupero password
+            assertEquals(1, recuperoPasswordService.richiedi("insegnante2"));
+            String token = link(adesso.plusHours(1));
+            recuperoPasswordService.reimposta(token, "nuovaPassword1");
+            assertTrue(utente().isEnabled());
+            assertFalse(utente().isSospesoPerInattivita());
+        } finally {
+            User ripristino = userRepository.findByUsername("admin").orElseThrow();
+            ripristino.setUltimoAccesso(accessoAdmin);
+            userRepository.save(ripristino);
+        }
     }
 
     @Test

@@ -13,4 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     List<User> findByEmailIgnoreCase(String email);
     List<User> findByEmailIgnoreCaseAndEnabledTrue(String email);
+
+    /** Account attivi con l'ultimo accesso prima del limite (chi non è mai entrato non c'è). */
+    List<User> findByEnabledTrueAndUltimoAccessoBefore(java.time.LocalDateTime limite);
 }

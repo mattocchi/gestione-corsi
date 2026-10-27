@@ -45,6 +45,13 @@ public class User {
     @Column(name = "ultimo_accesso")
     private LocalDateTime ultimoAccesso;
 
+    /**
+     * Disattivato in automatico dopo {@code UserService.MESI_INATTIVITA} mesi senza accessi: a differenza della
+     * disattivazione manuale si riattiva con il recupero password. null = no.
+     */
+    @Column(name = "sospeso_inattivita")
+    private Boolean sospesoPerInattivita;
+
     /** Data e ora dell'ultimo invito ad accedere inviato; {@code null} = mai invitato. */
     @Column(name = "invitato_il")
     private LocalDateTime invitatoIl;
@@ -124,6 +131,14 @@ public class User {
 
     public void setRoles(Set<String> roles) {
         this.roles = roles;
+    }
+
+    public boolean isSospesoPerInattivita() {
+        return Boolean.TRUE.equals(sospesoPerInattivita);
+    }
+
+    public void setSospesoPerInattivita(boolean sospesoPerInattivita) {
+        this.sospesoPerInattivita = sospesoPerInattivita;
     }
 
     public LocalDateTime getInvitatoIl() {

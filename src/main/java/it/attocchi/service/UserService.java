@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,12 +47,38 @@ public class UserService {
      */
     @Transactional
     public User save(User user, String rawPassword) {
+        // Riattivato a mano (o disattivato a mano): non è più una sospensione per inattività
+        if (user.isEnabled() || user.getId() == null) {
+            user.setSospesoPerInattivita(false);
+        }
         if (rawPassword != null && !rawPassword.isBlank()) {
             user.setPassword(passwordEncoder.encode(rawPassword));
         } else if (user.getId() == null) {
             throw new IllegalArgumentException("La password è obbligatoria per un nuovo utente");
         }
         return userRepository.save(user);
+    }
+
+    /** Mesi senza accessi dopo cui un account viene sospeso ({@link #sospendiInattivi}). */
+    public static final int MESI_INATTIVITA = 6;
+
+    /**
+     * Sospende gli account attivi che non entrano da più di {@link #MESI_INATTIVITA} mesi (rispetto a {@code adesso}),
+     * tranne gli admin e chi non è mai entrato: disattivati e segnati "sospesi per inattività", si riattivano con il
+     * recupero password. Restituisce gli username sospesi.
+     */
+    @Transactional
+    public List<String> sospendiInattivi(LocalDateTime adesso) {
+        List<String> sospesi = new ArrayList<>();
+        for (User user : userRepository.findByEnabledTrueAndUltimoAccessoBefore(adesso.minusMonths(MESI_INATTIVITA))) {
+            if (user.getRoles().contains("ADMIN")) {
+                continue;
+            }
+            user.setEnabled(false);
+            user.setSospesoPerInattivita(true);
+            sospesi.add(user.getUsername());
+        }
+        return sospesi;
     }
 
     /** Registra adesso come ultimo accesso dell'utente indicato (dopo un login riuscito). */
