@@ -182,6 +182,42 @@ class BilancioServiceTest {
     }
 
     @Test
+    void lezioniDelMese_perGiornoConOreEPreventivo() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Long cantoId = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow().getId();
+        Lezione prima = lezioneService.findByCorso(cantoId).getFirst();
+        YearMonth mese = YearMonth.from(prima.getData());
+        List<Lezione> delMese = lezioneService.findByCorso(cantoId).stream()
+            .filter(l -> YearMonth.from(l.getData()).equals(mese)).toList();
+        Lezione saltata = delMese.get(1);
+
+        lezioneService.completa(prima.getId(), "insegnante1");
+        lezioneService.segnaNonEffettuata(saltata.getId(), null, "insegnante1");
+        try {
+            BilancioService.LezioniDelMese lezioni = bilancioService.lezioniDelMese(insegnante.getId(), mese);
+            // La non effettuata non compare; 7 allievi × 40 minuti al giorno, 25 €/h
+            assertEquals(delMese.size() - 1, lezioni.giorni().size());
+            BilancioService.GiornoDiLezioni giorno = lezioni.giorni().getFirst();
+            assertEquals(prima.getData(), giorno.data());
+            assertEquals("Corso di Canto", giorno.corsi());
+            assertEquals(7, giorno.allievi());
+            assertEquals(280, giorno.minuti());
+            assertTrue(giorno.svolto());
+            assertFalse(lezioni.giorni().get(1).svolto());
+            assertEquals(280L * (delMese.size() - 1), lezioni.minuti());
+            assertEquals(280, lezioni.minutiSvolti());
+            assertEquals(new BigDecimal("116.67"), lezioni.maturato());
+            assertEquals(BilancioService.costo(lezioni.minuti(), new BigDecimal("25")), lezioni.preventivo());
+            assertTrue(bilancioService.lezioniDelMese(insegnante.getId(), mese.minusMonths(3)).giorni().isEmpty());
+        } finally {
+            lezioneService.ripristina(saltata.getId(), "insegnante1");
+            Lezione daRiaprire = lezioneService.findById(prima.getId());
+            daRiaprire.setCompletata(false);
+            lezioneService.save(daRiaprire);
+        }
+    }
+
+    @Test
     void forfaitAnnuo_siSommaAlCostoOrarioSoloNegliAnniConCorsi() {
         Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
         Long cantoId = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow().getId();

@@ -78,8 +78,8 @@ Per admin e segreteria nella sezione aggiungi dei filtri per poter filtrare per 
 ## RICHIESTE del 26 OTTOBRE 2026
 
 
-* [ ] Quando inserisco un rimborso riferimento al mese dell'insegnante vorrei avere un calco preventivo che é dato dalle lezioni programmate nel mese, ore al giorno e totale del mese. In questo modo ho già il riferimento teorico del mese per procedere al pagamento che poi inserisco come importo effettivamente rimborsato e in che data.
-Sarebbe utile per il mese oggetto di rimborso vedere un effettivo riepilogo delle lezioni del mese, come elenco di date, totale ore per ogni data e totale ore del mese.
+* [x] Quando inserisco un rimborso riferimento al mese dell'insegnante vorrei avere un calco preventivo che é dato dalle lezioni programmate nel mese, ore al giorno e totale del mese. In questo modo ho già il riferimento teorico del mese per procedere al pagamento che poi inserisco come importo effettivamente rimborsato e in che data.
+Sarebbe utile per il mese oggetto di rimborso vedere un effettivo riepilogo delle lezioni del mese, come elenco di date, totale ore per ogni data e totale ore del mese. _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: ore di una data = allievi previsti (assenti compresi) × durata della lezione; nel dialog del rimborso, sotto il mese, elenco delle date con corso e ore, totale ore e preventivo € (= ore × tariffa) su tutte le lezioni del mese tranne le non effettuate; l'importo proposto resta il maturato non rimborsato. Stesso riepilogo in sola lettura per l'insegnante in I Miei Rimborsi._
 
 * [x] Aggiungere oltre ai corsi anche in tipo servizi, di default é Corso ma esiste anche il tipo servizio. Ha tutte le caratteristiche del corso é solo un tipo diverso. Un esempio é il servizio Pulizia che viene svolto tre giorni a settimana il mart merc e ven dalle 6 alle 8. _(completata 2026-10-27)_

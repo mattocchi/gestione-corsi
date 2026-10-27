@@ -21,6 +21,7 @@ import it.attocchi.service.BilancioService;
 import it.attocchi.service.RimborsoService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
+import it.attocchi.views.RiepilogoLezioniMese;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
@@ -113,7 +114,7 @@ public class RimborsiDialog extends Dialog {
      */
     private void apriRimborso(Rimborso rimborso) {
         boolean nuovo = rimborso.getId() == null;
-        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo rimborso" : "Modifica rimborso", "420px");
+        Dialog dialog = ViewSupport.dialog(nuovo ? "Nuovo rimborso" : "Modifica rimborso", "720px");
 
         DatePicker data = ViewSupport.datePicker("Pagato il");
         YearMonth primo = YearMonth.from(RimborsoService.inizioAnno(annoScolastico));
@@ -147,6 +148,11 @@ public class RimborsiDialog extends Dialog {
             proponiImporto(importo, mese.getValue());
             mese.addValueChangeListener(e -> proponiImporto(importo, e.getValue()));
         }
+        // Riferimento teorico: le lezioni del mese con ore e preventivo, aggiornate quando si cambia mese
+        RiepilogoLezioniMese lezioni = new RiepilogoLezioniMese();
+        lezioni.mostra(mese.getValue() != null ? bilancioService.lezioniDelMese(insegnante.getId(), mese.getValue()) : null);
+        mese.addValueChangeListener(e -> lezioni.mostra(e.getValue() != null
+            ? bilancioService.lezioniDelMese(insegnante.getId(), e.getValue()) : null));
 
         Button salva = new Button("Salva", e -> {
             if (!binder.writeBeanIfValid(rimborso)) {
@@ -169,7 +175,7 @@ public class RimborsiDialog extends Dialog {
         mese.addClassNames("w-full");
         importo.addClassNames("w-full");
         nota.addClassNames("w-full");
-        dialog.add(form);
+        dialog.add(form, ViewSupport.sezione("Lezioni del mese"), lezioni);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), salva);
         dialog.open();
     }

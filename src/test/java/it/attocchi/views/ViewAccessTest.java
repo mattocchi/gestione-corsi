@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import java.time.YearMonth;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.ComponentUtil;
@@ -2278,6 +2279,20 @@ class ViewAccessTest extends SpringBrowserlessTest {
             rimborsoService.elimina(mio.getId());
             rimborsoService.elimina(suo.getId());
         }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_vedeLeLezioniDelMese() {
+        navigate(MieiRimborsiView.class);
+        test(find(Button.class).withText("Lezioni del mese").single()).click();
+        Dialog dialog = find(Dialog.class).single();
+        @SuppressWarnings("unchecked")
+        ComboBox<YearMonth> mese = find(ComboBox.class).from(dialog).withLabel("Mese").single();
+        mese.setValue(YearMonth.of(2024, 10));
+        assertTrue(find(Span.class).from(dialog).all().stream()
+            .anyMatch(s -> s.getText().startsWith("Totale di ottobre 2024: ") && s.getText().contains("preventivo")),
+            "Totale del mese con il preventivo");
     }
 
     @Test

@@ -15,6 +15,9 @@ import it.attocchi.repository.RimborsoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.stream.Collectors;
+import java.util.TreeMap;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
@@ -237,6 +240,52 @@ public class BilancioService {
         BigDecimal giaRimborsato = rimborsoRepository.findByInsegnanteAndPeriodo(insegnanteId, mese.atDay(1), mese.atEndOfMonth())
             .stream().map(Rimborso::getImporto).reduce(BigDecimal.ZERO, BigDecimal::add);
         return maturato.subtract(giaRimborsato).max(BigDecimal.ZERO);
+    }
+
+    /** Un giorno di lezioni dell'insegnante: corsi, allievi previsti (assenti compresi), minuti; svolto se tutte completate. */
+    public record GiornoDiLezioni(LocalDate data, String corsi, long allievi, long minuti, boolean svolto) {
+    }
+
+    /**
+     * Lezioni di un mese dell'insegnante, per giorno, con il preventivo (tutte le lezioni tranne le non effettuate)
+     * e il maturato (solo le completate) alla tariffa oraria corrente.
+     */
+    public record LezioniDelMese(YearMonth mese, List<GiornoDiLezioni> giorni, BigDecimal tariffaOraria,
+                                 long minuti, long minutiSvolti) {
+        public BigDecimal preventivo() {
+            return costo(minuti, tariffaOraria);
+        }
+
+        public BigDecimal maturato() {
+            return costo(minutiSvolti, tariffaOraria);
+        }
+
+        public boolean senzaTariffa() {
+            return tariffaOraria == null || tariffaOraria.signum() == 0;
+        }
+    }
+
+    /** Riepilogo delle lezioni del mese a cui l'insegnante è presente, tutti i corsi; le non effettuate non contano. */
+    public LezioniDelMese lezioniDelMese(Long insegnanteId, YearMonth mese) {
+        Insegnante insegnante = insegnante(insegnanteId);
+        Map<Long, Long> presenze = presenzePerLezione(insegnanteId);
+        Map<LocalDate, List<Lezione>> perGiorno = new TreeMap<>();
+        lezioneRepository.findConInsegnantePresente(insegnanteId).stream()
+            .filter(l -> !l.isNonEffettuata() && YearMonth.from(l.getData()).equals(mese))
+            .forEach(l -> perGiorno.computeIfAbsent(l.getData(), d -> new ArrayList<>()).add(l));
+        List<GiornoDiLezioni> giorni = perGiorno.entrySet().stream().map(giorno -> {
+            List<Lezione> lezioni = giorno.getValue();
+            String corsi = lezioni.stream().map(l -> l.getCorso().getNome()).distinct().sorted()
+                .collect(Collectors.joining(", "));
+            long allievi = lezioni.stream().filter(l -> !l.getCorso().isServizio())
+                .mapToLong(l -> presenze.getOrDefault(l.getId(), 0L)).sum();
+            long minuti = lezioni.stream().mapToLong(l -> minuti(l, presenze)).sum();
+            return new GiornoDiLezioni(giorno.getKey(), corsi, allievi, minuti, lezioni.stream().allMatch(Lezione::isCompletata));
+        }).toList();
+        long minutiSvolti = perGiorno.values().stream().flatMap(List::stream).filter(Lezione::isCompletata)
+            .mapToLong(l -> minuti(l, presenze)).sum();
+        return new LezioniDelMese(mese, giorni, insegnante.getTariffaOraria(),
+            giorni.stream().mapToLong(GiornoDiLezioni::minuti).sum(), minutiSvolti);
     }
 
     /** Mini bilancio dell'insegnante sui suoi corsi dell'anno scolastico e sui rimborsi dello stesso anno. */
