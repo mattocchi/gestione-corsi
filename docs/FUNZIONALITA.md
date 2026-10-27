@@ -473,3 +473,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] nel riepilogo per famiglia, sotto il nome del corso anziche indicare gli insegnanti indica l'anno scolastico _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: sotto il nome del corso "Anno scolastico 2024/2025" (niente per i corsi senza anno), seguito come prima dalla nota sulla quota personalizzata; vale anche per il riepilogo dell'allievo adulto, che usa lo stesso modello._
+
+### CRONOLOGIA DOCUMENTI
+
+* [ ] tutte le volte che un genitore o un allievo produce un documento sia in anteprima che in pdf scaricabile è possibile registrare l'operazione e darne visibiltià ad admin e segreteria come una "cronologia" o altra forma utile?
