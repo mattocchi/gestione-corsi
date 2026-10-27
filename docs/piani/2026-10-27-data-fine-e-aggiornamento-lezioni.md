@@ -26,11 +26,16 @@
 | 2 | Aggiornamento incrementale in `CorsoService` (`anteprimaAggiornamento`, `aggiornaLezioni`, piano comune); test | `CorsoService`, test | — | `./mvnw test` | [x] `generaLezioni` resta come alias di `aggiornaLezioni` |
 | 3 | Gestione Corsi: "Aggiorna lezioni" con anteprima; avviso dopo il salvataggio del corso; test | `CorsiView`, test | — | `./mvnw test` | [x] Il pulsante "Genera Lezioni" ora si chiama "Aggiorna lezioni" |
 | 4 | Festività: avviso con i corsi attivi da aggiornare e "Aggiorna"; test | `FestivitaView`, `CorsoService`, test | LEZIONI.2 | `./mvnw test` | [x] Proposta anche dopo attivazione/disattivazione ed eliminazione di una festività |
-| 5 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [ ] |
+| 5 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [x] |
 
 ## Fuori ambito
 
 - Aggiornamento automatico senza conferma.
 
 ## Registro
+
+- `./mvnw test`: 319 test superati (tutti quelli esistenti sulla generazione passano con l'aggiornamento incrementale). Nuovi: `CorsoServiceTest.dataFine_lezioniFinoAllaFineOAlPrimoLimite`, `aggiornaLezioni_festivitaNuovaToglieLaLezioneESlittaLaFine` (nota e presenze conservate, numeri 1..30), `ViewAccessTest.admin_aggiornaLezioniConAnteprimaDopoLaDataDiFine`, `segreteria_festivitaNuovaProponeDiAggiornareLeLezioni`.
+- Non verificato nel browser: dialog, avvisi e colonna "Lezioni" coperti dai test browserless.
+- Produzione: eseguire `docs/migrazioni/2026-10-27-numero-lezioni-facoltativo.sql` prima del deploy (toglie il NOT NULL da `corsi.numero_lezioni`; `data_fine` la aggiunge ddl-auto).
+- Lasciato aperto: nessuno.
 
