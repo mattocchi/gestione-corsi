@@ -410,3 +410,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### INSEGNANTI
 
 * [ ] aggiungi per favore fino a 3 insegnanti opzionali per corso
+  _Chiarimento 2026-10-27: titolare più fino a 3 insegnanti facoltativi (massimo 4), con gli stessi diritti del titolare (il secondo insegnante di oggi diventa il primo facoltativo); nel dialog del corso un campo a scelta multipla "Altri insegnanti"; in Gestisci Presenze con due insegnanti resta "Entrambi / Solo X / Solo Y", con più di due una casella per insegnante; dati in una tabella dedicata, con script SQL da eseguire in produzione prima del deploy._
