@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
@@ -410,6 +411,27 @@ public class CorsoService {
 
     /** Lezioni conservate, programmate da fare (da confrontare) e date del nuovo calendario. */
     private record Piano(Corso corso, List<Lezione> conservate, List<Lezione> programmate, List<DataPianificata> date) {
+    }
+
+    /** Corso attivo il cui calendario delle lezioni è cambiato, con l'anteprima dell'aggiornamento. */
+    public record CorsoDaAggiornare(Corso corso, AggiornamentoLezioni anteprima) {
+    }
+
+    /**
+     * Corsi attivi che hanno già lezioni e il cui calendario non corrisponde più (es. dopo una festività nuova o
+     * tolta), per nome.
+     */
+    public List<CorsoDaAggiornare> corsiDaAggiornare() {
+        List<CorsoDaAggiornare> corsi = new ArrayList<>();
+        for (Corso corso : corsoRepository.findByAttivoTrue()) {
+            AggiornamentoLezioni anteprima = anteprimaAggiornamento(corso.getId());
+            boolean haLezioni = anteprima.invariate() > 0 || !anteprima.tolte().isEmpty();
+            if (haLezioni && anteprima.cambia()) {
+                corsi.add(new CorsoDaAggiornare(corso, anteprima));
+            }
+        }
+        corsi.sort(Comparator.comparing(c -> c.corso().getNome(), String.CASE_INSENSITIVE_ORDER));
+        return corsi;
     }
 
     /** Cosa cambierebbe {@link #aggiornaLezioni} sul corso, senza modificare nulla. */

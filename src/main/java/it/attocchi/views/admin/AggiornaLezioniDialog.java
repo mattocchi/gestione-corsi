@@ -69,6 +69,56 @@ public final class AggiornaLezioniDialog {
         dialog.open();
     }
 
+    /**
+     * Dopo una modifica alle festività: se il calendario di qualche corso attivo è cambiato, l'elenco dei corsi con
+     * quante lezioni si aggiungono e si tolgono e "Aggiorna tutti"; altrimenti niente.
+     */
+    public static void proponiPerFestivita() {
+        CorsoService corsoService = VaadinService.getCurrent().getInstantiator().getOrCreate(CorsoService.class);
+        List<CorsoService.CorsoDaAggiornare> corsi = corsoService.corsiDaAggiornare();
+        if (corsi.isEmpty()) {
+            return;
+        }
+        Dialog dialog = ViewSupport.dialog("Aggiornare le lezioni?", "520px");
+        VerticalLayout contenuto = new VerticalLayout();
+        contenuto.addClassNames("p-0 gap-2");
+        Span spiegazione = new Span("Le festività cambiano il calendario di questi corsi attivi:");
+        contenuto.add(spiegazione);
+        for (CorsoService.CorsoDaAggiornare corso : corsi) {
+            AggiornamentoLezioni anteprima = corso.anteprima();
+            String cosa = (anteprima.tolte().isEmpty() ? "" : "togliere " + anteprima.tolte().stream().map(Formati::data)
+                .collect(Collectors.joining(", ")))
+                + (!anteprima.tolte().isEmpty() && !anteprima.aggiunte().isEmpty() ? "; " : "")
+                + (anteprima.aggiunte().isEmpty() ? "" : "aggiungere " + anteprima.aggiunte().size()
+                    + (anteprima.aggiunte().size() == 1 ? " lezione" : " lezioni"));
+            contenuto.add(riga(corso.corso().getNome(), cosa));
+        }
+        Span nota = new Span("Le lezioni da fare ancora valide restano com'erano, con note e presenze.");
+        nota.addClassNames(Stili.TESTO_SECONDARIO);
+        contenuto.add(nota);
+        Button aggiorna = new Button("Aggiorna tutti", e -> {
+            try {
+                corsi.forEach(c -> corsoService.aggiornaLezioni(c.corso().getId()));
+                dialog.close();
+                Notification.show("Lezioni aggiornate: " + corsi.size() + (corsi.size() == 1 ? " corso" : " corsi"));
+            } catch (RuntimeException ex) {
+                Notification.show("Aggiornamento non riuscito: " + ex.getMessage());
+            }
+        });
+        aggiorna.addThemeVariants(ButtonVariant.PRIMARY);
+        dialog.add(contenuto);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Non ora"), aggiorna);
+        dialog.open();
+    }
+
+    private static VerticalLayout riga(String titolo, String testo) {
+        Span etichetta = new Span(titolo);
+        etichetta.addClassNames("font-(--aura-font-weight-semibold)");
+        VerticalLayout riga = new VerticalLayout(etichetta, new Span(testo));
+        riga.addClassNames("p-0 gap-0");
+        return riga;
+    }
+
     private static VerticalLayout riga(String titolo, List<LocalDate> date) {
         Span etichetta = new Span(titolo);
         etichetta.addClassNames("font-(--aura-font-weight-semibold)");

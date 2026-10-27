@@ -215,6 +215,7 @@ public class FestivitaView extends VerticalLayout {
             updateGrid();
             dialog.close();
             Notification.show("Festività salvata");
+            AggiornaLezioniDialog.proponiPerFestivita();
         });
         salva.addThemeVariants(ButtonVariant.PRIMARY);
 
@@ -245,16 +246,18 @@ public class FestivitaView extends VerticalLayout {
     private void impostaAttiva(Festivita festivita, boolean attiva) {
         festivitaService.impostaAttiva(festivita.getId(), attiva);
         updateGrid();
+        AggiornaLezioniDialog.proponiPerFestivita();
     }
 
     private void elimina(Festivita festivita) {
         Dialog conferma = ViewSupport.dialog("Eliminare la festività?", "420px");
-        conferma.add(new Span("\"" + festivita.getNome() + "\" non verrà più saltata dalla generazione delle lezioni."));
+        conferma.add(new Span("\"" + festivita.getNome() + "\" non verrà più saltata dalle lezioni dei corsi."));
         Button elimina = new Button("Elimina", e -> {
             festivitaService.elimina(festivita.getId());
             updateGrid();
             conferma.close();
             Notification.show("Festività eliminata");
+            AggiornaLezioniDialog.proponiPerFestivita();
         });
         elimina.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
         conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), elimina);

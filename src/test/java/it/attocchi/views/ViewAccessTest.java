@@ -1873,6 +1873,35 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_festivitaNuovaProponeDiAggiornareLeLezioni() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        LocalDate giorno = lezioneService.findByCorso(canto.getId()).get(3).getData();
+        navigate(FestivitaView.class);
+        test(find(Button.class).withText("Nuova Festività").single()).click();
+        @SuppressWarnings("rawtypes")
+        SegmentedControl<Festivita.Tipo> tipo = find(SegmentedControl.class).single();
+        test(tipo.getPulsante(Festivita.Tipo.DATE)).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Chiusura di prova");
+        test(find(DatePicker.class).withLabel("Dal").single()).setValue(giorno);
+        test(find(Button.class).withText("Salva").single()).click();
+        Festivita nuova = festivitaService.elenco().stream()
+            .filter(f -> f.getNome().equals("Chiusura di prova")).findFirst().orElseThrow();
+        try {
+            Dialog proposta = find(Dialog.class).all().stream()
+                .filter(d -> "Aggiornare le lezioni?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            assertTrue(find(Span.class).from(proposta).withText("Corso di Canto").exists());
+            test(find(Button.class).from(proposta).withText("Aggiorna tutti").single()).click();
+            assertTrue(lezioneService.findByCorso(canto.getId()).stream().noneMatch(l -> l.getData().equals(giorno)));
+            assertEquals(30, lezioneService.findByCorso(canto.getId()).size());
+        } finally {
+            festivitaService.elimina(nuova.getId());
+            corsoService.aggiornaLezioni(canto.getId());
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_aggiungeEDisattivaFestivitaSenzaElimina() {
         navigate(HomeView.class);
         assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Festività")));
