@@ -481,5 +481,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### SCARICO
 
-* [ ] nella sezione documenti, lascia solo per admin e segreteria la possibiita di scaricare PDF, mentre lascia per allievi, genitori, insegnanti la possibilita di anteprima o invio via email, questo permette un invio piu formale del pdf che non sia un semplice download.
+* [x] nella sezione documenti, lascia solo per admin e segreteria la possibiita di scaricare PDF, mentre lascia per allievi, genitori, insegnanti la possibilita di anteprima o invio via email, questo permette un invio piu formale del pdf che non sia un semplice download. _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: genitori, allievi adulti e insegnanti hanno nel menu del documento "Anteprima in una nuova scheda" e "Invia alla mia email" (solo all'email del proprio profilo, non modificabile; senza email l'invio è bloccato con un avviso); "Scarica PDF" resta solo ad admin e segreteria. Il visualizzatore PDF del browser permette comunque di salvare l'anteprima: accettato. Ogni invio va in "Email inviate" (inviato da = l'utente) e in "Documenti aperti" come "Inviato per email"; anche anteprime e invii degli insegnanti (lettere di incarico) entrano nella cronologia._

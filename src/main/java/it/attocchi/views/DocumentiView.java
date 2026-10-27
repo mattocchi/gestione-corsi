@@ -17,6 +17,10 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.shared.Tooltip;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.function.SerializableConsumer;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.router.Menu;
@@ -37,6 +41,8 @@ import it.attocchi.service.ElencoDocumentiService.DocumentoAttestazione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoFamiglia;
 import it.attocchi.service.ElencoDocumentiService.DocumentoIscrizione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoRiepilogo;
+import it.attocchi.entity.AperturaDocumento.Modalita;
+import it.attocchi.service.EmailService;
 import it.attocchi.service.EmailService.Destinatario;
 import it.attocchi.views.admin.InvioEmailDialog;
 import it.attocchi.views.admin.LetteraIncaricoDialog;
@@ -55,8 +61,9 @@ import java.util.stream.Stream;
 /**
  * Documenti in PDF e loro invio per email. Admin e segreteria scelgono il tipo (conferme di iscrizione, ricevute,
  * riepiloghi annuali) e, su ogni riga, vedono o scaricano il PDF e lo inviano (con l'anteprima dell'email); scelto un
- * corso, inviano le conferme a tutti i suoi iscritti. Genitori e allievi senza genitore vedono o scaricano i propri
- * documenti (dei figli o propri), senza invii; la voce è nascosta all'allievo con genitore ({@code MainLayout}).
+ * corso, inviano le conferme a tutti i suoi iscritti. Genitori, allievi senza genitore e insegnanti vedono i propri
+ * documenti (dei figli o propri, le lettere di incarico) in anteprima o se li inviano all'email del profilo, senza
+ * scaricarli; la voce è nascosta all'allievo con genitore ({@code MainLayout}).
  * Permessi di PDF e invii in {@link DocumentiService} e {@code EmailService}.
  */
 @Route(value = DocumentiView.PERCORSO, layout = MainLayout.class)
@@ -94,12 +101,15 @@ public class DocumentiView extends VerticalLayout {
     private GridListDataView<DocumentoRiepilogo> righeRiepiloghi;
     private boolean primaApertura = true;
     private final CronologiaDocumentiService cronologiaDocumentiService;
+    private final EmailService emailService;
 
     public DocumentiView(ElencoDocumentiService elencoDocumentiService, DocumentiService documentiService,
                          AllievoService allievoService, LetteraIncaricoService letteraIncaricoService,
-                         CronologiaDocumentiService cronologiaDocumentiService, SecurityService securityService) {
+                         CronologiaDocumentiService cronologiaDocumentiService, EmailService emailService,
+                         SecurityService securityService) {
         this.letteraIncaricoService = letteraIncaricoService;
         this.cronologiaDocumentiService = cronologiaDocumentiService;
+        this.emailService = emailService;
         this.admin = securityService.hasRole("ADMIN");
         this.elencoDocumentiService = elencoDocumentiService;
         this.documentiService = documentiService;
@@ -276,15 +286,17 @@ public class DocumentiView extends VerticalLayout {
         return azioni;
     }
 
+    /** Lettera dell'insegnante: anteprima o invio alla propria email, come per le famiglie. */
     private HorizontalLayout pdfLettera(LetteraIncarico lettera) {
         Long id = lettera.getId();
         HorizontalLayout azioni = ViewSupport.actions();
-        azioni.add(pulsantePdf(VaadinIcon.FILE_TEXT_O, TipoDocumento.LETTERA_INCARICO.getTitolo(), null,
-            () -> documentiService.letteraPer(id, username)));
+        azioni.add(anteprimaEInvio(VaadinIcon.FILE_TEXT_O, TipoDocumento.LETTERA_INCARICO, lettera.getInsegnante().getNomeCompleto(),
+            lettera.getCorso().getNome(), lettera.getAnnoScolastico(), () -> documentiService.letteraPer(id, username),
+            () -> emailService.inviaLetteraAMe(id, username)));
         return azioni;
     }
 
-    /** Lettere di incarico dell'insegnante, anche degli anni passati: solo PDF. */
+    /** Lettere di incarico dell'insegnante, anche degli anni passati: anteprima o invio alla propria email. */
     private void creaElencoInsegnante() {
         Grid<LetteraIncarico> grid = new Grid<>();
         grid.addComponentColumn(l -> TipoCorsoUI.nome(l.getCorso())).setHeader("Corso");
@@ -348,8 +360,8 @@ public class DocumentiView extends VerticalLayout {
     }
 
     /**
-     * Documenti del genitore (dei figli e della famiglia) o dell'allievo senza genitore: solo PDF, filtro per anno
-     * se ce n'è più di uno.
+     * Documenti del genitore (dei figli e della famiglia) o dell'allievo senza genitore: anteprima o invio alla propria
+     * email, filtro per anno se ce n'è più di uno.
      */
     private void creaElencoFamiglia() {
         List<DocumentoFamiglia> documenti = elencoDocumentiService.documentiDi(username);
@@ -377,44 +389,86 @@ public class DocumentiView extends VerticalLayout {
         filtroAnno.addValueChangeListener(e -> righe.setFilter(d -> e.getValue() == null || e.getValue().equals(d.anno())));
         filtroAnno.setVisible(anni.size() > 1);
         Span nota = new Span("Conferme di iscrizione, ricevute dei pagamenti, riepiloghi annuali e attestazioni delle "
-            + "spese per anno solare, da vedere o scaricare in PDF.");
+            + "spese per anno solare: aprili in anteprima o inviali in PDF alla tua email.");
         nota.addClassNames(Stili.TESTO_SECONDARIO);
         add(nota, filtroAnno, grid);
         grid.addClassNames("grow");
     }
 
+    /** Anteprima o invio alla propria email (niente scarico: l'invio è la via formale per avere il PDF). */
     private HorizontalLayout azioniFamiglia(DocumentoFamiglia documento) {
         SerializableSupplier<Pdf> pdf;
+        SerializableSupplier<InvioEmail> invio;
         if (documento.iscrizione() != null) {
             TipoDocumento tipoDocumento = documento.tipo();
             Long corsoId = documento.iscrizione().getCorso().getId();
             Long allievoId = documento.iscrizione().getAllievo().getId();
             pdf = () -> documentiService.documentoPer(tipoDocumento, corsoId, allievoId, username);
+            invio = () -> emailService.inviaAMe(tipoDocumento, corsoId, allievoId, username);
         } else if (documento.tipo() == TipoDocumento.ATTESTAZIONE) {
             Long allievoId = documento.allievo().getId();
             int anno = Integer.parseInt(documento.anno());
             pdf = () -> documentiService.attestazionePer(allievoId, anno, username);
+            invio = () -> emailService.inviaAttestazioneAMe(allievoId, anno, username);
         } else {
             String anno = documento.anno();
             Long genitoreId = documento.genitore() != null ? documento.genitore().getId() : null;
             Long allievoId = documento.allievo() != null ? documento.allievo().getId() : null;
             pdf = genitoreId != null ? () -> documentiService.riepilogoFamigliaPer(genitoreId, anno, username)
                 : () -> documentiService.riepilogoAllievoPer(allievoId, anno, username);
+            invio = () -> emailService.inviaRiepilogoAMe(genitoreId, allievoId, anno, username);
         }
         VaadinIcon icona = documento.tipo() == TipoDocumento.RICEVUTA ? VaadinIcon.PRINT : VaadinIcon.FILE_TEXT_O;
         HorizontalLayout azioni = ViewSupport.actions();
-        // Ogni anteprima o scarico finisce nella cronologia dei documenti, visibile ad admin e segreteria
-        TipoDocumento tipoDocumento = documento.tipo();
-        String allievo = perChi(documento);
-        String corso = corso(documento);
-        String anno = documento.anno();
+        azioni.add(documento.datiMancanti() != null
+            ? pulsantePdf(icona, documento.tipo().getTitolo(), documento.datiMancanti(), pdf)
+            : anteprimaEInvio(icona, documento.tipo(), perChi(documento), corso(documento), documento.anno(), pdf, invio));
+        return azioni;
+    }
+
+    /**
+     * {@link MenuPdf#anteprimaEInvio} di famiglie e insegnanti: ogni anteprima e ogni invio riuscito finiscono nella
+     * cronologia dei documenti, visibile ad admin e segreteria.
+     */
+    private MenuBar anteprimaEInvio(VaadinIcon icona, TipoDocumento tipoDocumento, String allievo, String corso,
+                                    String anno, SerializableSupplier<Pdf> pdf, SerializableSupplier<InvioEmail> invio) {
         String utente = username;
         CronologiaDocumentiService cronologia = cronologiaDocumentiService;
-        azioni.add(documento.datiMancanti() != null
-            ? pulsantePdf(icona, tipoDocumento.getTitolo(), documento.datiMancanti(), pdf)
-            : MenuPdf.soloIcona(icona, tipoDocumento.getTitolo(), pdf, (modalita, generato) ->
-                cronologia.registra(utente, tipoDocumento, modalita, allievo, corso, anno, generato.nomeFile())));
-        return azioni;
+        return MenuPdf.anteprimaEInvio(icona, tipoDocumento.getTitolo(), pdf,
+            (modalita, generato) -> cronologia.registra(utente, tipoDocumento, modalita, allievo, corso, anno, generato.nomeFile()),
+            () -> inviaAMe(tipoDocumento, invio, inviato -> cronologia.registra(utente, tipoDocumento, Modalita.EMAIL,
+                allievo, corso, anno, inviato.getAllegato())));
+    }
+
+    /** Conferma con l'indirizzo del profilo, poi invia; senza email nel profilo solo un avviso. */
+    private void inviaAMe(TipoDocumento tipoDocumento, SerializableSupplier<InvioEmail> invio,
+                          SerializableConsumer<InvioEmail> riuscito) {
+        Optional<Destinatario> destinatario = emailService.destinatarioProprio(username);
+        if (destinatario.isEmpty()) {
+            Notification.show("Nel tuo profilo non c'è un indirizzo email: chiedi alla segreteria di aggiungerlo");
+            return;
+        }
+        String email = destinatario.get().email();
+        Dialog dialog = ViewSupport.dialog("Invia alla mia email", "28rem");
+        dialog.add(new Paragraph("Il PDF \"" + tipoDocumento.getTitolo() + "\" sarà inviato a " + email + "."));
+        Button annulla = new Button("Annulla", e -> dialog.close());
+        Button invia = new Button("Invia", VaadinIcon.ENVELOPE.create(), e -> {
+            dialog.close();
+            try {
+                InvioEmail inviato = invio.get();
+                if (inviato.getEsito() == InvioEmail.Esito.ERRORE) {
+                    Notification.show("Invio non riuscito: riprova più tardi o rivolgiti alla segreteria");
+                } else {
+                    riuscito.accept(inviato);
+                    Notification.show("Documento inviato a " + email);
+                }
+            } catch (IllegalArgumentException | IllegalStateException ex) {
+                Notification.show(ex.getMessage());
+            }
+        });
+        invia.addThemeVariants(ButtonVariant.PRIMARY);
+        dialog.getFooter().add(annulla, invia);
+        dialog.open();
     }
 
     private static String perChi(DocumentoFamiglia documento) {

@@ -33,7 +33,7 @@ email, un invio più formale di un semplice download — [F-2026-10-27/SCARICO.1
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
 | 1 | `EmailService`: invio dei propri documenti all'email del profilo (iscrizione, riepilogo, attestazione, lettera) con i permessi dell'anteprima; `Modalita.EMAIL` e badge in `GrigliaAperture` | `EmailService`, `AperturaDocumento`, `GrigliaAperture`, `EmailServiceTest` | `./mvnw test` | [x] | — |
-| 2 | Documenti: menu "Anteprima" + "Invia alla mia email" per famiglie e insegnanti (conferma, cronologia anche per gli insegnanti), scarico solo per lo staff; CLAUDE.md | `MenuPdf`, `DocumentiView`, `ViewAccessTest`, `CLAUDE.md` | `./mvnw test` | [ ] | F-2026-10-27/SCARICO.1 |
+| 2 | Documenti: menu "Anteprima" + "Invia alla mia email" per famiglie e insegnanti (conferma, cronologia anche per gli insegnanti), scarico solo per lo staff; CLAUDE.md | `MenuPdf`, `DocumentiView`, `ViewAccessTest`, `CLAUDE.md` | `./mvnw test` | [x] | F-2026-10-27/SCARICO.1 |
 | 3 | Registro | piano | — | [ ] | — |
 
 ## Fuori ambito

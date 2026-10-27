@@ -6,6 +6,8 @@ import java.time.YearMonth;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.browserless.SpringBrowserlessTest;
 import com.vaadin.flow.component.Component;
@@ -564,7 +566,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(2, documenti.size());
             assertEquals("Riepilogo pagamenti", documenti.getCellText(0, 0));
             assertEquals("Allievo Canto1", documenti.getCellText(0, 1));
-            assertLinkPdf(documenti.getCellComponent(0, 5));
+            assertAnteprimaEInvio(documenti.getCellComponent(0, 5));
 
             navigate(MieiCorsiView.class);
             navigate(HomeView.class);
@@ -3396,24 +3398,23 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
         assertEquals("Riepilogo pagamenti", documenti.getCellText(0, 0));
         assertEquals("2024/2025", documenti.getCellText(0, 3));
-        assertLinkPdf(documenti.getCellComponent(0, 5));
+        assertAnteprimaEInvio(documenti.getCellComponent(0, 5));
     }
 
     @Test
     @WithUserDetails("genitore3")
     @SuppressWarnings("unchecked")
-    void genitore_anteprimaEScaricoFinisconoNellaCronologia() throws Exception {
+    void genitore_anteprimaEInvioFinisconoNellaCronologia() throws Exception {
         try {
             navigate(DocumentiView.class);
             var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
-            List<com.vaadin.flow.component.html.Anchor> link = find(com.vaadin.flow.component.html.Anchor.class)
-                .from(documenti.getCellComponent(0, 5)).all();
-            for (var a : link) {
-                apriLink(a);
-            }
+            Component azioni = documenti.getCellComponent(0, 5);
+            apriLink(find(com.vaadin.flow.component.html.Anchor.class).from(azioni).single());
+            inviaAllaMiaEmail(azioni, "genitore3@example.com");
+
             List<AperturaDocumento> aperture = cronologiaDocumentiService.tutte();
             assertEquals(2, aperture.size());
-            assertEquals(Set.of(AperturaDocumento.Modalita.ANTEPRIMA, AperturaDocumento.Modalita.SCARICO),
+            assertEquals(Set.of(AperturaDocumento.Modalita.ANTEPRIMA, AperturaDocumento.Modalita.EMAIL),
                 aperture.stream().map(AperturaDocumento::getModalita).collect(Collectors.toSet()));
             AperturaDocumento apertura = aperture.getFirst();
             assertEquals("genitore3", apertura.getUsername());
@@ -3421,9 +3422,50 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Tutti i figli", apertura.getAllievoNome());
             assertEquals("2024/2025", apertura.getAnno());
             assertTrue(apertura.getNomeFile().endsWith(".pdf"));
+            // L'invio è anche in Email inviate, fatto dal genitore stesso
+            InvioEmail invio = invioEmailRepository.findAllByOrderByDataOraDesc().getFirst();
+            assertEquals("genitore3", invio.getInviatoDa());
+            assertEquals("genitore3@example.com", invio.getDestinatario());
         } finally {
             aperturaDocumentoRepository.deleteAll();
+            invioEmailRepository.deleteAll();
         }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_anteprimaEInvioDellaLetteraDiIncarico() throws Exception {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Long insegnanteId = insegnanteService.findByUsername("insegnante1").orElseThrow().getId();
+        LetteraIncarico lettera = letteraIncaricoService.salva(letteraIncaricoService.proposta(insegnanteId, canto.getId()), "segreteria");
+        try {
+            navigate(DocumentiView.class);
+            var lettere = test((Grid<LetteraIncarico>) find(Grid.class).single());
+            Component azioni = lettere.getCellComponent(0, 4);
+            assertAnteprimaEInvio(azioni);
+            apriLink(find(com.vaadin.flow.component.html.Anchor.class).from(azioni).single());
+            inviaAllaMiaEmail(azioni, "insegnante1@example.com");
+            assertEquals(Set.of(AperturaDocumento.Modalita.ANTEPRIMA, AperturaDocumento.Modalita.EMAIL),
+                cronologiaDocumentiService.tutte().stream().map(AperturaDocumento::getModalita).collect(Collectors.toSet()));
+            assertTrue(cronologiaDocumentiService.tutte().stream().allMatch(a -> "insegnante1".equals(a.getUsername())
+                && a.getTipo() == TipoDocumento.LETTERA_INCARICO && "Corso di Canto".equals(a.getCorsoNome())));
+            assertEquals(TipoDocumento.LETTERA_INCARICO, invioEmailRepository.findAllByOrderByDataOraDesc().getFirst().getTipo());
+        } finally {
+            aperturaDocumentoRepository.deleteAll();
+            invioEmailRepository.deleteAll();
+            letteraIncaricoService.elimina(lettera.getId(), "admin");
+        }
+    }
+
+    /** Sceglie "Invia alla mia email" nel menu del documento e conferma l'invio all'indirizzo atteso. */
+    private void inviaAllaMiaEmail(Component azioni, String email) {
+        MenuBar menu = find(MenuBar.class).from(azioni).single();
+        MenuItem invia = menu.getItems().getFirst().getSubMenu().getItems().stream()
+            .filter(v -> v.getElement().getTextRecursively().contains("Invia alla mia email")).findFirst().orElseThrow();
+        ComponentUtil.fireEvent(invia, new ClickEvent<>(invia));
+        assertTrue(find(Paragraph.class).all().stream().anyMatch(p -> p.getText().contains(email)));
+        test(find(Button.class).withText("Invia").single()).click();
     }
 
     /** Esegue il download del link come farebbe il browser (risposta su un buffer). */
@@ -3434,6 +3476,15 @@ class ViewAccessTest extends SpringBrowserlessTest {
         when(risposta.getOutputStream()).thenReturn(new ByteArrayOutputStream());
         risorsa.getElementRequestHandler().handleRequest(mock(VaadinRequest.class), risposta, VaadinSession.getCurrent(),
             risorsa.getOwner());
+    }
+
+    /** Menu PDF di famiglie e insegnanti: solo il link dell'anteprima (inline, nuova scheda) e "Invia alla mia email". */
+    private void assertAnteprimaEInvio(Component contenitore) {
+        var anteprima = find(com.vaadin.flow.component.html.Anchor.class).from(contenitore).single();
+        assertEquals("_blank", anteprima.getTarget().orElse(null));
+        assertFalse(anteprima.getElement().hasAttribute("download"));
+        assertTrue(find(MenuBar.class).from(contenitore).single().getItems().getFirst().getSubMenu().getItems().stream()
+            .anyMatch(v -> v.getElement().getTextRecursively().contains("Invia alla mia email")));
     }
 
     /** Nel componente un menu PDF con l'anteprima in una nuova scheda (inline) e lo scarico, entrambi con un indirizzo. */
@@ -4828,13 +4879,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
         rata.setImporto(new BigDecimal("200"));
         pagamentoService.salva(canto.getId(), figlio.getId(), rata);
         try {
-            // La ricevuta è in Documenti: menu con anteprima in una nuova scheda e scarico
+            // La ricevuta è in Documenti: menu con anteprima in una nuova scheda e invio alla propria email
             navigate(DocumentiView.class);
             var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
             int ricevuta = IntStream.range(0, documenti.size())
                 .filter(r -> documenti.getCellText(r, 0).equals("Ricevuta di pagamento")).findFirst().orElseThrow();
             assertEquals("Allievo Canto3", documenti.getCellText(ricevuta, 1));
-            assertLinkPdf(documenti.getCellComponent(ricevuta, 5));
+            assertAnteprimaEInvio(documenti.getCellComponent(ricevuta, 5));
 
             var pdf = documentiService.ricevutaPer(canto.getId(), figlio.getId(), "genitore3");
             assertTrue(pdf.nomeFile().startsWith("ricevuta-corso-di-canto-"));
