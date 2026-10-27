@@ -47,6 +47,7 @@ import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.Lezione;
+import it.attocchi.entity.Luogo;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.Presenza;
@@ -84,6 +85,7 @@ import it.attocchi.service.UserService;
 import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.FestivitaView;
 import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.LuoghiView;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
 import it.attocchi.views.admin.EmailDiTestDialog;
@@ -186,6 +188,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private FestivitaService festivitaService;
+
+    @Autowired
+    private it.attocchi.service.LuogoService luogoService;
 
     @Autowired
     private RimborsoService rimborsoService;
@@ -2102,6 +2107,41 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Checkbox ricordami = find(Checkbox.class).withLabel("Ricordami su questo dispositivo").single();
         assertFalse(ricordami.getValue());
         assertEquals("Credenziali errate", i18n.getErrorMessage().getTitle());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_aggiungeLuoghiSenzaElimina() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Luoghi")));
+        navigate(LuoghiView.class);
+        var luoghi = test((Grid<Luogo>) find(Grid.class).single());
+        int quanti = luoghi.size();
+        assertTrue(find(Button.class).all().stream().noneMatch(b -> "Elimina".equals(b.getElement().getAttribute("aria-label"))));
+
+        test(find(Button.class).withText("Nuovo Luogo").single()).click();
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Aula di prova");
+        test(find(Button.class).withText("Salva").single()).click();
+        Luogo nuovo = luogoService.elenco().stream().filter(l -> l.getNome().equals("Aula di prova")).findFirst().orElseThrow();
+        try {
+            assertEquals(quanti + 1, luoghi.size());
+            // Doppione: errore sul campo, nulla salvato
+            test(find(Button.class).withText("Nuovo Luogo").single()).click();
+            TextField nome = find(TextField.class).withLabel("Nome").single();
+            test(nome).setValue("aula di PROVA");
+            test(find(Button.class).withText("Salva").single()).click();
+            assertTrue(nome.isInvalid());
+            assertEquals(quanti + 1, luogoService.elenco().size());
+        } finally {
+            luogoService.elimina(nuovo.getId());
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_nonAccedeAiLuoghi() {
+        navigate("luoghi", RouteNotFoundError.class);
     }
 
     @Test
