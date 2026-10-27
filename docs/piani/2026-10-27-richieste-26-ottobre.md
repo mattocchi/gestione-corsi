@@ -58,7 +58,7 @@ Le otto voci di `docs/RICHIESTE.md`, sezione "RICHIESTE del 26 OTTOBRE 2026" (se
 | 7.2 | Footer con il link all'app nelle email di documenti; CLAUDE.md | template `email/` | RICHIESTE.5 | `./mvnw test` | [x] Solo email a famiglie e allievi (non lettera di incarico né messaggi di accesso) |
 | 8.1 | `User.sospesoPerInattivita`; job notturno (`@Scheduled`) che sospende dopo 6 mesi (non admin, non mai entrati); recupero/invito riattiva i sospesi; test | `User`, `UserService`, `RecuperoPasswordService` | RICHIESTE.6 | `./mvnw test` | [x] Job alle 3:30 (Europe/Rome), `config/SchedulingConfig`; riattivazione manuale in Gestione Utenti azzera la sospensione |
 | 8.2 | Messaggio di account sospeso al login (solo con password corretta); badge e filtro in Gestione Utenti; test; CLAUDE.md | `SecurityConfig`/`LoginView`, `UtentiView` | RICHIESTE.6 | `./mvnw test`; browser | [x] Stato dell'account verificato dopo la password per tutti (anche disattivati a mano) |
-| 9 | Registro finale | questo piano | — | build e test | [ ] |
+| 9 | Registro finale | questo piano | — | build e test | [x] |
 
 ## Fuori ambito
 
@@ -68,3 +68,8 @@ Le otto voci di `docs/RICHIESTE.md`, sezione "RICHIESTE del 26 OTTOBRE 2026" (se
 
 ## Registro
 
+- `./mvnw test`: 311 test superati (erano 290 all'inizio). Nuovi test: tipo Servizio (Gestione Corsi, Lezioni, costi dei servizi), luoghi (service, vista, lezione), lezioni del mese (service, I miei rimborsi), scheda allievo in due modalità, attestazioni (PDF, elenchi, invio, Documenti), lettere di incarico (service, PDF, email, Documenti per staff e insegnante), inviti (service, Gestione Utenti), sospensione per inattività (job, recupero, login con `LockedException`, Gestione Utenti).
+- Browser (dev, desktop): invito da Gestione Utenti, link "Benvenuto" e "Salva ed entra": la pagina si ricarica sulla Home già autenticata come genitore5 ("Ciao Genitore5!"). Non verificato nel browser il messaggio "Account sospeso per inattività" sulla pagina di accesso (la console H2 non si apre per sospendere un account a mano): la logica è coperta da `LoginTest`, la lettura in `LoginView` no. Non verificate nel browser le altre viste e la larghezza di 390px: coperte dai test browserless (incluse le card su mobile).
+- Produzione: nessuno script SQL; `ddl-auto=update` aggiunge tabelle (`luoghi`, `corso_luoghi`, `lettere_incarico`) e colonne nullable (`corsi.tipo`, `corsi.luogo_id`, `lezioni.luogo_id`, `recupero_password.invito`, `users.invitato_il`, `users.sospeso_inattivita`), con null = valore di default. Dopo il deploy la sospensione notturna sospende chi non entra da più di 6 mesi; in produzione `APP_URL` serve anche al link in fondo alle email.
+- Decisioni prese durante l'esecuzione (registrate in `RICHIESTE.md`): ore dei servizi = durata una volta; inviti della segreteria dalle schede delle persone. Scelte tecniche: 5.1+5.2 e 6.1+6.2 in un commit ciascuno (il nuovo `TipoDocumento` compare subito in Documenti); attestazione senza blocco per codice fiscale mancante; corso e insegnante con lettere di incarico non eliminabili.
+- Lasciato aperto: nessuna voce del 26 ottobre.
