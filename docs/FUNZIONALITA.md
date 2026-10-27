@@ -446,5 +446,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### VERSIONE
 
-* [ ] mi piacerebbe aggiungere in basso, nel menu slider, sopra il logo o sotto, la data di release del software, presa se possibile dalla data del jar
+* [x] mi piacerebbe aggiungere in basso, nel menu slider, sopra il logo o sotto, la data di release del software, presa se possibile dalla data del jar _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: data della build scritta nel JAR (build-info di Spring Boot, non cambia con le copie del file); sotto il logo "Versione 1.1.0 · 27/10/2026"; visibile solo ad admin e segreteria._

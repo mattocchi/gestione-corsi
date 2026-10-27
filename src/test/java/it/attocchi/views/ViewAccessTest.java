@@ -199,6 +199,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private it.attocchi.service.LuogoService luogoService;
 
     @Autowired
+    private org.springframework.beans.factory.ObjectProvider<org.springframework.boot.info.BuildProperties> buildProperties;
+
+    @Autowired
     private it.attocchi.service.LetteraIncaricoService letteraIncaricoService;
 
     @Autowired
@@ -292,6 +295,23 @@ class ViewAccessTest extends SpringBrowserlessTest {
             userService.save(ripristino, null);
             recuperoPasswordRepository.deleteAll();
         }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    void admin_vedeVersioneEDataDellaBuildSottoIlLogo() {
+        navigate(HomeView.class);
+        assertTrue(find(Span.class).from(find(MainLayout.class).single()).all().stream()
+            .anyMatch(s -> s.getText().matches("Versione \\S+ · \\d{2}/\\d{2}/\\d{4}")));
+        assertEquals("Versione di sviluppo", MainLayout.versione(null));
+    }
+
+    @Test
+    @WithUserDetails("genitore1")
+    void genitore_nonVedeLaVersione() {
+        navigate(HomeView.class);
+        assertTrue(find(Span.class).from(find(MainLayout.class).single()).all().stream()
+            .noneMatch(s -> s.getText().startsWith("Versione")));
     }
 
     @Test
@@ -507,7 +527,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         allievoService.save(allievo);
         try {
             // Menu (costruito al login): la voce Pagamenti compare
-            MainLayout layout = new MainLayout(securityService, dashboardService, allievoService);
+            MainLayout layout = new MainLayout(securityService, dashboardService, allievoService, buildProperties);
             assertTrue(find(SideNavItem.class).from(layout).all().stream().anyMatch(i -> i.getLabel().equals("Pagamenti")));
             assertTrue(find(SideNavItem.class).from(layout).all().stream().anyMatch(i -> i.getLabel().equals("Documenti")));
 

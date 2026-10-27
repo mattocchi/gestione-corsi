@@ -1,5 +1,10 @@
 package it.attocchi.views;
 
+import java.time.ZoneId;
+import java.time.LocalDate;
+import com.vaadin.flow.component.html.Span;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.beans.factory.ObjectProvider;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
@@ -45,8 +50,12 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final SecurityService securityService;
     private final DashboardService dashboardService;
     private final AllievoService allievoService;
+    /** Versione e data della build (goal build-info nel pom); assente se l'app non è stata costruita con Maven. */
+    private final BuildProperties build;
 
-    public MainLayout(SecurityService securityService, DashboardService dashboardService, AllievoService allievoService) {
+    public MainLayout(SecurityService securityService, DashboardService dashboardService, AllievoService allievoService,
+                      ObjectProvider<BuildProperties> build) {
+        this.build = build.getIfAvailable();
         this.securityService = securityService;
         this.dashboardService = dashboardService;
         this.allievoService = allievoService;
@@ -110,7 +119,22 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
         Div drawer = new Div(menu, ScorciatoiaHome.voceMenu(), logo);
         drawer.addClassNames("flex flex-col h-full min-h-0");
+        // Versione e data della release sotto il logo, solo per admin e segreteria
+        if (securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")) {
+            Span versione = new Span(versione(build));
+            versione.addClassNames(Stili.TESTO_SECONDARIO, "flex-none px-4 pb-3 -mt-2 text-(length:--aura-font-size-xs)");
+            drawer.add(versione);
+        }
         return drawer;
+    }
+
+    /** "Versione 1.1.0 · 27/10/2026" dalla build, o "Versione di sviluppo" senza build-info. */
+    static String versione(BuildProperties build) {
+        if (build == null || build.getTime() == null) {
+            return "Versione di sviluppo";
+        }
+        return "Versione " + build.getVersion() + " · "
+            + Formati.dataNumerica(LocalDate.ofInstant(build.getTime(), ZoneId.of("Europe/Rome")));
     }
 
     private SideNav createSideNav() {

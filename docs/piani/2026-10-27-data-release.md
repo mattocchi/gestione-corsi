@@ -20,11 +20,16 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Goal `build-info` nel pom; riga sotto il logo per admin e segreteria; test; CLAUDE.md; registro | `pom.xml`, `MainLayout`, test, `CLAUDE.md`, questo piano | VERSIONE.1 | `./mvnw test`; JAR | [ ] |
+| 1 | Goal `build-info` nel pom; riga sotto il logo per admin e segreteria; test; CLAUDE.md; registro | `pom.xml`, `MainLayout`, test, `CLAUDE.md`, questo piano | VERSIONE.1 | `./mvnw test`; JAR | [x] |
 
 ## Fuori ambito
 
 - Numero di versione automatico (resta quello del pom).
 
 ## Registro
+
+- `./mvnw test`: 328 test superati. Nuovi: `ViewAccessTest.admin_vedeVersioneEDataDellaBuildSottoIlLogo` (riga "Versione x · gg/mm/aaaa" nel drawer, "Versione di sviluppo" senza build-info) e `genitore_nonVedeLaVersione`.
+- `target/classes/META-INF/build-info.properties` generato dalla compilazione (versione 1.1.0, data della build): entra nel JAR di `./build.sh`. JAR di produzione non costruito in questa sessione.
+- Non verificato nel browser.
+- Lasciato aperto: nessuno.
 
