@@ -463,3 +463,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [ ] come genitore vorrei poter vedere i pagamenti passati dei corsi non attivi
 * [ ] inoltre per i corsi non attivi non riesco, come genitore a vedere i documenti, potrebbe essere utile discriminare tra attivi e non attivi ma i documenti potrebbero essere necessari. Esclusi i NON pubblici, perchè i NON pubblici sono appunto in lavorazione.
+
+### RICEVUTA
+
+* [ ] nella ricevuta di pagamento rimuovi l'informazione "Insegnanti"
