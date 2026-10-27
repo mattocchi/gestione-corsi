@@ -51,6 +51,46 @@ class CorsoServiceTest {
     private PagamentoService pagamentoService;
 
     @Test
+    void aggiornaLezioni_festivitaNuovaToglieLaLezioneESlittaLaFine() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        List<Lezione> prima = lezioneService.findByCorso(canto.getId());
+        Lezione quinta = prima.get(4);
+        Lezione terza = prima.get(2);
+        LocalDate ultima = prima.getLast().getData();
+        lezioneService.impostaNote(terza.getId(), "Portare il leggio", null, "admin");
+
+        // Nessun cambiamento finché il calendario è lo stesso
+        assertFalse(corsoService.anteprimaAggiornamento(canto.getId()).cambia());
+
+        it.attocchi.entity.Festivita ponte = new it.attocchi.entity.Festivita();
+        ponte.setNome("Ponte di prova");
+        ponte.setTipo(it.attocchi.entity.Festivita.Tipo.DATE);
+        ponte.setDataInizio(quinta.getData());
+        festivitaService.salva(ponte);
+        try {
+            CorsoService.AggiornamentoLezioni anteprima = corsoService.anteprimaAggiornamento(canto.getId());
+            assertEquals(List.of(quinta.getData()), anteprima.tolte());
+            assertEquals(List.of(ultima.plusWeeks(1)), anteprima.aggiunte());
+
+            corsoService.aggiornaLezioni(canto.getId());
+            List<Lezione> dopo = lezioneService.findByCorso(canto.getId());
+            assertEquals(30, dopo.size());
+            assertTrue(dopo.stream().noneMatch(l -> l.getData().equals(quinta.getData())));
+            // La lezione rimasta conserva la sua nota e le sue presenze; i numeri restano 1..30
+            assertEquals("Portare il leggio", lezioneService.findById(terza.getId()).getNote());
+            assertEquals(7, presenzaService.findByLezione(terza.getId()).size());
+            assertEquals(java.util.stream.IntStream.rangeClosed(1, 30).boxed().toList(),
+                dopo.stream().map(Lezione::getNumeroLezione).sorted().toList());
+        } finally {
+            festivitaService.elimina(ponte.getId());
+            corsoService.aggiornaLezioni(canto.getId());
+            lezioneService.impostaNote(terza.getId(), null, null, "admin");
+        }
+        assertEquals(prima.stream().map(Lezione::getData).toList(),
+            lezioneService.findByCorso(canto.getId()).stream().map(Lezione::getData).toList());
+    }
+
+    @Test
     void dataFine_lezioniFinoAllaFineOAlPrimoLimite() {
         Corso pulizia = new Corso();
         pulizia.setNome("Pulizia");

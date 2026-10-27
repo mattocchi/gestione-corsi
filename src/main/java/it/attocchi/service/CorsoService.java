@@ -29,6 +29,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Set;
 
@@ -385,27 +386,126 @@ public class CorsoService {
      * settimana sì e una no, a partire dalla data di inizio; una lezione che cade in una festività si sposta alla
      * settimana dopo e il ritmo riparte da lì.
      * <p>
-     * Ricrea solo le lezioni programmate ancora da fare: restano completate, non effettuate e aggiunte a mano; le
-     * programmate conservate contano per chi frequenta quel giorno, e la loro data e il loro numero non si ripetono.
+     * Aggiorna solo le lezioni programmate ancora da fare: restano completate, non effettuate, aggiunte a mano e
+     * spostate; le programmate conservate contano per chi frequenta quel giorno, e la loro data e il loro numero non si
+     * ripetono. Le programmate ancora valide restano com'erano (note, luogo, presenze già segnate), quelle che cadono
+     * in una festività o oltre la fine si tolgono, le mancanti si aggiungono ({@link #aggiornaLezioni}).
      */
     @Transactional
     public void generaLezioni(Corso corsoDaUi) {
-        Corso corso = corsoAttivo(corsoDaUi.getId());
+        aggiornaLezioni(corsoDaUi.getId());
+    }
 
-        List<Lezione> lezioniEsistenti = lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId());
+    /** Effetto di un aggiornamento delle lezioni: date aggiunte e tolte, quante lezioni da fare restano com'erano. */
+    public record AggiornamentoLezioni(List<LocalDate> aggiunte, List<LocalDate> tolte, int invariate) {
+
+        public boolean cambia() {
+            return !aggiunte.isEmpty() || !tolte.isEmpty();
+        }
+    }
+
+    /** Una data del calendario del corso con i partecipanti che la frequentano. */
+    private record DataPianificata(LocalDate data, List<Iscrizione> partecipanti) {
+    }
+
+    /** Lezioni conservate, programmate da fare (da confrontare) e date del nuovo calendario. */
+    private record Piano(Corso corso, List<Lezione> conservate, List<Lezione> programmate, List<DataPianificata> date) {
+    }
+
+    /** Cosa cambierebbe {@link #aggiornaLezioni} sul corso, senza modificare nulla. */
+    public AggiornamentoLezioni anteprimaAggiornamento(Long corsoId) {
+        Piano piano = piano(corsoAttivo(corsoId));
+        Set<LocalDate> pianificate = piano.date().stream().map(DataPianificata::data).collect(Collectors.toSet());
+        Set<LocalDate> esistenti = piano.programmate().stream().map(Lezione::getData).collect(Collectors.toSet());
+        return new AggiornamentoLezioni(
+            piano.date().stream().map(DataPianificata::data).filter(d -> !esistenti.contains(d)).toList(),
+            piano.programmate().stream().map(Lezione::getData).filter(d -> !pianificate.contains(d)).sorted().toList(),
+            (int) piano.programmate().stream().filter(l -> pianificate.contains(l.getData())).count());
+    }
+
+    /**
+     * Allinea le lezioni da fare al calendario del corso (numero di lezioni, data di fine, giorni, cadenza, festività,
+     * partecipanti): conserva quelle ancora valide (con l'orario del corso e i partecipanti del calendario, le presenze
+     * già segnate restano), toglie le altre e aggiunge le mancanti; poi rinumera.
+     */
+    @Transactional
+    public AggiornamentoLezioni aggiornaLezioni(Long corsoId) {
+        Piano piano = piano(corsoAttivo(corsoId));
+        Corso corso = piano.corso();
+        Map<LocalDate, Lezione> programmate = new HashMap<>();
+        piano.programmate().forEach(l -> programmate.putIfAbsent(l.getData(), l));
+        List<LocalDate> aggiunte = new ArrayList<>();
+        List<Lezione> calendario = new ArrayList<>();
+        for (DataPianificata pianificata : piano.date()) {
+            Lezione lezione = programmate.remove(pianificata.data());
+            if (lezione == null) {
+                lezione = new Lezione(corso, pianificata.data(), 0);
+                lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
+                aggiunte.add(pianificata.data());
+            }
+            lezione.setOrarioInizio(corso.getOrarioInizio());
+            lezione.setOrarioFine(corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null
+                ? corso.getOrarioInizio().plusMinutes(corso.getDurataLezioneMinuti()) : null);
+            lezione = lezioneRepository.save(lezione);
+            sincronizzaPartecipanti(lezione, pianificata.partecipanti());
+            calendario.add(lezione);
+        }
+        // Le programmate rimaste fuori dal calendario (festività, oltre la fine) si tolgono
+        List<LocalDate> tolte = programmate.values().stream().map(Lezione::getData).sorted().toList();
+        lezioneRepository.deleteAll(programmate.values());
+        lezioneRepository.flush();
+
+        // Numeri in ordine di data, senza ripetere quelli delle lezioni conservate
+        Set<Integer> numeriConservati = piano.conservate().stream().map(Lezione::getNumeroLezione).collect(Collectors.toSet());
+        int numero = 1;
+        for (Lezione lezione : calendario) {
+            while (numeriConservati.contains(numero)) {
+                numero++;
+            }
+            lezione.setNumeroLezione(numero++);
+        }
+        lezioneRepository.flush();
+        numerazioneLezioni.rinumera(corso.getId());
+        return new AggiornamentoLezioni(aggiunte, tolte, calendario.size() - aggiunte.size());
+    }
+
+    /** Presenze della lezione = partecipanti del calendario: quelle già segnate restano, le mancanti nascono PRESENTE. */
+    private void sincronizzaPartecipanti(Lezione lezione, List<Iscrizione> partecipanti) {
+        Set<Long> attesi = partecipanti.stream().map(i -> i.getAllievo().getId()).collect(Collectors.toSet());
+        List<Presenza> esistenti = presenzaRepository.findByLezioneId(lezione.getId());
+        Set<Long> presenti = new HashSet<>();
+        for (Presenza presenza : esistenti) {
+            if (attesi.contains(presenza.getAllievo().getId())) {
+                presenti.add(presenza.getAllievo().getId());
+            } else {
+                lezione.getPresenze().remove(presenza);
+                presenzaRepository.delete(presenza);
+            }
+        }
+        for (Iscrizione iscrizione : partecipanti) {
+            if (!presenti.contains(iscrizione.getAllievo().getId())) {
+                presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
+            }
+        }
+    }
+
+    /**
+     * Calendario del corso: scorre le date dei giorni del corso dalla data di inizio, saltando le festività, fino al
+     * numero di lezioni di ogni partecipante o alla data di fine (il primo limite raggiunto).
+     */
+    private Piano piano(Corso corso) {
         List<Lezione> conservate = new ArrayList<>();
-        for (Lezione esistente : lezioniEsistenti) {
-            // Le lezioni spostate a mano restano dove sono state messe
+        List<Lezione> programmate = new ArrayList<>();
+        for (Lezione esistente : lezioneRepository.findByCorsoIdOrderByDataAsc(corso.getId())) {
+            // Le lezioni spostate a mano restano dove sono state messe; le aggiunte non contano
             if (esistente.isDaFare() && !esistente.isAggiunta() && !esistente.isSpostata()) {
-                lezioneRepository.delete(esistente);
+                programmate.add(esistente);
             } else if (!esistente.isAggiunta()) {
                 conservate.add(esistente);
             }
         }
-        Set<Integer> numeriConservati = new HashSet<>();
         Set<LocalDate> dateConservate = new HashSet<>();
         conservate.forEach(l -> {
-            numeriConservati.add(l.getNumeroLezione());
             dateConservate.add(l.getData());
             dateConservate.add(l.getDataDelCalendario());
         });
@@ -420,15 +520,15 @@ public class CorsoService {
         CalendarioFestivita festivita = festivitaService.calendario();
         LocalDate dataCorrente = corso.getDataInizio();
         LocalDate limite = corso.getDataFine() != null ? corso.getDataFine() : corso.getDataInizio().plusYears(10);
-        int numeroLezione = 1;
-        int generateSenzaIscritti = conservate.size();
+        int senzaIscritti = conservate.size();
         // Cadenza: per ogni giorno del corso la prima data utile da cui cercare la prossima lezione. Dopo una
         // lezione si salta di "cadenza" settimane; una festività sposta la lezione alla settimana dopo
         int giorniTraLezioni = 7 * corso.getCadenzaSettimane();
         Map<DayOfWeek, LocalDate> prossima = new EnumMap<>(DayOfWeek.class);
+        List<DataPianificata> date = new ArrayList<>();
 
         while (!dataCorrente.isAfter(limite) && !corso.getGiorniSettimana().isEmpty()) {
-            if (iscrizioni.isEmpty() ? generateSenzaIscritti >= lezioniPerAllievo
+            if (iscrizioni.isEmpty() ? senzaIscritti >= lezioniPerAllievo
                 : contate.values().stream().allMatch(n -> n >= lezioniPerAllievo)) {
                 break;
             }
@@ -452,23 +552,10 @@ public class CorsoService {
             if (!iscrizioni.isEmpty() && partecipanti.isEmpty()) {
                 continue;
             }
-            while (numeriConservati.contains(numeroLezione)) {
-                numeroLezione++;
-            }
-            Lezione lezione = new Lezione(corso, data, numeroLezione++);
-            lezione.setInsegnantiPresenti(new HashSet<>(corso.getInsegnanti()));
-            lezione.setOrarioInizio(corso.getOrarioInizio());
-            if (corso.getOrarioInizio() != null && corso.getDurataLezioneMinuti() != null) {
-                lezione.setOrarioFine(corso.getOrarioInizio().plusMinutes(corso.getDurataLezioneMinuti()));
-            }
-            lezioneRepository.save(lezione);
-            generateSenzaIscritti++;
-            for (Iscrizione iscrizione : partecipanti) {
-                presenzaRepository.save(new Presenza(lezione, iscrizione.getAllievo(), Presenza.StatoPresenza.PRESENTE));
-                contate.merge(iscrizione, 1, Integer::sum);
-            }
+            date.add(new DataPianificata(data, partecipanti));
+            senzaIscritti++;
+            partecipanti.forEach(i -> contate.merge(i, 1, Integer::sum));
         }
-        lezioneRepository.flush();
-        numerazioneLezioni.rinumera(corso.getId());
+        return new Piano(corso, conservate, programmate, date);
     }
 }
