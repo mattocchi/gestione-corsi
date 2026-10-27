@@ -6,6 +6,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
@@ -140,6 +146,64 @@ public class UserService {
             candidato = base + n;
         }
         return candidato;
+    }
+
+    /** Username come quelli generati da {@link #usernameLibero}: "nome.cognome", con un eventuale numero in fondo. */
+    private static final Pattern GENERATO = Pattern.compile("[a-z0-9]+\\.[a-z0-9]+");
+
+    /** Username generato da allineare a nome e cognome attuali: quello di oggi e quello proposto. */
+    public record UsernameDaAllineare(User user, String attuale, String proposto) {
+    }
+
+    /**
+     * Utenti con uno username generato ("nome.cognome", eventualmente con un numero) che non corrisponde più a nome e
+     * cognome attuali, con lo username libero proposto; gli username scelti a mano non compaiono. Per username.
+     */
+    public List<UsernameDaAllineare> usernameDaAllineare() {
+        List<UsernameDaAllineare> elenco = new ArrayList<>();
+        for (User user : userRepository.findAll()) {
+            proposta(user).ifPresent(proposto -> elenco.add(new UsernameDaAllineare(user, user.getUsername(), proposto)));
+        }
+        elenco.sort(Comparator.comparing(UsernameDaAllineare::attuale));
+        return elenco;
+    }
+
+    /** Username proposto per l'utente, se il suo è generato e non corrisponde più a nome e cognome. */
+    public Optional<String> proposta(User user) {
+        String attuale = user.getUsername();
+        if (attuale == null || !GENERATO.matcher(attuale).matches()) {
+            return Optional.empty();
+        }
+        String base = (semplifica(user.getNome()) + "." + semplifica(user.getCognome())).replaceAll("(^\\.|\\.$)", "");
+        if (base.isEmpty() || !base.contains(".") || attuale.equals(base) || attuale.matches(Pattern.quote(base) + "\\d+")) {
+            return Optional.empty();
+        }
+        return Optional.of(usernameLibero(user.getNome(), user.getCognome()));
+    }
+
+    /**
+     * Allinea gli username degli utenti indicati (solo quelli ancora da allineare) a nome e cognome, ognuno con uno
+     * username libero. Solo l'admin. Restituisce vecchio → nuovo username degli utenti cambiati.
+     */
+    @Transactional
+    public Map<String, String> allineaUsername(Collection<Long> userIds, String admin) {
+        if (!utente(admin).getRoles().contains("ADMIN")) {
+            throw new IllegalStateException("Solo l'admin può allineare gli username");
+        }
+        Map<String, String> cambiati = new LinkedHashMap<>();
+        for (Long id : userIds) {
+            User user = userRepository.findById(id).orElse(null);
+            if (user == null) {
+                continue;
+            }
+            proposta(user).ifPresent(nuovo -> {
+                cambiati.put(user.getUsername(), nuovo);
+                user.setUsername(nuovo);
+                // Subito in database: il prossimo usernameLibero vede anche questo
+                userRepository.saveAndFlush(user);
+            });
+        }
+        return cambiati;
     }
 
     /** Minuscolo, senza accenti, solo lettere e cifre. */
