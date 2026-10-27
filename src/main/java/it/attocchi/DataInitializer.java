@@ -182,6 +182,7 @@ public class DataInitializer implements CommandLineRunner {
             Set<DayOfWeek> giorniCanto = new HashSet<>();
             giorniCanto.add(DayOfWeek.THURSDAY);
             corsoCanto.setGiorniSettimana(giorniCanto);
+            corsoCanto.setPubblicato(true);
             corsoCanto.setInsegnante(insegnante1);
             corsoCanto.setLuogo(aula1);
             corsoCanto.setLuoghiAbilitati(Set.of(aula1, palestra));
@@ -211,6 +212,7 @@ public class DataInitializer implements CommandLineRunner {
             giorniChitarra.add(DayOfWeek.TUESDAY);
             giorniChitarra.add(DayOfWeek.SATURDAY);
             corsoChitarra.setGiorniSettimana(giorniChitarra);
+            corsoChitarra.setPubblicato(true);
             corsoChitarra.setInsegnante(insegnante2);
             corsoChitarra.setLuogo(aula2);
             corsoChitarra.setLuoghiAbilitati(Set.of(aula2));

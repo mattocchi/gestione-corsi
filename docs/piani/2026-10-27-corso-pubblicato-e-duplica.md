@@ -21,7 +21,7 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `Corso.pubblicato` (null = pubblicato, nuovi no); campo nel dialog, badge "Non pubblicato" e filtro in Gestione Corsi; test | `Corso`, `CorsiView`, test | — | `./mvnw test` | [ ] |
+| 1 | `Corso.pubblicato` (null = pubblicato, nuovi no); campo nel dialog, badge "Non pubblicato" e filtro in Gestione Corsi; test | `Corso`, `CorsiView`, test | — | `./mvnw test` | [x] Badge "Non pubblicato" accanto al nome (`TipoCorsoUI.nome`), quindi anche nelle viste degli insegnanti; corsi di esempio pubblicati |
 | 2 | Corsi non pubblicati esclusi da tutto ciò che vedono genitori e allievi e dagli invii alle famiglie; badge per gli insegnanti; test | service e viste di allievi/genitori, `EmailService`, test | PUBBLICAZIONE.1 | `./mvnw test` | [ ] |
 | 3 | `CorsoService.duplica` e azione "Duplica" in Gestione Corsi; test | `CorsoService`, `CorsiView`, test | PUBBLICAZIONE.2 | `./mvnw test` | [ ] |
 | 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [ ] |

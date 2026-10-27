@@ -678,6 +678,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
             filtro.setValue(CorsiView.FiltroTipo.CORSI);
             assertEquals(2, grid.size());
 
+            // Un corso nuovo nasce non pubblicato: badge e filtro
+            filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
+            assertTrue(find(Badge.class).from(grid.getCellComponent(0, 0)).all().stream()
+                .anyMatch(b -> "Non pubblicato".equals(b.getText())));
+            filtro.setValue(CorsiView.FiltroTipo.TUTTI);
+            test(find(Checkbox.class).withLabel("Solo non pubblicati").single()).click();
+            assertEquals(1, grid.size());
+            test(find(Checkbox.class).withLabel("Solo non pubblicati").single()).click();
+            filtro.setValue(CorsiView.FiltroTipo.CORSI);
+
             // Nel dialog del servizio chi lo svolge è l'"Incaricato"
             filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
             test(pulsante(grid.getCellComponent(0, AZIONI_CORSO), "Modifica")).click();

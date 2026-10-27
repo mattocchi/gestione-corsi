@@ -119,6 +119,13 @@ public class Corso {
     @Column(name = "attivo")
     private boolean attivo = true;
 
+    /**
+     * Visibile a genitori e allievi; un corso non pubblicato è in preparazione (lo vedono staff e insegnanti). Diverso
+     * da {@link #attivo} (archivio). null (corsi creati prima della pubblicazione) = pubblicato; i nuovi nascono no.
+     */
+    @Column(name = "pubblicato")
+    private Boolean pubblicato = false;
+
     /** Anno scolastico nel formato "2026/2027" (vedi {@link AnnoScolastico}). */
     @Column(name = "anno_scolastico", length = 9)
     private String annoScolastico;
@@ -363,6 +370,14 @@ public class Corso {
 
     public void setAttivo(boolean attivo) {
         this.attivo = attivo;
+    }
+
+    public boolean isPubblicato() {
+        return pubblicato == null || pubblicato;
+    }
+
+    public void setPubblicato(boolean pubblicato) {
+        this.pubblicato = pubblicato;
     }
 
     /**

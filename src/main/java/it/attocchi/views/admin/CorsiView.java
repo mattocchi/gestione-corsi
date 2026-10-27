@@ -127,6 +127,7 @@ public class CorsiView extends VerticalLayout {
     private final SegmentedControl<FiltroTipo> filtroTipo = new SegmentedControl<>("Filtra per tipo",
         List.of(FiltroTipo.values()), FiltroTipo::getEtichetta, f -> "Mostra: " + f.getEtichetta(), null);
     private final ComboBox<String> filtroAnno = new ComboBox<>();
+    private final Checkbox soloNonPubblicati = new Checkbox("Solo non pubblicati");
     private final RicercaRapida ricerca = new RicercaRapida();
     private GridListDataView<Corso> corsi;
     private List<Corso> tutti = List.of();
@@ -160,9 +161,10 @@ public class CorsiView extends VerticalLayout {
         filtroAnno.setClearButtonVisible(true);
         filtroAnno.addClassNames("w-44");
         filtroAnno.addValueChangeListener(e -> applicaFiltri());
+        soloNonPubblicati.addValueChangeListener(e -> applicaFiltri());
         ricerca.addRicercaListener(this::applicaFiltri);
 
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroTipo, filtroAnno, ricerca);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroTipo, filtroAnno, soloNonPubblicati, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -189,6 +191,7 @@ public class CorsiView extends VerticalLayout {
             .titolo(Corso::getNome)
             .stato(this::createStatoBadge)
             .campo("Tipo", TipoCorsoUI::badge)
+            .campo("Pubblicazione", TipoCorsoUI::badgePubblicazione)
             .campo("Anno", Corso::getAnnoScolastico)
             .campo("Insegnanti", Corso::getNomiInsegnanti)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
@@ -301,6 +304,8 @@ public class CorsiView extends VerticalLayout {
                 annoScolastico.setValue(AnnoScolastico.di(e.getValue()));
             }
         });
+        Checkbox pubblicato = new Checkbox("Pubblicato");
+        pubblicato.setTooltipText("Visibile a genitori e allievi; finché non è pubblicato ci lavorano solo staff e insegnanti");
         Checkbox attivo = new Checkbox("Attivo");
         attivo.setTooltipText("I corsi non attivi non accettano nuovi partecipanti né lezioni e presenze");
 
@@ -381,10 +386,11 @@ public class CorsiView extends VerticalLayout {
                 (c, altri) -> c.setInsegnantiFacoltativi(new ArrayList<>(altri)));
         binder.forField(annoScolastico).asRequired("Scegli l'anno scolastico").bind(Corso::getAnnoScolastico, Corso::setAnnoScolastico);
         binder.forField(attivo).bind(Corso::isAttivo, Corso::setAttivo);
+        binder.forField(pubblicato).bind(Corso::isPubblicato, Corso::setPubblicato);
 
         binder.readBean(corso);
 
-        formLayout.add(bloccoTipo, nome, insegnante, altriInsegnanti, dataInizio, annoScolastico, numeroLezioni, dataFine, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
+        formLayout.add(bloccoTipo, nome, insegnante, altriInsegnanti, dataInizio, annoScolastico, numeroLezioni, dataFine, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, pubblicato, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi
@@ -477,6 +483,7 @@ public class CorsiView extends VerticalLayout {
             String anno = filtroAnno.getValue();
             SerializablePredicate<Corso> statoEAnno = corso -> filtroStato.getValue().ammette(corso)
                 && filtroTipo.getValue().ammette(corso)
+                && (!soloNonPubblicati.getValue() || !corso.isPubblicato())
                 && (anno == null || anno.equals(corso.getAnnoScolastico()));
             corsi.setFilter(corso -> statoEAnno.test(corso) && ricerca.corrisponde(RicercaRapida.testo(corso.getNome(),
                 corso.getAnnoScolastico(), corso.getNomiInsegnanti(), corso.getDescrizione(), corso.getNomeLuogo())));
