@@ -443,3 +443,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] in documentazione/ ti ho inserito dei pdf con vademecum e disposizioni in merito alla detrazione. rendi la dichairazione si spesa che abbiamo aggiunto su tutto l'anno scolastico, conforme alle direttive specificate in PDF. _(completata 2026-10-27; in produzione impostare ASSOCIAZIONE_LUOGO e ASSOCIAZIONE_CODICE_FISCALE)_
   _Chiarimento 2026-10-27: periodo = anno solare (periodo d'imposta, come chiede il vademecum); nel totale solo i pagamenti con bonifico e solo i corsi (non i servizi); si emette per tutti ma fuori dai 5-18 anni il testo si adatta e lo staff vede un badge; intestata al genitore registrato (o all'allievo adulto), senza ripartizione; bloccata finché mancano i dati del fac-simile; luogo da una nuova impostazione app.associazione.luogo._
+
+### VERSIONE
+
+* [ ] mi piacerebbe aggiungere in basso, nel menu slider, sopra il logo o sotto, la data di release del software, presa se possibile dalla data del jar
