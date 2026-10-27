@@ -1,5 +1,7 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.Component;
+import it.attocchi.views.SchedaAllievo;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.DetachEvent;
@@ -222,26 +224,19 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
         AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
         binder.readBean(allievo);
 
-        Span indirizzoGenitore = new Span();
-        indirizzoGenitore.addClassNames(Stili.TESTO_SECONDARIO);
-        genitore.addValueChangeListener(e -> mostraIndirizzoGenitore(indirizzoGenitore, e.getValue()));
-        mostraIndirizzoGenitore(indirizzoGenitore, genitore.getValue());
-
-        FormLayout utenteForm = new FormLayout(utente.getComponents());
         // Link alla scheda del genitore già collegato (non a quello appena scelto nel campo)
+        Component campoGenitore = sceltaGenitore;
         if (!nuovo && allievo.getGenitore() != null) {
             VerticalLayout genitoreECollegamento = new VerticalLayout(sceltaGenitore, SchedaCollegata.link(
                 allievo.getGenitore().getNomeCompleto(), dialog, () -> binder.hasChanges() || utente.hasChanges(),
                 GenitoriView.class, allievo.getGenitore().getId()));
             genitoreECollegamento.addClassNames("p-0 gap-0 items-start");
-            utenteForm.add(genitoreECollegamento);
-        } else {
-            utenteForm.add(sceltaGenitore);
+            campoGenitore = genitoreECollegamento;
         }
-        VerticalLayout content = new VerticalLayout(
-            ViewSupport.sezione("Utente e genitore"), utenteForm,
-            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzoGenitore);
-        content.addClassNames("p-0");
+        // Con genitore i contatti di riferimento sono i suoi; allievo adulto: contatti e indirizzo propri
+        SchedaAllievo content = new SchedaAllievo(utente, anagrafica, campoGenitore, true);
+        content.mostraGenitore(genitore.getValue());
+        genitore.addValueChangeListener(e -> content.mostraGenitore(e.getValue()));
 
         Button saveButton = new Button("Salva", e -> {
             // Valida tutto prima di salvare: niente utenti creati per un allievo che poi non si salva
@@ -272,13 +267,6 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
             campo.setItems(genitoreService.findAll());
             campo.setValue(scelto);
         }).open();
-    }
-
-    /** Indirizzo del genitore, mostrato quando l'allievo non ne ha uno proprio. */
-    private static void mostraIndirizzoGenitore(Span span, Genitore genitore) {
-        String indirizzo = genitore != null ? genitore.getIndirizzo().getFormattato() : "";
-        span.setText("Se l'indirizzo è vuoto si mostra quello del genitore: " + indirizzo);
-        span.setVisible(!indirizzo.isEmpty());
     }
 
     private void deleteAllievo(Allievo allievo) {

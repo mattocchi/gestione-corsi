@@ -1,5 +1,6 @@
 package it.attocchi.views.genitore;
 
+import it.attocchi.views.SchedaAllievo;
 import it.attocchi.views.TipoCorsoUI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -140,14 +141,9 @@ public class FigliView extends VerticalLayout {
         AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
         binder.readBean(allievo);
 
-        Span indirizzo = new Span("Se l'indirizzo è vuoto si usa il tuo: " + genitoreCorrente.getIndirizzo().getFormattato());
-        indirizzo.addClassNames(Stili.TESTO_SECONDARIO);
-        indirizzo.setVisible(!genitoreCorrente.getIndirizzo().isVuoto());
-
-        VerticalLayout content = new VerticalLayout(
-            ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
-            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()), indirizzo);
-        content.addClassNames("p-0");
+        // I tuoi contatti e il tuo indirizzo valgono come riferimento; quelli del figlio sono facoltativi
+        SchedaAllievo content = new SchedaAllievo(utente, anagrafica, null, true);
+        content.mostraGenitore(genitoreCorrente);
         // In alto, cosa manca per conferme e ricevute (i campi restano facoltativi)
         String mancanti = DocumentiService.avvisoDatiMancanti(allievo);
         if (mancanti != null) {

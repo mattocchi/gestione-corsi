@@ -154,19 +154,13 @@ public class ProfiloView extends VerticalLayout {
         binder.readBean(allievo);
         binder.setReadOnly(true);
 
-        TextField genitore = new TextField("Genitore");
-        genitore.setValue(allievo.getGenitore() != null ? allievo.getGenitore().getNomeCompleto() : "");
-        genitore.setReadOnly(true);
-        FormLayout utenteForm = new FormLayout(utente.getComponents());
-        utenteForm.add(genitore);
-
-        Span avviso = new Span("Per modificare i dati rivolgiti alla segreteria o al genitore.");
+        Span avviso = new Span("Per modificare i dati rivolgiti alla segreteria"
+            + (allievo.getGenitore() != null ? " o al genitore." : "."));
         avviso.addClassNames(Stili.TESTO_SECONDARIO);
-        add(avviso, ViewSupport.sezione("Utente e genitore"), utenteForm,
-            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
-        if (allievo.isIndirizzoDelGenitore()) {
-            add(new Span("Indirizzo: " + Formati.indirizzo(allievo)));
-        }
+        // Stessa scheda di Gestione Allievi, in sola lettura e con lo username
+        SchedaAllievo scheda = new SchedaAllievo(utente, anagrafica, null, true);
+        scheda.mostraGenitore(allievo.getGenitore());
+        add(avviso, scheda);
     }
 
     /** Nuova password con conferma. */

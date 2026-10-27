@@ -90,4 +90,17 @@ public class UtenteFields {
     public Component[] getComponents() {
         return new Component[] {username, password, nome, cognome, email, telefono};
     }
+
+    public Component[] getNomeECognome() {
+        return new Component[] {nome, cognome};
+    }
+
+    public Component[] getContatti() {
+        return new Component[] {email, telefono};
+    }
+
+    /** Username e password. */
+    public Component[] getAccesso() {
+        return new Component[] {username, password};
+    }
 }

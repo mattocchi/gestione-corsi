@@ -1087,6 +1087,25 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_schedaAllievoAdultoOConGenitore() {
+        navigate(AllieviView.class);
+        test(find(Button.class).withText("Nuovo Allievo").single()).click();
+        Dialog dialog = find(Dialog.class).single();
+        // Senza genitore: contatti e indirizzo propri in evidenza
+        assertTrue(find(H3.class).from(dialog).withText("Contatti e indirizzo").exists());
+        assertFalse(find(com.vaadin.flow.component.details.Details.class).from(dialog).exists());
+
+        test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
+        assertTrue(find(H3.class).from(dialog).withText("Contatti e indirizzo del genitore").exists());
+        assertTrue(find(Span.class).from(dialog).withText("Indirizzo: Via Roma 1, 00184 Roma (RM)").exists());
+        var propri = find(com.vaadin.flow.component.details.Details.class).from(dialog).single();
+        assertFalse(propri.isOpened());
+        assertTrue(find(TextField.class).from(propri).withLabel("Email").exists());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_creaAllievoSenzaCodiceFiscaleNeDataDiNascita() {
         navigate(AllieviView.class);
         test(find(Button.class).withText("Nuovo Allievo").single()).click();
@@ -4377,8 +4396,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(ProfiloView.class);
         assertTrue(find(TextField.class).withLabel("Nome").single().isReadOnly());
         assertTrue(find(TextField.class).withLabel("Codice fiscale").single().isReadOnly());
-        assertEquals("Genitore1 Cognome1", find(TextField.class).withLabel("Genitore").single().getValue());
-        assertTrue(find(Span.class).withText("Indirizzo: Via Roma 1, 00184 Roma (RM) (del genitore)").exists());
+        // Con genitore: i suoi contatti e il suo indirizzo come riferimento, quelli propri facoltativi
+        assertTrue(find(Span.class).withText("Genitore1 Cognome1").exists());
+        assertTrue(find(Span.class).withText("Indirizzo: Via Roma 1, 00184 Roma (RM)").exists());
+        assertTrue(find(com.vaadin.flow.component.details.Details.class).single().getSummaryText().contains("facoltativi"));
         assertFalse(find(Button.class).withText("Salva").exists());
         assertFalse(find(Button.class).withText("Cambia password").exists());
     }
