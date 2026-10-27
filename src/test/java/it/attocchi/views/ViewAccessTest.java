@@ -4185,6 +4185,39 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("insegnante1")
     @SuppressWarnings("unchecked")
+    void insegnante_conTreInsegnantiSceglieIPresentiConLeCaselle() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Insegnante maria = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+        User utente = utenteSenzaUsername("Ugo", "Terzo");
+        utente.setUsername("ugo.terzo");
+        Insegnante ugo = insegnanteService.salva(new Insegnante(), utente, "segreta123");
+        canto.setInsegnantiFacoltativi(java.util.List.of(marco, ugo));
+        corsoService.save(canto);
+        try {
+            apriLezioni();
+            var lezioni = test((Grid<Lezione>) find(Grid.class).single());
+            Lezione lezione = lezioni.getRow(0);
+            test((Button) lezioni.getCellComponent(0, 6).getChildren().findFirst().orElseThrow()).click();
+
+            assertFalse(find(Button.class).withText("Entrambi").exists());
+            CheckboxGroup<Insegnante> caselle = find(CheckboxGroup.class).all().stream()
+                .filter(c -> c.getAriaLabel().filter("Insegnanti presenti"::equals).isPresent()).findFirst().orElseThrow();
+            assertEquals(Set.of(maria, marco, ugo), caselle.getValue());
+            test(caselle).deselectItem("Marco Rossi");
+            assertEquals(Set.of(maria, ugo), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
+        } finally {
+            Corso ripristino = corsoService.findById(canto.getId());
+            ripristino.setInsegnantiFacoltativi(java.util.List.of());
+            corsoService.save(ripristino);
+            insegnanteRepository.delete(ugo);
+            userService.delete(ugo.getUser());
+        }
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
     void insegnante_conUnSoloInsegnanteNonVedeLaSceltaDegliInsegnanti() {
         apriLezioni();
         var lezioni = test((Grid<Lezione>) find(Grid.class).single());

@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.Text;
 import it.attocchi.entity.Luogo;
 import it.attocchi.service.LuogoService;
@@ -344,6 +345,8 @@ public class ElencoLezioni extends VerticalLayout {
         List<Insegnante> insegnanti = lezione.getCorso().getInsegnanti();
         if (insegnanti.size() == 2) {
             dialog.add(ViewSupport.sezione("Insegnanti presenti"), createInsegnantiPresenti(lezione, insegnanti));
+        } else if (insegnanti.size() > 2) {
+            dialog.add(ViewSupport.sezione("Insegnanti presenti"), createCaselleInsegnanti(lezione, insegnanti));
         }
         dialog.add(ViewSupport.sezione("Allievi"));
 
@@ -718,6 +721,37 @@ public class ElencoLezioni extends VerticalLayout {
             }
         });
         return controllo;
+    }
+
+    /**
+     * Con più di due insegnanti, una casella per insegnante del corso, salvata subito; almeno uno deve restare
+     * presente: togliendo l'ultimo la casella torna spuntata con un avviso.
+     */
+    private CheckboxGroup<Insegnante> createCaselleInsegnanti(Lezione lezione, List<Insegnante> insegnanti) {
+        CheckboxGroup<Insegnante> caselle = new CheckboxGroup<>();
+        caselle.setAriaLabel("Insegnanti presenti");
+        caselle.setItems(insegnanti);
+        caselle.setItemLabelGenerator(Insegnante::getNomeCompleto);
+        caselle.setValue(insegnanti.stream().filter(lezione.getInsegnantiPresenti()::contains).collect(Collectors.toSet()));
+        caselle.addValueChangeListener(e -> {
+            if (!e.isFromClient()) {
+                return;
+            }
+            if (e.getValue().isEmpty()) {
+                Notification.show("Almeno un insegnante deve essere presente");
+                caselle.setValue(e.getOldValue());
+                return;
+            }
+            try {
+                lezioneService.impostaInsegnantiPresenti(lezione.getId(),
+                    e.getValue().stream().map(Insegnante::getId).collect(Collectors.toSet()), username);
+                updateGrid();
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio degli insegnanti presenti: " + ex.getMessage());
+                caselle.setValue(e.getOldValue());
+            }
+        });
+        return caselle;
     }
 
     /** Cognome dell'insegnante per le etichette brevi (il nome completo se manca). */
