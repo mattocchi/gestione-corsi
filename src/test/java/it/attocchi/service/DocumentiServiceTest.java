@@ -74,8 +74,8 @@ class DocumentiServiceTest {
             assertTrue(testo.contains("DA PAGARE"), testo);
             assertTrue(testo.contains("150,00 €"), testo);
             assertTrue(testo.contains("450,00 €"), testo);
-            // La ricevuta riporta gli insegnanti, la conferma no
-            assertTrue(testo.contains("Insegnante " + iscrizione.getCorso().getNomiInsegnanti()), testo);
+            // Né la ricevuta né la conferma nominano gli insegnanti
+            assertFalse(testo.contains(iscrizione.getCorso().getNomiInsegnanti()), testo);
         } finally {
             pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
         }

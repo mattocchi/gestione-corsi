@@ -466,5 +466,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### RICEVUTA
 
-* [ ] nella ricevuta di pagamento rimuovi l'informazione "Insegnanti"
+* [x] nella ricevuta di pagamento rimuovi l'informazione "Insegnanti" _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: tolta la riga "Insegnante" dalla ricevuta in PDF (l'email della ricevuta non li nomina già), come nella conferma; il riepilogo della famiglia non cambia._

@@ -20,7 +20,7 @@
 
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
-| 1 | Tolta la riga degli insegnanti da `datiIscrizione`; test della ricevuta; CLAUDE.md | templates, `DocumentiServiceTest`, CLAUDE.md | `./mvnw test` | [ ] | F-2026-10-27/RICEVUTA.1 |
+| 1 | Tolta la riga degli insegnanti da `datiIscrizione`; test della ricevuta; CLAUDE.md | templates, `DocumentiServiceTest`, CLAUDE.md | `./mvnw test` | [x] | F-2026-10-27/RICEVUTA.1 |
 
 ## Fuori ambito
 
@@ -28,3 +28,4 @@
 
 ## Registro
 
+- Passo 1: tolta la riga e il parametro `insegnanti` dalla macro `datiIscrizione`, tolte le chiavi `insegnante`/`etichettaInsegnante` dal modello di `DocumentiService`; il test della ricevuta ora verifica che gli insegnanti non compaiano. `./mvnw test`: 331 test, tutti verdi. PDF non controllato a vista.

@@ -585,8 +585,6 @@ public class DocumentiService {
             modello.put("genitore", Map.of("nome", genitore.getNomeCompleto(), "codiceFiscale", testo(genitore.getCodiceFiscale())));
         }
         modello.put("corso", Map.of("nome", corso.getNome(), "anno", testo(corso.getAnnoScolastico()),
-            "insegnante", corso.getNomiInsegnanti(),
-            "etichettaInsegnante", corso.getInsegnanti().size() > 1 ? "Insegnanti" : "Insegnante",
             "quota", Formati.euro(situazione.quota()), "giorni", giorni(iscrizione)));
         modello.put("importi", importi(iscrizione, situazione));
         modello.put("modalitaPagamento", modalitaPagamento(corso.getAnnoScolastico()));
