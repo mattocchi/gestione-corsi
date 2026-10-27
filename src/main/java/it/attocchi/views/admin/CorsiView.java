@@ -51,6 +51,8 @@ import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.util.Arrays;
@@ -300,16 +302,16 @@ public class CorsiView extends VerticalLayout {
         ComboBox<Insegnante> insegnante = new ComboBox<>("Insegnante");
         insegnante.setItems(insegnanteService.findAll());
         insegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
-        ComboBox<Insegnante> secondoInsegnante = new ComboBox<>("Secondo insegnante");
-        secondoInsegnante.setItems(insegnanteService.findAll());
-        secondoInsegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
-        secondoInsegnante.setClearButtonVisible(true);
-        secondoInsegnante.setHelperText("Facoltativo: stessi diritti sul corso");
+        MultiSelectComboBox<Insegnante> altriInsegnanti = new MultiSelectComboBox<>("Altri insegnanti");
+        altriInsegnanti.setItems(insegnanteService.findAll());
+        altriInsegnanti.setItemLabelGenerator(Insegnante::getNomeCompleto);
+        altriInsegnanti.setClearButtonVisible(true);
+        altriInsegnanti.setHelperText("Facoltativi, fino a " + Corso.MAX_FACOLTATIVI + ": stessi diritti sul corso");
         // Per i servizi chi lo svolge è un "Incaricato"
         tipo.addValueChangeListener(e -> {
             TipoCorso scelto = e.getValue() != null ? e.getValue() : TipoCorso.CORSO;
             insegnante.setLabel(scelto.getChiLoSvolge());
-            secondoInsegnante.setLabel("Secondo " + scelto.getChiLoSvolge().toLowerCase());
+            altriInsegnanti.setLabel("Altri " + scelto.getChiLoSvolgonoPlurale().toLowerCase());
         });
 
         MultiSelectComboBox<Luogo> luoghiAbilitati = new MultiSelectComboBox<>("Luoghi abilitati");
@@ -358,16 +360,18 @@ public class CorsiView extends VerticalLayout {
         binder.forField(giorniSettimana).bind(Corso::getGiorniSettimana, Corso::setGiorniSettimana);
         binder.forField(cadenza).asRequired("Scegli la cadenza").bind(Corso::getCadenzaSettimane, Corso::setCadenzaSettimane);
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
-        binder.forField(secondoInsegnante)
-            .withValidator(secondo -> secondo == null || !secondo.equals(insegnante.getValue()),
-                "Deve essere diverso dal primo")
-            .bind(Corso::getSecondoInsegnante, Corso::setSecondoInsegnante);
+        // Nell'ordine di scelta, fino a MAX_FACOLTATIVI e senza il titolare
+        binder.forField(altriInsegnanti)
+            .withValidator(altri -> altri.size() <= Corso.MAX_FACOLTATIVI, "Al massimo " + Corso.MAX_FACOLTATIVI + " insegnanti")
+            .withValidator(altri -> !altri.contains(insegnante.getValue()), "Il titolare non va ripetuto qui")
+            .bind(c -> new LinkedHashSet<>(c.getInsegnantiFacoltativi()),
+                (c, altri) -> c.setInsegnantiFacoltativi(new ArrayList<>(altri)));
         binder.forField(annoScolastico).asRequired("Scegli l'anno scolastico").bind(Corso::getAnnoScolastico, Corso::setAnnoScolastico);
         binder.forField(attivo).bind(Corso::isAttivo, Corso::setAttivo);
 
         binder.readBean(corso);
 
-        formLayout.add(bloccoTipo, nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
+        formLayout.add(bloccoTipo, nome, insegnante, altriInsegnanti, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi

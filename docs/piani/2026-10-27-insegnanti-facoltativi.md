@@ -22,8 +22,8 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `Corso.insegnantiFacoltativi` (lista ordinata, tabella `corso_insegnanti`) al posto di `secondoInsegnante`; query dei corsi dell'insegnante; validazione in `CorsoService.save` (max 3, distinti, non il titolare); script di migrazione; test | entity, repository, `CorsoService`, `docs/migrazioni`, test | — | `./mvnw test` | [ ] |
-| 2 | Dialog del corso: "Altri insegnanti" a scelta multipla; test | `CorsiView`, `ViewAccessTest` | INSEGNANTI.1 | `./mvnw test` | [ ] |
+| 1 | `Corso.insegnantiFacoltativi` (lista ordinata, tabella `corso_insegnanti`) al posto di `secondoInsegnante`; query dei corsi dell'insegnante; validazione in `CorsoService.save` (max 3, distinti, non il titolare); script di migrazione; test | entity, repository, `CorsoService`, `docs/migrazioni`, test | — | `./mvnw test` | [x] Fatto insieme a 2 (il dialog usava il campo rimosso). Lista caricata con `@Fetch(SELECT)`: in join, l'EAGER di una lista ordinata dava `IndexOutOfBoundsException` in Hibernate |
+| 2 | Dialog del corso: "Altri insegnanti" a scelta multipla; test | `CorsiView`, `ViewAccessTest` | INSEGNANTI.1 | `./mvnw test` | [x] Nello stesso commit di 1 |
 | 3 | Gestisci Presenze: caselle degli insegnanti presenti con più di due insegnanti; test | `ElencoLezioni`, test | INSEGNANTI.1 | `./mvnw test` | [ ] |
 | 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | build e test | [ ] |
 

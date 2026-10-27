@@ -13,6 +13,6 @@ public interface InsegnanteRepository extends JpaRepository<Insegnante, Long> {
     Optional<Insegnante> findByUserId(Long userId);
     Optional<Insegnante> findByUserUsername(String username);
 
-    @Query("SELECT DISTINCT i FROM Insegnante i LEFT JOIN FETCH i.corsi LEFT JOIN FETCH i.corsiComeSecondo")
+    @Query("SELECT DISTINCT i FROM Insegnante i LEFT JOIN FETCH i.corsi LEFT JOIN FETCH i.corsiComeFacoltativo")
     List<Insegnante> findAllWithCorsi();
 }

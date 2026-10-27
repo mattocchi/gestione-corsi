@@ -2,6 +2,8 @@ package it.attocchi.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -83,10 +85,20 @@ public class Corso {
     @JoinColumn(name = "insegnante_id")
     private Insegnante insegnante;
 
-    /** Secondo insegnante facoltativo, con gli stessi diritti del titolare. */
-    @ManyToOne
-    @JoinColumn(name = "secondo_insegnante_id")
-    private Insegnante secondoInsegnante;
+    /** Massimo numero di insegnanti facoltativi oltre al titolare. */
+    public static final int MAX_FACOLTATIVI = 3;
+
+    /**
+     * Insegnanti facoltativi (fino a {@link #MAX_FACOLTATIVI}), con gli stessi diritti del titolare, nell'ordine scelto.
+     * Caricati sempre: servono a ogni controllo dei permessi ({@link #haInsegnante}).
+     */
+    @ManyToMany(fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SELECT)
+    @BatchSize(size = 50)
+    @OrderColumn(name = "ordine")
+    @JoinTable(name = "corso_insegnanti", joinColumns = @JoinColumn(name = "corso_id"),
+        inverseJoinColumns = @JoinColumn(name = "insegnante_id"))
+    private List<Insegnante> insegnantiFacoltativi = new ArrayList<>();
 
     // Solo REMOVE: salvare un corso dal dialog non deve sovrascrivere le iscrizioni,
     // che si gestiscono con i metodi dedicati di CorsoService
@@ -250,22 +262,24 @@ public class Corso {
         this.insegnante = insegnante;
     }
 
-    public Insegnante getSecondoInsegnante() {
-        return secondoInsegnante;
+    public List<Insegnante> getInsegnantiFacoltativi() {
+        return insegnantiFacoltativi;
     }
 
-    public void setSecondoInsegnante(Insegnante secondoInsegnante) {
-        this.secondoInsegnante = secondoInsegnante;
+    public void setInsegnantiFacoltativi(List<Insegnante> insegnantiFacoltativi) {
+        this.insegnantiFacoltativi = new ArrayList<>(insegnantiFacoltativi);
     }
 
-    /** Titolare e secondo insegnante, in quest'ordine, senza quelli non assegnati. */
+    /** Titolare e insegnanti facoltativi, in quest'ordine, senza doppioni. */
     public List<Insegnante> getInsegnanti() {
         List<Insegnante> insegnanti = new ArrayList<>();
         if (insegnante != null) {
             insegnanti.add(insegnante);
         }
-        if (secondoInsegnante != null && !secondoInsegnante.equals(insegnante)) {
-            insegnanti.add(secondoInsegnante);
+        for (Insegnante facoltativo : insegnantiFacoltativi) {
+            if (facoltativo != null && !insegnanti.contains(facoltativo)) {
+                insegnanti.add(facoltativo);
+            }
         }
         return insegnanti;
     }
@@ -275,7 +289,7 @@ public class Corso {
         return String.join(", ", getInsegnanti().stream().map(Insegnante::getNomeCompleto).toList());
     }
 
-    /** {@code true} se l'utente è il titolare o il secondo insegnante del corso. */
+    /** {@code true} se l'utente è il titolare o uno degli insegnanti facoltativi del corso. */
     public boolean haInsegnante(String username) {
         return username != null && getInsegnanti().stream()
             .anyMatch(i -> i.getUser() != null && username.equals(i.getUser().getUsername()));

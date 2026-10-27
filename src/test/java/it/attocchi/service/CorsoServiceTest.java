@@ -141,9 +141,15 @@ class CorsoServiceTest {
         prima.setCompletata(true);
         lezioneService.save(prima);
 
-        canto.setSecondoInsegnante(maria);
+        canto.setInsegnantiFacoltativi(java.util.List.of(maria));
         assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto));
-        canto.setSecondoInsegnante(marco);
+        // Al massimo 3 oltre al titolare, tutti diversi
+        canto.setInsegnantiFacoltativi(java.util.List.of(marco, marco));
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto));
+        canto.setInsegnantiFacoltativi(java.util.List.of(marco, marco, marco, marco));
+        assertEquals("Al massimo 3 insegnanti oltre al titolare",
+            assertThrows(IllegalArgumentException.class, () -> corsoService.save(canto)).getMessage());
+        canto.setInsegnantiFacoltativi(java.util.List.of(marco));
         corsoService.save(canto);
         try {
             List<Lezione> lezioni = lezioneService.findByCorso(canto.getId());
@@ -152,7 +158,7 @@ class CorsoServiceTest {
             assertEquals("Maria Verdi, Marco Rossi", corso("Corso di Canto").getNomiInsegnanti());
         } finally {
             Corso ripristino = corso("Corso di Canto");
-            ripristino.setSecondoInsegnante(null);
+            ripristino.setInsegnantiFacoltativi(java.util.List.of());
             corsoService.save(ripristino);
             Lezione completata = lezioneService.findById(prima.getId());
             completata.setCompletata(false);

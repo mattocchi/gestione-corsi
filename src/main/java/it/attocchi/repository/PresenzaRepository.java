@@ -25,9 +25,8 @@ public interface PresenzaRepository extends JpaRepository<Presenza, Long> {
     @Query("SELECT p FROM Presenza p WHERE p.lezione.corso.id = :corsoId AND p.allievo.id = :allievoId ORDER BY p.lezione.data")
     List<Presenza> findByCorsoIdAndAllievoId(@Param("corsoId") Long corsoId, @Param("allievoId") Long allievoId);
 
-    /** Presenze dei corsi attivi in cui l'utente è titolare o secondo insegnante, con la lezione. */
+    /** Presenze dei corsi attivi in cui l'utente è titolare o insegnante facoltativo, con la lezione. */
     @Query("SELECT p FROM Presenza p JOIN FETCH p.lezione l JOIN l.corso c LEFT JOIN c.insegnante i1 LEFT JOIN i1.user u1"
-        + " LEFT JOIN c.secondoInsegnante i2 LEFT JOIN i2.user u2"
-        + " WHERE c.attivo = true AND (u1.username = :username OR u2.username = :username)")
+        + " WHERE c.attivo = true AND (u1.username = :username OR EXISTS (SELECT f.id FROM Corso cf JOIN cf.insegnantiFacoltativi f JOIN f.user uf WHERE cf = c AND uf.username = :username))")
     List<Presenza> findDeiCorsiAttiviDellInsegnante(@Param("username") String username);
 }

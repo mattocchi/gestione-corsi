@@ -11,19 +11,18 @@ import java.util.List;
 @Repository
 public interface CorsoRepository extends JpaRepository<Corso, Long> {
     List<Corso> findByAttivoTrue();
-    /** Corsi in cui l'insegnante è titolare o secondo insegnante. */
-    @Query("SELECT c FROM Corso c LEFT JOIN c.insegnante i1 LEFT JOIN c.secondoInsegnante i2"
-        + " WHERE i1.id = :insegnanteId OR i2.id = :insegnanteId")
+    /** Corsi in cui l'insegnante è titolare o facoltativo. */
+    @Query("SELECT c FROM Corso c LEFT JOIN c.insegnante i1"
+        + " WHERE i1.id = :insegnanteId OR EXISTS (SELECT f.id FROM Corso cf JOIN cf.insegnantiFacoltativi f WHERE cf = c AND f.id = :insegnanteId)")
     List<Corso> findDellInsegnante(@Param("insegnanteId") Long insegnanteId);
 
-    /** Corsi attivi in cui l'utente è titolare o secondo insegnante. */
+    /** Corsi attivi in cui l'utente è titolare o insegnante facoltativo. */
     @Query("SELECT COUNT(c) FROM Corso c LEFT JOIN c.insegnante i1 LEFT JOIN i1.user u1"
-        + " LEFT JOIN c.secondoInsegnante i2 LEFT JOIN i2.user u2"
-        + " WHERE c.attivo = true AND (u1.username = :username OR u2.username = :username)")
+        + " WHERE c.attivo = true AND (u1.username = :username OR EXISTS (SELECT f.id FROM Corso cf JOIN cf.insegnantiFacoltativi f JOIN f.user uf WHERE cf = c AND uf.username = :username))")
     long contaAttiviDellInsegnante(@Param("username") String username);
     boolean existsByAnnoScolastico(String annoScolastico);
 
-    @Query("SELECT COUNT(c) > 0 FROM Corso c WHERE c.insegnante.id = :insegnanteId OR c.secondoInsegnante.id = :insegnanteId")
+    @Query("SELECT COUNT(c) > 0 FROM Corso c WHERE c.insegnante.id = :insegnanteId OR EXISTS (SELECT f.id FROM Corso cf JOIN cf.insegnantiFacoltativi f WHERE cf = c AND f.id = :insegnanteId)")
     boolean esisteConInsegnante(@Param("insegnanteId") Long insegnanteId);
 
     @Query("SELECT DISTINCT c.annoScolastico FROM Corso c WHERE c.annoScolastico IS NOT NULL")

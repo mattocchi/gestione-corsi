@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
@@ -316,8 +317,12 @@ public class CorsoService {
         if (corso.getCadenzaSettimane() != 1 && corso.getCadenzaSettimane() != 2) {
             throw new IllegalArgumentException("La cadenza è ogni settimana o ogni 2 settimane");
         }
-        if (corso.getSecondoInsegnante() != null && corso.getSecondoInsegnante().equals(corso.getInsegnante())) {
-            throw new IllegalArgumentException("Il secondo insegnante deve essere diverso dal primo");
+        List<Insegnante> facoltativi = corso.getInsegnantiFacoltativi();
+        if (facoltativi.size() > Corso.MAX_FACOLTATIVI) {
+            throw new IllegalArgumentException("Al massimo " + Corso.MAX_FACOLTATIVI + " insegnanti oltre al titolare");
+        }
+        if (facoltativi.contains(corso.getInsegnante()) || new HashSet<>(facoltativi).size() != facoltativi.size()) {
+            throw new IllegalArgumentException("Gli altri insegnanti devono essere diversi tra loro e dal titolare");
         }
         if (corso.getId() != null) {
             for (GruppoCorso gruppo : gruppoRepository.findByCorsoId(corso.getId())) {

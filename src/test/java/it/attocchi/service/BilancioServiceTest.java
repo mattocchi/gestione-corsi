@@ -265,7 +265,7 @@ class BilancioServiceTest {
         Insegnante maria = insegnanteService.findByUsername("insegnante1").orElseThrow();
         Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
         var canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
-        canto.setSecondoInsegnante(marco);
+        canto.setInsegnantiFacoltativi(java.util.List.of(marco));
         corsoService.save(canto);
         Lezione lezione = lezioneService.findByCorso(canto.getId()).getFirst();
         BigDecimal marcoPrima = maturato(marco);
@@ -289,7 +289,7 @@ class BilancioServiceTest {
             Lezione ripristino = lezioneService.findById(lezione.getId());
             ripristino.setCompletata(false);
             lezioneService.save(ripristino);
-            canto.setSecondoInsegnante(null);
+            canto.setInsegnantiFacoltativi(java.util.List.of());
             corsoService.save(canto);
         }
     }

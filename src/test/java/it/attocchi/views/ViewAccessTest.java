@@ -936,25 +936,28 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_assegnaUnSecondoInsegnanteAlCorso() {
+    void segreteria_assegnaAltriInsegnantiAlCorso() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
         try {
             test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
-            ComboBox<Insegnante> secondo = find(ComboBox.class).withLabel("Secondo insegnante").single();
-            test(secondo).selectItem("Maria Verdi");
+            MultiSelectComboBox<Insegnante> altri = find(MultiSelectComboBox.class).withLabel("Altri insegnanti").single();
+            Insegnante maria = insegnanteService.findByUsername("insegnante1").orElseThrow();
+            Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
+            // Il titolare non va ripetuto tra gli altri
+            altri.setValue(Set.of(maria));
             test(find(Button.class).withText("Salva").single()).click();
-            assertTrue(secondo.isInvalid());
+            assertTrue(altri.isInvalid());
 
-            test(secondo).selectItem("Marco Rossi");
+            altri.setValue(Set.of(marco));
             test(find(Button.class).withText("Salva").single()).click();
             assertEquals("Maria Verdi, Marco Rossi", corsoService.findById(corsoId).getNomiInsegnanti());
             assertEquals("Maria Verdi, Marco Rossi", corsi.getCellText(riga(corsi, "Corso di Canto"), 2));
         } finally {
             Corso ripristino = corsoService.findById(corsoId);
-            ripristino.setSecondoInsegnante(null);
+            ripristino.setInsegnantiFacoltativi(java.util.List.of());
             corsoService.save(ripristino);
         }
     }
@@ -4162,7 +4165,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void insegnante_indicaSeEranoPresentiEntrambiGliInsegnanti() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         Insegnante marco = insegnanteService.findByUsername("insegnante2").orElseThrow();
-        canto.setSecondoInsegnante(marco);
+        canto.setInsegnantiFacoltativi(java.util.List.of(marco));
         corsoService.save(canto);
         try {
             apriLezioni();
@@ -4174,7 +4177,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(find(Button.class).withText("Solo Rossi").single()).click();
             assertEquals(Set.of(marco), lezioneService.findById(lezione.getId()).getInsegnantiPresenti());
         } finally {
-            canto.setSecondoInsegnante(null);
+            canto.setInsegnantiFacoltativi(java.util.List.of());
             corsoService.save(canto);
         }
     }
