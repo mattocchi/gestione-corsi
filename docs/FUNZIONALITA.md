@@ -472,3 +472,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### RIEPILOGO FAMIGLIA
 
 * [ ] nel riepilogo per famiglia, sotto il nome del corso anziche indicare gli insegnanti indica l'anno scolastico
+  _Chiarimento 2026-10-27: sotto il nome del corso "Anno scolastico 2024/2025" (niente per i corsi senza anno), seguito come prima dalla nota sulla quota personalizzata; vale anche per il riepilogo dell'allievo adulto, che usa lo stesso modello._
