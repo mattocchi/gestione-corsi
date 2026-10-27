@@ -107,6 +107,9 @@ class EmailServiceTest {
             anteprima.destinatario().nome()), anteprima.corpoHtml());
         assertTrue(anteprima.allegato().endsWith(".pdf"));
         assertTrue(anteprima.pdf().length > 0);
+        // In fondo il link all'Area Corsi (app.url) per documenti e pagamenti
+        assertTrue(anteprima.corpoHtml().contains("nell'Area Corsi"), anteprima.corpoHtml());
+        assertTrue(anteprima.corpoHtml().contains("href=\"http"), anteprima.corpoHtml());
         assertEquals(0, emailService.tuttiGliInvii().size());
 
         // Stessi controlli dell'invio: ricevuta senza pagamenti, utente non autorizzato

@@ -1,3 +1,4 @@
+<#import "piede.ftlh" as p>
 <#import "/regole-corso.ftlh" as r>
 <#import "/importi.ftlh" as i>
 <!DOCTYPE html>
@@ -16,5 +17,6 @@
 <@r.regole email=true/>
 <p>In allegato la conferma di iscrizione in PDF.</p>
 <p>Cordiali saluti,<br/>${associazione.nome}</p>
+<@p.areaCorsi/>
 </body>
 </html>

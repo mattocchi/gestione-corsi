@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.config.RecuperoPasswordProperties;
 import java.util.Objects;
 import it.attocchi.entity.LetteraIncarico;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -68,9 +69,13 @@ public class DocumentiService {
 
     private final UserRepository userRepository;
     private final LetteraIncaricoService letteraIncaricoService;
+    /** Indirizzo dell'app ({@code app.url}) per il link in fondo alle email ({@code email/piede.ftlh}). */
+    private final String appUrl;
 
     public DocumentiService(PagamentoService pagamentoService, AssociazioneProperties associazione,
-                            UserRepository userRepository, LetteraIncaricoService letteraIncaricoService) {
+                            UserRepository userRepository, LetteraIncaricoService letteraIncaricoService,
+                            RecuperoPasswordProperties applicazione) {
+        this.appUrl = applicazione.url();
         this.letteraIncaricoService = letteraIncaricoService;
         this.pagamentoService = pagamentoService;
         this.userRepository = userRepository;
@@ -508,6 +513,7 @@ public class DocumentiService {
     private String render(String nome, Map<String, Object> modello) {
         try {
             Template template = freemarker.getTemplate(nome);
+            modello.putIfAbsent("appUrl", appUrl);
             StringWriter out = new StringWriter();
             template.process(modello, out);
             return out.toString();

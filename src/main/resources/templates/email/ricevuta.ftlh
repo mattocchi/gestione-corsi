@@ -1,3 +1,4 @@
+<#import "piede.ftlh" as p>
 <#import "/importi.ftlh" as i>
 <!DOCTYPE html>
 <html lang="it">
@@ -8,5 +9,6 @@
   di <strong>${allievo.nome}</strong>.</p>
 <@i.blocco email=true/>
 <p>Cordiali saluti,<br/>${associazione.nome}</p>
+<@p.areaCorsi/>
 </body>
 </html>
