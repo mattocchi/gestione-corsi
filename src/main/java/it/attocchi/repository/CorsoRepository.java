@@ -29,6 +29,12 @@ public interface CorsoRepository extends JpaRepository<Corso, Long> {
     @Query("SELECT DISTINCT c.annoScolastico FROM Corso c WHERE c.annoScolastico IS NOT NULL")
     List<String> findAnniScolasticiUsati();
 
+    @Query("SELECT DISTINCT c.luogo.id FROM Corso c WHERE c.luogo IS NOT NULL")
+    List<Long> findLuoghiPredefinitiUsati();
+
+    @Query("SELECT DISTINCT l.id FROM Corso c JOIN c.luoghiAbilitati l")
+    List<Long> findLuoghiAbilitatiUsati();
+
     @Query("SELECT c FROM Corso c JOIN c.iscrizioni i WHERE i.allievo.id = :allievoId")
     List<Corso> findByAllievoId(@Param("allievoId") Long allievoId);
 

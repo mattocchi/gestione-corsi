@@ -7,6 +7,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -31,6 +32,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.Luogo;
 import it.attocchi.entity.TipoCorso;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
@@ -38,6 +40,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.service.LuogoService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
@@ -112,6 +115,7 @@ public class CorsiView extends VerticalLayout {
     private final AllievoService allievoService;
     private final PagamentoService pagamentoService;
     private final AnnoScolasticoService annoScolasticoService;
+    private final LuogoService luogoService;
     /** L'eliminazione dei corsi è riservata all'admin; la segreteria li gestisce senza eliminarli. */
     private final boolean puoEliminare;
 
@@ -128,7 +132,8 @@ public class CorsiView extends VerticalLayout {
 
     public CorsiView(CorsoService corsoService, InsegnanteService insegnanteService, AllievoService allievoService,
                      PagamentoService pagamentoService, AnnoScolasticoService annoScolasticoService,
-                     SecurityService securityService) {
+                     LuogoService luogoService, SecurityService securityService) {
+        this.luogoService = luogoService;
         this.pagamentoService = pagamentoService;
         this.annoScolasticoService = annoScolasticoService;
         this.corsoService = corsoService;
@@ -170,6 +175,7 @@ public class CorsiView extends VerticalLayout {
         grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(Formati::giorniECadenza).setHeader("Giorni");
+        grid.addColumn(Corso::getNomeLuogo).setHeader("Luogo").setSortable(true);
         grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
         grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
@@ -185,6 +191,7 @@ public class CorsiView extends VerticalLayout {
             .campo("Insegnanti", Corso::getNomiInsegnanti)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("Giorni", Formati::giorniECadenza)
+            .campo("Luogo", Corso::getNomeLuogo)
             .campo("N. Lezioni", Corso::getNumeroLezioni)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti)
             .campo("N. Allievi", corso -> corso.getAllievi().size())
@@ -305,6 +312,24 @@ public class CorsiView extends VerticalLayout {
             secondoInsegnante.setLabel("Secondo " + scelto.getChiLoSvolge().toLowerCase());
         });
 
+        MultiSelectComboBox<Luogo> luoghiAbilitati = new MultiSelectComboBox<>("Luoghi abilitati");
+        luoghiAbilitati.setItems(luogoService.scelteCorso(corso.getLuoghiAbilitati()));
+        luoghiAbilitati.setItemLabelGenerator(Luogo::getNome);
+        luoghiAbilitati.setHelperText("Proposti per primi sulle lezioni; si può scegliere comunque ogni luogo attivo");
+        ComboBox<Luogo> luogo = new ComboBox<>("Luogo predefinito");
+        luogo.setItems(luogoService.scelteCorso(corso.getLuogo() != null ? List.of(corso.getLuogo()) : List.of()));
+        luogo.setItemLabelGenerator(Luogo::getNome);
+        luogo.setClearButtonVisible(true);
+        luogo.setHelperText("Facoltativo: dove si svolgono di solito le lezioni");
+        // Il predefinito è anche abilitato
+        luogo.addValueChangeListener(e -> {
+            if (e.getValue() != null && !luoghiAbilitati.getValue().contains(e.getValue())) {
+                luoghiAbilitati.select(e.getValue());
+            }
+        });
+
+        binder.forField(luogo).bind(Corso::getLuogo, Corso::setLuogo);
+        binder.forField(luoghiAbilitati).bind(Corso::getLuoghiAbilitati, Corso::setLuoghiAbilitati);
         binder.forField(tipo).asRequired("Scegli il tipo").bind(Corso::getTipo, Corso::setTipo);
         binder.forField(nome).asRequired("Inserisci il nome del corso").bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
@@ -342,7 +367,7 @@ public class CorsiView extends VerticalLayout {
 
         binder.readBean(corso);
 
-        formLayout.add(bloccoTipo, nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, descrizione);
+        formLayout.add(bloccoTipo, nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi
@@ -418,7 +443,7 @@ public class CorsiView extends VerticalLayout {
                 && filtroTipo.getValue().ammette(corso)
                 && (anno == null || anno.equals(corso.getAnnoScolastico()));
             corsi.setFilter(corso -> statoEAnno.test(corso) && ricerca.corrisponde(RicercaRapida.testo(corso.getNome(),
-                corso.getAnnoScolastico(), corso.getNomiInsegnanti(), corso.getDescrizione())));
+                corso.getAnnoScolastico(), corso.getNomiInsegnanti(), corso.getDescrizione(), corso.getNomeLuogo())));
             ricerca.mostraConteggio(corsi.getItemCount(), (int) tutti.stream().filter(statoEAnno).count());
         }
     }

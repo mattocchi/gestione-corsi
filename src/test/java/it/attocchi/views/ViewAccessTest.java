@@ -149,7 +149,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ViewAccessTest extends SpringBrowserlessTest {
 
     /** Colonna delle azioni in Gestione Corsi (desktop). */
-    private static final int AZIONI_CORSO = 10;
+    private static final int AZIONI_CORSO = 11;
 
     @Autowired
     private PresenzaService presenzaService;
@@ -758,8 +758,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             dialog.close();
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
-            assertEquals("1", corsi.getCellText(riga(corsi, "Corso di Chitarra"), 8));
-            assertEquals("", corsi.getCellText(riga(corsi, "Corso di Canto"), 8));
+            assertEquals("1", corsi.getCellText(riga(corsi, "Corso di Chitarra"), 9));
+            assertEquals("", corsi.getCellText(riga(corsi, "Corso di Canto"), 9));
 
             // Nel Riepilogo Iscritti il corso con gruppi ha un livello in più: corso → gruppi → iscritti
             navigate(RiepilogoIscrittiView.class);
@@ -1341,7 +1341,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         int canto = riga(corsi, "Corso di Canto");
         Long corsoId = corsi.getRow(canto).getId();
         assertEquals("2024/2025", corsi.getCellText(canto, 1));
-        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 9)).getText());
+        assertEquals("Attivo", ((Badge) corsi.getCellComponent(canto, 10)).getText());
 
         test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Modifica")).click();
         test(find(ComboBox.class).withLabel("Anno Scolastico").single()).selectItem("2025/2026");
@@ -1378,7 +1378,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
             assertEquals(1, corsi.size());
-            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 9)).getText());
+            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 10)).getText());
 
             test(stato.getPulsante(CorsiView.FiltroStato.TUTTI)).click();
             assertEquals(2, corsi.size());

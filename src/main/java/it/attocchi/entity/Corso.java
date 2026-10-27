@@ -58,6 +58,18 @@ public class Corso {
 
     private BigDecimal costoTotale;
 
+    /** Luogo in cui si svolgono di solito le lezioni (facoltativo); una lezione può averne un altro. */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "luogo_id")
+    private Luogo luogo;
+
+    /** Luoghi proposti per primi sulle lezioni del corso (comprende quello predefinito). Caricati sempre. */
+    @ManyToMany(fetch = FetchType.EAGER)
+    @BatchSize(size = 50)
+    @JoinTable(name = "corso_luoghi", joinColumns = @JoinColumn(name = "corso_id"),
+        inverseJoinColumns = @JoinColumn(name = "luogo_id"))
+    private Set<Luogo> luoghiAbilitati = new HashSet<>();
+
     /**
      * Prezzo con pre-iscrizione, assegnato a mano (di solito il costo totale scontato del 15%):
      * solo informativo, la quota dovuta resta il costo totale o la quota personalizzata.
@@ -134,6 +146,27 @@ public class Corso {
 
     public void setNumeroLezioni(Integer numeroLezioni) {
         this.numeroLezioni = numeroLezioni;
+    }
+
+    public Luogo getLuogo() {
+        return luogo;
+    }
+
+    public void setLuogo(Luogo luogo) {
+        this.luogo = luogo;
+    }
+
+    public Set<Luogo> getLuoghiAbilitati() {
+        return luoghiAbilitati;
+    }
+
+    public void setLuoghiAbilitati(Set<Luogo> luoghiAbilitati) {
+        this.luoghiAbilitati = new HashSet<>(luoghiAbilitati);
+    }
+
+    /** Nome del luogo predefinito, o {@code null}. */
+    public String getNomeLuogo() {
+        return luogo != null ? luogo.getNome() : null;
     }
 
     public TipoCorso getTipo() {

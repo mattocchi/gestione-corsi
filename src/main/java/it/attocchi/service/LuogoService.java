@@ -1,11 +1,17 @@
 package it.attocchi.service;
 
 import it.attocchi.entity.Luogo;
+import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.LuogoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.List;
 import java.util.Set;
 
@@ -14,10 +20,14 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class LuogoService {
 
-    private final LuogoRepository luogoRepository;
+    public static final Comparator<Luogo> PER_NOME = Comparator.comparing(Luogo::getNome, String.CASE_INSENSITIVE_ORDER);
 
-    public LuogoService(LuogoRepository luogoRepository) {
+    private final LuogoRepository luogoRepository;
+    private final CorsoRepository corsoRepository;
+
+    public LuogoService(LuogoRepository luogoRepository, CorsoRepository corsoRepository) {
         this.luogoRepository = luogoRepository;
+        this.corsoRepository = corsoRepository;
     }
 
     /** Tutti i luoghi, in ordine di nome. */
@@ -32,7 +42,17 @@ public class LuogoService {
 
     /** Id dei luoghi usati da almeno un corso o una lezione (non eliminabili). */
     public Set<Long> usati() {
-        return new HashSet<>();
+        Set<Long> usati = new HashSet<>(corsoRepository.findLuoghiPredefinitiUsati());
+        usati.addAll(corsoRepository.findLuoghiAbilitatiUsati());
+        return usati;
+    }
+
+    /** Scelte per un corso: i luoghi attivi più quelli che ha già (anche se non più attivi), in ordine di nome. */
+    public List<Luogo> scelteCorso(Collection<Luogo> giaAssegnati) {
+        Map<Long, Luogo> scelte = new LinkedHashMap<>();
+        attivi().forEach(l -> scelte.put(l.getId(), l));
+        giaAssegnati.stream().filter(Objects::nonNull).forEach(l -> scelte.putIfAbsent(l.getId(), l));
+        return scelte.values().stream().sorted(PER_NOME).toList();
     }
 
     /** Crea o rinomina un luogo; il nome è obbligatorio e unico (senza distinguere maiuscole). */

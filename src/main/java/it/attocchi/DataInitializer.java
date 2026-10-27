@@ -35,11 +35,13 @@ public class DataInitializer implements CommandLineRunner {
     private final CorsoService corsoService;
     private final CorsoRepository corsoRepository;
     private final IscrizioneRepository iscrizioneRepository;
+    private final LuogoRepository luogoRepository;
 
     public DataInitializer(UserService userService, InsegnanteRepository insegnanteRepository,
                           AllievoRepository allievoRepository, GenitoreRepository genitoreRepository,
                           CorsoService corsoService, CorsoRepository corsoRepository,
-                          IscrizioneRepository iscrizioneRepository) {
+                          IscrizioneRepository iscrizioneRepository, LuogoRepository luogoRepository) {
+        this.luogoRepository = luogoRepository;
         this.userService = userService;
         this.insegnanteRepository = insegnanteRepository;
         this.allievoRepository = allievoRepository;
@@ -163,6 +165,11 @@ public class DataInitializer implements CommandLineRunner {
                 allieviChitarra[i] = allievoRepository.save(allievo);
             }
 
+            // Luoghi: Canto in Aula 1 (anche Palestra), Chitarra in Aula 2
+            Luogo aula1 = luogoRepository.save(new Luogo("Aula 1"));
+            Luogo aula2 = luogoRepository.save(new Luogo("Aula 2"));
+            Luogo palestra = luogoRepository.save(new Luogo("Palestra"));
+
             // Crea corso di Canto - Giovedì
             Corso corsoCanto = new Corso();
             corsoCanto.setNome("Corso di Canto");
@@ -176,6 +183,8 @@ public class DataInitializer implements CommandLineRunner {
             giorniCanto.add(DayOfWeek.THURSDAY);
             corsoCanto.setGiorniSettimana(giorniCanto);
             corsoCanto.setInsegnante(insegnante1);
+            corsoCanto.setLuogo(aula1);
+            corsoCanto.setLuoghiAbilitati(Set.of(aula1, palestra));
             corsoCanto.setCostoTotale(new BigDecimal("600.00"));
             corsoCanto.setCostoPerLezione(new BigDecimal("20.00"));
             corsoCanto = corsoRepository.save(corsoCanto);
@@ -203,6 +212,8 @@ public class DataInitializer implements CommandLineRunner {
             giorniChitarra.add(DayOfWeek.SATURDAY);
             corsoChitarra.setGiorniSettimana(giorniChitarra);
             corsoChitarra.setInsegnante(insegnante2);
+            corsoChitarra.setLuogo(aula2);
+            corsoChitarra.setLuoghiAbilitati(Set.of(aula2));
             corsoChitarra.setCostoTotale(new BigDecimal("600.00"));
             corsoChitarra.setCostoPerLezione(new BigDecimal("20.00"));
             corsoChitarra = corsoRepository.save(corsoChitarra);

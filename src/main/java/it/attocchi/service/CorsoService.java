@@ -324,6 +324,10 @@ public class CorsoService {
                 }
             }
         }
+        // Il luogo predefinito è sempre tra quelli abilitati
+        if (corso.getLuogo() != null) {
+            corso.getLuoghiAbilitati().add(corso.getLuogo());
+        }
         boolean insegnantiCambiati = corso.getId() != null && corsoRepository.findById(corso.getId())
             .map(prima -> !Set.copyOf(prima.getInsegnanti()).equals(Set.copyOf(corso.getInsegnanti())))
             .orElse(false);
