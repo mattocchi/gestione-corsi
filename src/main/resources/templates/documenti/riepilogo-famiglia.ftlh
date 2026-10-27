@@ -27,7 +27,7 @@
   <tr><th>Corso</th><th class="importo">Quota</th><th class="importo">Pagato</th><th class="importo">Residuo</th></tr>
   <#list figlio.corsi as corso>
   <tr>
-    <td class="corso">${corso.nome}<br/><small>${corso.insegnanti}<#if corso.nota?has_content> · ${corso.nota}</#if></small></td>
+    <td class="corso">${corso.nome}<#if corso.anno?has_content || corso.nota?has_content><br/><small>${corso.anno}<#if corso.anno?has_content && corso.nota?has_content> · </#if>${corso.nota}</small></#if></td>
     <td class="importo">${corso.quota}</td><td class="importo">${corso.pagato}</td><td class="importo">${corso.residuo}</td>
   </tr>
   </#list>

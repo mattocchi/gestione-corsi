@@ -20,7 +20,7 @@
 
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
-| 1 | `rigaRiepilogo` con l'anno al posto degli insegnanti; template; test; CLAUDE.md | `DocumentiService`, `riepilogo-famiglia.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [ ] | F-2026-10-27/RIEPILOGO.1 |
+| 1 | `rigaRiepilogo` con l'anno al posto degli insegnanti; template; test; CLAUDE.md | `DocumentiService`, `riepilogo-famiglia.ftlh`, `DocumentiServiceTest` | `./mvnw test` | [x] | F-2026-10-27/RIEPILOGO.1 |
 
 ## Fuori ambito
 
@@ -28,3 +28,4 @@
 
 ## Registro
 
+- Passo 1: `rigaRiepilogo` ha la chiave `anno` ("Anno scolastico …") al posto di `insegnanti`; il template la mostra con la nota della quota. Test del riepilogo esteso (anno sotto i due corsi, insegnanti assenti). `./mvnw test`: 331 test, tutti verdi. PDF non controllato a vista.

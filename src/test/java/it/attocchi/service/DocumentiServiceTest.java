@@ -329,6 +329,9 @@ class DocumentiServiceTest {
             assertTrue(testo.contains("Allievo Chitarra1"), testo);
             assertTrue(testo.contains("1.200,00 €"), testo);
             assertTrue(testo.contains("1.100,00 €"), testo);
+            // Sotto ogni corso l'anno scolastico, non gli insegnanti
+            assertEquals(3, testo.split("Anno scolastico 2024/2025", -1).length - 1, testo);
+            assertFalse(testo.contains(chitarra.corso().getNomiInsegnanti()), testo);
 
             // Admin e segreteria ogni famiglia, il genitore solo la propria
             documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "segreteria");

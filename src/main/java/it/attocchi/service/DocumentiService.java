@@ -279,7 +279,7 @@ public class DocumentiService {
         Iscrizione iscrizione = riga.iscrizione();
         Map<String, String> corsoRiga = new LinkedHashMap<>();
         corsoRiga.put("nome", corso.getNome());
-        corsoRiga.put("insegnanti", corso.getNomiInsegnanti());
+        corsoRiga.put("anno", corso.getAnnoScolastico() != null ? "Anno scolastico " + corso.getAnnoScolastico() : "");
         corsoRiga.put("nota", iscrizione.getQuotaPersonalizzata() != null
             ? "quota piena " + Formati.euro(corso.getCostoTotale())
                 + (iscrizione.getNotaQuota() != null ? ", " + iscrizione.getNotaQuota() : "")
