@@ -1,5 +1,6 @@
 package it.attocchi.views.insegnante;
 
+import it.attocchi.views.TipoCorsoUI;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
@@ -69,7 +70,7 @@ public class MieiAllieviView extends VerticalLayout {
 
         grid.addColumn(a -> allievo(a).getAllievo().getNomeCompleto()).setHeader("Allievo")
             .setComparator(a -> allievo(a).getAllievo().getNomeCompleto());
-        grid.addColumn(a -> allievo(a).getCorso().getNome()).setHeader("Corso")
+        grid.addComponentColumn(a -> TipoCorsoUI.nome(allievo(a).getCorso())).setHeader("Corso")
             .setComparator(a -> allievo(a).getCorso().getNome());
         grid.addColumn(MieiAllieviView::giorniOGruppo).setHeader("Giorni / Gruppo").setAutoWidth(true);
         grid.addColumn(a -> Formati.ora(allievo(a).orarioAbituale())).setHeader("Orario")
@@ -84,6 +85,7 @@ public class MieiAllieviView extends VerticalLayout {
         CardMobile.per(grid)
             .titolo(a -> allievo(a).getAllievo().getNomeCompleto())
             .sottotitolo(a -> allievo(a).getCorso().getNome())
+            .campo("Tipo", a -> TipoCorsoUI.badge(allievo(a).getCorso()))
             .campo("Giorni / Gruppo", MieiAllieviView::giorniOGruppo)
             .campo("Orario", a -> Formati.ora(allievo(a).orarioAbituale()))
             .campo("Svolte", MieiAllieviView::svolte)

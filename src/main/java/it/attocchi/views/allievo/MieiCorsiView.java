@@ -1,5 +1,6 @@
 package it.attocchi.views.allievo;
 
+import it.attocchi.views.TipoCorsoUI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -59,7 +60,7 @@ public class MieiCorsiView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        gridCorsi.addColumn(Corso::getNome).setHeader("Corso").setSortable(true);
+        gridCorsi.addComponentColumn(TipoCorsoUI::nome).setHeader("Corso").setComparator(Corso::getNome);
         gridCorsi.addColumn(MieiCorsiView::insegnante).setHeader("Insegnanti");
         // Il gruppo dell'allievo (solo il suo giorno) o tutti i giorni del corso
         Map<Long, GruppoCorso> gruppi = allievoCorrente != null
@@ -83,6 +84,7 @@ public class MieiCorsiView extends VerticalLayout {
 
         CardMobile<Corso> card = CardMobile.per(gridCorsi)
             .titolo(Corso::getNome)
+            .campo("Tipo", TipoCorsoUI::badge)
 
             .campo("Insegnanti", MieiCorsiView::insegnante)
             .campo("Giorni", giorniDi)

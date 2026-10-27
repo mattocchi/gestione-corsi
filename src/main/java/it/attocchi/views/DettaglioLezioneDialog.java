@@ -53,9 +53,12 @@ public final class DettaglioLezioneDialog {
         VerticalLayout contenuto = new VerticalLayout(
             riga("Lezione", numero + (lezione.getRecuperoDi() != null ? " (recupero)" : "")),
             riga("Data", Formati.data(lezione.getData()) + quando),
-            riga("Insegnanti", lezione.getInsegnantiPresenti().isEmpty() ? lezione.getCorso().getNomiInsegnanti()
+            riga(lezione.getCorso().getTipo().getChiLoSvolgonoPlurale(), lezione.getInsegnantiPresenti().isEmpty() ? lezione.getCorso().getNomiInsegnanti()
                 : lezione.getInsegnantiPresenti().stream().map(Insegnante::getNomeCompleto).sorted()
                     .collect(Collectors.joining(", "))));
+        if (lezione.getCorso().isServizio()) {
+            contenuto.addComponentAsFirst(riga("Tipo", TipoCorsoUI.badge(lezione.getCorso())));
+        }
         if (lezione.isSpostata()) {
             contenuto.add(riga("Spostata dal", Formati.data(lezione.getDataOriginale())));
         }

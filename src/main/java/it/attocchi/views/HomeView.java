@@ -230,10 +230,18 @@ public class HomeView extends VerticalLayout {
         dettaglio.addClassNames("block", Stili.TESTO_SECONDARIO);
         card.add(data, dettaglio);
         LocalDate oggi = LocalDate.now();
+        Span badges = new Span();
+        badges.addClassNames("inline-flex flex-wrap gap-1");
+        if (lezione.getCorso().isServizio()) {
+            badges.add(TipoCorsoUI.badge(lezione.getCorso()));
+        }
         if (lezione.getData().equals(oggi) || lezione.getData().equals(oggi.plusDays(1))) {
             Badge badge = new Badge(lezione.getData().equals(oggi) ? "Oggi" : "Domani");
             badge.addThemeVariants(lezione.getData().equals(oggi) ? BadgeVariant.FILLED : BadgeVariant.CONTRAST);
-            card.setHeaderSuffix(badge);
+            badges.add(badge);
+        }
+        if (badges.getComponentCount() > 0) {
+            card.setHeaderSuffix(badges);
         }
         card.addClassNames("cursor-pointer");
         card.getElement().setAttribute("role", "button");

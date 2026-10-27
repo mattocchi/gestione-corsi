@@ -3634,6 +3634,34 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_lezioniDiUnServizioConBadge() {
+        Corso pulizia = new Corso();
+        pulizia.setTipo(it.attocchi.entity.TipoCorso.SERVIZIO);
+        pulizia.setNome("Pulizia");
+        pulizia.setDataInizio(LocalDate.of(2024, 10, 1));
+        pulizia.setAnnoScolastico("2024/2025");
+        pulizia.setNumeroLezioni(2);
+        pulizia.setDurataLezioneMinuti(120);
+        pulizia.setGiorniSettimana(new java.util.HashSet<>(Set.of(DayOfWeek.TUESDAY)));
+        pulizia.setInsegnante(insegnanteService.findByUsername("insegnante1").orElseThrow());
+        pulizia = corsoService.save(pulizia);
+        try {
+            corsoService.generaLezioni(pulizia);
+            navigate(LezioniView.class);
+            var grid = test((Grid<Lezione>) find(Grid.class).single());
+            Long id = pulizia.getId();
+            int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getCorso().getId().equals(id))
+                .findFirst().orElseThrow();
+            assertTrue(find(Badge.class).from(grid.getCellComponent(riga, 0)).all().stream()
+                .anyMatch(b -> "Servizio".equals(b.getText())));
+        } finally {
+            corsoService.delete(corsoService.findById(pulizia.getId()));
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_cambiaLaDataDiUnaLezione() {
         navigate(LezioniView.class);
         var grid = test((Grid<Lezione>) find(Grid.class).single());

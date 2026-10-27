@@ -1,5 +1,6 @@
 package it.attocchi.views.genitore;
 
+import it.attocchi.views.TipoCorsoUI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -181,7 +182,7 @@ public class FigliView extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog("Corsi di " + allievo.getNomeCompleto(), "1000px");
 
         Grid<Corso> gridCorsi = new Grid<>(Corso.class, false);
-        gridCorsi.addColumn(Corso::getNome).setHeader("Corso");
+        gridCorsi.addComponentColumn(TipoCorsoUI::nome).setHeader("Corso");
         gridCorsi.addColumn(FigliView::insegnante).setHeader("Insegnanti");
         // Il gruppo dell'allievo (solo il suo giorno) o tutti i giorni del corso
         Map<Long, GruppoCorso> gruppi = corsoService.gruppiDellAllievo(allievo.getId());
@@ -204,6 +205,7 @@ public class FigliView extends VerticalLayout {
         CardMobile<Corso> card = CardMobile.per(gridCorsi)
             .titolo(Corso::getNome)
             .stato(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())))
+            .campo("Tipo", TipoCorsoUI::badge)
             .campo("Insegnanti", FigliView::insegnante)
             .campo("Giorni", giorniDi)
             .campo("N. Lezioni", Corso::getNumeroLezioni);

@@ -195,7 +195,8 @@ public class RiepilogoIscrittiView extends VerticalLayout {
     /** Nome del corso, del gruppo ("Senza gruppo (tutti i giorni)" per chi non ne ha) o dell'iscritto. */
     private static String nome(Voce voce) {
         if (voce.isCorso()) {
-            return voce.corso().corso().getNome();
+            Corso corso = voce.corso().corso();
+            return corso.isServizio() ? corso.getNome() + " (servizio)" : corso.getNome();
         }
         if (voce.isGruppo()) {
             return voce.gruppo().gruppo() != null ? Formati.gruppo(voce.gruppo().gruppo()) : "Senza gruppo (tutti i giorni)";

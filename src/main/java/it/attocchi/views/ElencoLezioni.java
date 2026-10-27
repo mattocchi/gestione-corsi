@@ -143,7 +143,8 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     private void configureGrid() {
-        gridLezioni.addColumn(l -> l.getCorso().getNome()).setHeader("Corso").setSortable(true);
+        gridLezioni.addComponentColumn(l -> TipoCorsoUI.nome(l.getCorso())).setHeader("Corso")
+            .setComparator(l -> l.getCorso().getNome());
         var insegnante = gridLezioni.addColumn(ElencoLezioni::insegnante).setHeader("Insegnanti").setSortable(true);
         insegnante.setVisible(tuttiICorsi);
         // Data con il badge "Oggi", "Settimana scorsa", … (QuandoLezione)
@@ -162,6 +163,7 @@ public class ElencoLezioni extends VerticalLayout {
         CardMobile.per(gridLezioni)
             .titolo(l -> l.getCorso().getNome())
             .stato(this::createStatoBadge)
+            .campo("Tipo", l -> TipoCorsoUI.badge(l.getCorso()))
             .campo("Data", this::createData)
             .campo("Insegnanti", l -> tuttiICorsi ? insegnante(l) : null)
             .campo("N. Lezione", this::numero)

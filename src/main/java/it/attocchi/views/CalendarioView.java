@@ -6,6 +6,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -256,6 +257,9 @@ public class CalendarioView extends VerticalLayout {
         ora.addClassNames("font-(--aura-font-weight-semibold)");
         String gruppo = voce.gruppo() != null ? " · " + nomeBreve(voce.gruppo()) : voce.senzaGruppo() ? " · Senza gruppo" : "";
         Span corso = new Span(voce.corso().getNome() + gruppo + (voce.perChi() != null ? " – " + voce.perChi() : ""));
+        if (voce.corso().isServizio()) {
+            corso.add(new Text(" "), TipoCorsoUI.badge(voce.corso()));
+        }
         Span insegnanti = new Span(voce.corso().getNomiInsegnanti()
             + (voce.corso().getCadenzaSettimane() == 2 ? " · ogni 2 sett." : ""));
         insegnanti.addClassNames("text-(--vaadin-text-color-secondary)");
@@ -283,6 +287,11 @@ public class CalendarioView extends VerticalLayout {
             + lezione.getCorso().getNome() + gruppo
             + (voce.perChi() != null ? " – " + voce.perChi() : "");
         Button pulsante = new Button(testo, e -> dettagli(voce));
+        // Servizio (es. Pulizia): icona prima del testo, "servizio" letto dai lettori di schermo
+        if (lezione.getCorso().isServizio()) {
+            pulsante.setIcon(VaadinIcon.TOOLS.create());
+            testo += " (servizio)";
+        }
         pulsante.addThemeVariants(ButtonVariant.TERTIARY);
         pulsante.addClassNames("justify-start m-0 h-auto min-h-0 py-0.5 px-1 w-full min-w-0",
             compatto ? "text-(length:--aura-font-size-xs)" : "text-(length:--aura-font-size-s)");
