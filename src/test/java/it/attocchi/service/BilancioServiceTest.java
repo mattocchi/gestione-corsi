@@ -1,6 +1,8 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.TipoCorso;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
@@ -13,10 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -143,6 +147,37 @@ class BilancioServiceTest {
             Lezione daRiaprire = lezioneService.findById(completata.getId());
             daRiaprire.setCompletata(false);
             lezioneService.save(daRiaprire);
+        }
+    }
+
+    @Test
+    void servizio_ogniLezioneValeLaSuaDurataSenzaIscritti() {
+        Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
+        Corso pulizia = new Corso();
+        pulizia.setTipo(TipoCorso.SERVIZIO);
+        pulizia.setNome("Pulizia");
+        pulizia.setDataInizio(LocalDate.of(2025, 9, 2));
+        pulizia.setAnnoScolastico("2025/2026");
+        pulizia.setNumeroLezioni(2);
+        pulizia.setDurataLezioneMinuti(120);
+        pulizia.setGiorniSettimana(new HashSet<>(Set.of(DayOfWeek.TUESDAY)));
+        pulizia.setInsegnante(insegnante);
+        pulizia = corsoService.save(pulizia);
+        try {
+            // Senza lezioni generate: stima su numero di lezioni × durata
+            assertEquals(new BigDecimal("100.00"), bilancioService.costiPrevistiPerCorso().get(pulizia.getId()));
+            corsoService.generaLezioni(pulizia);
+            Lezione prima = lezioneService.findByCorso(pulizia.getId()).getFirst();
+            lezioneService.completa(prima.getId(), "insegnante1");
+
+            // 25 €/h: 2 lezioni da 2 h previste, una svolta
+            Bilancio bilancio = bilancioService.bilancio(insegnante.getId(), "2025/2026");
+            assertEquals(new BigDecimal("100.00"), bilancio.costoPrevisto());
+            assertEquals(new BigDecimal("50.00"), bilancio.costoMaturato());
+            assertEquals(0, new BigDecimal("50.00").compareTo(
+                bilancioService.propostaRimborso(insegnante.getId(), YearMonth.from(prima.getData()))));
+        } finally {
+            corsoService.delete(corsoService.findById(pulizia.getId()));
         }
     }
 

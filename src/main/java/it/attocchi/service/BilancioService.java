@@ -274,7 +274,7 @@ public class BilancioService {
     private static BigDecimal costoPrevisto(Corso corso, List<Lezione> lezioni, Map<Long, Long> presenze, long iscritti,
                                             BigDecimal tariffaOraria) {
         long minutiPrevisti = lezioni.isEmpty()
-            ? valore(corso.getNumeroLezioni()) * iscritti * valore(corso.getDurataLezioneMinuti())
+            ? valore(corso.getNumeroLezioni()) * (corso.isServizio() ? 1 : iscritti) * valore(corso.getDurataLezioneMinuti())
             : minuti(lezioni, presenze, l -> !l.isNonEffettuata());
         return costo(minutiPrevisti, tariffaOraria);
     }
@@ -314,8 +314,17 @@ public class BilancioService {
     private static long minuti(List<Lezione> lezioni, Map<Long, Long> presenze, Predicate<Lezione> filtro) {
         return lezioni.stream()
             .filter(l -> !l.isNonEffettuata() && filtro.test(l))
-            .mapToLong(l -> presenze.getOrDefault(l.getId(), 0L) * valore(l.getCorso().getDurataLezioneMinuti()))
+            .mapToLong(l -> minuti(l, presenze))
             .sum();
+    }
+
+    /**
+     * Minuti di una lezione: allievi previsti (assenti compresi) × durata, perché le lezioni sono individuali; in un
+     * servizio la durata una volta sola, senza contare gli iscritti.
+     */
+    static long minuti(Lezione lezione, Map<Long, Long> presenze) {
+        long volte = lezione.getCorso().isServizio() ? 1 : presenze.getOrDefault(lezione.getId(), 0L);
+        return volte * valore(lezione.getCorso().getDurataLezioneMinuti());
     }
 
     private Map<Long, Long> presenzePerLezione(Long insegnanteId) {
