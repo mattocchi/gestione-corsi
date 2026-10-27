@@ -459,6 +459,17 @@ public class DocumentiService {
         return render("email/recupero-password.ftlh", modello);
     }
 
+    /** Invito ad accedere: link per impostare la password, valido {@code giorni} giorni. */
+    public String emailInvitoHtml(String saluto, String username, String link, int giorni) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("username", username);
+        modello.put("link", link);
+        modello.put("giorni", giorni);
+        return render("email/invito.ftlh", modello);
+    }
+
     /** Avviso all'utente dopo il cambio della password. */
     public String emailPasswordCambiataHtml(String saluto, String username) {
         Map<String, Object> modello = new HashMap<>();

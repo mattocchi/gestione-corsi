@@ -89,6 +89,10 @@ public class InsegnantiView extends VerticalLayout {
 
     private HorizontalLayout createActions(Insegnante insegnante) {
         HorizontalLayout azioni = ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(insegnante)));
+        Button invita = InvitoUI.pulsante(insegnante.getUser(), this::updateGrid);
+        if (invita != null) {
+            azioni.add(invita);
+        }
         if (puoEliminare) {
             Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> confermaEliminazione(insegnante));
             elimina.addThemeVariants(ButtonVariant.ERROR);

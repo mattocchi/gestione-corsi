@@ -1,5 +1,6 @@
 package it.attocchi.views.admin;
 
+import it.attocchi.service.RecuperoPasswordService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
@@ -53,11 +54,15 @@ public class UtentiView extends VerticalLayout {
     private final Grid<User> grid = new Grid<>(User.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
     private final Checkbox soloIncongruenze = new Checkbox("Solo incongruenze");
+    private final Button invitaSelezionati = new Button("Invita selezionati", VaadinIcon.PAPERPLANE.create());
+    private final RecuperoPasswordService recuperoPasswordService;
     private GridListDataView<User> utenti;
     private List<User> tutti = List.of();
     private Map<Long, List<String>> incongruenze = Map.of();
 
-    public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService, SecurityService securityService) {
+    public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService, SecurityService securityService,
+                      RecuperoPasswordService recuperoPasswordService) {
+        this.recuperoPasswordService = recuperoPasswordService;
         this.userService = userService;
         this.schedeRuoliService = schedeRuoliService;
         this.securityService = securityService;
@@ -72,7 +77,10 @@ public class UtentiView extends VerticalLayout {
         ricerca.addRicercaListener(this::applicaFiltri);
         Button creaSchede = new Button("Crea schede mancanti", VaadinIcon.FILE_ADD.create(), e -> creaSchedeMancanti());
         creaSchede.setTooltipText("Crea la scheda di insegnante, genitore o allievo a chi ha il ruolo ma non la scheda");
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, soloIncongruenze, ricerca);
+        invitaSelezionati.setEnabled(false);
+        invitaSelezionati.setTooltipText("Email con il link per impostare la password a chi ha un'email e non è mai entrato");
+        invitaSelezionati.addClickListener(e -> invitaSelezionati());
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, invitaSelezionati, soloIncongruenze, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -90,8 +98,14 @@ public class UtentiView extends VerticalLayout {
         grid.addColumn(UtentiView::ultimoAccesso).setHeader("Ultimo accesso")
             .setComparator(Comparator.comparing(User::getUltimoAccesso, Comparator.nullsFirst(Comparator.naturalOrder())))
             .setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(UtentiView::invito).setHeader("Invito")
+            .setComparator(Comparator.comparing(User::getInvitatoIl, Comparator.nullsFirst(Comparator.naturalOrder())))
+            .setAutoWidth(true).setFlexGrow(0);
 
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
+        // Selezione multipla per invitare più utenti insieme
+        grid.setSelectionMode(Grid.SelectionMode.MULTI);
+        grid.addSelectionListener(e -> invitaSelezionati.setEnabled(!e.getAllSelectedItems().isEmpty()));
 
         CardMobile.per(grid)
             .titolo(User::getUsername)
@@ -101,8 +115,24 @@ public class UtentiView extends VerticalLayout {
             .campo("Ruoli", user -> String.join(", ", user.getRoles()))
             .campo("Schede", user -> incongruenze.containsKey(user.getId()) ? avvisi(user) : null)
             .campo("Ultimo accesso", UtentiView::ultimoAccesso)
+            .campo("Invito", UtentiView::invito)
             .azioni(this::createActions)
             .applica();
+    }
+
+    /** Ultimo invito ad accedere, vuoto se mai invitato. */
+    private static String invito(User user) {
+        return user.getInvitatoIl() != null ? Formati.dataOra(user.getInvitatoIl()) : "";
+    }
+
+    /** Invita i selezionati che hanno un'email e non sono mai entrati; dice quanti sono stati saltati. */
+    private void invitaSelezionati() {
+        var esito = recuperoPasswordService.invitaTutti(grid.getSelectedItems().stream().map(User::getId).toList(),
+            securityService.getUsername().orElse(""));
+        Notification.show("Inviti inviati: " + esito.invitati()
+            + (esito.saltati() > 0 ? " · saltati " + esito.saltati() + " (senza email o già entrati)" : ""));
+        grid.deselectAll();
+        updateGrid();
     }
 
     private static String ultimoAccesso(User user) {
@@ -113,7 +143,7 @@ public class UtentiView extends VerticalLayout {
         Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(user));
         Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteUser(user));
         deleteButton.addThemeVariants(ButtonVariant.ERROR);
-        return ViewSupport.actions(editButton, deleteButton);
+        return ViewSupport.actions(editButton, InvitoUI.pulsante(user, this::updateGrid), deleteButton);
     }
 
     private void openDialog(User user) {

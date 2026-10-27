@@ -1,5 +1,8 @@
 package it.attocchi.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.util.List;
 import it.attocchi.entity.RecuperoPassword;
 import it.attocchi.entity.User;
 import it.attocchi.repository.RecuperoPasswordRepository;
@@ -44,8 +47,49 @@ class RecuperoPasswordServiceTest {
         user.setPassword(passwordOriginale);
         user.setEnabled(true);
         user.setUltimoAccesso(null);
+        user.setInvitatoIl(null);
         userRepository.save(user);
         recuperoPasswordRepository.deleteAll();
+    }
+
+    @Test
+    void invito_soloStaffEAccountMaiEntratoConEmail() {
+        User user = utente();
+        user.setEnabled(false);
+        userRepository.save(user);
+        assertThrows(IllegalStateException.class, () -> recuperoPasswordService.invita(user.getId(), "insegnante1"));
+
+        recuperoPasswordService.invita(user.getId(), "segreteria");
+        RecuperoPassword link = recuperoPasswordRepository.findAll().getFirst();
+        assertTrue(link.isInvito());
+        assertTrue(link.getScadenza().isAfter(LocalDateTime.now().plusDays(6)));
+        assertNotNull(utente().getInvitatoIl());
+
+        // Già entrato: non si invita più (usa il login o il recupero)
+        User entrato = utente();
+        entrato.setUltimoAccesso(LocalDateTime.now());
+        userRepository.save(entrato);
+        assertFalse(RecuperoPasswordService.invitabile(entrato));
+        assertThrows(IllegalStateException.class, () -> recuperoPasswordService.invita(entrato.getId(), "admin"));
+        assertEquals(new RecuperoPasswordService.EsitoInviti(0, 1),
+            recuperoPasswordService.invitaTutti(List.of(entrato.getId()), "admin"));
+    }
+
+    @Test
+    void invito_impostataLaPasswordLAccountSiAttiva() {
+        User user = utente();
+        user.setEnabled(false);
+        userRepository.save(user);
+        String token = "invito-di-prova";
+        recuperoPasswordRepository.save(new RecuperoPassword(user, RecuperoPasswordService.hash(token),
+            LocalDateTime.now().plusDays(7), true));
+        assertTrue(recuperoPasswordService.isInvito(token));
+        assertFalse(recuperoPasswordService.isInvito("altro"));
+
+        assertEquals("insegnante2", recuperoPasswordService.reimposta(token, "nuovaPassword1"));
+        assertTrue(utente().isEnabled());
+        assertTrue(passwordEncoder.matches("nuovaPassword1", utente().getPassword()));
+        assertEquals(0, recuperoPasswordRepository.count());
     }
 
     @Test

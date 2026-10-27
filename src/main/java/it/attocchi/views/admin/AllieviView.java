@@ -152,6 +152,10 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
     private HorizontalLayout createActions(Allievo allievo) {
         Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(allievo));
         HorizontalLayout actions = ViewSupport.actions(editButton);
+        Button invita = InvitoUI.pulsante(allievo.getUser(), this::updateGrid);
+        if (invita != null) {
+            actions.add(invita);
+        }
         if (puoEliminare) {
             Button deleteButton = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> deleteAllievo(allievo));
             deleteButton.addThemeVariants(ButtonVariant.ERROR);

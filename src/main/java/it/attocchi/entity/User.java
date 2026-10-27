@@ -45,6 +45,10 @@ public class User {
     @Column(name = "ultimo_accesso")
     private LocalDateTime ultimoAccesso;
 
+    /** Data e ora dell'ultimo invito ad accedere inviato; {@code null} = mai invitato. */
+    @Column(name = "invitato_il")
+    private LocalDateTime invitatoIl;
+
     // Costruttori
     public User() {
     }
@@ -120,6 +124,14 @@ public class User {
 
     public void setRoles(Set<String> roles) {
         this.roles = roles;
+    }
+
+    public LocalDateTime getInvitatoIl() {
+        return invitatoIl;
+    }
+
+    public void setInvitatoIl(LocalDateTime invitatoIl) {
+        this.invitatoIl = invitatoIl;
     }
 
     public LocalDateTime getUltimoAccesso() {

@@ -26,6 +26,9 @@ public class RecuperoPassword {
     @Column(nullable = false)
     private LocalDateTime scadenza;
 
+    /** Link di un invito ad accedere (impostata la password si entra subito); null = recupero password. */
+    private Boolean invito;
+
     public RecuperoPassword() {
     }
 
@@ -33,6 +36,15 @@ public class RecuperoPassword {
         this.user = user;
         this.tokenHash = tokenHash;
         this.scadenza = scadenza;
+    }
+
+    public RecuperoPassword(User user, String tokenHash, LocalDateTime scadenza, boolean invito) {
+        this(user, tokenHash, scadenza);
+        this.invito = invito;
+    }
+
+    public boolean isInvito() {
+        return Boolean.TRUE.equals(invito);
     }
 
     public Long getId() {

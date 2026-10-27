@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import it.attocchi.security.AccessoDiretto;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -23,10 +24,12 @@ import it.attocchi.service.UserService;
 public class NuovaPasswordView extends PaginaPubblica implements BeforeEnterObserver {
 
     private final RecuperoPasswordService recuperoPasswordService;
+    private final AccessoDiretto accessoDiretto;
 
-    public NuovaPasswordView(RecuperoPasswordService recuperoPasswordService) {
+    public NuovaPasswordView(RecuperoPasswordService recuperoPasswordService, AccessoDiretto accessoDiretto) {
         super("Nuova password");
         this.recuperoPasswordService = recuperoPasswordService;
+        this.accessoDiretto = accessoDiretto;
     }
 
     @Override
@@ -39,7 +42,13 @@ public class NuovaPasswordView extends PaginaPubblica implements BeforeEnterObse
     }
 
     private void mostraForm(String token, String username) {
-        Paragraph account = new Paragraph("Scegli una nuova password per l'account " + username + ".");
+        boolean invito = recuperoPasswordService.isInvito(token);
+        if (invito) {
+            setTitolo("Benvenuto");
+        }
+        Paragraph account = new Paragraph(invito
+            ? "Scegli la password per il tuo account " + username + ": poi entri subito nell'app."
+            : "Scegli una nuova password per l'account " + username + ".");
         account.addClassNames("m-0");
         PasswordField nuova = new PasswordField("Nuova password");
         nuova.setHelperText("Almeno " + UserService.PASSWORD_MINIMA + " caratteri");
@@ -47,13 +56,13 @@ public class NuovaPasswordView extends PaginaPubblica implements BeforeEnterObse
         nuova.setAutofocus(true);
         PasswordField conferma = new PasswordField("Conferma password");
         conferma.addClassNames("w-full");
-        Button salva = new Button("Salva password", e -> salva(token, nuova, conferma));
+        Button salva = new Button(invito ? "Salva ed entra" : "Salva password", e -> salva(token, invito, nuova, conferma));
         salva.addThemeVariants(ButtonVariant.PRIMARY);
         salva.addClickShortcut(Key.ENTER);
         contenuto.add(account, nuova, conferma, salva);
     }
 
-    private void salva(String token, PasswordField nuova, PasswordField conferma) {
+    private void salva(String token, boolean invito, PasswordField nuova, PasswordField conferma) {
         boolean lunga = nuova.getValue().length() >= UserService.PASSWORD_MINIMA;
         nuova.setErrorMessage("La password deve avere almeno " + UserService.PASSWORD_MINIMA + " caratteri");
         nuova.setInvalid(!lunga);
@@ -63,12 +72,18 @@ public class NuovaPasswordView extends PaginaPubblica implements BeforeEnterObse
         if (!lunga || !uguali) {
             return;
         }
+        String username;
         try {
-            recuperoPasswordService.reimposta(token, nuova.getValue());
+            username = recuperoPasswordService.reimposta(token, nuova.getValue());
         } catch (IllegalStateException ex) {
             // Scaduto o già usato nel frattempo
             contenuto.removeAll();
             mostraLinkNonValido();
+            return;
+        }
+        // Dall'invito si entra subito: la pagina si ricarica già autenticata sulla Home
+        if (invito && accessoDiretto.entra(username)) {
+            getUI().ifPresent(ui -> ui.getPage().setLocation("./"));
             return;
         }
         getUI().ifPresent(ui -> ui.navigate(PasswordAggiornataView.class));

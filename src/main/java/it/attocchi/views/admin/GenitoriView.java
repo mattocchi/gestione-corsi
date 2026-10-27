@@ -91,6 +91,10 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
 
     private HorizontalLayout createActions(Genitore genitore) {
         HorizontalLayout azioni = ViewSupport.actions(ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(genitore)));
+        Button invita = InvitoUI.pulsante(genitore.getUser(), this::updateGrid);
+        if (invita != null) {
+            azioni.add(invita);
+        }
         if (puoEliminare) {
             Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> confermaEliminazione(genitore));
             elimina.addThemeVariants(ButtonVariant.ERROR);

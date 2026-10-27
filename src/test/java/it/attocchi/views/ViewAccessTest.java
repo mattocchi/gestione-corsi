@@ -2816,7 +2816,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());
         assertEquals(13, allievi.size());
-        assertAzioni(allievi.getCellComponent(0, 7), "Modifica");
+        assertAzioni(allievi.getCellComponent(0, 7), "Modifica", "Invita ad accedere");
     }
 
     @Test
@@ -2867,7 +2867,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("", grid.getCellText(row, 4));
             assertEquals("1", grid.getCellText(row, 5));
         }
-        assertAzioni(grid.getCellComponent(0, 6), "Modifica");
+        assertAzioni(grid.getCellComponent(0, 6), "Modifica", "Invita ad accedere");
     }
 
     @Test
@@ -3264,13 +3264,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var utenti = test((Grid<User>) find(Grid.class).single());
             // Allievo iscritto a un corso: niente conferma, solo il motivo
             cerca("allievo_canto1");
-            test(pulsante(utenti.getCellComponent(0, 7), "Elimina")).click();
+            test(pulsante(utenti.getCellComponent(0, 8), "Elimina")).click();
             assertTrue(find(Dialog.class).all().stream().noneMatch(d -> "Eliminare l'utente?".equals(d.getHeaderTitle())));
             assertNotNull(userService.findByUsername("allievo_canto1"));
 
             cerca("ivo daeliminare");
             assertEquals(1, utenti.size());
-            test(pulsante(utenti.getCellComponent(0, 7), "Elimina")).click();
+            test(pulsante(utenti.getCellComponent(0, 8), "Elimina")).click();
             Dialog conferma = find(Dialog.class).all().stream()
                 .filter(d -> "Eliminare l'utente?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
             assertTrue(find(Span.class).from(conferma).all().stream().anyMatch(sp -> sp.getText().contains("si eliminano anche scheda allievo")));
@@ -3349,7 +3349,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var utenti = test((Grid<User>) find(Grid.class).single());
             cerca("lia ruolo");
             assertEquals(1, utenti.size());
-            test(pulsante(utenti.getCellComponent(0, 7), "Modifica")).click();
+            test(pulsante(utenti.getCellComponent(0, 8), "Modifica")).click();
             test((CheckboxGroup<String>) find(CheckboxGroup.class).withLabel("Ruoli").single()).selectItem("GENITORE");
             test(find(Button.class).withText("Salva").single()).click();
 
@@ -3394,6 +3394,32 @@ class ViewAccessTest extends SpringBrowserlessTest {
         cerca("chitarra");
         assertEquals(7, riepilogo.size());
         assertTrue(find(Span.class).withText("1 di 2").exists());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_invitaGliUtentiSelezionati() {
+        navigate(UtentiView.class);
+        var utenti = test((Grid<User>) find(Grid.class).single());
+        Button invitaSelezionati = find(Button.class).withText("Invita selezionati").single();
+        assertFalse(invitaSelezionati.isEnabled());
+        cerca("allievo_canto1");
+        User allievo = utenti.getRow(0);
+        try {
+            utenti.select(0);
+            assertTrue(invitaSelezionati.isEnabled());
+            test(invitaSelezionati).click();
+            assertNotNull(userService.findByUsername("allievo_canto1").getInvitatoIl());
+            // La colonna "Invito" mostra quando
+            cerca("allievo_canto1");
+            assertFalse(utenti.getCellText(0, 7).isEmpty());
+        } finally {
+            User ripristino = userService.findByUsername("allievo_canto1");
+            ripristino.setInvitatoIl(null);
+            userService.save(ripristino, null);
+            recuperoPasswordRepository.deleteAll();
+        }
     }
 
     private void cerca(String testo) {

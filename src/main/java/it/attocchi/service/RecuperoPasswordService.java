@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+import java.util.Collection;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -38,6 +40,13 @@ public class RecuperoPasswordService {
 
     private static final Logger log = LoggerFactory.getLogger(RecuperoPasswordService.class);
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    /** Giorni di validità del link d'invito. */
+    public static final int VALIDITA_INVITO_GIORNI = 7;
+
+    /** Esito di un invio multiplo di inviti: invitati e saltati (senza email o già entrati). */
+    public record EsitoInviti(int invitati, int saltati) {
+    }
 
     private final UserRepository userRepository;
     private final RecuperoPasswordRepository recuperoPasswordRepository;
@@ -105,6 +114,73 @@ public class RecuperoPasswordService {
         return inviati;
     }
 
+    /**
+     * Un account si può invitare se ha un'email e non è mai entrato (es. creato con username generato e accesso
+     * disattivato): chi è già entrato usa il login o «Password dimenticata?».
+     */
+    public static boolean invitabile(User user) {
+        return user.getUltimoAccesso() == null && user.getEmail() != null && !user.getEmail().isBlank();
+    }
+
+    /**
+     * Invita l'utente ad accedere: email con il link per impostare la password, valido {@link #VALIDITA_INVITO_GIORNI}
+     * giorni (annulla i link precedenti); impostata la password l'account si attiva e l'utente entra subito. Solo admin
+     * e segreteria; un account non {@link #invitabile} dà {@link IllegalStateException}.
+     */
+    @Transactional
+    public void invita(Long userId, String username) {
+        Set<String> ruoli = userRepository.findByUsername(username).map(User::getRoles).orElse(Set.of());
+        if (!ruoli.contains("ADMIN") && !ruoli.contains("SEGRETERIA")) {
+            throw new IllegalStateException("Gli inviti li mandano admin e segreteria");
+        }
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
+        if (!invitabile(user)) {
+            throw new IllegalStateException(user.getUltimoAccesso() != null
+                ? user.getUsername() + " è già entrato nell'app" : user.getUsername() + " non ha un indirizzo email");
+        }
+        String token = nuovoToken();
+        recuperoPasswordRepository.deleteByUserId(user.getId());
+        recuperoPasswordRepository.save(new RecuperoPassword(user, hash(token),
+            LocalDateTime.now().plusDays(VALIDITA_INVITO_GIORNI), true));
+        user.setInvitatoIl(LocalDateTime.now());
+        String link = proprieta.linkNuovaPassword(token);
+        var esito = emailService.inviaMessaggio(user.getEmail(), "Invito ad accedere all'Area Corsi",
+            documentiService.emailInvitoHtml(saluto(user), user.getUsername(), link, VALIDITA_INVITO_GIORNI));
+        if (esito == Esito.ERRORE) {
+            throw new IllegalStateException("Invio dell'email non riuscito per " + user.getUsername());
+        }
+        if (esito == Esito.SIMULATA && environment.acceptsProfiles(Profiles.of("dev"))) {
+            log.info("Link d'invito per {} (solo dev): {}", user.getUsername(), link);
+        }
+    }
+
+    /** Invita ogni utente {@link #invitabile} tra quelli indicati; gli altri sono saltati. */
+    @Transactional
+    public EsitoInviti invitaTutti(Collection<Long> userIds, String username) {
+        int invitati = 0;
+        int saltati = 0;
+        for (Long id : userIds) {
+            if (userRepository.findById(id).filter(RecuperoPasswordService::invitabile).isEmpty()) {
+                saltati++;
+                continue;
+            }
+            try {
+                invita(id, username);
+                invitati++;
+            } catch (IllegalStateException ex) {
+                // Email non partita: gli altri inviti proseguono
+                log.warn("Invito non inviato: {}", ex.getMessage());
+                saltati++;
+            }
+        }
+        return new EsitoInviti(invitati, saltati);
+    }
+
+    /** {@code true} se il link è valido ed è un invito: impostata la password si entra subito. */
+    public boolean isInvito(String token) {
+        return valido(token).map(RecuperoPassword::isInvito).orElse(false);
+    }
+
     /** Username dell'account del link, se il link è valido (esiste, non scaduto, account recuperabile). */
     public Optional<String> verifica(String token) {
         return valido(token).map(recupero -> recupero.getUser().getUsername());
@@ -128,6 +204,11 @@ public class RecuperoPasswordService {
             log.info("Account {} attivato con il link di recupero password", user.getUsername());
         }
         recuperoPasswordRepository.deleteByUserId(user.getId());
+        if (recupero.isInvito()) {
+            // Primo accesso dall'invito: nessun avviso di "password cambiata"
+            log.info("Password impostata con l'invito per {}", user.getUsername());
+            return user.getUsername();
+        }
         log.info("Password reimpostata con il link di recupero per {}", user.getUsername());
         emailService.inviaMessaggio(user.getEmail(), "La tua password è stata cambiata",
             documentiService.emailPasswordCambiataHtml(saluto(user), user.getUsername()));
