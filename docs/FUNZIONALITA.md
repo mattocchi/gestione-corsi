@@ -458,3 +458,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] rendi modificabile un corso anche se non attivo da admin _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: la scheda del corso era già modificabile; per l'admin un corso non attivo si comporta come uno attivo (partecipanti, orari, gruppi, Aggiorna lezioni, lezioni e presenze); segreteria e insegnanti restano bloccati. In Lezioni il filtro corso dell'admin include i corsi non attivi ("(non attivo)") per gestirne lezioni e presenze; Calendario e dashboard restano sui corsi attivi._
+
+### GENITORI E CORSI NON ATTIVI
+
+* [ ] come genitore vorrei poter vedere i pagamenti passati dei corsi non attivi
+* [ ] inoltre per i corsi non attivi non riesco, come genitore a vedere i documenti, potrebbe essere utile discriminare tra attivi e non attivi ma i documenti potrebbero essere necessari. Esclusi i NON pubblici, perchè i NON pubblici sono appunto in lavorazione.
