@@ -208,9 +208,33 @@ public class UtentiView extends VerticalLayout {
         return user.getInvitatoIl() != null ? Formati.dataOra(user.getInvitatoIl()) : "";
     }
 
-    /** Invita i selezionati che hanno un'email e non sono mai entrati; dice quanti sono stati saltati. */
+    /**
+     * Conferma con il numero di inviti (i selezionati con email mai entrati, gli altri saltati), poi invita; dice
+     * quanti sono stati saltati.
+     */
     private void invitaSelezionati() {
-        var esito = recuperoPasswordService.invitaTutti(grid.getSelectedItems().stream().map(User::getId).toList(),
+        List<User> selezionati = List.copyOf(grid.getSelectedItems());
+        long invitabili = selezionati.stream().filter(RecuperoPasswordService::invitabile).count();
+        if (invitabili == 0) {
+            Notification.show("Nessun selezionato si può invitare: servono un'email e nessun accesso");
+            return;
+        }
+        Dialog conferma = ViewSupport.dialog("Invita selezionati", "460px");
+        Span testo = new Span("Invito ad accedere per email a " + invitabili + (invitabili == 1 ? " utente" : " utenti")
+            + (selezionati.size() > invitabili ? "; " + (selezionati.size() - invitabili)
+                + " saltati (senza email o già entrati: per loro \"Reimposta accesso\" sulla riga)." : "."));
+        Button invia = new Button("Invia " + invitabili + (invitabili == 1 ? " invito" : " inviti"), e -> {
+            conferma.close();
+            eseguiInviti(selezionati);
+        });
+        invia.addThemeVariants(ButtonVariant.PRIMARY);
+        conferma.add(testo);
+        conferma.getFooter().add(ViewSupport.closeButton(conferma, "Annulla"), invia);
+        conferma.open();
+    }
+
+    private void eseguiInviti(List<User> selezionati) {
+        var esito = recuperoPasswordService.invitaTutti(selezionati.stream().map(User::getId).toList(),
             securityService.getUsername().orElse(""));
         Notification.show("Inviti inviati: " + esito.invitati()
             + (esito.saltati() > 0 ? " · saltati " + esito.saltati() + " (senza email o già entrati)" : ""));

@@ -3506,6 +3506,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("admin")
     @SuppressWarnings("unchecked")
+    void admin_reimpostaLAccessoDiUnUtenteGiaEntrato() {
+        User insegnante = userService.findByUsername("insegnante2");
+        insegnante.setUltimoAccesso(LocalDateTime.now().minusDays(1));
+        userService.save(insegnante, null);
+        try {
+            navigate(UtentiView.class);
+            var utenti = test((Grid<User>) find(Grid.class).single());
+            cerca("insegnante2");
+            test(pulsante(utenti.getCellComponent(0, 9), "Reimposta accesso")).click();
+            Dialog dialog = find(Dialog.class).single();
+            test(find(Button.class).from(dialog).withText("Anteprima").single()).click();
+            assertTrue(find(Dialog.class).all().stream()
+                .anyMatch(d -> "Anteprima – Il tuo accesso all'Area Corsi è stato reimpostato".equals(d.getHeaderTitle())));
+            assertTrue(userService.findByUsername("insegnante2").isEnabled());
+
+            test(find(Button.class).from(dialog).withText("Reimposta e invia").single()).click();
+            assertFalse(userService.findByUsername("insegnante2").isEnabled());
+        } finally {
+            User ripristino = userService.findByUsername("insegnante2");
+            ripristino.setEnabled(true);
+            ripristino.setUltimoAccesso(null);
+            ripristino.setInvitatoIl(null);
+            userService.save(ripristino, "insegnante2");
+            recuperoPasswordRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
     void admin_invitaGliUtentiSelezionati() {
         navigate(UtentiView.class);
         var utenti = test((Grid<User>) find(Grid.class).single());
@@ -3517,6 +3547,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             utenti.select(0);
             assertTrue(invitaSelezionati.isEnabled());
             test(invitaSelezionati).click();
+            test(find(Button.class).withText("Invia 1 invito").single()).click();
             assertNotNull(userService.findByUsername("allievo_canto1").getInvitatoIl());
             // La colonna "Invito" mostra quando
             cerca("allievo_canto1");
