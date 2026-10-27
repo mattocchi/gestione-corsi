@@ -26,6 +26,11 @@ public class Corso {
     @NotBlank
     private String nome;
 
+    /** Corso o servizio; null (corsi creati prima del tipo) = corso. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TipoCorso tipo;
+
     private String descrizione;
 
     @NotNull
@@ -129,6 +134,18 @@ public class Corso {
 
     public void setNumeroLezioni(Integer numeroLezioni) {
         this.numeroLezioni = numeroLezioni;
+    }
+
+    public TipoCorso getTipo() {
+        return tipo != null ? tipo : TipoCorso.CORSO;
+    }
+
+    public void setTipo(TipoCorso tipo) {
+        this.tipo = tipo;
+    }
+
+    public boolean isServizio() {
+        return getTipo() == TipoCorso.SERVIZIO;
     }
 
     public int getCadenzaSettimane() {

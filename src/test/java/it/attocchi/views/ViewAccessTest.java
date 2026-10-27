@@ -611,6 +611,44 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_corsi_servizioConBadgeEFiltroPerTipo() {
+        Corso pulizia = new Corso();
+        pulizia.setTipo(it.attocchi.entity.TipoCorso.SERVIZIO);
+        pulizia.setNome("Pulizia");
+        pulizia.setDataInizio(LocalDate.of(2024, 10, 1));
+        pulizia.setAnnoScolastico("2024/2025");
+        pulizia.setNumeroLezioni(10);
+        pulizia.setDurataLezioneMinuti(120);
+        pulizia.setInsegnante(insegnanteService.findByUsername("insegnante1").orElseThrow());
+        pulizia = corsoService.save(pulizia);
+        try {
+            navigate(CorsiView.class);
+            var grid = test((Grid<Corso>) find(Grid.class).single());
+            assertEquals(3, grid.size());
+            int riga = riga(grid, "Pulizia");
+            assertTrue(find(Badge.class).from(grid.getCellComponent(riga, 0)).all().stream()
+                .anyMatch(b -> "Servizio".equals(b.getText())));
+            assertTrue(find(Badge.class).from(grid.getCellComponent(riga(grid, "Corso di Canto"), 0)).all().isEmpty());
+
+            SegmentedControl<CorsiView.FiltroTipo> filtro = find(SegmentedControl.class).all().stream()
+                .filter(c -> c.getValue() instanceof CorsiView.FiltroTipo).findFirst().orElseThrow();
+            filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
+            assertEquals(1, grid.size());
+            filtro.setValue(CorsiView.FiltroTipo.CORSI);
+            assertEquals(2, grid.size());
+
+            // Nel dialog del servizio chi lo svolge è l'"Incaricato"
+            filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
+            test(pulsante(grid.getCellComponent(0, AZIONI_CORSO), "Modifica")).click();
+            assertTrue(find(ComboBox.class).all().stream().anyMatch(c -> "Incaricato".equals(c.getLabel())));
+        } finally {
+            corsoService.delete(corsoService.findById(pulizia.getId()));
+        }
+    }
+
+    @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_inserisceRapidamenteUnNuovoAllievoNelCorso() {
@@ -1326,7 +1364,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
-            SegmentedControl<CorsiView.FiltroStato> stato = find(SegmentedControl.class).single();
+            SegmentedControl<CorsiView.FiltroStato> stato = filtroStatoCorsi();
 
             // default: solo i corsi attivi
             assertEquals(CorsiView.FiltroStato.ATTIVI, stato.getValue());
@@ -1358,7 +1396,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
-            test(((SegmentedControl<CorsiView.FiltroStato>) find(SegmentedControl.class).single())
+            test(filtroStatoCorsi()
                 .getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
             assertFalse(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Genera Lezioni").isEnabled());
 
@@ -1686,7 +1724,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(8, grid.size());
 
             // Corsi non attivi dell'anno: nessuno
-            SegmentedControl<CorsiView.FiltroStato> stato = find(SegmentedControl.class).single();
+            SegmentedControl<CorsiView.FiltroStato> stato = filtroStatoCorsi();
             test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
             assertEquals(0, grid.size());
         } finally {
@@ -2558,6 +2596,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
             }
         }
         throw new AssertionError("Corso non trovato: " + nome);
+    }
+
+    /** Filtro per stato di Gestione Corsi (accanto c'è anche quello per tipo). */
+    @SuppressWarnings("unchecked")
+    private SegmentedControl<CorsiView.FiltroStato> filtroStatoCorsi() {
+        return find(SegmentedControl.class).all().stream()
+            .filter(c -> c.getValue() instanceof CorsiView.FiltroStato).findFirst().orElseThrow();
     }
 
     private static Button pulsante(Component azioni, String etichetta) {

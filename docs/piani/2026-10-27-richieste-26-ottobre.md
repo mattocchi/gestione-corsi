@@ -41,7 +41,7 @@ Le otto voci di `docs/RICHIESTE.md`, sezione "RICHIESTE del 26 OTTOBRE 2026" (se
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1.1 | `Corso.tipo` (`TipoCorso` CORSO/SERVIZIO, null = CORSO) con etichette ("Corso"/"Servizio", "Insegnante"/"Incaricato"); campo nel dialog, colonna/badge e filtro in Gestione Corsi; test | `entity`, `CorsiView`, test | RICHIESTE.2 | `./mvnw test` | [ ] |
+| 1.1 | `Corso.tipo` (`TipoCorso` CORSO/SERVIZIO, null = CORSO) con etichette ("Corso"/"Servizio", "Insegnante"/"Incaricato"); campo nel dialog, colonna/badge e filtro in Gestione Corsi; test | `entity`, `CorsiView`, test | RICHIESTE.2 | `./mvnw test` | [x] Nessun servizio nei dati di esempio (cambierebbe i conteggi di molti test) |
 | 1.2 | Badge "Servizio" ed etichetta "Incaricato" nelle altre viste (Calendario, Lezioni, dashboard, Riepilogo Iscritti, I Miei Corsi/Figli, I miei allievi); CLAUDE.md | viste, `CLAUDE.md` | RICHIESTE.2 | `./mvnw test`; browser | [ ] |
 | 1.3 | `BilancioService`: minuti di una lezione di un servizio = durata (una volta), per costi, maturato, proposta di rimborso e ore donate; test | `BilancioService`, test | RICHIESTE.2 | `./mvnw test` | [ ] |
 | 2.1 | Entità `Luogo` + `LuogoService` + vista "Luoghi" (admin/segreteria, elimina admin solo se non usato); test | `entity`, `service`, `admin/LuoghiView` | RICHIESTE.3 | `./mvnw test` | [ ] |

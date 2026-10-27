@@ -31,6 +31,7 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Insegnante;
+import it.attocchi.entity.TipoCorso;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.InsegnanteService;
@@ -42,6 +43,7 @@ import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
 import it.attocchi.views.SegmentedControl;
+import it.attocchi.views.TipoCorsoUI;
 import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
@@ -82,6 +84,29 @@ public class CorsiView extends VerticalLayout {
         }
     }
 
+    /** Filtro della griglia per tipo: corsi, servizi o entrambi. */
+    public enum FiltroTipo {
+        TUTTI("Tutti", null),
+        CORSI("Corsi", TipoCorso.CORSO),
+        SERVIZI("Servizi", TipoCorso.SERVIZIO);
+
+        private final String etichetta;
+        private final TipoCorso tipo;
+
+        FiltroTipo(String etichetta, TipoCorso tipo) {
+            this.etichetta = etichetta;
+            this.tipo = tipo;
+        }
+
+        public String getEtichetta() {
+            return etichetta;
+        }
+
+        public boolean ammette(Corso corso) {
+            return tipo == null || corso.getTipo() == tipo;
+        }
+    }
+
     private final CorsoService corsoService;
     private final InsegnanteService insegnanteService;
     private final AllievoService allievoService;
@@ -93,6 +118,8 @@ public class CorsiView extends VerticalLayout {
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
     private final SegmentedControl<FiltroStato> filtroStato = new SegmentedControl<>("Filtra i corsi per stato",
         List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Mostra corsi: " + f.getEtichetta(), null);
+    private final SegmentedControl<FiltroTipo> filtroTipo = new SegmentedControl<>("Filtra per tipo",
+        List.of(FiltroTipo.values()), FiltroTipo::getEtichetta, f -> "Mostra: " + f.getEtichetta(), null);
     private final ComboBox<String> filtroAnno = new ComboBox<>();
     private final RicercaRapida ricerca = new RicercaRapida();
     private GridListDataView<Corso> corsi;
@@ -118,6 +145,9 @@ public class CorsiView extends VerticalLayout {
         filtroStato.setValue(FiltroStato.ATTIVI);
         filtroStato.addClassNames("max-w-[22rem]");
         filtroStato.addValueChangeListener(e -> applicaFiltri());
+        filtroTipo.setValue(FiltroTipo.TUTTI);
+        filtroTipo.addClassNames("max-w-[18rem]");
+        filtroTipo.addValueChangeListener(e -> applicaFiltri());
         filtroAnno.setPlaceholder("Tutti gli anni");
         filtroAnno.setAriaLabel("Filtra per anno scolastico");
         filtroAnno.setClearButtonVisible(true);
@@ -125,7 +155,7 @@ public class CorsiView extends VerticalLayout {
         filtroAnno.addValueChangeListener(e -> applicaFiltri());
         ricerca.addRicercaListener(this::applicaFiltri);
 
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroAnno, ricerca);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroTipo, filtroAnno, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -134,7 +164,7 @@ public class CorsiView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid.addColumn(Corso::getNome).setHeader("Nome").setSortable(true);
+        grid.addComponentColumn(TipoCorsoUI::nome).setHeader("Nome").setComparator(Corso::getNome);
         grid.addColumn(Corso::getAnnoScolastico).setHeader("Anno").setSortable(true).setWidth("7rem").setFlexGrow(0);
         grid.addColumn(Corso::getNomiInsegnanti).setHeader("Insegnanti");
         grid.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
@@ -150,6 +180,7 @@ public class CorsiView extends VerticalLayout {
         CardMobile.per(grid)
             .titolo(Corso::getNome)
             .stato(this::createStatoBadge)
+            .campo("Tipo", TipoCorsoUI::badge)
             .campo("Anno", Corso::getAnnoScolastico)
             .campo("Insegnanti", Corso::getNomiInsegnanti)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
@@ -199,6 +230,13 @@ public class CorsiView extends VerticalLayout {
         FormLayout formLayout = new FormLayout();
         Binder<Corso> binder = new Binder<>(Corso.class);
 
+        SegmentedControl<TipoCorso> tipo = new SegmentedControl<>("Tipo", List.of(TipoCorso.values()),
+            TipoCorso::getDescrizione, t -> t == TipoCorso.SERVIZIO
+                ? "Servizio (es. Pulizia): come un corso, svolto da un incaricato" : "Corso", null);
+        Span etichettaTipo = new Span("Tipo");
+        etichettaTipo.addClassNames(Stili.TESTO_SECONDARIO);
+        Div bloccoTipo = new Div(etichettaTipo, tipo);
+        bloccoTipo.addClassNames("flex flex-col gap-1");
         TextField nome = new TextField("Nome");
         TextArea descrizione = new TextArea("Descrizione");
         DatePicker dataInizio = ViewSupport.datePicker("Data Inizio");
@@ -260,7 +298,14 @@ public class CorsiView extends VerticalLayout {
         secondoInsegnante.setItemLabelGenerator(Insegnante::getNomeCompleto);
         secondoInsegnante.setClearButtonVisible(true);
         secondoInsegnante.setHelperText("Facoltativo: stessi diritti sul corso");
+        // Per i servizi chi lo svolge è un "Incaricato"
+        tipo.addValueChangeListener(e -> {
+            TipoCorso scelto = e.getValue() != null ? e.getValue() : TipoCorso.CORSO;
+            insegnante.setLabel(scelto.getChiLoSvolge());
+            secondoInsegnante.setLabel("Secondo " + scelto.getChiLoSvolge().toLowerCase());
+        });
 
+        binder.forField(tipo).asRequired("Scegli il tipo").bind(Corso::getTipo, Corso::setTipo);
         binder.forField(nome).asRequired("Inserisci il nome del corso").bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
         binder.forField(dataInizio).asRequired("Inserisci la data di inizio del corso").bind(Corso::getDataInizio, Corso::setDataInizio);
@@ -290,14 +335,14 @@ public class CorsiView extends VerticalLayout {
         binder.forField(insegnante).asRequired("Scegli l'insegnante del corso").bind(Corso::getInsegnante, Corso::setInsegnante);
         binder.forField(secondoInsegnante)
             .withValidator(secondo -> secondo == null || !secondo.equals(insegnante.getValue()),
-                "Il secondo insegnante deve essere diverso dal primo")
+                "Deve essere diverso dal primo")
             .bind(Corso::getSecondoInsegnante, Corso::setSecondoInsegnante);
         binder.forField(annoScolastico).asRequired("Scegli l'anno scolastico").bind(Corso::getAnnoScolastico, Corso::setAnnoScolastico);
         binder.forField(attivo).bind(Corso::isAttivo, Corso::setAttivo);
 
         binder.readBean(corso);
 
-        formLayout.add(nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, descrizione);
+        formLayout.add(bloccoTipo, nome, insegnante, secondoInsegnante, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi
@@ -315,6 +360,7 @@ public class CorsiView extends VerticalLayout {
         });
         saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
+        formLayout.setColspan(bloccoTipo, 2);
         formLayout.setColspan(giorniSettimana, 2);
         formLayout.setColspan(bloccoCadenza, 2);
         formLayout.setColspan(descrizione, 2);
@@ -369,6 +415,7 @@ public class CorsiView extends VerticalLayout {
         if (corsi != null) {
             String anno = filtroAnno.getValue();
             SerializablePredicate<Corso> statoEAnno = corso -> filtroStato.getValue().ammette(corso)
+                && filtroTipo.getValue().ammette(corso)
                 && (anno == null || anno.equals(corso.getAnnoScolastico()));
             corsi.setFilter(corso -> statoEAnno.test(corso) && ricerca.corrisponde(RicercaRapida.testo(corso.getNome(),
                 corso.getAnnoScolastico(), corso.getNomiInsegnanti(), corso.getDescrizione())));
