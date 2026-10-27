@@ -438,3 +438,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-27: un corso non pubblicato è nascosto del tutto a genitori e allievi (corsi, calendario, dashboard, pagamenti, documenti) e non si inviano loro email di quel corso; lo vedono e ci lavorano admin, segreteria e insegnanti del corso, con il badge "Non pubblicato"; pubblicano admin e segreteria; i corsi esistenti restano pubblicati, i nuovi nascono non pubblicati._
 * [x] inoltre sarebbe utile una funzione duplica corso per creare una copia per anni successivi che permette di avere tutto pronto per la creazione e lasciare admin segreteria alle modifiche di dettaglio _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: "Duplica" in Gestione Corsi (admin e segreteria) copia le impostazioni (tipo, nome, descrizione, insegnanti, giorni, cadenza, orario, durata, numero/fine, costi, luoghi, gruppi) con anno scolastico successivo e date spostate di un anno sullo stesso giorno della settimana; nasce non pubblicato e attivo, senza partecipanti, lezioni né pagamenti; poi si apre il dialog per le modifiche._
+
+### DETRAZIONE
+
+* [ ] in documentazione/ ti ho inserito dei pdf con vademecum e disposizioni in merito alla detrazione. rendi la dichairazione si spesa che abbiamo aggiunto su tutto l'anno scolastico, conforme alle direttive specificate in PDF.
