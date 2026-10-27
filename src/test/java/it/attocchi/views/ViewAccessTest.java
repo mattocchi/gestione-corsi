@@ -175,6 +175,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     private UserService userService;
 
     @Autowired
+    private it.attocchi.repository.UserRepository userRepository;
+
+    @Autowired
     private InsegnanteRepository insegnanteRepository;
 
     @Autowired
@@ -3397,6 +3400,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
         cerca("chitarra");
         assertEquals(7, riepilogo.size());
         assertTrue(find(Span.class).withText("1 di 2").exists());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_allineaGliUsernameGeneratiANomeECognome() {
+        User anna = new User("anna.bianchi", "x", "Anna", "Verdi", null);
+        anna = userService.save(anna, "segreta123");
+        Long id = anna.getId();
+        try {
+            navigate(UtentiView.class);
+            test(find(Button.class).withText("Allinea username").single()).click();
+            Dialog dialog = find(Dialog.class).single();
+            var proposte = test((Grid<UserService.UsernameDaAllineare>) find(Grid.class).from(dialog).single());
+            assertEquals(1, proposte.size());
+            assertEquals("anna.verdi", proposte.getCellText(0, 2));
+            test(find(Button.class).from(dialog).withText("Allinea").single()).click();
+            assertEquals("anna.verdi", userRepository.findById(id).orElseThrow().getUsername());
+
+            // Già allineati: un avviso, nessun dialog
+            test(find(Button.class).withText("Allinea username").single()).click();
+            assertFalse(find(Dialog.class).exists());
+        } finally {
+            userRepository.deleteById(id);
+        }
     }
 
     @Test

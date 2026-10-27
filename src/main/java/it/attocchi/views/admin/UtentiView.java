@@ -1,5 +1,7 @@
 package it.attocchi.views.admin;
 
+import it.attocchi.views.Stili;
+import it.attocchi.security.SessioniUtenti;
 import com.vaadin.flow.component.shared.Tooltip;
 import it.attocchi.service.RecuperoPasswordService;
 import com.vaadin.flow.component.Component;
@@ -58,13 +60,15 @@ public class UtentiView extends VerticalLayout {
     private final Checkbox soloSospesi = new Checkbox("Solo sospesi per inattività");
     private final Button invitaSelezionati = new Button("Invita selezionati", VaadinIcon.PAPERPLANE.create());
     private final RecuperoPasswordService recuperoPasswordService;
+    private final SessioniUtenti sessioniUtenti;
     private GridListDataView<User> utenti;
     private List<User> tutti = List.of();
     private Map<Long, List<String>> incongruenze = Map.of();
 
     public UtentiView(UserService userService, SchedeRuoliService schedeRuoliService, SecurityService securityService,
-                      RecuperoPasswordService recuperoPasswordService) {
+                      RecuperoPasswordService recuperoPasswordService, SessioniUtenti sessioniUtenti) {
         this.recuperoPasswordService = recuperoPasswordService;
+        this.sessioniUtenti = sessioniUtenti;
         this.userService = userService;
         this.schedeRuoliService = schedeRuoliService;
         this.securityService = securityService;
@@ -83,7 +87,9 @@ public class UtentiView extends VerticalLayout {
         invitaSelezionati.setEnabled(false);
         invitaSelezionati.setTooltipText("Email con il link per impostare la password a chi ha un'email e non è mai entrato");
         invitaSelezionati.addClickListener(e -> invitaSelezionati());
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, invitaSelezionati, soloIncongruenze, soloSospesi, ricerca);
+        Button allinea = new Button("Allinea username", VaadinIcon.EXCHANGE.create(), e -> apriAllineamento());
+        allinea.setTooltipText("Username generati (nome.cognome) non più uguali a nome e cognome attuali");
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, allinea, invitaSelezionati, soloIncongruenze, soloSospesi, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -141,6 +147,60 @@ public class UtentiView extends VerticalLayout {
             return badge;
         }
         return new Badge("Disattivato", VaadinIcon.BAN.create());
+    }
+
+    /**
+     * Anteprima degli username generati da allineare (vecchio → nuovo), tutti scelti; la conferma allinea quelli
+     * spuntati.
+     */
+    private void apriAllineamento() {
+        List<UserService.UsernameDaAllineare> proposte = userService.usernameDaAllineare();
+        if (proposte.isEmpty()) {
+            Notification.show("Tutti gli username generati sono già allineati a nome e cognome");
+            return;
+        }
+        Dialog dialog = ViewSupport.dialog("Allinea username", "640px");
+        Grid<UserService.UsernameDaAllineare> elenco = new Grid<>();
+        elenco.addColumn(p -> p.user().getNomeCompleto()).setHeader("Utente");
+        elenco.addColumn(UserService.UsernameDaAllineare::attuale).setHeader("Username attuale");
+        elenco.addColumn(UserService.UsernameDaAllineare::proposto).setHeader("Nuovo username");
+        CardMobile.per(elenco)
+            .titolo(p -> p.user().getNomeCompleto())
+            .campo("Username attuale", UserService.UsernameDaAllineare::attuale)
+            .campo("Nuovo username", UserService.UsernameDaAllineare::proposto)
+            .applica();
+        elenco.setItems(proposte);
+        elenco.setSelectionMode(Grid.SelectionMode.MULTI);
+        proposte.forEach(elenco::select);
+        elenco.setAllRowsVisible(true);
+        Span nota = new Span("Chi è collegato con questi utenti dovrà rientrare con il nuovo username (o con l'email).");
+        nota.addClassNames(Stili.TESTO_SECONDARIO);
+        Button conferma = new Button("Allinea", e -> {
+            dialog.close();
+            allinea(elenco.getSelectedItems().stream().map(p -> p.user().getId()).toList());
+        });
+        conferma.addThemeVariants(ButtonVariant.PRIMARY);
+        elenco.addSelectionListener(e -> conferma.setEnabled(!e.getAllSelectedItems().isEmpty()));
+        dialog.add(nota, elenco);
+        dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), conferma);
+        dialog.open();
+    }
+
+    /** Allinea gli username, chiude le sessioni di chi è cambiato e, se è cambiato il proprio, esce. */
+    private void allinea(List<Long> userIds) {
+        String corrente = securityService.getUsername().orElse("");
+        try {
+            Map<String, String> cambiati = userService.allineaUsername(userIds, corrente);
+            sessioniUtenti.chiudi(cambiati.keySet());
+            if (cambiati.containsKey(corrente)) {
+                securityService.logout();
+                return;
+            }
+            Notification.show("Username allineati: " + cambiati.size());
+            updateGrid();
+        } catch (RuntimeException ex) {
+            Notification.show("Allineamento non riuscito: " + ex.getMessage());
+        }
     }
 
     /** Ultimo invito ad accedere, vuoto se mai invitato. */
@@ -235,6 +295,17 @@ public class UtentiView extends VerticalLayout {
 
         dialog.add(formLayout);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
+        // Username generato non più attuale: si allinea a nome e cognome salvati
+        if (user.getId() != null) {
+            userService.proposta(user).ifPresent(proposto -> {
+                Button allinea = new Button("Allinea username (" + proposto + ")", VaadinIcon.EXCHANGE.create(), e -> {
+                    dialog.close();
+                    allinea(List.of(user.getId()));
+                });
+                allinea.setTooltipText("Lo username generato non corrisponde più a nome e cognome");
+                dialog.getFooter().addComponentAsFirst(allinea);
+            });
+        }
         dialog.open();
     }
 

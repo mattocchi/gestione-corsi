@@ -23,7 +23,7 @@
 |---|---|---|---|---|---|
 | 1 | `UserService.usernameDaAllineare()` (proposte) e `allineaUsername(ids, admin)` (solo admin, nuovo username libero); test | `UserService`, test | — | `./mvnw test` | [x] |
 | 2 | Registro delle sessioni (`SessionRegistry`) e chiusura delle sessioni degli utenti allineati | `SecurityConfig`, `UserService` o componente security | — | `./mvnw test` | [x] Componente `security/SessioniUtenti`; anche l'accesso diretto dall'invito registra la sessione |
-| 3 | Gestione Utenti: "Allinea username" con anteprima e conferma; pulsante nel dialog dell'utente; logout se cambia il proprio; test | `UtentiView`, `ViewAccessTest` | USERNAME.1 | `./mvnw test`; browser | [ ] |
+| 3 | Gestione Utenti: "Allinea username" con anteprima e conferma; pulsante nel dialog dell'utente; logout se cambia il proprio; test | `UtentiView`, `ViewAccessTest` | USERNAME.1 | `./mvnw test`; browser | [x] Browser non verificato: coperto dal test browserless |
 | 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [ ] |
 
 ## Fuori ambito
