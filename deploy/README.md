@@ -65,7 +65,9 @@ Il profilo `prod` è fissato in `ecosystem.config.js` e `start.sh`: senza, Sprin
 Conferme di iscrizione e ricevute partono per email solo se in `gestione-corsi.env` è impostata `MAIL_HOST`
 (con `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_STARTTLS`); senza, l'invio è simulato:
 registrato nella vista "Email inviate" con esito "Simulata" e scritto nel log. I dati dell'associazione in testata
-a ricevute e conferme (e l'IBAN per il bonifico) sono le variabili `ASSOCIAZIONE_*`. Dopo averle cambiate:
+a ricevute e conferme (e l'IBAN per il bonifico) sono le variabili `ASSOCIAZIONE_*`; `ASSOCIAZIONE_LUOGO` (es. `Roma`)
+è la località di "Luogo e data" della ricevuta per la detrazione, `ASSOCIAZIONE_CODICE_FISCALE` va indicato perché
+la ricevuta lo riporta. Dopo averle cambiate:
 `pm2 reload ecosystem.config.js --update-env`.
 
 ### Monitoraggio

@@ -27,8 +27,8 @@
 |---|---|---|---|---|---|
 | 1 | Dati: solo bonifico e corsi; fascia 5-18; dati mancanti; importo in lettere; `app.associazione.luogo`; test | `PagamentoService`, `PagamentoRepository`, `DocumentiService`, `Formati`, `AssociazioneProperties`, test | — | `./mvnw test` | [x] Dati di esempio: luogo di nascita "Roma" per gli allievi |
 | 2 | Template PDF ed email secondo il fac-simile; test sul testo del PDF | `documenti/attestazione.ftlh`, `email/attestazione.ftlh`, test | — | `./mvnw test` | [x] Allievo "Cognome Nome" come nel fac-simile; dettaglio dei versamenti in fondo |
-| 3 | Documenti: badge "Dati mancanti" e "Fuori età 5-18", PDF e invio bloccati senza dati, avviso nel dialog d'invio; test | `ElencoDocumentiService`, `DocumentiView`, `EmailService`, `InvioEmailDialog`, test | DETRAZIONE.1 | `./mvnw test` | [ ] |
-| 4 | `CLAUDE.md`, `deploy/README.md` (ASSOCIAZIONE_LUOGO) e registro | docs | — | test | [ ] |
+| 3 | Documenti: badge "Dati mancanti" e "Fuori età 5-18", PDF e invio bloccati senza dati, avviso nel dialog d'invio; test | `ElencoDocumentiService`, `DocumentiView`, `EmailService`, `InvioEmailDialog`, test | DETRAZIONE.1 | `./mvnw test` | [x] |
+| 4 | `CLAUDE.md`, `deploy/README.md` (ASSOCIAZIONE_LUOGO) e registro | docs | — | test | [x] |
 
 ## Fuori ambito
 
@@ -37,4 +37,11 @@
 - I PDF in `documentazione/` restano file dell'utente (non aggiunti al repository da questo piano).
 
 ## Registro
+
+- `./mvnw test`: 326 test superati. Nuovi o estesi: `FormatiTest.inLettere_importiComeNelleRicevute`, `DocumentiServiceTest.attestazione_…` (contanti esclusi, fascia d'età, dati completi, testo del PDF secondo il fac-simile), `ElencoDocumentiServiceTest.attestazioni_…` (dati mancanti bloccano l'invio), `ViewAccessTest.segreteria_documenti_attestazioniPerAnnoSolare` (colonna Stato).
+- Testo del PDF verificato dal test (estrazione con PDFBox): intestatario, minore, periodo, importo in numeri e lettere, requisiti, luogo e data, firma.
+- Produzione: nessuno script; impostare `ASSOCIAZIONE_LUOGO` e, se manca, `ASSOCIAZIONE_CODICE_FISCALE` (riportati nella ricevuta). I pagamenti registrati come "Cassa" non entrano più nella dichiarazione.
+- Da verificare dall'associazione (fuori dall'app): possesso dei requisiti di riconoscimento (vademecum, pag. 2) prima di rilasciare le ricevute.
+- Non verificato nel browser: badge e blocchi coperti dai test browserless.
+- Lasciato aperto: nessuno.
 

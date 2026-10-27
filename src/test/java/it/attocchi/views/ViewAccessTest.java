@@ -2473,7 +2473,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Genitore3 Cognome3", attestazioni.getCellText(0, 1));
             assertEquals("2025", attestazioni.getCellText(0, 2));
             assertEquals("90,00 €", attestazioni.getCellText(0, 3));
-            test(pulsante(attestazioni.getCellComponent(0, 6), "Invia per email")).click();
+            test(pulsante(attestazioni.getCellComponent(0, 7), "Invia per email")).click();
             assertTrue(find(Button.class).withText("Anteprima").exists());
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);

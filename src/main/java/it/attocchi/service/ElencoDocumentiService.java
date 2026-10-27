@@ -63,7 +63,7 @@ public class ElencoDocumentiService {
 
     /** Attestazione delle spese di un allievo in un anno solare per lo staff, con il totale pagato nell'anno. */
     public record DocumentoAttestazione(Allievo allievo, int anno, BigDecimal totale, Optional<Destinatario> destinatario,
-                                        InvioEmail ultimoInvio) {
+                                        InvioEmail ultimoInvio, String datiMancanti, boolean inEta) {
     }
 
     /**
@@ -173,9 +173,11 @@ public class ElencoDocumentiService {
             Allievo allievo = allievi.get((Long) riga[0]);
             int anno = ((Number) riga[1]).intValue();
             Genitore genitore = allievo.getGenitore();
+            // Dati richiesti e fascia d'età non dipendono dai singoli versamenti
+            PagamentoService.Attestazione controllo = new PagamentoService.Attestazione(allievo, anno, List.of());
             attestazioni.add(new DocumentoAttestazione(allievo, anno, (BigDecimal) riga[2],
                 EmailService.destinatarioRiepilogoDi(genitore, genitore == null ? allievo : null),
-                ultimi.get(allievo.getId() + "/" + anno)));
+                ultimi.get(allievo.getId() + "/" + anno), DocumentiService.avvisoDatiMancanti(controllo), controllo.inEta()));
         }
         attestazioni.sort(Comparator.comparing(DocumentoAttestazione::anno, Comparator.reverseOrder())
             .thenComparing(d -> d.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER));
@@ -202,8 +204,9 @@ public class ElencoDocumentiService {
         for (Object[] riga : pagamentoRepository.totaliPerAllievoEAnno()) {
             Allievo allievo = propri.get((Long) riga[0]);
             if (allievo != null) {
-                documenti.add(new DocumentoFamiglia(TipoDocumento.ATTESTAZIONE, null, null, allievo,
-                    String.valueOf(((Number) riga[1]).intValue()), null));
+                int anno = ((Number) riga[1]).intValue();
+                documenti.add(new DocumentoFamiglia(TipoDocumento.ATTESTAZIONE, null, null, allievo, String.valueOf(anno),
+                    DocumentiService.avvisoDatiMancanti(new PagamentoService.Attestazione(allievo, anno, List.of()))));
             }
         }
         documenti.sort(Comparator.comparing(DocumentoFamiglia::anno, PER_ANNO)

@@ -151,12 +151,26 @@ class ElencoDocumentiServiceTest {
             assertEquals(0, new BigDecimal("120").compareTo(attestazione.totale()));
             assertEquals("genitore3@example.com", attestazione.destinatario().orElseThrow().email());
             assertNull(attestazione.ultimoInvio());
+            assertNull(attestazione.datiMancanti());
+            assertTrue(attestazione.inEta());
 
             emailService.inviaAttestazione(allievo.getId(), 2025, "segreteria");
             assertNotNull(elencoDocumentiService.attestazioni("segreteria").stream()
                 .filter(a -> a.allievo().getId().equals(allievo.getId())).findFirst().orElseThrow().ultimoInvio());
             assertThrows(IllegalStateException.class, () -> emailService.inviaAttestazione(allievo.getId(), 2023, "segreteria"));
             assertThrows(IllegalStateException.class, () -> elencoDocumentiService.attestazioni("insegnante1"));
+
+            // Senza luogo di nascita la dichiarazione non si emette né si invia
+            allievo.setLuogoNascita(null);
+            allievoService.save(allievo);
+            try {
+                assertEquals("Per la dichiarazione mancano: luogo di nascita dell'allievo", elencoDocumentiService.attestazioni("segreteria")
+                    .stream().filter(a -> a.allievo().getId().equals(allievo.getId())).findFirst().orElseThrow().datiMancanti());
+                assertThrows(IllegalStateException.class, () -> emailService.inviaAttestazione(allievo.getId(), 2025, "segreteria"));
+            } finally {
+                allievo.setLuogoNascita("Roma");
+                allievoService.save(allievo);
+            }
 
             // Il genitore la trova tra i suoi documenti
             assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().anyMatch(d -> d.tipo() == TipoDocumento.ATTESTAZIONE

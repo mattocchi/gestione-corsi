@@ -1,5 +1,6 @@
 package it.attocchi.views.admin;
 
+import it.attocchi.service.PagamentoService;
 import it.attocchi.entity.LetteraIncarico;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -81,8 +82,11 @@ public final class InvioEmailDialog {
         EmailService emailService = emailService();
         String username = username();
         Long allievoId = allievo.getId();
+        PagamentoService.Attestazione controllo = new PagamentoService.Attestazione(allievo, anno, List.of());
         apriInvio(emailService, TipoDocumento.ATTESTAZIONE, TipoDocumento.ATTESTAZIONE.getTitolo() + " – " + allievo.getNomeCompleto(),
-            "Pagamenti dell'anno " + anno, emailService.destinatarioAttestazione(allievoId, anno), null,
+            "Versamenti con bonifico dell'anno " + anno + (controllo.inEta() ? ""
+                : ". Fuori età 5-18: la ricevuta ha un testo generico, senza la detrazione per i minori"),
+            emailService.destinatarioAttestazione(allievoId, anno), DocumentiService.avvisoDatiMancanti(controllo),
             () -> emailService.anteprimaAttestazione(allievoId, anno, username),
             () -> emailService.inviaAttestazione(allievoId, anno, username), dopoInvio);
     }

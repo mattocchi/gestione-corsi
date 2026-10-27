@@ -215,11 +215,13 @@ public class DocumentiView extends VerticalLayout {
             .setComparator(DocumentoAttestazione::totale).setAutoWidth(true).setFlexGrow(0);
         gridAttestazioni.addColumn(a -> destinatario(a.destinatario())).setHeader("Destinatario");
         gridAttestazioni.addColumn(a -> ultimoInvio(a.ultimoInvio())).setHeader("Ultimo invio").setAutoWidth(true);
+        gridAttestazioni.addComponentColumn(DocumentiView::statoAttestazione).setHeader("Stato").setAutoWidth(true).setFlexGrow(0);
         ViewSupport.configureActionsColumn(gridAttestazioni.addComponentColumn(this::azioniAttestazione));
         gridAttestazioni.setEmptyStateText("Nessuna attestazione: compaiono con i pagamenti");
         CardMobile.per(gridAttestazioni)
             .titolo(a -> a.allievo().getNomeCompleto())
             .sottotitolo(a -> "Anno " + a.anno())
+            .stato(DocumentiView::statoAttestazione)
             .campo("Spese di", DocumentiView::chiPaga)
             .campo("Pagato nell'anno", a -> Formati.euro(a.totale()))
             .campo("Destinatario", a -> destinatario(a.destinatario()))
@@ -298,6 +300,31 @@ public class DocumentiView extends VerticalLayout {
         add(ViewSupport.sezione("Lettere di incarico"), grid);
     }
 
+    /**
+     * "Dati mancanti" (la dichiarazione non si emette) e "Fuori età 5-18" (la detrazione riguarda i ragazzi tra 5 e 18
+     * anni: il documento ha un testo generico); {@code null} se è tutto a posto.
+     */
+    private static Component statoAttestazione(DocumentoAttestazione attestazione) {
+        Badge mancanti = datiMancanti(attestazione.datiMancanti());
+        Badge eta = null;
+        if (!attestazione.inEta()) {
+            eta = new Badge("Fuori età 5-18", VaadinIcon.INFO_CIRCLE.create());
+            Tooltip.forComponent(eta).setText("La detrazione vale per ragazzi tra 5 e 18 anni: la ricevuta avrà un testo generico");
+        }
+        if (mancanti == null && eta == null) {
+            return null;
+        }
+        Span stato = new Span();
+        stato.addClassNames("inline-flex flex-wrap gap-1");
+        if (mancanti != null) {
+            stato.add(mancanti);
+        }
+        if (eta != null) {
+            stato.add(eta);
+        }
+        return stato;
+    }
+
     /** Chi sostiene le spese: il genitore, o l'allievo adulto. */
     private static String chiPaga(DocumentoAttestazione attestazione) {
         return attestazione.allievo().getGenitore() != null ? attestazione.allievo().getGenitore().getNomeCompleto()
@@ -310,8 +337,8 @@ public class DocumentiView extends VerticalLayout {
         Button invia = ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Invia per email",
             e -> InvioEmailDialog.apriAttestazione(attestazione.allievo(), anno, this::aggiorna));
         HorizontalLayout azioni = ViewSupport.actions(invia);
-        azioni.addComponentAsFirst(pulsantePdf(VaadinIcon.FILE_TEXT_O, TipoDocumento.ATTESTAZIONE.getTitolo(), null,
-            () -> documentiService.attestazionePer(allievoId, anno, username)));
+        azioni.addComponentAsFirst(pulsantePdf(VaadinIcon.FILE_TEXT_O, TipoDocumento.ATTESTAZIONE.getTitolo(),
+            attestazione.datiMancanti(), () -> documentiService.attestazionePer(allievoId, anno, username)));
         return azioni;
     }
 
