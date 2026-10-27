@@ -1,5 +1,6 @@
 package it.attocchi.views.admin;
 
+import it.attocchi.entity.LetteraIncarico;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -84,6 +85,19 @@ public final class InvioEmailDialog {
             "Pagamenti dell'anno " + anno, emailService.destinatarioAttestazione(allievoId, anno), null,
             () -> emailService.anteprimaAttestazione(allievoId, anno, username),
             () -> emailService.inviaAttestazione(allievoId, anno, username), dopoInvio);
+    }
+
+    /** Invio della lettera di incarico all'insegnante. */
+    public static void apriLettera(LetteraIncarico lettera, Runnable dopoInvio) {
+        EmailService emailService = emailService();
+        String username = username();
+        Long letteraId = lettera.getId();
+        apriInvio(emailService, TipoDocumento.LETTERA_INCARICO, TipoDocumento.LETTERA_INCARICO.getTitolo() + " – "
+                + lettera.getInsegnante().getNomeCompleto(),
+            lettera.getCorso().getNome() + (lettera.getAnnoScolastico() != null ? ", anno scolastico " + lettera.getAnnoScolastico() : ""),
+            emailService.destinatarioLettera(letteraId, username), null,
+            () -> emailService.anteprimaLettera(letteraId, username),
+            () -> emailService.inviaLettera(letteraId, username), dopoInvio);
     }
 
     /** Dialog comune: documento, destinatario o motivo per cui non si può inviare, anteprima e invio. */

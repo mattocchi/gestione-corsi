@@ -10,6 +10,7 @@ import it.attocchi.entity.Allievo;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.GruppoCorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
+import it.attocchi.repository.LetteraIncaricoRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.PresenzaRepository;
@@ -43,12 +44,14 @@ public class CorsoService {
     private final FestivitaService festivitaService;
     private final GruppoCorsoRepository gruppoRepository;
     private final NumerazioneLezioni numerazioneLezioni;
+    private final LetteraIncaricoRepository letteraIncaricoRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
                        AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository,
                        FestivitaService festivitaService, GruppoCorsoRepository gruppoRepository,
-                       NumerazioneLezioni numerazioneLezioni) {
+                       NumerazioneLezioni numerazioneLezioni, LetteraIncaricoRepository letteraIncaricoRepository) {
+        this.letteraIncaricoRepository = letteraIncaricoRepository;
         this.gruppoRepository = gruppoRepository;
         this.numerazioneLezioni = numerazioneLezioni;
         this.pagamentoRepository = pagamentoRepository;
@@ -345,6 +348,9 @@ public class CorsoService {
     public void delete(Corso corso) {
         if (pagamentoRepository.existsByCorso(corso.getId())) {
             throw new IllegalStateException("Il corso ha pagamenti registrati: eliminali prima di eliminare il corso");
+        }
+        if (letteraIncaricoRepository.existsByCorsoId(corso.getId())) {
+            throw new IllegalStateException("Il corso ha lettere di incarico: eliminale prima di eliminare il corso");
         }
         // Prima si staccano le iscrizioni dai gruppi, poi si eliminano i gruppi e il corso (con le iscrizioni)
         iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId()).forEach(i -> i.setGruppo(null));

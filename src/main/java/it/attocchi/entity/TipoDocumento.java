@@ -10,7 +10,9 @@ public enum TipoDocumento {
     /** Riepilogo annuale dei pagamenti della famiglia o dell'allievo adulto (PDF {@code documenti/riepilogo-famiglia}). */
     RIEPILOGO("Riepilogo pagamenti", "Riepilogo", "Riepiloghi", "riepilogo"),
     /** Spese di un allievo in un anno solare, di tutti i corsi (PDF {@code documenti/attestazione}). */
-    ATTESTAZIONE("Attestazione delle spese", "Attestazione", "Attestazioni", "attestazione");
+    ATTESTAZIONE("Attestazione delle spese", "Attestazione", "Attestazioni", "attestazione"),
+    /** Incarico di un insegnante per un corso e anno scolastico ({@code LetteraIncarico}, PDF {@code documenti/lettera-incarico}). */
+    LETTERA_INCARICO("Lettera di incarico", "Lettera di incarico", "Lettere di incarico", "lettera-incarico");
 
     private final String titolo;
     private final String breve;

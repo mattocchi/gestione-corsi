@@ -1,5 +1,7 @@
 package it.attocchi.service;
 
+import java.util.Objects;
+import it.attocchi.entity.LetteraIncarico;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -65,9 +67,11 @@ public class DocumentiService {
     private final String logo;
 
     private final UserRepository userRepository;
+    private final LetteraIncaricoService letteraIncaricoService;
 
     public DocumentiService(PagamentoService pagamentoService, AssociazioneProperties associazione,
-                            UserRepository userRepository) {
+                            UserRepository userRepository, LetteraIncaricoService letteraIncaricoService) {
+        this.letteraIncaricoService = letteraIncaricoService;
         this.pagamentoService = pagamentoService;
         this.userRepository = userRepository;
         this.associazione = associazione;
@@ -277,6 +281,63 @@ public class DocumentiService {
     public String nomeFile(RiepilogoFamiglia riepilogo) {
         String base = (riepilogo.genitore() != null ? "riepilogo-famiglia-" : "riepilogo-pagamenti-") + riepilogo.intestatario()
             + (riepilogo.anno() != null ? "-" + riepilogo.anno() : "");
+        return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
+    }
+
+    /** Lettera di incarico in PDF: admin e segreteria ogni lettera, l'insegnante le proprie; altrimenti {@link IllegalArgumentException}. */
+    public Pdf letteraPer(Long letteraId, String username) {
+        return letteraPdf(letteraIncaricoService.lettera(letteraId, username));
+    }
+
+    /** PDF della lettera, senza controllo dei permessi (allegato delle email, inviate solo da admin e segreteria). */
+    public Pdf letteraPdf(LetteraIncarico lettera) {
+        return new Pdf(nomeFile(lettera), pdf(letteraHtml(lettera)));
+    }
+
+    /** Corpo HTML dell'email che accompagna la lettera di incarico; {@code saluto} è il nome dell'insegnante. */
+    public String emailLetteraHtml(LetteraIncarico lettera, String saluto) {
+        Map<String, Object> modello = modelloLettera(lettera);
+        modello.put("saluto", saluto);
+        return render("email/" + TipoDocumento.LETTERA_INCARICO.getTemplate() + ".ftlh", modello);
+    }
+
+    /** HTML (pagina A4) della lettera di incarico, con i dati fissati all'emissione. */
+    public String letteraHtml(LetteraIncarico lettera) {
+        Map<String, Object> modello = modelloLettera(lettera);
+        if (logo != null) {
+            modello.put("logo", logo);
+        }
+        modello.put("emessa", Formati.dataCompleta(lettera.getDataEmissione()));
+        Insegnante insegnante = lettera.getInsegnante();
+        modello.put("codiceFiscale", testo(insegnante.getCodiceFiscale()));
+        modello.put("indirizzo", testo(insegnante.getIndirizzo().getFormattato()));
+        modello.put("nascita", insegnante.getDataNascita() != null ? Formati.dataNumerica(insegnante.getDataNascita())
+            + (insegnante.getLuogoNascita() != null ? " a " + insegnante.getLuogoNascita() : "") : "");
+        return render("documenti/" + TipoDocumento.LETTERA_INCARICO.getTemplate() + ".ftlh", modello);
+    }
+
+    private Map<String, Object> modelloLettera(LetteraIncarico lettera) {
+        Corso corso = lettera.getCorso();
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("insegnante", lettera.getInsegnante().getNomeCompleto());
+        modello.put("servizio", corso.isServizio());
+        modello.put("tipo", corso.getTipo().getDescrizione().toLowerCase());
+        modello.put("corso", corso.getNome());
+        modello.put("anno", testo(lettera.getAnnoScolastico()));
+        modello.put("giorniEOrari", testo(lettera.getGiorniEOrari()));
+        modello.put("luogo", testo(corso.getNomeLuogo()));
+        modello.put("dataInizio", corso.getDataInizio() != null ? Formati.dataCompleta(corso.getDataInizio()) : "");
+        modello.put("tariffaOraria", lettera.getTariffaOraria() != null ? Formati.euro(lettera.getTariffaOraria()) : "");
+        modello.put("unaTantum", lettera.getImportoUnaTantum() != null ? Formati.euro(lettera.getImportoUnaTantum()) : "");
+        modello.put("nota", testo(lettera.getNota()));
+        return modello;
+    }
+
+    /** Nome del file PDF della lettera, es. "lettera-incarico-2026-2027-corso-di-canto-mario-rossi.pdf". */
+    public String nomeFile(LetteraIncarico lettera) {
+        String base = "lettera-incarico-" + Objects.toString(lettera.getAnnoScolastico(), "") + "-" + lettera.getCorso().getNome()
+            + "-" + lettera.getInsegnante().getNomeCompleto();
         return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
     }
 

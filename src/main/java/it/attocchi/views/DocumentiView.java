@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
@@ -21,18 +22,21 @@ import com.vaadin.flow.router.Route;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.InvioEmail;
+import it.attocchi.entity.LetteraIncarico;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.AllievoService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.DocumentiService.Pdf;
 import it.attocchi.service.ElencoDocumentiService;
+import it.attocchi.service.LetteraIncaricoService;
 import it.attocchi.service.ElencoDocumentiService.DocumentoAttestazione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoFamiglia;
 import it.attocchi.service.ElencoDocumentiService.DocumentoIscrizione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoRiepilogo;
 import it.attocchi.service.EmailService.Destinatario;
 import it.attocchi.views.admin.InvioEmailDialog;
+import it.attocchi.views.admin.LetteraIncaricoDialog;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.time.LocalDate;
@@ -55,7 +59,7 @@ import java.util.stream.Stream;
 @Route(value = DocumentiView.PERCORSO, layout = MainLayout.class)
 @PageTitle("Documenti")
 @Menu(title = "Documenti", order = 42, icon = "vaadin:file-text-o")
-@RolesAllowed({"ADMIN", "SEGRETERIA", "GENITORE", "ALLIEVO"})
+@RolesAllowed({"ADMIN", "SEGRETERIA", "GENITORE", "ALLIEVO", "INSEGNANTE"})
 public class DocumentiView extends VerticalLayout {
 
     /** Percorso della vista, usato da {@code MainLayout} per nasconderla all'allievo con genitore. */
@@ -63,6 +67,7 @@ public class DocumentiView extends VerticalLayout {
 
     private final ElencoDocumentiService elencoDocumentiService;
     private final DocumentiService documentiService;
+    private final LetteraIncaricoService letteraIncaricoService;
     private final String username;
 
     private final SegmentedControl<TipoDocumento> tipo;
@@ -73,6 +78,11 @@ public class DocumentiView extends VerticalLayout {
     private final Grid<DocumentoIscrizione> gridIscrizioni = new Grid<>();
     private final Grid<DocumentoRiepilogo> gridRiepiloghi = new Grid<>();
     private final Grid<DocumentoAttestazione> gridAttestazioni = new Grid<>();
+    private final Grid<LetteraIncarico> gridLettere = new Grid<>();
+    private final Button nuovaLettera = new Button("Nuova lettera di incarico", VaadinIcon.PLUS.create());
+    private List<LetteraIncarico> lettere = List.of();
+    private GridListDataView<LetteraIncarico> righeLettere;
+    private boolean admin;
     private List<DocumentoAttestazione> attestazioni = List.of();
     private GridListDataView<DocumentoAttestazione> righeAttestazioni;
     private List<DocumentoIscrizione> iscrizioni = List.of();
@@ -82,7 +92,10 @@ public class DocumentiView extends VerticalLayout {
     private boolean primaApertura = true;
 
     public DocumentiView(ElencoDocumentiService elencoDocumentiService, DocumentiService documentiService,
-                         AllievoService allievoService, SecurityService securityService) {
+                         AllievoService allievoService, LetteraIncaricoService letteraIncaricoService,
+                         SecurityService securityService) {
+        this.letteraIncaricoService = letteraIncaricoService;
+        this.admin = securityService.hasRole("ADMIN");
         this.elencoDocumentiService = elencoDocumentiService;
         this.documentiService = documentiService;
         this.username = securityService.getUsername().orElse("");
@@ -91,7 +104,14 @@ public class DocumentiView extends VerticalLayout {
             t -> t == TipoDocumento.RIEPILOGO ? "Riepiloghi annuali dei pagamenti"
                 : t == TipoDocumento.ATTESTAZIONE ? "Attestazioni delle spese per anno solare" : t.getTitolo(), null);
         if (!securityService.hasRole("ADMIN") && !securityService.hasRole("SEGRETERIA")) {
-            if (!securityService.hasRole("GENITORE") && !allievoService.gestisceDaSe(username)) {
+            boolean famiglia = securityService.hasRole("GENITORE") || allievoService.gestisceDaSe(username);
+            if (securityService.hasRole("INSEGNANTE")) {
+                creaElencoInsegnante();
+                if (!famiglia) {
+                    return;
+                }
+            }
+            if (!famiglia) {
                 // Allievo con genitore (la voce di menu è nascosta, qui solo dall'indirizzo)
                 Span avviso = new Span("I documenti dei tuoi corsi sono nell'area del genitore.");
                 avviso.addClassNames(Stili.TESTO_SECONDARIO);
@@ -131,7 +151,11 @@ public class DocumentiView extends VerticalLayout {
         creaGrigliaIscrizioni();
         creaGrigliaRiepiloghi();
         creaGrigliaAttestazioni();
-        add(tipo, filtri, gridIscrizioni, gridRiepiloghi, gridAttestazioni);
+        creaGrigliaLettere();
+        nuovaLettera.addClickListener(e -> LetteraIncaricoDialog.apri(new LetteraIncarico(), username, this::aggiorna));
+        filtri.add(nuovaLettera);
+        add(tipo, filtri, gridIscrizioni, gridRiepiloghi, gridAttestazioni, gridLettere);
+        gridLettere.addClassNames("grow");
         gridIscrizioni.addClassNames("grow");
         gridRiepiloghi.addClassNames("grow");
         gridAttestazioni.addClassNames("grow");
@@ -202,6 +226,76 @@ public class DocumentiView extends VerticalLayout {
             .campo("Ultimo invio", a -> ultimoInvio(a.ultimoInvio()))
             .azioni(this::azioniAttestazione)
             .applica();
+    }
+
+    private void creaGrigliaLettere() {
+        gridLettere.addColumn(l -> l.getInsegnante().getNomeCompleto()).setHeader("Insegnante")
+            .setComparator(l -> l.getInsegnante().getNomeCompleto());
+        gridLettere.addComponentColumn(l -> TipoCorsoUI.nome(l.getCorso())).setHeader("Corso")
+            .setComparator(l -> l.getCorso().getNome());
+        gridLettere.addColumn(LetteraIncarico::getAnnoScolastico).setHeader("Anno").setAutoWidth(true).setFlexGrow(0);
+        gridLettere.addColumn(LetteraIncaricoDialog::compenso).setHeader("Compenso");
+        gridLettere.addColumn(l -> Formati.data(l.getDataEmissione())).setHeader("Emessa il")
+            .setComparator(LetteraIncarico::getDataEmissione).setAutoWidth(true).setFlexGrow(0);
+        ViewSupport.configureActionsColumn(gridLettere.addComponentColumn(this::azioniLettera));
+        gridLettere.setEmptyStateText("Nessuna lettera di incarico");
+        CardMobile.per(gridLettere)
+            .titolo(l -> l.getInsegnante().getNomeCompleto())
+            .sottotitolo(l -> l.getCorso().getNome() + anno(l.getAnnoScolastico()))
+            .campo("Compenso", LetteraIncaricoDialog::compenso)
+            .campo("Emessa il", l -> Formati.data(l.getDataEmissione()))
+            .azioni(this::azioniLettera)
+            .applica();
+    }
+
+    private HorizontalLayout azioniLettera(LetteraIncarico lettera) {
+        Long id = lettera.getId();
+        Button modifica = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica",
+            e -> LetteraIncaricoDialog.apri(lettera, username, this::aggiorna));
+        Button invia = ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Invia per email",
+            e -> InvioEmailDialog.apriLettera(lettera, this::aggiorna));
+        HorizontalLayout azioni = ViewSupport.actions(modifica, invia);
+        azioni.addComponentAsFirst(pulsantePdf(VaadinIcon.FILE_TEXT_O, TipoDocumento.LETTERA_INCARICO.getTitolo(), null,
+            () -> documentiService.letteraPer(id, username)));
+        if (admin) {
+            Button elimina = ViewSupport.iconButton(VaadinIcon.TRASH, "Elimina", e -> {
+                letteraIncaricoService.elimina(id, username);
+                Notification.show("Lettera di incarico eliminata");
+                aggiorna();
+            });
+            elimina.addThemeVariants(ButtonVariant.ERROR);
+            azioni.add(elimina);
+        }
+        return azioni;
+    }
+
+    private HorizontalLayout pdfLettera(LetteraIncarico lettera) {
+        Long id = lettera.getId();
+        HorizontalLayout azioni = ViewSupport.actions();
+        azioni.add(pulsantePdf(VaadinIcon.FILE_TEXT_O, TipoDocumento.LETTERA_INCARICO.getTitolo(), null,
+            () -> documentiService.letteraPer(id, username)));
+        return azioni;
+    }
+
+    /** Lettere di incarico dell'insegnante, anche degli anni passati: solo PDF. */
+    private void creaElencoInsegnante() {
+        Grid<LetteraIncarico> grid = new Grid<>();
+        grid.addComponentColumn(l -> TipoCorsoUI.nome(l.getCorso())).setHeader("Corso");
+        grid.addColumn(LetteraIncarico::getAnnoScolastico).setHeader("Anno").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(LetteraIncaricoDialog::compenso).setHeader("Compenso");
+        grid.addColumn(l -> Formati.data(l.getDataEmissione())).setHeader("Emessa il").setAutoWidth(true).setFlexGrow(0);
+        ViewSupport.configureActionsColumn(grid.addComponentColumn(this::pdfLettera));
+        grid.setEmptyStateText("Nessuna lettera di incarico");
+        grid.setAllRowsVisible(true);
+        CardMobile.per(grid)
+            .titolo(l -> l.getCorso().getNome())
+            .sottotitolo(l -> Objects.requireNonNullElse(l.getAnnoScolastico(), ""))
+            .campo("Compenso", LetteraIncaricoDialog::compenso)
+            .campo("Emessa il", l -> Formati.data(l.getDataEmissione()))
+            .azioni(this::pdfLettera)
+            .applica();
+        grid.setItems(letteraIncaricoService.dellInsegnante(username));
+        add(ViewSupport.sezione("Lettere di incarico"), grid);
     }
 
     /** Chi sostiene le spese: il genitore, o l'allievo adulto. */
@@ -363,12 +457,19 @@ public class DocumentiView extends VerticalLayout {
     private void aggiorna() {
         boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
         boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
-        gridIscrizioni.setVisible(!perRiepilogo && !perAttestazione);
+        boolean perLettera = tipo.getValue() == TipoDocumento.LETTERA_INCARICO;
+        gridIscrizioni.setVisible(!perRiepilogo && !perAttestazione && !perLettera);
         gridRiepiloghi.setVisible(perRiepilogo);
         gridAttestazioni.setVisible(perAttestazione);
-        filtroCorso.setVisible(!perRiepilogo && !perAttestazione);
+        gridLettere.setVisible(perLettera);
+        nuovaLettera.setVisible(perLettera);
+        filtroCorso.setVisible(!perRiepilogo && !perAttestazione && !perLettera);
         Stream<String> anni;
-        if (perAttestazione) {
+        if (perLettera) {
+            lettere = letteraIncaricoService.tutte(username);
+            righeLettere = gridLettere.setItems(lettere);
+            anni = lettere.stream().map(LetteraIncarico::getAnnoScolastico);
+        } else if (perAttestazione) {
             attestazioni = elencoDocumentiService.attestazioni(username);
             righeAttestazioni = gridAttestazioni.setItems(attestazioni);
             anni = attestazioni.stream().map(a -> String.valueOf(a.anno()));
@@ -414,9 +515,17 @@ public class DocumentiView extends VerticalLayout {
         String anno = filtroAnno.getValue();
         boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
         boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
+        boolean perLettera = tipo.getValue() == TipoDocumento.LETTERA_INCARICO;
         Corso corso = filtroCorso.getValue();
         confermeATutti.setVisible(tipo.getValue() == TipoDocumento.CONFERMA_ISCRIZIONE && corso != null);
-        if (perAttestazione) {
+        if (perLettera) {
+            if (righeLettere != null) {
+                SerializablePredicate<LetteraIncarico> dellAnno = l -> anno == null || anno.equals(l.getAnnoScolastico());
+                righeLettere.setFilter(l -> dellAnno.test(l) && ricerca.corrisponde(RicercaRapida.testo(
+                    l.getInsegnante().getNomeCompleto(), l.getCorso().getNome())));
+                ricerca.mostraConteggio(righeLettere.getItemCount(), (int) lettere.stream().filter(dellAnno).count());
+            }
+        } else if (perAttestazione) {
             if (righeAttestazioni != null) {
                 SerializablePredicate<DocumentoAttestazione> dellAnno = a -> anno == null || anno.equals(String.valueOf(a.anno()));
                 righeAttestazioni.setFilter(a -> dellAnno.test(a) && ricerca.corrisponde(RicercaRapida.testo(

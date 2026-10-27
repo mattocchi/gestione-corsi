@@ -22,7 +22,7 @@ public class GrigliaInvii extends Grid<InvioEmail> {
             .setComparator(InvioEmail::getDataOra).setWidth("12rem").setFlexGrow(0);
         addColumn(i -> i.getTipo().getTitolo()).setHeader("Tipo").setWidth("11rem").setFlexGrow(0);
         var corso = addColumn(InvioEmail::getCorsoNome).setHeader("Corso").setSortable(true);
-        var allievo = addColumn(InvioEmail::getAllievoNome).setHeader("Allievo").setSortable(true);
+        var allievo = addColumn(InvioEmail::getAllievoNome).setHeader("Allievo o insegnante").setSortable(true);
         addColumn(InvioEmail::getDestinatario).setHeader("Destinatario");
         var inviatoDa = addColumn(InvioEmail::getInviatoDa).setHeader("Inviata da").setWidth("8rem").setFlexGrow(0);
         addComponentColumn(GrigliaInvii::esito).setHeader("Esito").setWidth("8rem").setFlexGrow(0);

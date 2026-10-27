@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import it.attocchi.entity.LetteraIncarico;
 import it.attocchi.service.ElencoDocumentiService;
 import java.time.YearMonth;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -193,6 +194,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private it.attocchi.service.LuogoService luogoService;
+
+    @Autowired
+    private it.attocchi.service.LetteraIncaricoService letteraIncaricoService;
 
     @Autowired
     private RimborsoService rimborsoService;
@@ -2451,9 +2455,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_emetteUnaLetteraDiIncarico() {
+        navigate(DocumentiView.class);
+        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
+        test(tipo.getPulsante(TipoDocumento.LETTERA_INCARICO)).click();
+        test(find(Button.class).withText("Nuova lettera di incarico").single()).click();
+        test((ComboBox<Corso>) find(ComboBox.class).withLabel("Corso o servizio").single()).selectItem("Corso di Canto (2024/2025)");
+        // Un solo insegnante: scelto da sé, con la sua tariffa e i giorni del corso proposti
+        assertEquals("Maria Verdi", ((ComboBox<Insegnante>) find(ComboBox.class).withLabel("Insegnante").single()).getValue().getNomeCompleto());
+        assertEquals(0, new BigDecimal("25").compareTo(find(BigDecimalField.class).withLabel("Tariffa oraria (€/ora)").single().getValue()));
+        assertEquals("giovedì alle 17:00, lezioni da 40 minuti", find(TextField.class).withLabel("Giorni e orari").single().getValue());
+        test(find(Button.class).withText("Salva").single()).click();
+        var lettere = test((Grid<LetteraIncarico>) find(Grid.class).single());
+        try {
+            assertEquals(1, lettere.size());
+            assertEquals("25,00 €/ora", lettere.getCellText(0, 3));
+        } finally {
+            letteraIncaricoService.elimina(lettere.getRow(0).getId(), "admin");
+        }
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
-    void insegnante_nonAccedeAiDocumenti() {
-        navigate("documenti", RouteNotFoundError.class);
+    void insegnante_vedeLeSueLettereDiIncarico() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Documenti")));
+        navigate(DocumentiView.class);
+        assertTrue(find(H3.class).withText("Lettere di incarico").exists());
+        assertFalse(find(SegmentedControl.class).exists());
     }
 
     @SuppressWarnings("unchecked")

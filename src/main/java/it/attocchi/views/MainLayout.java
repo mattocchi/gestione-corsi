@@ -119,7 +119,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         // staff, genitori e allievi senza genitore (non all'allievo con genitore: sono del genitore)
         boolean allievoAdulto = allievoService.gestisceDaSe(securityService.getUsername().orElse(null));
         boolean conDocumenti = allievoAdulto || securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")
-            || securityService.hasRole("GENITORE");
+            || securityService.hasRole("GENITORE") || securityService.hasRole("INSEGNANTE");
         MenuConfiguration.getMenuEntries().stream()
             .filter(entry -> {
                 String percorso = entry.path().replaceFirst("^/", "");

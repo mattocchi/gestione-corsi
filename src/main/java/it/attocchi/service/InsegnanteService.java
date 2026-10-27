@@ -5,6 +5,7 @@ import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.User;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.InsegnanteRepository;
+import it.attocchi.repository.LetteraIncaricoRepository;
 import it.attocchi.repository.LezioneRepository;
 import it.attocchi.repository.RimborsoRepository;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,12 @@ public class InsegnanteService {
     private final CorsoRepository corsoRepository;
     private final LezioneRepository lezioneRepository;
     private final RimborsoRepository rimborsoRepository;
+    private final LetteraIncaricoRepository letteraIncaricoRepository;
 
     public InsegnanteService(InsegnanteRepository insegnanteRepository, UserService userService,
                              CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
-                             RimborsoRepository rimborsoRepository) {
+                             RimborsoRepository rimborsoRepository, LetteraIncaricoRepository letteraIncaricoRepository) {
+        this.letteraIncaricoRepository = letteraIncaricoRepository;
         this.insegnanteRepository = insegnanteRepository;
         this.userService = userService;
         this.corsoRepository = corsoRepository;
@@ -64,6 +67,9 @@ public class InsegnanteService {
         }
         if (rimborsoRepository.existsByInsegnanteId(insegnanteId)) {
             return "ha dei rimborsi registrati";
+        }
+        if (letteraIncaricoRepository.existsByInsegnanteId(insegnanteId)) {
+            return "ha delle lettere di incarico";
         }
         return null;
     }

@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.LetteraIncarico;
 import it.attocchi.service.PagamentoService.Attestazione;
 import it.attocchi.config.MailProperties;
 import it.attocchi.entity.Allievo;
@@ -80,11 +81,14 @@ public class EmailService {
     private final UserRepository userRepository;
     private final ObjectProvider<JavaMailSender> mailSender;
     private final MailProperties mail;
+    private final LetteraIncaricoService letteraIncaricoService;
 
     public EmailService(PagamentoService pagamentoService, DocumentiService documentiService,
                         IscrizioneRepository iscrizioneRepository, PagamentoRepository pagamentoRepository,
                         InvioEmailRepository invioEmailRepository, UserRepository userRepository,
-                        ObjectProvider<JavaMailSender> mailSender, MailProperties mail) {
+                        ObjectProvider<JavaMailSender> mailSender, MailProperties mail,
+                        LetteraIncaricoService letteraIncaricoService) {
+        this.letteraIncaricoService = letteraIncaricoService;
         this.pagamentoService = pagamentoService;
         this.documentiService = documentiService;
         this.iscrizioneRepository = iscrizioneRepository;
@@ -265,6 +269,63 @@ public class EmailService {
         Pdf pdf = documentiService.riepilogoPdf(riepilogo);
         return new Anteprima(destinatario, oggetto(riepilogo), documentiService.emailRiepilogoHtml(riepilogo, destinatario.nome()),
             pdf.nomeFile(), pdf.contenuto());
+    }
+
+    /** Destinatario della lettera di incarico: l'insegnante, se ha un'email. */
+    public Optional<Destinatario> destinatarioLettera(Long letteraId, String username) {
+        return destinatario(letteraIncaricoService.lettera(letteraId, username));
+    }
+
+    /**
+     * Invia la lettera di incarico all'insegnante e registra il tentativo come {@link #invia} (insegnante nella colonna
+     * "Allievo o insegnante"); senza email {@link IllegalStateException}.
+     */
+    @Transactional
+    public InvioEmail inviaLettera(Long letteraId, String username) {
+        verificaPermesso(username);
+        LetteraIncarico lettera = letteraIncaricoService.lettera(letteraId, username);
+        Destinatario destinatario = verificaInviabile(lettera);
+
+        InvioEmail invio = new InvioEmail();
+        invio.setDataOra(LocalDateTime.now());
+        invio.setTipo(TipoDocumento.LETTERA_INCARICO);
+        invio.setCorsoId(lettera.getCorso().getId());
+        invio.setCorsoNome(lettera.getCorso().getNome());
+        invio.setAllievoNome(lettera.getInsegnante().getNomeCompleto());
+        invio.setAnno(lettera.getAnnoScolastico());
+        invio.setDestinatario(destinatario.email());
+        invio.setDestinatarioNome(destinatario.nome());
+        invio.setOggetto(oggetto(lettera));
+        Pdf pdf = documentiService.letteraPdf(lettera);
+        invio.setAllegato(pdf.nomeFile());
+        invio.setInviatoDa(username);
+        return spedisciERegistra(invio, () -> documentiService.emailLetteraHtml(lettera, destinatario.nome()), pdf::contenuto);
+    }
+
+    /** Anteprima dell'email della lettera di incarico, con gli stessi controlli di {@link #inviaLettera}, senza inviarla. */
+    public Anteprima anteprimaLettera(Long letteraId, String username) {
+        verificaPermesso(username);
+        LetteraIncarico lettera = letteraIncaricoService.lettera(letteraId, username);
+        Destinatario destinatario = verificaInviabile(lettera);
+        Pdf pdf = documentiService.letteraPdf(lettera);
+        return new Anteprima(destinatario, oggetto(lettera), documentiService.emailLetteraHtml(lettera, destinatario.nome()),
+            pdf.nomeFile(), pdf.contenuto());
+    }
+
+    private static Optional<Destinatario> destinatario(LetteraIncarico lettera) {
+        User user = lettera.getInsegnante().getUser();
+        return user != null && conEmail(user)
+            ? Optional.of(new Destinatario(lettera.getInsegnante().getNomeCompleto(), user.getEmail().strip()))
+            : Optional.empty();
+    }
+
+    private static Destinatario verificaInviabile(LetteraIncarico lettera) {
+        return destinatario(lettera).orElseThrow(() -> new IllegalStateException("L'insegnante non ha un indirizzo email"));
+    }
+
+    private static String oggetto(LetteraIncarico lettera) {
+        return TipoDocumento.LETTERA_INCARICO.getTitolo() + " – " + lettera.getCorso().getNome()
+            + (lettera.getAnnoScolastico() != null ? " " + lettera.getAnnoScolastico() : "");
     }
 
     /** Destinatario dell'attestazione: il genitore dell'allievo, o l'allievo adulto, se ha un'email. */
