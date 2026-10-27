@@ -28,7 +28,7 @@ e segreteria come cronologia — [F-2026-10-27/CRONOLOGIA.1]
 
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
-| 1 | Entità `AperturaDocumento`, repository, `CronologiaDocumentiService` (registra, elenco, elimina solo admin); `MenuPdf` con la registrazione per anteprima/scarico; `DocumentiView` registra per l'elenco famiglia; test | entity, repository, service, `MenuPdf`, `DocumentiView`, test | `./mvnw test` | [ ] | |
+| 1 | Entità `AperturaDocumento`, repository, `CronologiaDocumentiService` (registra, elenco, elimina solo admin); `MenuPdf` con la registrazione per anteprima/scarico; `DocumentiView` registra per l'elenco famiglia; test | entity, repository, service, `MenuPdf`, `DocumentiView`, test | `./mvnw test` | [x] | |
 | 2 | "Cronologia documenti": schede in `EmailInviateView`, griglia dei documenti aperti con Elimina (admin); test; CLAUDE.md | `EmailInviateView`, `GrigliaAperture`, test, CLAUDE.md | `./mvnw test` | [ ] | F-2026-10-27/CRONOLOGIA.1 |
 
 ## Fuori ambito

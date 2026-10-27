@@ -1,6 +1,7 @@
 package it.attocchi.views;
 
 import it.attocchi.service.AnnoScolasticoService;
+import it.attocchi.service.CronologiaDocumentiService;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
@@ -92,11 +93,13 @@ public class DocumentiView extends VerticalLayout {
     private GridListDataView<DocumentoIscrizione> righeIscrizioni;
     private GridListDataView<DocumentoRiepilogo> righeRiepiloghi;
     private boolean primaApertura = true;
+    private final CronologiaDocumentiService cronologiaDocumentiService;
 
     public DocumentiView(ElencoDocumentiService elencoDocumentiService, DocumentiService documentiService,
                          AllievoService allievoService, LetteraIncaricoService letteraIncaricoService,
-                         SecurityService securityService) {
+                         CronologiaDocumentiService cronologiaDocumentiService, SecurityService securityService) {
         this.letteraIncaricoService = letteraIncaricoService;
+        this.cronologiaDocumentiService = cronologiaDocumentiService;
         this.admin = securityService.hasRole("ADMIN");
         this.elencoDocumentiService = elencoDocumentiService;
         this.documentiService = documentiService;
@@ -400,7 +403,17 @@ public class DocumentiView extends VerticalLayout {
         }
         VaadinIcon icona = documento.tipo() == TipoDocumento.RICEVUTA ? VaadinIcon.PRINT : VaadinIcon.FILE_TEXT_O;
         HorizontalLayout azioni = ViewSupport.actions();
-        azioni.add(pulsantePdf(icona, documento.tipo().getTitolo(), documento.datiMancanti(), pdf));
+        // Ogni anteprima o scarico finisce nella cronologia dei documenti, visibile ad admin e segreteria
+        TipoDocumento tipoDocumento = documento.tipo();
+        String allievo = perChi(documento);
+        String corso = corso(documento);
+        String anno = documento.anno();
+        String utente = username;
+        CronologiaDocumentiService cronologia = cronologiaDocumentiService;
+        azioni.add(documento.datiMancanti() != null
+            ? pulsantePdf(icona, tipoDocumento.getTitolo(), documento.datiMancanti(), pdf)
+            : MenuPdf.soloIcona(icona, tipoDocumento.getTitolo(), pdf, (modalita, generato) ->
+                cronologia.registra(utente, tipoDocumento, modalita, allievo, corso, anno, generato.nomeFile())));
         return azioni;
     }
 

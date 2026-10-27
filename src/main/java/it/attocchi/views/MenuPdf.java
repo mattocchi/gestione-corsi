@@ -6,10 +6,12 @@ import com.vaadin.flow.component.html.AttachmentType;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.function.SerializableBiConsumer;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
+import it.attocchi.entity.AperturaDocumento.Modalita;
 import it.attocchi.service.DocumentiService.Pdf;
 
 import java.io.ByteArrayInputStream;
@@ -17,7 +19,8 @@ import java.io.ByteArrayInputStream;
 /**
  * Pulsante dei PDF con un menu: "Anteprima in una nuova scheda" (il PDF aperto dal browser) o "Scarica PDF". Le voci
  * sono link, non azioni sul server: così la nuova scheda non viene bloccata come popup. Il PDF è generato a ogni
- * richiesta dal fornitore indicato (che controlla i permessi); un errore diventa una risposta 404.
+ * richiesta dal fornitore indicato (che controlla i permessi); un errore diventa una risposta 404. Con {@code dopo}
+ * ogni PDF generato viene segnalato con la modalità (anteprima o scarico), per la cronologia dei documenti.
  */
 public final class MenuPdf {
 
@@ -30,12 +33,18 @@ public final class MenuPdf {
         MenuItem voce = menu.addItem(icona.create());
         voce.add(new Span(testo));
         voce.setAriaLabel(testo + ": anteprima o scarica il PDF");
-        voci(voce, pdf);
+        voci(voce, pdf, null);
         return menu;
     }
 
     /** Pulsante con la sola icona (azioni nelle righe delle tabelle); {@code etichetta} è il nome accessibile. */
     public static MenuBar soloIcona(VaadinIcon icona, String etichetta, SerializableSupplier<Pdf> pdf) {
+        return soloIcona(icona, etichetta, pdf, null);
+    }
+
+    /** Come {@link #soloIcona(VaadinIcon, String, SerializableSupplier)}, segnalando a {@code dopo} ogni PDF generato. */
+    public static MenuBar soloIcona(VaadinIcon icona, String etichetta, SerializableSupplier<Pdf> pdf,
+                                    SerializableBiConsumer<Modalita, Pdf> dopo) {
         MenuBar menu = new MenuBar();
         // Larghezza fissa (icona + freccia del sottomenu di Aura): il menu disegna il pulsante dopo che la colonna
         // "Azioni" ha calcolato la sua larghezza automatica, che altrimenti non lo conterebbe e lo taglierebbe
@@ -43,15 +52,15 @@ public final class MenuPdf {
         MenuItem voce = menu.addItem(icona.create());
         voce.setAriaLabel(etichetta);
         menu.setTooltipText(voce, etichetta);
-        voci(voce, pdf);
+        voci(voce, pdf, dopo);
         return menu;
     }
 
-    private static void voci(MenuItem voce, SerializableSupplier<Pdf> pdf) {
-        Anchor anteprima = new Anchor(handler(pdf).inline(), AttachmentType.INLINE, "");
+    private static void voci(MenuItem voce, SerializableSupplier<Pdf> pdf, SerializableBiConsumer<Modalita, Pdf> dopo) {
+        Anchor anteprima = new Anchor(handler(pdf, Modalita.ANTEPRIMA, dopo).inline(), AttachmentType.INLINE, "");
         anteprima.setTarget("_blank");
         anteprima.add(VaadinIcon.EYE.create(), new Span("Anteprima in una nuova scheda"));
-        Anchor scarica = new Anchor(handler(pdf), "");
+        Anchor scarica = new Anchor(handler(pdf, Modalita.SCARICO, dopo), "");
         scarica.add(VaadinIcon.DOWNLOAD.create(), new Span("Scarica PDF"));
         for (Anchor link : new Anchor[] {anteprima, scarica}) {
             // Il link occupa tutta la voce del menu, testo normale (non sottolineato)
@@ -60,10 +69,14 @@ public final class MenuPdf {
         }
     }
 
-    private static InputStreamDownloadHandler handler(SerializableSupplier<Pdf> pdf) {
+    private static InputStreamDownloadHandler handler(SerializableSupplier<Pdf> pdf, Modalita modalita,
+                                                      SerializableBiConsumer<Modalita, Pdf> dopo) {
         return DownloadHandler.fromInputStream(evento -> {
             try {
                 Pdf documento = pdf.get();
+                if (dopo != null) {
+                    dopo.accept(modalita, documento);
+                }
                 return new DownloadResponse(new ByteArrayInputStream(documento.contenuto()), documento.nomeFile(),
                     "application/pdf", documento.contenuto().length);
             } catch (IllegalArgumentException | IllegalStateException ex) {

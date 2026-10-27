@@ -132,6 +132,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import com.vaadin.flow.server.StreamResourceRegistry;
+import com.vaadin.flow.server.VaadinRequest;
+import com.vaadin.flow.server.VaadinResponse;
+import com.vaadin.flow.server.VaadinSession;
+import it.attocchi.entity.AperturaDocumento;
+import it.attocchi.repository.AperturaDocumentoRepository;
+import it.attocchi.service.CronologiaDocumentiService;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -159,6 +173,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private LezioneService lezioneService;
+
+    @Autowired
+    private CronologiaDocumentiService cronologiaDocumentiService;
+
+    @Autowired
+    private AperturaDocumentoRepository aperturaDocumentoRepository;
 
     @Autowired
     private InsegnanteService insegnanteService;
@@ -3330,6 +3350,43 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals("Riepilogo pagamenti", documenti.getCellText(0, 0));
         assertEquals("2024/2025", documenti.getCellText(0, 3));
         assertLinkPdf(documenti.getCellComponent(0, 5));
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    @SuppressWarnings("unchecked")
+    void genitore_anteprimaEScaricoFinisconoNellaCronologia() throws Exception {
+        try {
+            navigate(DocumentiView.class);
+            var documenti = test((Grid<DocumentoFamiglia>) find(Grid.class).single());
+            List<com.vaadin.flow.component.html.Anchor> link = find(com.vaadin.flow.component.html.Anchor.class)
+                .from(documenti.getCellComponent(0, 5)).all();
+            for (var a : link) {
+                apriLink(a);
+            }
+            List<AperturaDocumento> aperture = cronologiaDocumentiService.tutte();
+            assertEquals(2, aperture.size());
+            assertEquals(Set.of(AperturaDocumento.Modalita.ANTEPRIMA, AperturaDocumento.Modalita.SCARICO),
+                aperture.stream().map(AperturaDocumento::getModalita).collect(Collectors.toSet()));
+            AperturaDocumento apertura = aperture.getFirst();
+            assertEquals("genitore3", apertura.getUsername());
+            assertEquals(TipoDocumento.RIEPILOGO, apertura.getTipo());
+            assertEquals("Tutti i figli", apertura.getAllievoNome());
+            assertEquals("2024/2025", apertura.getAnno());
+            assertTrue(apertura.getNomeFile().endsWith(".pdf"));
+        } finally {
+            aperturaDocumentoRepository.deleteAll();
+        }
+    }
+
+    /** Esegue il download del link come farebbe il browser (risposta su un buffer). */
+    private static void apriLink(com.vaadin.flow.component.html.Anchor link) throws IOException {
+        var risorsa = (StreamResourceRegistry.ElementStreamResource) VaadinSession.getCurrent().getResourceRegistry()
+            .getResource(URI.create(link.getHref())).orElseThrow();
+        VaadinResponse risposta = mock(VaadinResponse.class);
+        when(risposta.getOutputStream()).thenReturn(new ByteArrayOutputStream());
+        risorsa.getElementRequestHandler().handleRequest(mock(VaadinRequest.class), risposta, VaadinSession.getCurrent(),
+            risorsa.getOwner());
     }
 
     /** Nel componente un menu PDF con l'anteprima in una nuova scheda (inline) e lo scarico, entrambi con un indirizzo. */
