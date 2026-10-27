@@ -44,7 +44,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             user.isEnabled(),
             true,
             true,
-            true,
+            // Sospeso per inattività = "bloccato": al login lo dice solo con la password giusta (SecurityConfig)
+            !user.isSospesoPerInattivita(),
             authorities
         );
     }
@@ -53,7 +54,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (email == null || email.isBlank()) {
             return Optional.empty();
         }
-        List<User> account = userRepository.findByEmailIgnoreCaseAndEnabledTrue(email.strip());
+        // Attivi, o sospesi per inattività (per dire come riattivarsi)
+        List<User> account = userRepository.findByEmailIgnoreCase(email.strip()).stream()
+            .filter(u -> u.isEnabled() || u.isSospesoPerInattivita()).toList();
         return account.size() == 1 ? Optional.of(account.getFirst()) : Optional.empty();
     }
 }

@@ -1,5 +1,8 @@
 package it.attocchi.security;
 
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import it.attocchi.views.LoginView;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -66,6 +69,21 @@ public class SecurityConfig {
         servizi.setTokenValiditySeconds((int) DURATA_RICORDAMI.toSeconds());
         servizi.setCookieName("ricordami-accesso");
         return servizi;
+    }
+
+    /**
+     * Login con username o email ({@link UserDetailsServiceImpl}): lo stato dell'account si controlla solo dopo la
+     * password, così il motivo (es. sospeso per inattività, {@link LockedException}) non rivela a chi non conosce la
+     * password quali account esistono; con la password sbagliata resta "credenziali errate".
+     */
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        AccountStatusUserDetailsChecker stato = new AccountStatusUserDetailsChecker();
+        provider.setPreAuthenticationChecks(utente -> { });
+        provider.setPostAuthenticationChecks(stato);
+        return provider;
     }
 
     @Bean

@@ -3264,13 +3264,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var utenti = test((Grid<User>) find(Grid.class).single());
             // Allievo iscritto a un corso: niente conferma, solo il motivo
             cerca("allievo_canto1");
-            test(pulsante(utenti.getCellComponent(0, 8), "Elimina")).click();
+            test(pulsante(utenti.getCellComponent(0, 9), "Elimina")).click();
             assertTrue(find(Dialog.class).all().stream().noneMatch(d -> "Eliminare l'utente?".equals(d.getHeaderTitle())));
             assertNotNull(userService.findByUsername("allievo_canto1"));
 
             cerca("ivo daeliminare");
             assertEquals(1, utenti.size());
-            test(pulsante(utenti.getCellComponent(0, 8), "Elimina")).click();
+            test(pulsante(utenti.getCellComponent(0, 9), "Elimina")).click();
             Dialog conferma = find(Dialog.class).all().stream()
                 .filter(d -> "Eliminare l'utente?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
             assertTrue(find(Span.class).from(conferma).all().stream().anyMatch(sp -> sp.getText().contains("si eliminano anche scheda allievo")));
@@ -3349,7 +3349,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var utenti = test((Grid<User>) find(Grid.class).single());
             cerca("lia ruolo");
             assertEquals(1, utenti.size());
-            test(pulsante(utenti.getCellComponent(0, 8), "Modifica")).click();
+            test(pulsante(utenti.getCellComponent(0, 9), "Modifica")).click();
             test((CheckboxGroup<String>) find(CheckboxGroup.class).withLabel("Ruoli").single()).selectItem("GENITORE");
             test(find(Button.class).withText("Salva").single()).click();
 
@@ -3394,6 +3394,28 @@ class ViewAccessTest extends SpringBrowserlessTest {
         cerca("chitarra");
         assertEquals(7, riepilogo.size());
         assertTrue(find(Span.class).withText("1 di 2").exists());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_vedeGliUtentiSospesiPerInattivita() {
+        User sospeso = userService.findByUsername("genitore9");
+        sospeso.setUltimoAccesso(LocalDateTime.now().minusMonths(8));
+        userService.save(sospeso, null);
+        userService.sospendiInattivi(LocalDateTime.now());
+        try {
+            navigate(UtentiView.class);
+            var utenti = test((Grid<User>) find(Grid.class).single());
+            test(find(Checkbox.class).withLabel("Solo sospesi per inattività").single()).click();
+            assertEquals(1, utenti.size());
+            assertEquals("Sospeso per inattività", ((Badge) utenti.getCellComponent(0, 8)).getText());
+        } finally {
+            User ripristino = userService.findByUsername("genitore9");
+            ripristino.setEnabled(true);
+            ripristino.setUltimoAccesso(null);
+            userService.save(ripristino, null);
+        }
     }
 
     @Test

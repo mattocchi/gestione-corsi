@@ -1,5 +1,6 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.shared.Tooltip;
 import it.attocchi.service.RecuperoPasswordService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
@@ -54,6 +55,7 @@ public class UtentiView extends VerticalLayout {
     private final Grid<User> grid = new Grid<>(User.class, false);
     private final RicercaRapida ricerca = new RicercaRapida();
     private final Checkbox soloIncongruenze = new Checkbox("Solo incongruenze");
+    private final Checkbox soloSospesi = new Checkbox("Solo sospesi per inattività");
     private final Button invitaSelezionati = new Button("Invita selezionati", VaadinIcon.PAPERPLANE.create());
     private final RecuperoPasswordService recuperoPasswordService;
     private GridListDataView<User> utenti;
@@ -74,13 +76,14 @@ public class UtentiView extends VerticalLayout {
         // Incongruenze tra ruoli e schede: filtro e creazione delle schede che mancano
         soloIncongruenze.setTooltipText("Utenti con un ruolo senza la sua scheda o una scheda senza il ruolo");
         soloIncongruenze.addValueChangeListener(e -> applicaFiltri());
+        soloSospesi.addValueChangeListener(e -> applicaFiltri());
         ricerca.addRicercaListener(this::applicaFiltri);
         Button creaSchede = new Button("Crea schede mancanti", VaadinIcon.FILE_ADD.create(), e -> creaSchedeMancanti());
         creaSchede.setTooltipText("Crea la scheda di insegnante, genitore o allievo a chi ha il ruolo ma non la scheda");
         invitaSelezionati.setEnabled(false);
         invitaSelezionati.setTooltipText("Email con il link per impostare la password a chi ha un'email e non è mai entrato");
         invitaSelezionati.addClickListener(e -> invitaSelezionati());
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, invitaSelezionati, soloIncongruenze, ricerca);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, creaSchede, invitaSelezionati, soloIncongruenze, soloSospesi, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
         add(toolbar, grid);
         grid.addClassNames("grow");
@@ -102,6 +105,8 @@ public class UtentiView extends VerticalLayout {
             .setComparator(Comparator.comparing(User::getInvitatoIl, Comparator.nullsFirst(Comparator.naturalOrder())))
             .setAutoWidth(true).setFlexGrow(0);
 
+        grid.addComponentColumn(UtentiView::stato).setHeader("Stato").setAutoWidth(true).setFlexGrow(0);
+
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createActions));
         // Selezione multipla per invitare più utenti insieme
         grid.setSelectionMode(Grid.SelectionMode.MULTI);
@@ -109,6 +114,7 @@ public class UtentiView extends VerticalLayout {
 
         CardMobile.per(grid)
             .titolo(User::getUsername)
+            .stato(UtentiView::stato)
             .campo("Nome", User::getNome)
             .campo("Cognome", User::getCognome)
             .campo("Email", User::getEmail)
@@ -118,6 +124,23 @@ public class UtentiView extends VerticalLayout {
             .campo("Invito", UtentiView::invito)
             .azioni(this::createActions)
             .applica();
+    }
+
+    /** Attivo, Disattivato, o Sospeso per inattività (si riattiva con il recupero password). */
+    private static Badge stato(User user) {
+        if (user.isEnabled()) {
+            Badge badge = new Badge("Attivo", VaadinIcon.CHECK.create());
+            badge.addThemeVariants(BadgeVariant.SUCCESS);
+            return badge;
+        }
+        if (user.isSospesoPerInattivita()) {
+            Badge badge = new Badge("Sospeso per inattività", VaadinIcon.CLOCK.create());
+            badge.addThemeVariants(BadgeVariant.WARNING);
+            Tooltip.forComponent(badge).setText("Nessun accesso da più di " + UserService.MESI_INATTIVITA
+                + " mesi: si riattiva con «Password dimenticata?» o spuntando Attivo");
+            return badge;
+        }
+        return new Badge("Disattivato", VaadinIcon.BAN.create());
     }
 
     /** Ultimo invito ad accedere, vuoto se mai invitato. */
@@ -251,7 +274,8 @@ public class UtentiView extends VerticalLayout {
     /** Solo incongruenze e ricerca rapida; "N di M" sugli utenti del primo filtro. */
     private void applicaFiltri() {
         if (utenti != null) {
-            SerializablePredicate<User> filtro = user -> !soloIncongruenze.getValue() || incongruenze.containsKey(user.getId());
+            SerializablePredicate<User> filtro = user -> (!soloIncongruenze.getValue() || incongruenze.containsKey(user.getId()))
+                && (!soloSospesi.getValue() || user.isSospesoPerInattivita());
             utenti.setFilter(user -> filtro.test(user) && ricerca.corrisponde(RicercaRapida.testo(user)));
             ricerca.mostraConteggio(utenti.getItemCount(), (int) tutti.stream().filter(filtro).count());
         }

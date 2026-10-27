@@ -1,5 +1,7 @@
 package it.attocchi.security;
 
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import it.attocchi.entity.User;
 import it.attocchi.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -73,6 +75,29 @@ class LoginTest {
         allievo.setEnabled(false);
         userRepository.save(allievo);
         assertEquals("insegnante1", accedi(EMAIL, "insegnante1").getName());
+    }
+
+    @Test
+    void accesso_sospesoPerInattivita_sololaPasswordGiustaLoDice() throws Exception {
+        User insegnante = userRepository.findByUsername("insegnante2").orElseThrow();
+        insegnante.setEnabled(false);
+        insegnante.setSospesoPerInattivita(true);
+        userRepository.save(insegnante);
+        try {
+            assertThrows(LockedException.class, () -> accedi("insegnante2", "insegnante2"));
+            assertThrows(LockedException.class, () -> accedi("insegnante2@example.com", "insegnante2"));
+            // Con la password sbagliata non si scopre nulla
+            assertThrows(BadCredentialsException.class, () -> accedi("insegnante2", "sbagliata"));
+            // Disattivato a mano: solo "credenziali errate" o disattivato, mai "sospeso"
+            insegnante.setSospesoPerInattivita(false);
+            userRepository.save(insegnante);
+            assertThrows(DisabledException.class, () -> accedi("insegnante2", "insegnante2"));
+            assertThrows(BadCredentialsException.class, () -> accedi("insegnante2", "sbagliata"));
+        } finally {
+            insegnante.setEnabled(true);
+            insegnante.setSospesoPerInattivita(false);
+            userRepository.save(insegnante);
+        }
     }
 
     private Authentication accedi(String usernameOEmail, String password) throws Exception {

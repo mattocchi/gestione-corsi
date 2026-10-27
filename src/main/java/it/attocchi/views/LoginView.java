@@ -1,5 +1,8 @@
 package it.attocchi.views;
 
+import it.attocchi.service.UserService;
+import org.springframework.security.web.WebAttributes;
+import org.springframework.security.authentication.LockedException;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.login.LoginI18n;
@@ -78,13 +81,34 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         return i18n;
     }
 
+    /** Messaggio per l'account sospeso per inattività (mostrato solo dopo nome e password corretti). */
+    static LoginI18n sospeso() {
+        LoginI18n i18n = italiano();
+        i18n.getErrorMessage().setTitle("Account sospeso per inattività");
+        i18n.getErrorMessage().setMessage("Non accedi da più di " + UserService.MESI_INATTIVITA + " mesi. Per riattivare "
+            + "l'account usa «Password dimenticata?»: riceverai un'email con il link per scegliere la password.");
+        return i18n;
+    }
+
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         if (beforeEnterEvent.getLocation()
             .getQueryParameters()
             .getParameters()
             .containsKey("error")) {
+            if (ultimoErrore() instanceof LockedException) {
+                login.setI18n(sospeso());
+            }
             login.setError(true);
         }
+    }
+
+    /** Errore dell'ultimo tentativo di accesso, salvato in sessione da Spring Security. */
+    private static Object ultimoErrore() {
+        VaadinRequest richiesta = VaadinService.getCurrentRequest();
+        if (richiesta == null || richiesta.getWrappedSession(false) == null) {
+            return null;
+        }
+        return richiesta.getWrappedSession(false).getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
     }
 }
