@@ -429,6 +429,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 * [x] potrebbe essere interessante usare quell'invito anche per resettare l'utente da admin, se inviamo un invito in pratica disabilita e si parte con la procedura di attivazione su invito e cambio password _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: solo l'admin in Gestione Utenti (non sul proprio utente); lo stesso pulsante diventa "Reimposta accesso" per chi è già entrato; l'account si blocca subito (disattivato, password vecchia non valida, sessioni e "Ricordami" chiusi) e il link di 7 giorni fa scegliere la password, riattiva ed entra; prima dell'invio, per inviti e reimpostazioni, un dialog con destinatario, anteprima del messaggio e Invia; "Invita selezionati" chiede conferma._
 
+* [ ] nella email di invito\reset esplicita fin da subito che può entrare con username o email indistintamente
+
 ### PUBBLICAZIONE CORSI
 
 * [x] vorrei introdurre un principio di corso pubblicato o non pubblicato per renderlo visibile o no a genitori e allievi fintanto che segreteria e insegnante ci stanno lavorando. non usare attivo e non attivo in quanto con non attivo faccio archivio di tutti gli storici ma pubblico o non pubblico direbbe che è uno in partenza quest'anno scolastico ma non ancora visibile a tutti. _(completata 2026-10-27)_
