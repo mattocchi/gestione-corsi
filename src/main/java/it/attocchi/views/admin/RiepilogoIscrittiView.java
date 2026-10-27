@@ -1,5 +1,9 @@
 package it.attocchi.views.admin;
 
+import java.time.LocalDate;
+import it.attocchi.entity.AnnoScolastico;
+import it.attocchi.service.AnnoScolasticoService;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -120,7 +124,13 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         costi = bilancioService.costiPrevistiPerCorso();
         List<String> anni = corsi.stream().map(c -> c.corso().getAnnoScolastico()).filter(Objects::nonNull).distinct()
             .sorted(Comparator.reverseOrder()).toList();
-        filtroAnno = ViewSupport.filtroAnnoScolastico(anni);
+        // Anche gli anni non attivi (archivio): lo storico si consulta
+        AnnoScolasticoService annoScolasticoService = VaadinService.getCurrent().getInstantiator()
+            .getOrCreate(AnnoScolasticoService.class);
+        filtroAnno = ViewSupport.filtroAnnoScolastico(annoScolasticoService.perFiltro(anni), annoScolasticoService.nonAttivi());
+        // All'apertura l'anno corrente se ha corsi, altrimenti il più recente con corsi (come prima)
+        String corrente = AnnoScolastico.di(LocalDate.now());
+        filtroAnno.setValue(anni.contains(corrente) ? corrente : anni.isEmpty() ? null : anni.getFirst());
         filtroAnno.setPlaceholder("Tutti gli anni");
         filtroAnno.setClearButtonVisible(true);
         filtroCorsi.setValue(FiltroStato.ATTIVI);

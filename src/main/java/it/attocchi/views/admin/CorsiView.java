@@ -486,7 +486,9 @@ public class CorsiView extends VerticalLayout {
         tutti = corsoService.findAll();
         gruppiPerCorso = corsoService.numeroGruppi();
         String annoScelto = filtroAnno.getValue();
-        filtroAnno.setItems(tutti.stream().map(Corso::getAnnoScolastico).filter(a -> a != null).distinct().sorted().toList());
+        // Anche gli anni non attivi (archivio): non si scelgono per i corsi nuovi ma si filtrano
+        filtroAnno.setItems(annoScolasticoService.perFiltro(tutti.stream().map(Corso::getAnnoScolastico).toList()));
+        filtroAnno.setItemLabelGenerator(ViewSupport.etichettaAnno(annoScolasticoService.nonAttivi()));
         filtroAnno.setValue(annoScelto);
         corsi = grid.setItems(tutti);
         applicaFiltri();

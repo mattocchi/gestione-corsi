@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import java.util.Set;
+import com.vaadin.flow.component.ItemLabelGenerator;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
@@ -65,6 +67,18 @@ public final class ViewSupport {
      * Filtro per anno scolastico tra quelli indicati (dal più recente), con l'anno corrente preselezionato
      * se presente, altrimenti il più recente.
      */
+    /** Filtro per anno scolastico con "(archivio)" accanto agli anni non attivi. */
+    public static ComboBox<String> filtroAnnoScolastico(List<String> anni, Set<String> nonAttivi) {
+        ComboBox<String> filtro = filtroAnnoScolastico(anni);
+        filtro.setItemLabelGenerator(etichettaAnno(nonAttivi));
+        return filtro;
+    }
+
+    /** Etichetta di un anno scolastico nei filtri: "2023/2024 (archivio)" se non è più attivo. */
+    public static ItemLabelGenerator<String> etichettaAnno(Set<String> nonAttivi) {
+        return anno -> nonAttivi.contains(anno) ? anno + " (archivio)" : anno;
+    }
+
     public static ComboBox<String> filtroAnnoScolastico(List<String> anni) {
         ComboBox<String> filtro = new ComboBox<>();
         filtro.setAriaLabel("Filtra per anno scolastico");

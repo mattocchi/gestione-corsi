@@ -54,7 +54,7 @@ public class MieiRimborsiView extends VerticalLayout {
         addClassNames("size-full");
 
         filtroAnno = ViewSupport.filtroAnnoScolastico(
-            annoScolasticoService.elenco().stream().map(AnnoScolastico::getNome).toList());
+            annoScolasticoService.perFiltro(List.of()), annoScolasticoService.nonAttivi());
         filtroAnno.addValueChangeListener(e -> aggiorna());
         Button lezioniDelMese = new Button("Lezioni del mese", VaadinIcon.CALENDAR_CLOCK.create(), e -> apriLezioniDelMese());
         lezioniDelMese.setEnabled(insegnante != null);

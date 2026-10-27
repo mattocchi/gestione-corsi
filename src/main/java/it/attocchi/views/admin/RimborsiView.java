@@ -1,5 +1,6 @@
 package it.attocchi.views.admin;
 
+import java.util.List;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -48,7 +49,7 @@ public class RimborsiView extends VerticalLayout {
         addClassNames("size-full");
 
         filtroAnno = ViewSupport.filtroAnnoScolastico(
-            annoScolasticoService.elenco().stream().map(AnnoScolastico::getNome).toList());
+            annoScolasticoService.perFiltro(List.of()), annoScolasticoService.nonAttivi());
         filtroAnno.addValueChangeListener(e -> aggiorna());
         configureGrid();
         add(filtroAnno, grid);

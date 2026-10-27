@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import it.attocchi.service.AnnoScolasticoService;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
@@ -510,13 +512,19 @@ public class DocumentiView extends VerticalLayout {
             anni = iscrizioni.stream().map(d -> d.iscrizione().getCorso().getAnnoScolastico());
         }
         String annoScelto = filtroAnno.getValue();
-        List<String> elencoAnni = anni.filter(Objects::nonNull).distinct().sorted(Comparator.reverseOrder()).toList();
+        List<String> anniDeiDati = anni.filter(Objects::nonNull).distinct().sorted(Comparator.reverseOrder()).toList();
+        // Anni scolastici: anche quelli non attivi dell'elenco (archivio); attestazioni: anni solari dei pagamenti
+        AnnoScolasticoService annoScolasticoService = VaadinService.getCurrent().getInstantiator()
+            .getOrCreate(AnnoScolasticoService.class);
+        List<String> elencoAnni = perAttestazione ? anniDeiDati : annoScolasticoService.perFiltro(anniDeiDati);
         filtroAnno.setItems(elencoAnni);
-        // Alla prima apertura l'anno corrente (o il più recente), poi quello scelto se c'è ancora
+        filtroAnno.setItemLabelGenerator(perAttestazione ? anno -> anno
+            : ViewSupport.etichettaAnno(annoScolasticoService.nonAttivi()));
+        // Alla prima apertura l'anno corrente se ha documenti (o il più recente con documenti), poi quello scelto
         if (primaApertura) {
             primaApertura = false;
             String corrente = AnnoScolastico.di(LocalDate.now());
-            filtroAnno.setValue(elencoAnni.contains(corrente) ? corrente : elencoAnni.isEmpty() ? null : elencoAnni.getFirst());
+            filtroAnno.setValue(anniDeiDati.contains(corrente) ? corrente : anniDeiDati.isEmpty() ? null : anniDeiDati.getFirst());
         } else {
             filtroAnno.setValue(annoScelto != null && elencoAnni.contains(annoScelto) ? annoScelto : null);
         }

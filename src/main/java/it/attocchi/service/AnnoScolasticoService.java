@@ -6,6 +6,9 @@ import it.attocchi.repository.CorsoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+import java.util.Comparator;
+import java.util.Collection;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +36,24 @@ public class AnnoScolasticoService {
     /** Anni assegnati ad almeno un corso (non eliminabili). */
     public Set<String> usati() {
         return new HashSet<>(corsoRepository.findAnniScolasticiUsati());
+    }
+
+    /**
+     * Scelte dei filtri per anno scolastico: tutti gli anni dell'elenco, attivi o no (lo storico si consulta), più
+     * quelli presenti nei dati della vista, dal più recente.
+     */
+    public List<String> perFiltro(Collection<String> anniDeiDati) {
+        Set<String> anni = new TreeSet<>(Comparator.reverseOrder());
+        annoScolasticoRepository.findAll().forEach(anno -> anni.add(anno.getNome()));
+        anniDeiDati.stream().filter(Objects::nonNull).forEach(anni::add);
+        return List.copyOf(anni);
+    }
+
+    /** Anni dell'elenco non attivi (non si scelgono per i corsi nuovi, restano nei filtri come archivio). */
+    public Set<String> nonAttivi() {
+        Set<String> nonAttivi = new HashSet<>();
+        annoScolasticoRepository.findAll().stream().filter(anno -> !anno.isAttivo()).forEach(anno -> nonAttivi.add(anno.getNome()));
+        return nonAttivi;
     }
 
     /** Scelte per il dialog del corso: gli anni attivi più quello già assegnato al corso, in ordine. */

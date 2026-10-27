@@ -69,4 +69,21 @@ class AnnoScolasticoServiceTest {
             .filter(a -> a.getNome().equals("2024/2025")).findFirst().orElseThrow();
         assertThrows(IllegalStateException.class, () -> annoScolasticoService.elimina(usato.getId()));
     }
+
+    @Test
+    void perFiltro_ancheGliAnniNonAttiviEQuelliDeiDati() {
+        AnnoScolastico vecchio = annoScolasticoService.crea("2019/2020");
+        annoScolasticoService.impostaAttivo(vecchio.getId(), false);
+        try {
+            List<String> anni = annoScolasticoService.perFiltro(List.of("2010/2011"));
+            assertTrue(anni.contains("2019/2020"), anni.toString());
+            assertTrue(anni.contains("2010/2011"), anni.toString());
+            assertEquals("2010/2011", anni.getLast());
+            assertTrue(annoScolasticoService.nonAttivi().contains("2019/2020"));
+            // Per i corsi nuovi solo gli attivi
+            assertFalse(annoScolasticoService.scelteCorso(null).contains("2019/2020"));
+        } finally {
+            annoScolasticoService.elimina(vecchio.getId());
+        }
+    }
 }

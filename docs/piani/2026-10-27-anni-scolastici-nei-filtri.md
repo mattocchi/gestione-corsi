@@ -19,11 +19,16 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `AnnoScolasticoService.perFiltro(anniDeiDati)` e etichetta "(archivio)"; filtri di Documenti, Rimborsi, I miei rimborsi, Gestione Pagamenti, Gestione Corsi, Riepilogo Iscritti; test; CLAUDE.md; registro | service, viste, test | ANNI.1 | `./mvnw test` | [ ] |
+| 1 | `AnnoScolasticoService.perFiltro(anniDeiDati)` e etichetta "(archivio)"; filtri di Documenti, Rimborsi, I miei rimborsi, Gestione Pagamenti, Gestione Corsi, Riepilogo Iscritti; test; CLAUDE.md; registro | service, viste, test | ANNI.1 | `./mvnw test` | [x] Gestione Pagamenti: anni dell'elenco solo per lo staff (le famiglie vedono gli anni dei loro dati) |
 
 ## Fuori ambito
 
 - Il filtro per anno solare delle attestazioni resta com'è.
 
 ## Registro
+
+- `./mvnw test`: 330 test superati. Nuovi: `AnnoScolasticoServiceTest.perFiltro_ancheGliAnniNonAttiviEQuelliDeiDati`, `ViewAccessTest.segreteria_filtraPerUnAnnoScolasticoNonAttivo` (2024/2025 disattivato resta nel filtro di Gestione Corsi come "(archivio)" e filtra i suoi corsi).
+- Problema trovato e corretto: con l'anno corrente sempre in elenco, Riepilogo Iscritti si apriva su un anno senza corsi; la selezione iniziale resta sull'anno corrente solo se ha dati.
+- Non verificato nel browser.
+- Lasciato aperto: nessuno.
 

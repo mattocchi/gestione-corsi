@@ -1,5 +1,7 @@
 package it.attocchi.views;
 
+import it.attocchi.service.AnnoScolasticoService;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
@@ -200,6 +202,14 @@ public class ElencoPagamenti extends VerticalLayout {
         aggiornaVoci(filtroAllievo, elenco, RigaPagamento::allievo, Comparator.comparing(Allievo::getNomeCompleto));
         aggiornaVoci(filtroGenitore, elenco, RigaPagamento::genitore, Comparator.comparing(Genitore::getNomeCompleto));
         aggiornaVoci(filtroAnno, elenco, r -> r.corso().getAnnoScolastico(), Comparator.reverseOrder());
+        if (gestione) {
+            // Lo staff filtra anche per gli anni non attivi dell'elenco (archivio)
+            AnnoScolasticoService anni = VaadinService.getCurrent().getInstantiator().getOrCreate(AnnoScolasticoService.class);
+            String scelto = filtroAnno.getValue();
+            filtroAnno.setItems(anni.perFiltro(elenco.stream().map(r -> r.corso().getAnnoScolastico()).toList()));
+            filtroAnno.setItemLabelGenerator(ViewSupport.etichettaAnno(anni.nonAttivi()));
+            filtroAnno.setValue(scelto);
+        }
         filtroAllievo.setVisible(gestione || filtroAllievo.getListDataView().getItemCount() > 1);
         righe = grid.setItems(elenco);
         applicaFiltri();

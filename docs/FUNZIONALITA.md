@@ -451,5 +451,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### ANNI SCOLASTICI
 
-* [ ] nella finestra attestazione e filtri sarebbe opportuno verificare se ci sono anni scolastici "precedenti". anche se non attivi ma ci sono dei dati, è importante che nel filtro rimanga come opzione, quindi se disabilitato non posso usare l'anno scolastico per nuovi inserimenti ma per ricercare nello storico direi che è oppotuno poterlo usare.
+* [x] nella finestra attestazione e filtri sarebbe opportuno verificare se ci sono anni scolastici "precedenti". anche se non attivi ma ci sono dei dati, è importante che nel filtro rimanga come opzione, quindi se disabilitato non posso usare l'anno scolastico per nuovi inserimenti ma per ricercare nello storico direi che è oppotuno poterlo usare. _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: in tutti i filtri per anno scolastico (Documenti, Rimborsi e I miei rimborsi, Gestione Pagamenti, Gestione Corsi, Riepilogo Iscritti) compaiono gli anni dell'elenco Anni scolastici, attivi o no, più quelli presenti nei dati, dal più recente, con "(archivio)" per i non attivi; solo il dialog del corso propone i soli anni attivi per i nuovi inserimenti. Le attestazioni restano per anno solare con tutti gli anni passati con pagamenti._

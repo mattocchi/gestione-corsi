@@ -647,6 +647,25 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
+    void segreteria_filtraPerUnAnnoScolasticoNonAttivo() {
+        AnnoScolastico anno = annoScolasticoService.elenco().stream().filter(a -> a.getNome().equals("2024/2025")).findFirst().orElseThrow();
+        annoScolasticoService.impostaAttivo(anno.getId(), false);
+        try {
+            navigate(CorsiView.class);
+            ComboBox<String> filtro = find(ComboBox.class).all().stream()
+                .filter(c -> c.getAriaLabel().filter("Filtra per anno scolastico"::equals).isPresent()).findFirst().orElseThrow();
+            assertTrue(filtro.getListDataView().getItems().anyMatch("2024/2025"::equals));
+            assertEquals("2024/2025 (archivio)", filtro.getItemLabelGenerator().apply("2024/2025"));
+            filtro.setValue("2024/2025");
+            assertEquals(2, test((Grid<Corso>) find(Grid.class).single()).size());
+        } finally {
+            annoScolasticoService.impostaAttivo(anno.getId(), true);
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
     void segreteria_duplicaUnCorsoEApreIlDialog() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
