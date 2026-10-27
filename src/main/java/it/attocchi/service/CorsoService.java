@@ -314,6 +314,15 @@ public class CorsoService {
                 || corso.getCostoTotale() == null || preiscrizione.compareTo(corso.getCostoTotale()) > 0)) {
             throw new IllegalArgumentException("Il prezzo con pre-iscrizione deve essere tra zero e il costo totale");
         }
+        if (corso.getNumeroLezioni() == null && corso.getDataFine() == null) {
+            throw new IllegalArgumentException("Indica il numero di lezioni o la data di fine");
+        }
+        if (corso.getNumeroLezioni() != null && corso.getNumeroLezioni() < 1) {
+            throw new IllegalArgumentException("Il numero di lezioni deve essere almeno 1");
+        }
+        if (corso.getDataFine() != null && corso.getDataInizio() != null && corso.getDataFine().isBefore(corso.getDataInizio())) {
+            throw new IllegalArgumentException("La data di fine non può essere prima della data di inizio");
+        }
         if (corso.getCadenzaSettimane() != 1 && corso.getCadenzaSettimane() != 2) {
             throw new IllegalArgumentException("La cadenza è ogni settimana o ogni 2 settimane");
         }
@@ -402,14 +411,15 @@ public class CorsoService {
         });
 
         List<Iscrizione> iscrizioni = iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId());
-        int lezioniPerAllievo = corso.getNumeroLezioni() != null ? corso.getNumeroLezioni() : 0;
+        // Senza numero di lezioni nessun limite per allievo: ci si ferma alla data di fine
+        int lezioniPerAllievo = corso.getNumeroLezioni() != null ? corso.getNumeroLezioni() : Integer.MAX_VALUE;
         Map<Iscrizione, Integer> contate = new HashMap<>();
         iscrizioni.forEach(i -> contate.put(i, (int) conservate.stream().filter(l -> i.frequenta(l.getDataDelCalendario())).count()));
 
         // I giorni festivi si saltano senza consumare un numero: la fine del corso slitta
         CalendarioFestivita festivita = festivitaService.calendario();
         LocalDate dataCorrente = corso.getDataInizio();
-        LocalDate limite = corso.getDataInizio().plusYears(10);
+        LocalDate limite = corso.getDataFine() != null ? corso.getDataFine() : corso.getDataInizio().plusYears(10);
         int numeroLezione = 1;
         int generateSenzaIscritti = conservate.size();
         // Cadenza: per ogni giorno del corso la prima data utile da cui cercare la prossima lezione. Dopo una

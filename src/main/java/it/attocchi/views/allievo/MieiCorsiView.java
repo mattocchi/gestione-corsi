@@ -70,7 +70,7 @@ public class MieiCorsiView extends VerticalLayout {
         gridCorsi.addColumn(Corso::getNomeLuogo).setHeader("Luogo");
         gridCorsi.addColumn(corso -> Formati.data(corso.getDataInizio())).setHeader("Data Inizio")
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
-        gridCorsi.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        gridCorsi.addColumn(Formati::lezioniCorso).setHeader("Lezioni");
         gridCorsi.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         Map<Long, Situazione> situazioni = allievoCorrente != null
             ? pagamentoService.situazioniDelloAllievo(allievoCorrente.getId()) : Map.of();
@@ -91,7 +91,7 @@ public class MieiCorsiView extends VerticalLayout {
             .campo("Giorni", giorniDi)
             .campo("Luogo", Corso::getNomeLuogo)
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
-            .campo("N. Lezioni", Corso::getNumeroLezioni)
+            .campo("Lezioni", Formati::lezioniCorso)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti);
         if (adulto) {
             card.stato(corso -> StatoPagamentoUI.badge(situazioni.get(corso.getId())));

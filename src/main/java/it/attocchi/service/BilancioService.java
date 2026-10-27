@@ -323,7 +323,7 @@ public class BilancioService {
     private static BigDecimal costoPrevisto(Corso corso, List<Lezione> lezioni, Map<Long, Long> presenze, long iscritti,
                                             BigDecimal tariffaOraria) {
         long minutiPrevisti = lezioni.isEmpty()
-            ? valore(corso.getNumeroLezioni()) * (corso.isServizio() ? 1 : iscritti) * valore(corso.getDurataLezioneMinuti())
+            ? corso.getLezioniPreviste() * (corso.isServizio() ? 1 : iscritti) * valore(corso.getDurataLezioneMinuti())
             : minuti(lezioni, presenze, l -> !l.isNonEffettuata());
         return costo(minutiPrevisti, tariffaOraria);
     }

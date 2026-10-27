@@ -419,7 +419,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### LEZIONI
 
-* [ ] nel caso di servizi o alcuni corsi non ha senso indicare il numero di lezioni, ma è piu utile indicare una data di fine, quindi rendi opzionale numero lezioni o data di fine. Le lezioni vengono generate per numero o fino alla data di fine.
+* [x] nel caso di servizi o alcuni corsi non ha senso indicare il numero di lezioni, ma è piu utile indicare una data di fine, quindi rendi opzionale numero lezioni o data di fine. Le lezioni vengono generate per numero o fino alla data di fine. _(completata 2026-10-27; in produzione eseguire prima docs/migrazioni/2026-10-27-numero-lezioni-facoltativo.sql)_
   _Chiarimento 2026-10-27: obbligatorio almeno uno tra numero di lezioni e data di fine; con entrambi le lezioni si fermano al primo limite raggiunto._
 * [ ] Fai una funzione di aggiornamento delle lezioni mancanti per quelle programmate se nel frattempo modifica data fine o numero lezioni e sopratutto se per caso è entrata una festività che va quindi a modificare la programmazione iniziale
   _Chiarimento 2026-10-27: "Genera Lezioni" diventa "Aggiorna lezioni" incrementale con anteprima: le lezioni da fare ancora valide restano (note, luogo, presenze), si tolgono quelle che cadono in una festività o oltre la fine (la programmazione slitta in avanti con il numero di lezioni), si aggiungono le mancanti. Aggiornamento a mano per corso, con un avviso dopo il salvataggio di un corso con fine cambiata e dopo il salvataggio di una festività (corsi attivi interessati)._

@@ -51,6 +51,39 @@ class CorsoServiceTest {
     private PagamentoService pagamentoService;
 
     @Test
+    void dataFine_lezioniFinoAllaFineOAlPrimoLimite() {
+        Corso pulizia = new Corso();
+        pulizia.setNome("Pulizia");
+        pulizia.setDataInizio(LocalDate.of(2025, 9, 2));
+        pulizia.setAnnoScolastico("2025/2026");
+        pulizia.setDurataLezioneMinuti(120);
+        pulizia.setGiorniSettimana(new java.util.HashSet<>(Set.of(DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)));
+        pulizia.setInsegnante(insegnanteService.findByUsername("insegnante1").orElseThrow());
+        // Serve il numero di lezioni o la data di fine, non prima dell'inizio
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(pulizia));
+        pulizia.setDataFine(LocalDate.of(2025, 9, 1));
+        assertThrows(IllegalArgumentException.class, () -> corsoService.save(pulizia));
+
+        pulizia.setDataFine(LocalDate.of(2025, 9, 14));
+        Corso salvato = corsoService.save(pulizia);
+        try {
+            assertEquals(6, salvato.getLezioniPreviste());
+            corsoService.generaLezioni(salvato);
+            assertEquals(List.of(2, 3, 5, 9, 10, 12), lezioneService.findByCorso(salvato.getId()).stream()
+                .map(l -> l.getData().getDayOfMonth()).toList());
+
+            // Con entrambi vale il primo limite raggiunto
+            Corso conNumero = corsoService.findById(salvato.getId());
+            conNumero.setNumeroLezioni(4);
+            corsoService.save(conNumero);
+            corsoService.generaLezioni(conNumero);
+            assertEquals(4, lezioneService.findByCorso(salvato.getId()).size());
+        } finally {
+            corsoService.delete(corsoService.findById(salvato.getId()));
+        }
+    }
+
+    @Test
     void save_prezzoConPreiscrizioneTraZeroECostoTotale() {
         Corso canto = corso("Corso di Canto");
         canto.setPrezzoPreiscrizione(new java.math.BigDecimal("600.01"));

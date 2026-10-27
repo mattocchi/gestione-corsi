@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,8 +39,15 @@ public class Corso {
     @NotNull
     private LocalDate dataInizio;
 
-    @NotNull
+    /**
+     * Lezioni per partecipante; facoltativo se c'è la data di fine (almeno uno dei due, {@code CorsoService.save}).
+     * Con entrambi le lezioni si fermano al primo limite raggiunto.
+     */
     private Integer numeroLezioni;
+
+    /** Ultimo giorno in cui generare lezioni (compreso); facoltativo se c'è il numero di lezioni. */
+    @Column(name = "data_fine")
+    private LocalDate dataFine;
 
     @NotNull
     private Integer durataLezioneMinuti;
@@ -150,6 +158,35 @@ public class Corso {
 
     public void setDataInizio(LocalDate dataInizio) {
         this.dataInizio = dataInizio;
+    }
+
+    public LocalDate getDataFine() {
+        return dataFine;
+    }
+
+    public void setDataFine(LocalDate dataFine) {
+        this.dataFine = dataFine;
+    }
+
+    /**
+     * Lezioni per partecipante stimate: il numero di lezioni se c'è, altrimenti le date dei giorni del corso (con la
+     * cadenza) dalla data di inizio alla data di fine, senza contare le festività.
+     */
+    public int getLezioniPreviste() {
+        if (numeroLezioni != null) {
+            return numeroLezioni;
+        }
+        if (dataInizio == null || dataFine == null || giorniSettimana.isEmpty()) {
+            return 0;
+        }
+        int lezioni = 0;
+        for (DayOfWeek giorno : giorniSettimana) {
+            LocalDate data = dataInizio.with(TemporalAdjusters.nextOrSame(giorno));
+            for (; !data.isAfter(dataFine); data = data.plusWeeks(getCadenzaSettimane())) {
+                lezioni++;
+            }
+        }
+        return lezioni;
     }
 
     public Integer getNumeroLezioni() {

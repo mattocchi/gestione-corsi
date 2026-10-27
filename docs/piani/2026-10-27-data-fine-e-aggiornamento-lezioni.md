@@ -22,7 +22,7 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | `Corso.dataFine`, `numeroLezioni` facoltativo (almeno uno); generazione fino alla data di fine; dialog del corso; "Lezioni" nelle liste; previste e stima del costo senza numero; script SQL; test | `Corso`, `CorsoService`, `CorsiView`, viste, `ConteggioLezioni`, `BilancioService`, `docs/migrazioni` | LEZIONI.1 | `./mvnw test` | [ ] |
+| 1 | `Corso.dataFine`, `numeroLezioni` facoltativo (almeno uno); generazione fino alla data di fine; dialog del corso; "Lezioni" nelle liste; previste e stima del costo senza numero; script SQL; test | `Corso`, `CorsoService`, `CorsiView`, viste, `ConteggioLezioni`, `BilancioService`, `docs/migrazioni` | LEZIONI.1 | `./mvnw test` | [x] Colonna "Lezioni" (`Formati.lezioniCorso`: "30", "fino al …" o entrambi) |
 | 2 | Aggiornamento incrementale in `CorsoService` (`anteprimaAggiornamento`, `aggiornaLezioni`, piano comune); test | `CorsoService`, test | — | `./mvnw test` | [ ] |
 | 3 | Gestione Corsi: "Aggiorna lezioni" con anteprima; avviso dopo il salvataggio del corso; test | `CorsiView`, test | — | `./mvnw test` | [ ] |
 | 4 | Festività: avviso con i corsi attivi da aggiornare e "Aggiorna"; test | `FestivitaView`, `CorsoService`, test | LEZIONI.2 | `./mvnw test` | [ ] |

@@ -13,7 +13,7 @@ import java.util.Collection;
  */
 public record ConteggioLezioni(int previste, int svolte, int daFare, int presenze, int giustificate, int ingiustificate) {
 
-    /** @param previste lezioni per partecipante del corso ({@code Corso.numeroLezioni}; {@code null} = 0) */
+    /** @param previste lezioni per partecipante del corso ({@code Corso.numeroLezioni}; {@code null} = svolte + da fare) */
     public static ConteggioLezioni di(Collection<Presenza> presenzeAllievo, Integer previste) {
         int svolte = 0;
         int daFare = 0;
@@ -35,7 +35,9 @@ public record ConteggioLezioni(int previste, int svolte, int daFare, int presenz
                 }
             }
         }
-        return new ConteggioLezioni(previste != null ? previste : 0, svolte, daFare, presenti, giustificate, ingiustificate);
+        // Senza numero di lezioni (corso con data di fine) le previste sono le lezioni dell'allievo
+        return new ConteggioLezioni(previste != null ? previste : svolte + daFare, svolte, daFare, presenti, giustificate,
+            ingiustificate);
     }
 
     /** Lezione completata (e non segnata come non effettuata). */

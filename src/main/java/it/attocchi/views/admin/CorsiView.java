@@ -178,7 +178,7 @@ public class CorsiView extends VerticalLayout {
             .setComparator(Corso::getDataInizio).setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(Formati::giorniECadenza).setHeader("Giorni");
         grid.addColumn(Corso::getNomeLuogo).setHeader("Luogo").setSortable(true);
-        grid.addColumn(Corso::getNumeroLezioni).setHeader("N. Lezioni");
+        grid.addColumn(Formati::lezioniCorso).setHeader("Lezioni");
         grid.addColumn(Corso::getDurataLezioneMinuti).setHeader("Durata (min)");
         grid.addColumn(corso -> corso.getAllievi().size()).setHeader("N. Allievi");
         grid.addColumn(this::numeroGruppi).setHeader("Gruppi");
@@ -194,7 +194,7 @@ public class CorsiView extends VerticalLayout {
             .campo("Data Inizio", corso -> Formati.data(corso.getDataInizio()))
             .campo("Giorni", Formati::giorniECadenza)
             .campo("Luogo", Corso::getNomeLuogo)
-            .campo("N. Lezioni", Corso::getNumeroLezioni)
+            .campo("Lezioni", Formati::lezioniCorso)
             .campo("Durata (min)", Corso::getDurataLezioneMinuti)
             .campo("N. Allievi", corso -> corso.getAllievi().size())
             .campo("Gruppi", this::numeroGruppi)
@@ -250,7 +250,11 @@ public class CorsiView extends VerticalLayout {
         TextArea descrizione = new TextArea("Descrizione");
         DatePicker dataInizio = ViewSupport.datePicker("Data Inizio");
         IntegerField numeroLezioni = new IntegerField("Numero Lezioni");
-        numeroLezioni.setHelperText("Per ogni allievo, nei giorni che frequenta");
+        numeroLezioni.setHelperText("Per ogni allievo, nei giorni che frequenta; facoltativo con la data di fine");
+        numeroLezioni.setClearButtonVisible(true);
+        DatePicker dataFine = ViewSupport.datePicker("Data di fine");
+        dataFine.setHelperText("Ultimo giorno di lezione; facoltativa con il numero di lezioni");
+        dataFine.setClearButtonVisible(true);
         IntegerField durataLezioni = new IntegerField("Durata Lezione (minuti)");
         TimePicker orarioInizio = ViewSupport.timePicker("Orario Inizio");
         BigDecimalField costoTotale = new BigDecimalField("Costo Totale");
@@ -336,8 +340,16 @@ public class CorsiView extends VerticalLayout {
         binder.forField(nome).asRequired("Inserisci il nome del corso").bind(Corso::getNome, Corso::setNome);
         binder.forField(descrizione).bind(Corso::getDescrizione, Corso::setDescrizione);
         binder.forField(dataInizio).asRequired("Inserisci la data di inizio del corso").bind(Corso::getDataInizio, Corso::setDataInizio);
-        binder.forField(numeroLezioni).asRequired("Inserisci il numero di lezioni")
+        // Almeno uno tra numero di lezioni e data di fine: con entrambi vale il primo limite raggiunto
+        var bindingNumero = binder.forField(numeroLezioni)
+            .withValidator(n -> n != null || dataFine.getValue() != null, "Indica il numero di lezioni o la data di fine")
+            .withValidator(n -> n == null || n >= 1, "Almeno 1 lezione")
             .bind(Corso::getNumeroLezioni, Corso::setNumeroLezioni);
+        binder.forField(dataFine)
+            .withValidator(d -> d == null || dataInizio.getValue() == null || !d.isBefore(dataInizio.getValue()),
+                "Non può essere prima della data di inizio")
+            .bind(Corso::getDataFine, Corso::setDataFine);
+        dataFine.addValueChangeListener(e -> bindingNumero.validate());
         binder.forField(durataLezioni).asRequired("Inserisci la durata della lezione")
             .bind(Corso::getDurataLezioneMinuti, Corso::setDurataLezioneMinuti);
         binder.forField(orarioInizio).bind(Corso::getOrarioInizio, Corso::setOrarioInizio);
@@ -371,7 +383,7 @@ public class CorsiView extends VerticalLayout {
 
         binder.readBean(corso);
 
-        formLayout.add(bloccoTipo, nome, insegnante, altriInsegnanti, dataInizio, annoScolastico, numeroLezioni, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
+        formLayout.add(bloccoTipo, nome, insegnante, altriInsegnanti, dataInizio, annoScolastico, numeroLezioni, dataFine, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi

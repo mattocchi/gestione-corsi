@@ -66,6 +66,13 @@ public final class Formati {
         return String.join(", ", nomi.subList(0, nomi.size() - 1)) + " e " + nomi.getLast();
     }
 
+    /** Durata del corso: "30" lezioni, "fino al mar 30 giugno" o entrambi ("30 · fino al …"). */
+    public static String lezioniCorso(Corso corso) {
+        String numero = corso.getNumeroLezioni() != null ? corso.getNumeroLezioni().toString() : null;
+        String fine = corso.getDataFine() != null ? "fino al " + data(corso.getDataFine()) : null;
+        return numero != null && fine != null ? numero + " · " + fine : numero != null ? numero : fine != null ? fine : "";
+    }
+
     /**
      * Luogo della lezione: "Aula 1", o "Palestra (invece di Aula 1)" se differisce da quello del corso; {@code null}
      * se né la lezione né il corso ne hanno uno.
