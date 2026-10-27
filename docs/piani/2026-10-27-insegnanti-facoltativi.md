@@ -25,11 +25,17 @@
 | 1 | `Corso.insegnantiFacoltativi` (lista ordinata, tabella `corso_insegnanti`) al posto di `secondoInsegnante`; query dei corsi dell'insegnante; validazione in `CorsoService.save` (max 3, distinti, non il titolare); script di migrazione; test | entity, repository, `CorsoService`, `docs/migrazioni`, test | — | `./mvnw test` | [x] Fatto insieme a 2 (il dialog usava il campo rimosso). Lista caricata con `@Fetch(SELECT)`: in join, l'EAGER di una lista ordinata dava `IndexOutOfBoundsException` in Hibernate |
 | 2 | Dialog del corso: "Altri insegnanti" a scelta multipla; test | `CorsiView`, `ViewAccessTest` | INSEGNANTI.1 | `./mvnw test` | [x] Nello stesso commit di 1 |
 | 3 | Gestisci Presenze: caselle degli insegnanti presenti con più di due insegnanti; test | `ElencoLezioni`, test | INSEGNANTI.1 | `./mvnw test` | [x] |
-| 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | build e test | [ ] |
+| 4 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | INSEGNANTI.1 | build e test | [x] |
 
 ## Fuori ambito
 
 - Nessun limite diverso per i servizi (stesse regole dei corsi).
 
 ## Registro
+
+- `./mvnw test`: 312 test superati. Nuovi o aggiornati: `CorsoServiceTest` (titolare ripetuto, doppioni, più di 3), `ViewAccessTest.segreteria_assegnaAltriInsegnantiAlCorso` (campo "Altri insegnanti") e `insegnante_conTreInsegnantiSceglieIPresentiConLeCaselle`; i test con il secondo insegnante usano ora la lista.
+- Problema trovato e corretto: con la lista caricata in join, Hibernate dava `IndexOutOfBoundsException` nei grafi con lezioni e insegnanti presenti; risolto con `@Fetch(FetchMode.SELECT)` e `@BatchSize`.
+- Produzione: eseguire `docs/migrazioni/2026-10-27-insegnanti-facoltativi.sql` su MySQL prima del deploy (crea `corso_insegnanti`, copia i secondi insegnanti, svuota `corsi.secondo_insegnante_id`).
+- Non verificato nel browser: dialog del corso e caselle coperti dai test browserless.
+- Lasciato aperto: nessuno.
 
