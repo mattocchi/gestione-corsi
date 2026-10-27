@@ -414,5 +414,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### USERNAME
 
-* [ ] gli utenti non possono cambiare username, puoi fare almeno una procedura che li allinea ai nomi per sistemare eventuali default che non sono piu attuali dopo il cambio di nome e cognome?
+* [x] gli utenti non possono cambiare username, puoi fare almeno una procedura che li allinea ai nomi per sistemare eventuali default che non sono piu attuali dopo il cambio di nome e cognome? _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: solo gli username generati "nome.cognome" (anche con numero) non più attuali, non quelli scelti a mano; solo l'admin in Gestione Utenti ("Allinea username" con anteprima vecchio → nuovo e caselle, più un pulsante nel dialog dell'utente); nessuna email; vale anche per il proprio utente, che se cambia viene disconnesso; le sessioni aperte degli utenti allineati si chiudono._
