@@ -125,6 +125,21 @@ class RecuperoPasswordServiceTest {
 
         var anteprima = recuperoPasswordService.anteprimaInvito(entrato.getId(), "admin");
         assertEquals("Il tuo accesso all'Area Corsi è stato reimpostato", anteprima.oggetto());
+        // Fin da subito: si entra con lo username o con l'email
+        assertTrue(anteprima.corpoHtml().contains("indistintamente il nome utente <strong>insegnante2</strong> oppure la tua email"),
+            anteprima.corpoHtml());
+        assertTrue(anteprima.corpoHtml().contains("insegnante2@example.com"));
+        // Email usata anche da un altro account: serve il nome utente
+        User altro = userRepository.findByUsername("allievo_canto1").orElseThrow();
+        String emailAltro = altro.getEmail();
+        altro.setEmail("insegnante2@example.com");
+        userRepository.save(altro);
+        try {
+            assertTrue(recuperoPasswordService.anteprimaInvito(entrato.getId(), "admin").corpoHtml().contains("usata da più account"));
+        } finally {
+            altro.setEmail(emailAltro);
+            userRepository.save(altro);
+        }
         assertTrue(utente().isEnabled(), "L'anteprima non cambia l'account");
 
         assertEquals(RecuperoPasswordService.TipoInvito.REIMPOSTAZIONE, recuperoPasswordService.invita(entrato.getId(), "admin"));

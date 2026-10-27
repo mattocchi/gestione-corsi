@@ -472,10 +472,11 @@ public class DocumentiService {
     }
 
     /**
-     * Invito ad accedere, o reimpostazione dell'accesso ({@code reimpostazione}): link per impostare la password,
-     * valido {@code giorni} giorni.
+     * Invito ad accedere, o reimpostazione dell'accesso ({@code reimpostazione}): si entra con lo username o con
+     * {@code email} ({@code null} se l'email è di più account), link per impostare la password valido {@code giorni} giorni.
      */
-    public String emailInvitoHtml(String saluto, String username, String link, int giorni, boolean reimpostazione) {
+    public String emailInvitoHtml(String saluto, String username, String email, String link, int giorni,
+                                  boolean reimpostazione) {
         Map<String, Object> modello = new HashMap<>();
         modello.put("associazione", associazione());
         modello.put("saluto", saluto);
@@ -483,6 +484,8 @@ public class DocumentiService {
         modello.put("link", link);
         modello.put("giorni", giorni);
         modello.put("reimpostazione", reimpostazione);
+        // Vuota se l'email non basta per entrare (usata da più account)
+        modello.put("email", email != null ? email : "");
         return render("email/invito.ftlh", modello);
     }
 

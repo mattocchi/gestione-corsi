@@ -201,8 +201,10 @@ public class RecuperoPasswordService {
     }
 
     private String corpoInvito(User user, TipoInvito tipo, String link) {
-        return documentiService.emailInvitoHtml(saluto(user), user.getUsername(), link, VALIDITA_INVITO_GIORNI,
-            tipo == TipoInvito.REIMPOSTAZIONE);
+        // L'email vale per entrare solo se è di un unico account (UserDetailsServiceImpl)
+        boolean emailUnica = userRepository.findByEmailIgnoreCase(user.getEmail().strip()).size() == 1;
+        return documentiService.emailInvitoHtml(saluto(user), user.getUsername(), emailUnica ? user.getEmail().strip() : null,
+            link, VALIDITA_INVITO_GIORNI, tipo == TipoInvito.REIMPOSTAZIONE);
     }
 
     /** Invita ogni utente {@link #invitabile} tra quelli indicati; gli altri sono saltati. */

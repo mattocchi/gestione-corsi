@@ -18,11 +18,15 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Template e modello dell'email con username o email (email condivisa → solo username); test; registro | `invito.ftlh`, `DocumentiService`, `RecuperoPasswordService`, test, questo piano | ACCESSO.2 | `./mvnw test` | [ ] |
+| 1 | Template e modello dell'email con username o email (email condivisa → solo username); test; registro | `invito.ftlh`, `DocumentiService`, `RecuperoPasswordService`, test, questo piano | ACCESSO.2 | `./mvnw test` | [x] |
 
 ## Fuori ambito
 
 - Le altre email (recupero password, documenti).
 
 ## Registro
+
+- `./mvnw test`: 325 test superati; `RecuperoPasswordServiceTest.reimpostazione_…` verifica il riquadro iniziale con username ed email e il caso dell'email condivisa.
+- Non verificato nel browser (l'anteprima dell'email mostra lo stesso testo).
+- Lasciato aperto: nessuno.
 
