@@ -416,3 +416,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] gli utenti non possono cambiare username, puoi fare almeno una procedura che li allinea ai nomi per sistemare eventuali default che non sono piu attuali dopo il cambio di nome e cognome? _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: solo gli username generati "nome.cognome" (anche con numero) non più attuali, non quelli scelti a mano; solo l'admin in Gestione Utenti ("Allinea username" con anteprima vecchio → nuovo e caselle, più un pulsante nel dialog dell'utente); nessuna email; vale anche per il proprio utente, che se cambia viene disconnesso; le sessioni aperte degli utenti allineati si chiudono._
+
+### LEZIONI
+
+* [ ] nel caso di servizi o alcuni corsi non ha senso indicare il numero di lezioni, ma è piu utile indicare una data di fine, quindi rendi opzionale numero lezioni o data di fine. Le lezioni vengono generate per numero o fino alla data di fine.
+* [ ] Fai una funzione di aggiornamento delle lezioni mancanti per quelle programmate se nel frattempo modifica data fine o numero lezioni e sopratutto se per caso è entrata una festività che va quindi a modificare la programmazione iniziale
