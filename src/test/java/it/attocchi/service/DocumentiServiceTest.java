@@ -352,8 +352,14 @@ class DocumentiServiceTest {
         Pagamento gennaio = rata(LocalDate.of(2025, 1, 20), "250");
         pagamentoService.salva(corsoId, allievoId, dicembre);
         pagamentoService.salva(corsoId, allievoId, gennaio);
+        // Il contante ("Cassa") non è tracciabile: non entra nella dichiarazione
+        Pagamento contanti = rata(LocalDate.of(2025, 2, 1), "70");
+        contanti.setMetodo(MetodoPagamento.CASSA);
+        pagamentoService.salva(corsoId, allievoId, contanti);
         try {
             PagamentoService.Attestazione attestazione = pagamentoService.attestazione(allievoId, 2025);
+            assertTrue(attestazione.inEta());
+            assertTrue(attestazione.datiMancanti().isEmpty(), attestazione.datiMancanti().toString());
             assertEquals(1, attestazione.pagamenti().size());
             assertEquals(0, new BigDecimal("250").compareTo(attestazione.totale()));
             assertEquals("genitore3", attestazione.genitore().getUser().getUsername());

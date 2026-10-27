@@ -141,6 +141,7 @@ public class DataInitializer implements CommandLineRunner {
                 allievo.setUser(userAllievo);
                 allievo.setCodiceFiscale(codiceFiscale("CNTSTD" + String.format("%02d", (8 + i) % 100) + "C15H501"));
                 allievo.setDataNascita(LocalDate.of(2008 + i, 3, 15));
+                allievo.setLuogoNascita("Roma");
                 allievo.setGenitore(genitori[i]);
                 allieviCanto[i] = allievoRepository.save(allievo);
             }
@@ -161,6 +162,7 @@ public class DataInitializer implements CommandLineRunner {
                 allievo.setUser(userAllievo);
                 allievo.setCodiceFiscale(codiceFiscale("CHTSTD" + String.format("%02d", (9 + i) % 100) + "E20H501"));
                 allievo.setDataNascita(LocalDate.of(2009 + i, 5, 20));
+                allievo.setLuogoNascita("Roma");
                 allievo.setGenitore(genitori[i + 2]);
                 allieviChitarra[i] = allievoRepository.save(allievo);
             }

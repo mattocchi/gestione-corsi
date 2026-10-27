@@ -7,6 +7,7 @@ import it.attocchi.entity.Lezione;
 import it.attocchi.service.CalendarioService.VoceCalendario;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -64,6 +65,47 @@ public final class Formati {
             return String.join("", nomi);
         }
         return String.join(", ", nomi.subList(0, nomi.size() - 1)) + " e " + nomi.getLast();
+    }
+
+    private static final String[] UNITA = {"", "uno", "due", "tre", "quattro", "cinque", "sei", "sette", "otto", "nove",
+        "dieci", "undici", "dodici", "tredici", "quattordici", "quindici", "sedici", "diciassette", "diciotto", "diciannove"};
+    private static final String[] DECINE = {"", "", "venti", "trenta", "quaranta", "cinquanta", "sessanta", "settanta",
+        "ottanta", "novanta"};
+
+    /** Importo in lettere come negli assegni e nelle ricevute: 1234,50 → "milleduecentotrentaquattro/50". */
+    public static String inLettere(BigDecimal importo) {
+        BigDecimal arrotondato = importo.setScale(2, RoundingMode.HALF_UP);
+        long intero = arrotondato.longValue();
+        int centesimi = arrotondato.remainder(BigDecimal.ONE).movePointRight(2).abs().intValue();
+        return (intero == 0 ? "zero" : lettere(intero)) + "/" + String.format("%02d", centesimi);
+    }
+
+    private static String lettere(long numero) {
+        if (numero >= 1_000_000) {
+            long milioni = numero / 1_000_000;
+            return (milioni == 1 ? "unmilione" : lettere(milioni) + "milioni") + (numero % 1_000_000 > 0 ? lettere(numero % 1_000_000) : "");
+        }
+        if (numero >= 1000) {
+            long migliaia = numero / 1000;
+            return (migliaia == 1 ? "mille" : lettere(migliaia) + "mila") + (numero % 1000 > 0 ? lettere(numero % 1000) : "");
+        }
+        if (numero >= 100) {
+            long centinaia = numero / 100;
+            String resto = numero % 100 > 0 ? lettere(numero % 100) : "";
+            // "centottanta": la "o" di cento cade davanti a otto e ottanta
+            String cento = (centinaia == 1 ? "" : UNITA[(int) centinaia]) + (resto.startsWith("o") ? "cent" : "cento");
+            return cento + resto;
+        }
+        if (numero >= 20) {
+            String decina = DECINE[(int) (numero / 10)];
+            int unita = (int) (numero % 10);
+            // "ventuno", "trentotto": la vocale finale cade davanti a uno e otto
+            if (unita == 1 || unita == 8) {
+                decina = decina.substring(0, decina.length() - 1);
+            }
+            return decina + (unita == 3 ? "tré" : UNITA[unita]);
+        }
+        return UNITA[(int) numero];
     }
 
     /** Durata del corso: "30" lezioni, "fino al mar 30 giugno" o entrambi ("30 · fino al …"). */

@@ -2461,7 +2461,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Pagamento rata = new Pagamento();
         rata.setData(LocalDate.of(2025, 2, 3));
         rata.setImporto(new BigDecimal("90"));
-        rata.setMetodo(MetodoPagamento.CASSA);
+        rata.setMetodo(MetodoPagamento.BONIFICO);
         pagamentoService.salva(canto.getId(), allievo.getId(), rata);
         try {
             navigate(DocumentiView.class);

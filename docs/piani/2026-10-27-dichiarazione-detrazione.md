@@ -25,7 +25,7 @@
 
 | Passo | Cosa | File | Richiesta | Verifica | Stato |
 |---|---|---|---|---|---|
-| 1 | Dati: solo bonifico e corsi; fascia 5-18; dati mancanti; importo in lettere; `app.associazione.luogo`; test | `PagamentoService`, `PagamentoRepository`, `DocumentiService`, `Formati`, `AssociazioneProperties`, test | — | `./mvnw test` | [ ] |
+| 1 | Dati: solo bonifico e corsi; fascia 5-18; dati mancanti; importo in lettere; `app.associazione.luogo`; test | `PagamentoService`, `PagamentoRepository`, `DocumentiService`, `Formati`, `AssociazioneProperties`, test | — | `./mvnw test` | [x] Dati di esempio: luogo di nascita "Roma" per gli allievi |
 | 2 | Template PDF ed email secondo il fac-simile; test sul testo del PDF | `documenti/attestazione.ftlh`, `email/attestazione.ftlh`, test | — | `./mvnw test` | [ ] |
 | 3 | Documenti: badge "Dati mancanti" e "Fuori età 5-18", PDF e invio bloccati senza dati, avviso nel dialog d'invio; test | `ElencoDocumentiService`, `DocumentiView`, `EmailService`, `InvioEmailDialog`, test | DETRAZIONE.1 | `./mvnw test` | [ ] |
 | 4 | `CLAUDE.md`, `deploy/README.md` (ASSOCIAZIONE_LUOGO) e registro | docs | — | test | [ ] |

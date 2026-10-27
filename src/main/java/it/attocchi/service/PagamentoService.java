@@ -1,5 +1,7 @@
 package it.attocchi.service;
 
+import it.attocchi.entity.MetodoPagamento;
+import it.attocchi.entity.Indirizzo;
 import java.time.LocalDate;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
@@ -374,6 +376,54 @@ public class PagamentoService {
         public Genitore genitore() {
             return allievo.getGenitore();
         }
+
+        /**
+         * {@code true} se l'allievo ha tra 5 e 18 anni in almeno un giorno dell'anno (requisito della detrazione:
+         * compie 5 anni entro il 31 dicembre e non ha ancora compiuto 19 anni il 1° gennaio).
+         */
+        public boolean inEta() {
+            LocalDate nascita = allievo.getDataNascita();
+            return nascita != null && !nascita.plusYears(5).isAfter(LocalDate.of(anno, 12, 31))
+                && nascita.plusYears(19).isAfter(LocalDate.of(anno, 1, 1));
+        }
+
+        /**
+         * Dati del fac-simile che mancano (vuota se completi): luogo e data di nascita, codice fiscale e residenza
+         * dell'allievo (propria o del genitore), codice fiscale e indirizzo di chi sostiene le spese.
+         */
+        public List<String> datiMancanti() {
+            List<String> mancanti = new ArrayList<>();
+            if (vuoto(allievo.getLuogoNascita())) {
+                mancanti.add("luogo di nascita dell'allievo");
+            }
+            if (allievo.getDataNascita() == null) {
+                mancanti.add("data di nascita dell'allievo");
+            }
+            if (vuoto(allievo.getCodiceFiscale())) {
+                mancanti.add("codice fiscale dell'allievo");
+            }
+            if (!completo(allievo.getIndirizzoEffettivo())) {
+                mancanti.add("residenza dell'allievo");
+            }
+            Genitore genitore = genitore();
+            if (genitore != null) {
+                if (vuoto(genitore.getCodiceFiscale())) {
+                    mancanti.add("codice fiscale del genitore");
+                }
+                if (!completo(genitore.getIndirizzo())) {
+                    mancanti.add("indirizzo del genitore");
+                }
+            }
+            return mancanti;
+        }
+
+        private static boolean vuoto(String valore) {
+            return valore == null || valore.isBlank();
+        }
+
+        private static boolean completo(Indirizzo indirizzo) {
+            return indirizzo != null && !vuoto(indirizzo.getVia()) && !vuoto(indirizzo.getComune());
+        }
     }
 
     public Attestazione attestazione(Long allievoId, int anno) {
@@ -381,7 +431,10 @@ public class PagamentoService {
             .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));
         return new Attestazione(allievo, anno, pagamentoRepository.findDellAllievoNelPeriodo(allievoId,
             LocalDate.of(anno, 1, 1), LocalDate.of(anno, 12, 31)).stream()
-            .filter(p -> p.getIscrizione().getCorso().isPubblicato()).toList());
+            // Detraibili: solo bonifici (tracciabili), solo corsi (non servizi) pubblicati
+            .filter(p -> p.getIscrizione().getCorso().isPubblicato() && !p.getIscrizione().getCorso().isServizio()
+                && p.getMetodo() == MetodoPagamento.BONIFICO)
+            .toList());
     }
 
     /** Anni solari con almeno un pagamento, per allievo (dal più recente). */

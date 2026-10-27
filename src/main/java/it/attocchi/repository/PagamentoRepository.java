@@ -30,9 +30,14 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     List<Pagamento> findDellAllievoNelPeriodo(@Param("allievoId") Long allievoId, @Param("dal") LocalDate dal,
                                               @Param("al") LocalDate al);
 
-    /** Totale pagato da ogni allievo in ogni anno solare (corsi pubblicati): righe [allievoId, anno, somma]. */
+    /**
+     * Totale detraibile pagato da ogni allievo in ogni anno solare: bonifici dei corsi (non dei servizi) pubblicati,
+     * come nella dichiarazione delle spese; righe [allievoId, anno, somma].
+     */
     @Query("SELECT p.iscrizione.id.allievoId, YEAR(p.data), SUM(p.importo) FROM Pagamento p "
-        + "WHERE p.iscrizione.corso.pubblicato IS NULL OR p.iscrizione.corso.pubblicato = true "
+        + "WHERE (p.iscrizione.corso.pubblicato IS NULL OR p.iscrizione.corso.pubblicato = true) "
+        + "AND p.metodo = it.attocchi.entity.MetodoPagamento.BONIFICO "
+        + "AND (p.iscrizione.corso.tipo IS NULL OR p.iscrizione.corso.tipo = it.attocchi.entity.TipoCorso.CORSO) "
         + "GROUP BY p.iscrizione.id.allievoId, YEAR(p.data)")
     List<Object[]> totaliPerAllievoEAnno();
 

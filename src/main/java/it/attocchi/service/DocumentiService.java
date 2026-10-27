@@ -367,7 +367,20 @@ public class DocumentiService {
         if (!puoVedere(attestazione.allievo(), username)) {
             throw new IllegalArgumentException("Attestazione non trovata");
         }
+        String mancanti = avvisoDatiMancanti(attestazione);
+        if (mancanti != null) {
+            throw new IllegalStateException(mancanti);
+        }
         return attestazionePdf(attestazione);
+    }
+
+    /**
+     * Avviso se mancano i dati richiesti dalla dichiarazione per la detrazione (fac-simile del vademecum), es.
+     * "Per la dichiarazione mancano: codice fiscale dell'allievo"; {@code null} se completi.
+     */
+    public static String avvisoDatiMancanti(Attestazione attestazione) {
+        List<String> mancanti = attestazione.datiMancanti();
+        return mancanti.isEmpty() ? null : "Per la dichiarazione mancano: " + String.join(", ", mancanti);
     }
 
     /** PDF dell'attestazione, senza controllo dei permessi (allegato delle email, inviate solo da admin e segreteria). */
@@ -602,7 +615,7 @@ public class DocumentiService {
     private Map<String, String> associazione() {
         return Map.of("nome", testo(associazione.nome()), "indirizzo", testo(associazione.indirizzo()),
             "codiceFiscale", testo(associazione.codiceFiscale()), "email", testo(associazione.email()),
-            "iban", testo(associazione.iban()));
+            "iban", testo(associazione.iban()), "luogo", testo(associazione.luogo()));
     }
 
     /**

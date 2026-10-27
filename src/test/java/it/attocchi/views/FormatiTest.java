@@ -87,4 +87,14 @@ class FormatiTest {
         recupero.setRecuperoDi(lunedi);
         assertEquals("5 · Piccoli", Formati.numeroLezione(recupero, gruppi));
     }
+
+    @Test
+    void inLettere_importiComeNelleRicevute() {
+        assertEquals("centoventi/00", Formati.inLettere(new java.math.BigDecimal("120")));
+        assertEquals("milleduecentotrentaquattro/50", Formati.inLettere(new java.math.BigDecimal("1234.5")));
+        assertEquals("centottantuno/00", Formati.inLettere(new java.math.BigDecimal("181")));
+        assertEquals("ventitré/05", Formati.inLettere(new java.math.BigDecimal("23.05")));
+        assertEquals("duemilaotto/00", Formati.inLettere(new java.math.BigDecimal("2008")));
+        assertEquals("zero/90", Formati.inLettere(new java.math.BigDecimal("0.90")));
+    }
 }

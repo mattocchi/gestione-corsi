@@ -378,7 +378,11 @@ public class EmailService {
 
     private static Destinatario verificaInviabile(Attestazione attestazione) {
         if (attestazione.pagamenti().isEmpty()) {
-            throw new IllegalStateException("Nessun pagamento nell'anno " + attestazione.anno());
+            throw new IllegalStateException("Nessun pagamento con bonifico nell'anno " + attestazione.anno());
+        }
+        String mancanti = DocumentiService.avvisoDatiMancanti(attestazione);
+        if (mancanti != null) {
+            throw new IllegalStateException(mancanti);
         }
         return destinatario(attestazione).orElseThrow(() -> new IllegalStateException(
             (attestazione.genitore() != null ? "Il genitore" : "L'allievo") + " non ha un indirizzo email"));
