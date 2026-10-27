@@ -2,7 +2,7 @@
 
 ## Richiesta
 
-"rendi modificabile un corso anche se non attivo da admin" — [F-2026-10-27/CORSI NON ATTIVI → CORSI.1]
+"rendi modificabile un corso anche se non attivo da admin" — [F-2026-10-27/CORSI.1]
 
 ## Analisi
 
@@ -27,7 +27,7 @@
 
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
-| 1 | `CorsoService.verificaModificabile` (attivo, oppure admin corrente) e `puoModificare` al posto di `verificaAttivo`; `LezioneService`/`PresenzaService`; UI di `PartecipantiDialog`, `CorsiView`; filtro corsi non attivi in `LezioniView`/`ElencoLezioni`; test; CLAUDE.md | service, views, test | `./mvnw test` | [ ] | F-2026-10-27/CORSI.1 |
+| 1 | `CorsoService.verificaModificabile` (attivo, oppure admin corrente) e `puoModificare` al posto di `verificaAttivo`; `LezioneService`/`PresenzaService`; UI di `PartecipantiDialog`, `CorsiView`; filtro corsi non attivi in `LezioniView`/`ElencoLezioni`; test; CLAUDE.md | service, views, test | `./mvnw test` | [x] | F-2026-10-27/CORSI.1 |
 
 ## Fuori ambito
 
@@ -36,3 +36,4 @@
 
 ## Registro
 
+- Passo 1: `CorsoService.verificaModificabile`/`puoModificare` (admin dal `SecurityContextHolder`), `LezioneService.verificaPermesso` con i ruoli dello username, `PartecipantiDialog`, `CorsiView` (Aggiorna lezioni e avviso dopo il salvataggio), filtro di Lezioni con i corsi non attivi per l'admin. Nuovo test `ViewAccessTest.admin_modificaUnCorsoNonAttivo`; il test della segreteria in sola lettura resta valido. `./mvnw test`: 331 test, tutti verdi. Non verificato nel browser.

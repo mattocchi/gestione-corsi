@@ -18,6 +18,8 @@ import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.AllievoRepository;
 import it.attocchi.views.Formati;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,19 +103,30 @@ public class CorsoService {
     }
 
     /**
-     * In un corso non attivo partecipanti, orari, lezioni e presenze non sono modificabili
-     * (quote e pagamenti sì).
+     * In un corso non attivo partecipanti, orari, gruppi, lezioni e presenze li modifica solo l'admin
+     * (quote e pagamenti tutti): vale per l'utente corrente.
      */
-    static void verificaAttivo(Corso corso) {
-        if (!corso.isAttivo()) {
-            throw new IllegalStateException("Il corso \"" + corso.getNome() + "\" non è attivo");
+    static void verificaModificabile(Corso corso) {
+        if (!puoModificare(corso)) {
+            throw new IllegalStateException("Il corso \"" + corso.getNome() + "\" non è attivo: solo l'admin può modificarlo");
         }
     }
 
-    private Corso corsoAttivo(Long corsoId) {
+    /** Partecipanti, orari, gruppi, lezioni e presenze del corso modificabili dall'utente corrente. */
+    public static boolean puoModificare(Corso corso) {
+        return corso.isAttivo() || adminCorrente();
+    }
+
+    private static boolean adminCorrente() {
+        Authentication autenticazione = SecurityContextHolder.getContext().getAuthentication();
+        return autenticazione != null && autenticazione.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
+
+    private Corso corsoModificabile(Long corsoId) {
         Corso corso = corsoRepository.findById(corsoId)
             .orElseThrow(() -> new IllegalArgumentException("Corso non trovato: " + corsoId));
-        verificaAttivo(corso);
+        verificaModificabile(corso);
         return corso;
     }
 
@@ -130,7 +143,7 @@ public class CorsoService {
      */
     @Transactional
     public void iscrivi(Long corsoId, Long allievoId) {
-        Corso corso = corsoAttivo(corsoId);
+        Corso corso = corsoModificabile(corsoId);
         if (iscrizioneRepository.existsById(new IscrizioneId(corsoId, allievoId))) {
             return;
         }
@@ -155,7 +168,7 @@ public class CorsoService {
      */
     @Transactional
     public GruppoCorso salvaGruppo(Long corsoId, GruppoCorso gruppo) {
-        Corso corso = corsoAttivo(corsoId);
+        Corso corso = corsoModificabile(corsoId);
         if (gruppo.getGiorno() == null || !corso.getGiorniSettimana().contains(gruppo.getGiorno())) {
             throw new IllegalArgumentException("Scegli uno dei giorni del corso");
         }
@@ -181,7 +194,7 @@ public class CorsoService {
     public void eliminaGruppo(Long gruppoId) {
         GruppoCorso gruppo = gruppoRepository.findById(gruppoId)
             .orElseThrow(() -> new IllegalArgumentException("Gruppo non trovato: " + gruppoId));
-        verificaAttivo(gruppo.getCorso());
+        verificaModificabile(gruppo.getCorso());
         for (Iscrizione iscrizione : partecipantiDelGruppo(gruppo)) {
             iscrizione.setGruppo(null);
             sincronizzaPresenze(iscrizione);
@@ -201,7 +214,7 @@ public class CorsoService {
      */
     @Transactional
     public void assegnaGruppo(Long corsoId, Long allievoId, Long gruppoId) {
-        corsoAttivo(corsoId);
+        corsoModificabile(corsoId);
         Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
             .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
         GruppoCorso gruppo = gruppoId == null ? null : gruppoRepository.findById(gruppoId)
@@ -282,7 +295,7 @@ public class CorsoService {
      */
     @Transactional
     public void rimuoviIscrizione(Long corsoId, Long allievoId) {
-        corsoAttivo(corsoId);
+        corsoModificabile(corsoId);
         if (pagamentoRepository.existsByIscrizione(corsoId, allievoId)) {
             throw new IllegalStateException("ha pagamenti registrati: eliminali prima di rimuoverlo dal corso");
         }
@@ -304,7 +317,7 @@ public class CorsoService {
     /** Imposta (o con {@code null} toglie) l'orario di inizio lezione di un partecipante. */
     @Transactional
     public void impostaOrario(Long corsoId, Long allievoId, LocalTime orario) {
-        corsoAttivo(corsoId);
+        corsoModificabile(corsoId);
         Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
             .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
         iscrizione.setOrarioLezione(orario);
@@ -483,7 +496,7 @@ public class CorsoService {
 
     /** Cosa cambierebbe {@link #aggiornaLezioni} sul corso, senza modificare nulla. */
     public AggiornamentoLezioni anteprimaAggiornamento(Long corsoId) {
-        Piano piano = piano(corsoAttivo(corsoId));
+        Piano piano = piano(corsoModificabile(corsoId));
         Set<LocalDate> pianificate = piano.date().stream().map(DataPianificata::data).collect(Collectors.toSet());
         Set<LocalDate> esistenti = piano.programmate().stream().map(Lezione::getData).collect(Collectors.toSet());
         return new AggiornamentoLezioni(
@@ -499,7 +512,7 @@ public class CorsoService {
      */
     @Transactional
     public AggiornamentoLezioni aggiornaLezioni(Long corsoId) {
-        Piano piano = piano(corsoAttivo(corsoId));
+        Piano piano = piano(corsoModificabile(corsoId));
         Corso corso = piano.corso();
         Map<LocalDate, Lezione> programmate = new HashMap<>();
         piano.programmate().forEach(l -> programmate.putIfAbsent(l.getData(), l));

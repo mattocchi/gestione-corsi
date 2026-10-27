@@ -456,5 +456,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### CORSI NON ATTIVI
 
-* [ ] rendi modificabile un corso anche se non attivo da admin
+* [x] rendi modificabile un corso anche se non attivo da admin _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: la scheda del corso era già modificabile; per l'admin un corso non attivo si comporta come uno attivo (partecipanti, orari, gruppi, Aggiorna lezioni, lezioni e presenze); segreteria e insegnanti restano bloccati. In Lezioni il filtro corso dell'admin include i corsi non attivi ("(non attivo)") per gestirne lezioni e presenze; Calendario e dashboard restano sui corsi attivi._

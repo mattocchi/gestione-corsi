@@ -101,8 +101,10 @@ public class ElencoLezioni extends VerticalLayout {
     private GridListDataView<Lezione> lezioni;
 
     /**
-     * {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica; {@code corsi} i corsi attivi a cui
-     * si possono aggiungere lezioni; {@code username} è l'utente corrente, di cui il service verifica i permessi.
+     * {@code fonte} fornisce le lezioni da mostrare, riletta dopo ogni modifica; {@code corsi} i corsi a cui si possono
+     * aggiungere lezioni e, con {@code tuttiICorsi}, quelli del filtro: un corso non attivo (solo per l'admin) vi compare
+     * con "(non attivo)" e, scelto, se ne mostrano le lezioni al posto di {@code fonte};
+     * {@code username} è l'utente corrente, di cui il service verifica i permessi.
      */
     public ElencoLezioni(LezioneService lezioneService, PresenzaService presenzaService,
                          SerializableSupplier<List<Lezione>> fonte, SerializableSupplier<List<Corso>> corsi,
@@ -134,9 +136,15 @@ public class ElencoLezioni extends VerticalLayout {
             filtroCorso.setPlaceholder("Tutti i corsi");
             filtroCorso.setAriaLabel("Filtra per corso");
             filtroCorso.setClearButtonVisible(true);
-            filtroCorso.setItemLabelGenerator(Corso::getNome);
+            filtroCorso.setItemLabelGenerator(c -> c.isAttivo() ? c.getNome() : c.getNome() + " (non attivo)");
             filtroCorso.setItems(corsi.get());
-            filtroCorso.addValueChangeListener(e -> applicaFiltro());
+            filtroCorso.addValueChangeListener(e -> {
+                if (nonAttivo(e.getOldValue()) || nonAttivo(e.getValue())) {
+                    updateGrid();
+                } else {
+                    applicaFiltro();
+                }
+            });
             barra.add(filtroCorso);
         }
         barra.add(nuova);
@@ -406,7 +414,9 @@ public class ElencoLezioni extends VerticalLayout {
         Dialog dialog = ViewSupport.dialog(saltata != null
             ? "Recupero della lezione " + saltata.getNumeroLezione() + " (" + Formati.data(saltata.getData()) + ")"
             : "Nuova lezione", "480px");
-        List<Corso> scelte = saltata != null ? List.of(saltata.getCorso()) : corsi.get();
+        List<Corso> scelte = saltata != null ? List.of(saltata.getCorso())
+            : nonAttivo(filtroCorso.getValue()) ? List.of(filtroCorso.getValue())
+            : corsi.get().stream().filter(Corso::isAttivo).toList();
         if (scelte.isEmpty()) {
             Notification.show("Nessun corso attivo a cui aggiungere lezioni");
             return;
@@ -790,10 +800,15 @@ public class ElencoLezioni extends VerticalLayout {
 
     private void updateGrid() {
         festivita = festivitaService().calendario();
-        elenco = fonte.get();
+        Corso corso = filtroCorso.getValue();
+        elenco = nonAttivo(corso) ? lezioneService.findByCorso(corso.getId()) : fonte.get();
         gruppiPerCorso = lezioneService.gruppiPerCorso();
         lezioni = gridLezioni.setItems(elenco);
         applicaFiltro();
+    }
+
+    private static boolean nonAttivo(Corso corso) {
+        return corso != null && !corso.isAttivo();
     }
 
     private void applicaFiltro() {

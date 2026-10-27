@@ -44,11 +44,11 @@ public class PresenzaService {
         return presenzaRepository.findByCorsoIdAndAllievoId(corsoId, allievoId);
     }
 
-    /** Le presenze di un corso non attivo non sono modificabili. */
+    /** Le presenze di un corso non attivo le modifica solo l'admin. */
     @Transactional
     public Presenza save(Presenza presenza) {
         lezioneRepository.findById(presenza.getLezione().getId())
-            .ifPresent(lezione -> CorsoService.verificaAttivo(lezione.getCorso()));
+            .ifPresent(lezione -> CorsoService.verificaModificabile(lezione.getCorso()));
         return presenzaRepository.save(presenza);
     }
 

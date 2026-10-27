@@ -211,7 +211,7 @@ public class CorsiView extends VerticalLayout {
             e -> openPartecipanti(corso));
         Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Aggiorna lezioni",
             e -> AggiornaLezioniDialog.apri(corso, this::updateGrid));
-        generateButton.setEnabled(corso.isAttivo());
+        generateButton.setEnabled(CorsoService.puoModificare(corso));
         Button duplicaButton = ViewSupport.iconButton(VaadinIcon.COPY, "Duplica", e -> duplica(corso));
         duplicaButton.setTooltipText("Duplica per l'anno successivo (senza partecipanti, non pubblicato)");
         HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton, duplicaButton);
@@ -450,7 +450,7 @@ public class CorsiView extends VerticalLayout {
      * cadenza…) un avviso propone di aggiornarle.
      */
     private void proponiAggiornamento(Corso corso) {
-        if (!corso.isAttivo()) {
+        if (!CorsoService.puoModificare(corso)) {
             return;
         }
         CorsoService.AggiornamentoLezioni anteprima = corsoService.anteprimaAggiornamento(corso.getId());

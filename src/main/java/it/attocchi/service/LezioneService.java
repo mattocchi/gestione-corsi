@@ -94,11 +94,11 @@ public class LezioneService {
         return lezioneRepository.findByDataBetweenOrderByDataAsc(dataInizio, dataFine);
     }
 
-    /** Le lezioni di un corso non attivo non si possono modificare né completare. */
+    /** Le lezioni di un corso non attivo le modifica e completa solo l'admin. */
     @Transactional
     public Lezione save(Lezione lezione) {
         if (lezione.getId() != null) {
-            lezioneRepository.findById(lezione.getId()).ifPresent(l -> CorsoService.verificaAttivo(l.getCorso()));
+            lezioneRepository.findById(lezione.getId()).ifPresent(l -> CorsoService.verificaModificabile(l.getCorso()));
         }
         return lezioneRepository.save(lezione);
     }
@@ -334,13 +334,15 @@ public class LezioneService {
     }
 
     /**
-     * Corso attivo e utente autorizzato: l'insegnante del corso, oppure admin e segreteria
-     * (per eliminare solo admin).
+     * Utente autorizzato: l'insegnante del corso, oppure admin e segreteria (per eliminare solo admin); in un corso
+     * non attivo solo l'admin.
      */
     private void verificaPermesso(Corso corso, String username, boolean elimina) {
-        CorsoService.verificaAttivo(corso);
         User user = userRepository.findByUsername(username).orElse(null);
         Set<String> ruoli = user != null ? user.getRoles() : Set.of();
+        if (!corso.isAttivo() && !ruoli.contains("ADMIN")) {
+            throw new IllegalStateException("Il corso \"" + corso.getNome() + "\" non è attivo: solo l'admin può modificarlo");
+        }
         boolean autorizzato = insegnanteDelCorso(corso, username) || ruoli.contains("ADMIN")
             || (!elimina && ruoli.contains("SEGRETERIA"));
         if (!autorizzato) {

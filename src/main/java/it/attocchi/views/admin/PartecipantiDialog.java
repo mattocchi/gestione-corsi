@@ -39,7 +39,8 @@ import java.util.stream.Collectors;
  * è in fondo), con aggiunta, rimozione e orario modificabile. Le modifiche sono salvate subito
  * e l'elenco si riordina; la notifica compare solo in caso di errore. Sopra l'elenco i gruppi del corso (giorno e
  * orario): ogni partecipante può appartenere a uno e frequenta solo quel giorno, senza gruppo tutti i giorni.
- * Eliminare un gruppo è solo per l'admin. Per un corso non attivo partecipanti, orari e gruppi sono in sola lettura.
+ * Eliminare un gruppo è solo per l'admin. Per un corso non attivo partecipanti, orari e gruppi sono in sola lettura
+ * (tranne che per l'admin).
  */
 public class PartecipantiDialog extends Dialog {
 
@@ -92,7 +93,7 @@ public class PartecipantiDialog extends Dialog {
         colonnaGruppo = grid.addComponentColumn(this::createGruppo).setHeader("Gruppo").setWidth("12rem").setFlexGrow(0);
         grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
-        boolean modificabile = corso.isAttivo();
+        boolean modificabile = CorsoService.puoModificare(corso);
         // Quota e pagamenti sempre disponibili (anche per i corsi non attivi); rimozione solo per i corsi attivi
         var azioni = grid.addComponentColumn(iscrizione -> createAzioni(iscrizione, modificabile));
         ViewSupport.configureActionsColumn(azioni);
@@ -145,7 +146,7 @@ public class PartecipantiDialog extends Dialog {
         orario.addClassNames("w-full");
         orario.setAriaLabel("Orario lezione di " + iscrizione.getAllievo().getNomeCompleto());
         orario.setValue(iscrizione.getOrarioLezione());
-        orario.setReadOnly(!corso.isAttivo());
+        orario.setReadOnly(!CorsoService.puoModificare(corso));
         orario.addValueChangeListener(e -> {
             try {
                 corsoService.impostaOrario(corso.getId(), iscrizione.getAllievo().getId(), e.getValue());
@@ -169,7 +170,7 @@ public class PartecipantiDialog extends Dialog {
         gruppo.setClearButtonVisible(true);
         gruppo.addClassNames("w-full");
         gruppo.setValue(iscrizione.getGruppo());
-        gruppo.setReadOnly(!corso.isAttivo());
+        gruppo.setReadOnly(!CorsoService.puoModificare(corso));
         gruppo.addValueChangeListener(e -> {
             if (!e.isFromClient()) {
                 return;
@@ -188,7 +189,7 @@ public class PartecipantiDialog extends Dialog {
     /** Sezione dei gruppi: uno per riga con il numero di allievi, modifica ed eliminazione; "Nuovo gruppo". */
     private void mostraGruppi(List<Iscrizione> partecipanti) {
         gruppiDelCorso.removeAll();
-        boolean modificabile = corso.isAttivo();
+        boolean modificabile = CorsoService.puoModificare(corso);
         gruppiDelCorso.setVisible(modificabile || !gruppi.isEmpty());
         Span spiegazione = new Span(gruppi.isEmpty()
             ? "Nessun gruppo: tutti frequentano tutti i giorni del corso."

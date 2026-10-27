@@ -1541,6 +1541,51 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_modificaUnCorsoNonAttivo() {
+        Corso chitarra = disattiva("Corso di Chitarra");
+        Long allievo = allievoService.findByUsername("allievo_canto1").orElseThrow().getId();
+        try {
+            navigate(CorsiView.class);
+            var corsi = test((Grid<Corso>) find(Grid.class).single());
+            test(filtroStatoCorsi().getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            assertTrue(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Aggiorna lezioni").isEnabled());
+
+            test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
+            PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+            assertTrue(find(ComboBox.class).from(dialog).exists());
+            assertTrue(find(TimePicker.class).from(dialog).all().stream().noneMatch(TimePicker::isReadOnly));
+            dialog.close();
+
+            corsoService.iscrivi(chitarra.getId(), allievo);
+            corsoService.rimuoviIscrizione(chitarra.getId(), allievo);
+            Presenza presenza = presenzaService.findByCorsoAndAllievo(chitarra.getId(),
+                allievoService.findByUsername("allievo_chitarra1").orElseThrow().getId()).getFirst();
+            StatoPresenza stato = presenza.getStato();
+            presenza.setStato(StatoPresenza.ASSENTE_GIUSTIFICATA);
+            presenzaService.save(presenza);
+            presenza.setStato(stato);
+            presenzaService.save(presenza);
+
+            // In Lezioni il filtro offre anche il corso non attivo, con le sue lezioni
+            navigate(LezioniView.class);
+            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+            test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
+            var lezioni = test(find(Grid.class).single());
+            ComboBox<Corso> filtroCorso = find(ComboBox.class).withPlaceholder("Tutti i corsi").single();
+            Corso nonAttivo = filtroCorso.getListDataView().getItems()
+                .filter(c -> c.getId().equals(chitarra.getId())).findFirst().orElseThrow();
+            assertEquals("Corso di Chitarra (non attivo)", filtroCorso.getItemLabelGenerator().apply(nonAttivo));
+            test(filtroCorso).selectItem("Corso di Chitarra (non attivo)");
+            assertEquals(lezioneService.findByCorso(chitarra.getId()).size(), lezioni.size());
+            assertTrue(lezioni.size() > 0);
+        } finally {
+            riattiva(chitarra);
+        }
+    }
+
+    @Test
     @WithUserDetails("insegnante2")
     void insegnante_nonVedeICorsiNonAttivi() {
         Corso chitarra = disattiva("Corso di Chitarra");
