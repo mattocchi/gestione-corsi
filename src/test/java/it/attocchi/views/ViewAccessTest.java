@@ -614,7 +614,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             }
         }
 
-        assertAzioni(grid.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Genera Lezioni", "Elimina");
+        assertAzioni(grid.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni", "Elimina");
 
         // Apre il dialog di modifica: i giorni della settimana devono essere già caricati
         Button modifica = (Button) grid.getCellComponent(0, AZIONI_CORSO).getChildren().findFirst().orElseThrow();
@@ -622,6 +622,31 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(modifica).click();
         CheckboxGroup<?> giorni = find(CheckboxGroup.class).single();
         assertFalse(giorni.getValue().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_aggiornaLezioniConAnteprimaDopoLaDataDiFine() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        List<Lezione> lezioni = lezioneService.findByCorso(canto.getId());
+        canto.setDataFine(lezioni.get(24).getData());
+        corsoService.save(canto);
+        try {
+            navigate(CorsiView.class);
+            var corsi = test((Grid<Corso>) find(Grid.class).single());
+            test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Aggiorna lezioni")).click();
+            Dialog dialog = find(Dialog.class).single();
+            assertTrue(find(Span.class).from(dialog).all().stream().anyMatch(t -> t.getText().startsWith("Da togliere (5)")));
+            test(find(Button.class).from(dialog).withText("Aggiorna").single()).click();
+            assertEquals(25, lezioneService.findByCorso(canto.getId()).size());
+        } finally {
+            Corso ripristino = corsoService.findById(canto.getId());
+            ripristino.setDataFine(null);
+            corsoService.save(ripristino);
+            corsoService.aggiornaLezioni(canto.getId());
+        }
+        assertEquals(30, lezioneService.findByCorso(canto.getId()).size());
     }
 
     @Test
@@ -1434,7 +1459,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var corsi = test((Grid<Corso>) find(Grid.class).single());
             test(filtroStatoCorsi()
                 .getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
-            assertFalse(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Genera Lezioni").isEnabled());
+            assertFalse(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Aggiorna lezioni").isEnabled());
 
             test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
             PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
@@ -2817,7 +2842,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         assertEquals(2, corsi.size());
-        assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Genera Lezioni");
+        assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni");
 
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());

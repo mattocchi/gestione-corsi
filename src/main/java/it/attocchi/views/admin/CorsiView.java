@@ -206,7 +206,8 @@ public class CorsiView extends VerticalLayout {
         Button editButton = ViewSupport.iconButton(VaadinIcon.PENCIL, "Modifica", e -> openDialog(corso));
         Button partecipantiButton = ViewSupport.iconButton(VaadinIcon.USERS, "Partecipanti",
             e -> openPartecipanti(corso));
-        Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Genera Lezioni", e -> generaLezioni(corso));
+        Button generateButton = ViewSupport.iconButton(VaadinIcon.REFRESH, "Aggiorna lezioni",
+            e -> AggiornaLezioniDialog.apri(corso, this::updateGrid));
         generateButton.setEnabled(corso.isAttivo());
         HorizontalLayout actions = ViewSupport.actions(editButton, partecipantiButton, generateButton);
         if (puoEliminare) {
@@ -286,7 +287,7 @@ public class CorsiView extends VerticalLayout {
             settimane -> settimane == 1 ? "Lezione ogni settimana" : "Lezione ogni 2 settimane, dalla data di inizio",
             null);
         Span aiutoCadenza = new Span("Ogni 2 settimane: le settimane alterne partono dalla data di inizio e una "
-            + "festività sposta la lezione alla settimana dopo. Vale da \"Genera Lezioni\".");
+            + "festività sposta la lezione alla settimana dopo. Vale da \"Aggiorna lezioni\".");
         aiutoCadenza.addClassNames(Stili.TESTO_SECONDARIO);
         Div bloccoCadenza = new Div(cadenza, aiutoCadenza);
         bloccoCadenza.addClassNames("flex flex-col gap-1");
@@ -391,10 +392,11 @@ public class CorsiView extends VerticalLayout {
                 return;
             }
             try {
-                corsoService.save(corso);
+                Corso salvato = corsoService.save(corso);
                 updateGrid();
                 dialog.close();
                 Notification.show("Corso salvato con successo");
+                proponiAggiornamento(salvato);
             } catch (Exception ex) {
                 Notification.show("Errore nel salvataggio: " + ex.getMessage());
             }
@@ -422,13 +424,31 @@ public class CorsiView extends VerticalLayout {
         dialog.open();
     }
 
-    private void generaLezioni(Corso corso) {
-        try {
-            corsoService.generaLezioni(corso);
-            Notification.show("Lezioni generate con successo");
-        } catch (Exception e) {
-            Notification.show("Errore nella generazione delle lezioni: " + e.getMessage());
+    /**
+     * Dopo il salvataggio: se il corso ha già lezioni e il suo calendario è cambiato (fine, numero di lezioni, giorni,
+     * cadenza…) un avviso propone di aggiornarle.
+     */
+    private void proponiAggiornamento(Corso corso) {
+        if (!corso.isAttivo()) {
+            return;
         }
+        CorsoService.AggiornamentoLezioni anteprima = corsoService.anteprimaAggiornamento(corso.getId());
+        boolean haLezioni = anteprima.invariate() > 0 || !anteprima.tolte().isEmpty();
+        if (!haLezioni || !anteprima.cambia()) {
+            return;
+        }
+        Notification avviso = new Notification();
+        avviso.setDuration(10000);
+        Button aggiorna = new Button("Aggiorna lezioni", e -> {
+            avviso.close();
+            AggiornaLezioniDialog.apri(corso, this::updateGrid);
+        });
+        aggiorna.addThemeVariants(ButtonVariant.PRIMARY);
+        HorizontalLayout riga = new HorizontalLayout(new Span("Il calendario delle lezioni di " + corso.getNome()
+            + " è cambiato."), aggiorna);
+        riga.addClassNames("items-center");
+        avviso.add(riga);
+        avviso.open();
     }
 
     private void deleteCorso(Corso corso) {
