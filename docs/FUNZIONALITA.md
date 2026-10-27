@@ -426,5 +426,5 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### ACCESSO
 
-* [ ] potrebbe essere interessante usare quell'invito anche per resettare l'utente da admin, se inviamo un invito in pratica disabilita e si parte con la procedura di attivazione su invito e cambio password
+* [x] potrebbe essere interessante usare quell'invito anche per resettare l'utente da admin, se inviamo un invito in pratica disabilita e si parte con la procedura di attivazione su invito e cambio password _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: solo l'admin in Gestione Utenti (non sul proprio utente); lo stesso pulsante diventa "Reimposta accesso" per chi è già entrato; l'account si blocca subito (disattivato, password vecchia non valida, sessioni e "Ricordami" chiusi) e il link di 7 giorni fa scegliere la password, riattiva ed entra; prima dell'invio, per inviti e reimpostazioni, un dialog con destinatario, anteprima del messaggio e Invia; "Invita selezionati" chiede conferma._

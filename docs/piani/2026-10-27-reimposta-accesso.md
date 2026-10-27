@@ -24,11 +24,18 @@
 |---|---|---|---|---|---|
 | 1 | Service: reimpostazione (solo admin, non se stesso: disattiva, password casuale, link d'invito, email "accesso reimpostato"), anteprima dell'email, link d'invito validi per account disattivati, link annullati alla disattivazione manuale; test | `RecuperoPasswordService`, `UserService`, template, test | — | `./mvnw test` | [x] Proprio account escluso anche dall'invito semplice |
 | 2 | `InvitoUI`: etichetta secondo il caso, dialog con anteprima e invio, chiusura delle sessioni dopo la reimpostazione; conferma per "Invita selezionati"; test | `InvitoUI`, `UtentiView`, test | ACCESSO.1 | `./mvnw test` | [x] |
-| 3 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [ ] |
+| 3 | `CLAUDE.md` e registro | `CLAUDE.md`, questo piano | — | test | [x] |
 
 ## Fuori ambito
 
 - Reimpostazione multipla di utenti già entrati.
 
 ## Registro
+
+- `./mvnw test`: 322 test superati. Nuovi: `RecuperoPasswordServiceTest.reimpostazione_soloAdminBloccaLAccountFinoAlNuovoAccesso`, `disattivazioneManuale_annullaILinkAperti`, `ViewAccessTest.admin_reimpostaLAccessoDiUnUtenteGiaEntrato` (anteprima, poi account bloccato); aggiornati i test dell'invito (conferma di "Invita selezionati", la segreteria non invita chi è già entrato).
+- Scelta tecnica: il proprio account è escluso anche dall'invito semplice (si cambia la password dal profilo).
+- Limite: un account reimpostato e poi disattivato a mano mantiene il link aperto finché non scade (la disattivazione annulla i link solo di un account attivo).
+- Non verificato nel browser: dialog e anteprima coperti dai test browserless.
+- Produzione: nessuno script.
+- Lasciato aperto: nessuno.
 
