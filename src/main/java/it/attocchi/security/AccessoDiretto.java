@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -23,11 +24,14 @@ public class AccessoDiretto {
 
     private final UserDetailsService userDetailsService;
     private final ApplicationEventPublisher eventi;
+    private final SessionRegistry sessionRegistry;
     private final HttpSessionSecurityContextRepository repository = new HttpSessionSecurityContextRepository();
 
-    public AccessoDiretto(UserDetailsService userDetailsService, ApplicationEventPublisher eventi) {
+    public AccessoDiretto(UserDetailsService userDetailsService, ApplicationEventPublisher eventi,
+                          SessionRegistry sessionRegistry) {
         this.userDetailsService = userDetailsService;
         this.eventi = eventi;
+        this.sessionRegistry = sessionRegistry;
     }
 
     /** {@code true} se l'utente è entrato; {@code false} se non c'è una richiesta HTTP o l'account non è attivo. */
@@ -48,6 +52,8 @@ public class AccessoDiretto {
         contesto.setAuthentication(autenticazione);
         SecurityContextHolder.setContext(contesto);
         repository.saveContext(contesto, http, risposta.getHttpServletResponse());
+        // Come il login: la sessione entra nel registro (SessioniUtenti)
+        sessionRegistry.registerNewSession(http.getSession().getId(), utente);
         eventi.publishEvent(new AuthenticationSuccessEvent(autenticazione));
         return true;
     }

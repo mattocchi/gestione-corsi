@@ -1,5 +1,8 @@
 package it.attocchi.security;
 
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -86,9 +89,21 @@ public class SecurityConfig {
         return provider;
     }
 
+    /** Sessioni aperte per utente: servono a chiudere quelle di chi cambia username ({@link SessioniUtenti}). */
     @Bean
-    public SecurityFilterChain vaadinSecurityFilterChain(HttpSecurity http, TokenBasedRememberMeServices rememberMeServices)
-            throws Exception {
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    /** Avvisa il {@link SessionRegistry} delle sessioni scadute o chiuse dal server. */
+    @Bean
+    public static HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+    @Bean
+    public SecurityFilterChain vaadinSecurityFilterChain(HttpSecurity http, TokenBasedRememberMeServices rememberMeServices,
+                                                         SessionRegistry sessionRegistry) throws Exception {
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers(HttpMethod.GET, "/styles.css").permitAll();
             auth.requestMatchers(HttpMethod.GET, "/images/*.png").permitAll();
@@ -96,6 +111,8 @@ public class SecurityConfig {
             auth.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll();
         });
         http.rememberMe(ricordami -> ricordami.rememberMeServices(rememberMeServices));
+        // Sessioni senza limite di numero, registrate per poterle chiudere; una sessione chiusa torna all'accesso
+        http.sessionManagement(sessioni -> sessioni.maximumSessions(-1).sessionRegistry(sessionRegistry).expiredUrl("/login"));
         http.with(vaadin(), vaadin -> vaadin.loginView(LoginView.class));
         return http.build();
     }
