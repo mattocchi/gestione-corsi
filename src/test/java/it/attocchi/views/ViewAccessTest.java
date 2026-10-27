@@ -1,5 +1,6 @@
 package it.attocchi.views;
 
+import it.attocchi.service.ElencoDocumentiService;
 import java.time.YearMonth;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tab;
@@ -2357,6 +2358,34 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Button.class).withText("Invia 7 conferme di iscrizione").exists());
         } finally {
             invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_documenti_attestazioniPerAnnoSolare() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.of(2025, 2, 3));
+        rata.setImporto(new BigDecimal("90"));
+        rata.setMetodo(MetodoPagamento.CASSA);
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        try {
+            navigate(DocumentiView.class);
+            SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
+            test(tipo.getPulsante(TipoDocumento.ATTESTAZIONE)).click();
+            var attestazioni = test((Grid<ElencoDocumentiService.DocumentoAttestazione>) find(Grid.class).single());
+            test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("canto3");
+            assertEquals(1, attestazioni.size());
+            assertEquals("Genitore3 Cognome3", attestazioni.getCellText(0, 1));
+            assertEquals("2025", attestazioni.getCellText(0, 2));
+            assertEquals("90,00 €", attestazioni.getCellText(0, 3));
+            test(pulsante(attestazioni.getCellComponent(0, 6), "Invia per email")).click();
+            assertTrue(find(Button.class).withText("Anteprima").exists());
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }
 

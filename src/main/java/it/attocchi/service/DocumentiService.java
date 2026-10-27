@@ -20,6 +20,7 @@ import it.attocchi.entity.TipoDocumento;
 import it.attocchi.entity.User;
 import it.attocchi.repository.UserRepository;
 import it.attocchi.service.PagamentoService.Ricevuta;
+import it.attocchi.service.PagamentoService.Attestazione;
 import it.attocchi.service.PagamentoService.RiepilogoFamiglia;
 import it.attocchi.service.PagamentoService.RigaPagamento;
 import it.attocchi.service.PagamentoService.Situazione;
@@ -276,6 +277,80 @@ public class DocumentiService {
     public String nomeFile(RiepilogoFamiglia riepilogo) {
         String base = (riepilogo.genitore() != null ? "riepilogo-famiglia-" : "riepilogo-pagamenti-") + riepilogo.intestatario()
             + (riepilogo.anno() != null ? "-" + riepilogo.anno() : "");
+        return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
+    }
+
+    /**
+     * Attestazione delle spese di un allievo in un anno solare: admin e segreteria ogni allievo, il genitore i figli,
+     * l'allievo adulto la propria. Altrimenti {@link IllegalArgumentException}.
+     */
+    public Pdf attestazionePer(Long allievoId, int anno, String username) {
+        Attestazione attestazione;
+        try {
+            attestazione = pagamentoService.attestazione(allievoId, anno);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Attestazione non trovata");
+        }
+        if (!puoVedere(attestazione.allievo(), username)) {
+            throw new IllegalArgumentException("Attestazione non trovata");
+        }
+        return attestazionePdf(attestazione);
+    }
+
+    /** PDF dell'attestazione, senza controllo dei permessi (allegato delle email, inviate solo da admin e segreteria). */
+    public Pdf attestazionePdf(Attestazione attestazione) {
+        return new Pdf(nomeFile(attestazione), pdf(attestazioneHtml(attestazione)));
+    }
+
+    /** Corpo HTML dell'email che accompagna l'attestazione; {@code saluto} è il nome del destinatario. */
+    public String emailAttestazioneHtml(Attestazione attestazione, String saluto) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("allievo", attestazione.allievo().getNomeCompleto());
+        modello.put("famiglia", attestazione.genitore() != null);
+        modello.put("anno", String.valueOf(attestazione.anno()));
+        modello.put("numeroPagamenti", attestazione.pagamenti().size());
+        modello.put("totale", Formati.euro(attestazione.totale()));
+        return render("email/" + TipoDocumento.ATTESTAZIONE.getTemplate() + ".ftlh", modello);
+    }
+
+    /** HTML (pagina A4) dell'attestazione: allievo, chi sostiene le spese, rate dell'anno e totale. */
+    public String attestazioneHtml(Attestazione attestazione) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        if (logo != null) {
+            modello.put("logo", logo);
+        }
+        modello.put("emessa", Formati.dataCompleta(LocalDate.now()));
+        modello.put("anno", String.valueOf(attestazione.anno()));
+        Allievo allievo = attestazione.allievo();
+        modello.put("allievo", persona(allievo.getNomeCompleto(), allievo.getCodiceFiscale(), allievo.getDataNascita()));
+        Genitore genitore = attestazione.genitore();
+        if (genitore != null) {
+            modello.put("genitore", persona(genitore.getNomeCompleto(), genitore.getCodiceFiscale(), null));
+        }
+        modello.put("pagamenti", attestazione.pagamenti().stream().map(p -> Map.of(
+            "data", Formati.dataNumerica(p.getData()),
+            "corso", p.getIscrizione().getCorso().getNome()
+                + (p.getIscrizione().getCorso().getAnnoScolastico() != null ? " (" + p.getIscrizione().getCorso().getAnnoScolastico() + ")" : ""),
+            "metodo", p.getMetodo().getDescrizione(),
+            "importo", Formati.euro(p.getImporto()))).toList());
+        modello.put("totale", Formati.euro(attestazione.totale()));
+        return render("documenti/" + TipoDocumento.ATTESTAZIONE.getTemplate() + ".ftlh", modello);
+    }
+
+    private static Map<String, String> persona(String nome, String codiceFiscale, LocalDate nascita) {
+        Map<String, String> persona = new HashMap<>();
+        persona.put("nome", nome);
+        persona.put("codiceFiscale", codiceFiscale != null ? codiceFiscale : "");
+        persona.put("nascita", nascita != null ? Formati.dataNumerica(nascita) : "");
+        return persona;
+    }
+
+    /** Nome del file PDF dell'attestazione, es. "attestazione-spese-2026-mario-rossi.pdf". */
+    public String nomeFile(Attestazione attestazione) {
+        String base = "attestazione-spese-" + attestazione.anno() + "-" + attestazione.allievo().getNomeCompleto();
         return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
     }
 

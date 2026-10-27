@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import java.time.LocalDate;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
@@ -359,6 +360,39 @@ public class PagamentoService {
     }
 
     /** Riepilogo dei corsi dell'allievo per l'anno scolastico indicato ({@code null} = corsi senza anno). */
+    /**
+     * Spese di un allievo in un anno solare, a prescindere dagli anni scolastici: le rate di tutti i corsi con data
+     * nell'anno. Chi paga è il genitore, o l'allievo adulto.
+     */
+    public record Attestazione(Allievo allievo, int anno, List<Pagamento> pagamenti) {
+
+        public BigDecimal totale() {
+            return pagamenti.stream().map(Pagamento::getImporto).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        /** Il genitore che sostiene le spese, o {@code null} se l'allievo è adulto e paga da sé. */
+        public Genitore genitore() {
+            return allievo.getGenitore();
+        }
+    }
+
+    public Attestazione attestazione(Long allievoId, int anno) {
+        Allievo allievo = allievoRepository.findById(allievoId)
+            .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));
+        return new Attestazione(allievo, anno, pagamentoRepository.findDellAllievoNelPeriodo(allievoId,
+            LocalDate.of(anno, 1, 1), LocalDate.of(anno, 12, 31)));
+    }
+
+    /** Anni solari con almeno un pagamento, per allievo (dal più recente). */
+    public Map<Long, List<Integer>> anniDiPagamentoPerAllievo() {
+        Map<Long, List<Integer>> anni = new HashMap<>();
+        for (Object[] riga : pagamentoRepository.totaliPerAllievoEAnno()) {
+            anni.computeIfAbsent((Long) riga[0], k -> new ArrayList<>()).add(((Number) riga[1]).intValue());
+        }
+        anni.values().forEach(elenco -> elenco.sort(Comparator.reverseOrder()));
+        return anni;
+    }
+
     public RiepilogoFamiglia riepilogoAllievo(Long allievoId, String anno) {
         Allievo allievo = allievoRepository.findById(allievoId)
             .orElseThrow(() -> new IllegalArgumentException("Allievo non trovato: " + allievoId));

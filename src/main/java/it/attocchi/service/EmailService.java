@@ -1,5 +1,6 @@
 package it.attocchi.service;
 
+import it.attocchi.service.PagamentoService.Attestazione;
 import it.attocchi.config.MailProperties;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Genitore;
@@ -264,6 +265,66 @@ public class EmailService {
         Pdf pdf = documentiService.riepilogoPdf(riepilogo);
         return new Anteprima(destinatario, oggetto(riepilogo), documentiService.emailRiepilogoHtml(riepilogo, destinatario.nome()),
             pdf.nomeFile(), pdf.contenuto());
+    }
+
+    /** Destinatario dell'attestazione: il genitore dell'allievo, o l'allievo adulto, se ha un'email. */
+    public Optional<Destinatario> destinatarioAttestazione(Long allievoId, int anno) {
+        return destinatario(pagamentoService.attestazione(allievoId, anno));
+    }
+
+    /**
+     * Invia l'attestazione delle spese dell'allievo nell'anno solare e registra il tentativo come {@link #invia}; senza
+     * destinatario o senza pagamenti nell'anno {@link IllegalStateException}.
+     */
+    @Transactional
+    public InvioEmail inviaAttestazione(Long allievoId, int anno, String username) {
+        verificaPermesso(username);
+        Attestazione attestazione = pagamentoService.attestazione(allievoId, anno);
+        Destinatario destinatario = verificaInviabile(attestazione);
+
+        InvioEmail invio = new InvioEmail();
+        invio.setDataOra(LocalDateTime.now());
+        invio.setTipo(TipoDocumento.ATTESTAZIONE);
+        invio.setGenitoreId(attestazione.genitore() != null ? attestazione.genitore().getId() : null);
+        invio.setAllievoId(allievoId);
+        invio.setAllievoNome(attestazione.allievo().getNomeCompleto());
+        invio.setAnno(String.valueOf(anno));
+        invio.setCorsoNome("Anno solare " + anno);
+        invio.setDestinatario(destinatario.email());
+        invio.setDestinatarioNome(destinatario.nome());
+        invio.setOggetto(oggetto(attestazione));
+        Pdf pdf = documentiService.attestazionePdf(attestazione);
+        invio.setAllegato(pdf.nomeFile());
+        invio.setInviatoDa(username);
+        return spedisciERegistra(invio, () -> documentiService.emailAttestazioneHtml(attestazione, destinatario.nome()),
+            pdf::contenuto);
+    }
+
+    /** Anteprima dell'email dell'attestazione, con gli stessi controlli di {@link #inviaAttestazione}, senza inviarla. */
+    public Anteprima anteprimaAttestazione(Long allievoId, int anno, String username) {
+        verificaPermesso(username);
+        Attestazione attestazione = pagamentoService.attestazione(allievoId, anno);
+        Destinatario destinatario = verificaInviabile(attestazione);
+        Pdf pdf = documentiService.attestazionePdf(attestazione);
+        return new Anteprima(destinatario, oggetto(attestazione),
+            documentiService.emailAttestazioneHtml(attestazione, destinatario.nome()), pdf.nomeFile(), pdf.contenuto());
+    }
+
+    private static Optional<Destinatario> destinatario(Attestazione attestazione) {
+        Genitore genitore = attestazione.genitore();
+        return destinatarioRiepilogoDi(genitore, genitore == null ? attestazione.allievo() : null);
+    }
+
+    private static Destinatario verificaInviabile(Attestazione attestazione) {
+        if (attestazione.pagamenti().isEmpty()) {
+            throw new IllegalStateException("Nessun pagamento nell'anno " + attestazione.anno());
+        }
+        return destinatario(attestazione).orElseThrow(() -> new IllegalStateException(
+            (attestazione.genitore() != null ? "Il genitore" : "L'allievo") + " non ha un indirizzo email"));
+    }
+
+    private static String oggetto(Attestazione attestazione) {
+        return TipoDocumento.ATTESTAZIONE.getTitolo() + " " + attestazione.anno() + " – " + attestazione.allievo().getNomeCompleto();
     }
 
     private RiepilogoFamiglia riepilogo(Long genitoreId, Long allievoId, String anno) {

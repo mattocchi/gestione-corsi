@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -22,6 +23,17 @@ public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
 
     @Query("SELECT COUNT(p) > 0 FROM Pagamento p WHERE p.iscrizione.id.allievoId = :allievoId")
     boolean existsByAllievo(@Param("allievoId") Long allievoId);
+
+    /** Rate pagate dall'allievo nel periodo (tutti i corsi), con iscrizione e corso, in ordine di data. */
+    @Query("SELECT p FROM Pagamento p JOIN FETCH p.iscrizione i JOIN FETCH i.corso "
+        + "WHERE i.id.allievoId = :allievoId AND p.data BETWEEN :dal AND :al ORDER BY p.data, p.id")
+    List<Pagamento> findDellAllievoNelPeriodo(@Param("allievoId") Long allievoId, @Param("dal") LocalDate dal,
+                                              @Param("al") LocalDate al);
+
+    /** Totale pagato da ogni allievo in ogni anno solare con pagamenti: righe [allievoId, anno, somma]. */
+    @Query("SELECT p.iscrizione.id.allievoId, YEAR(p.data), SUM(p.importo) FROM Pagamento p "
+        + "GROUP BY p.iscrizione.id.allievoId, YEAR(p.data)")
+    List<Object[]> totaliPerAllievoEAnno();
 
     /** Totale pagato per ogni partecipante del corso: righe [allievoId, somma]. */
     @Query("SELECT p.iscrizione.id.allievoId, SUM(p.importo) FROM Pagamento p WHERE p.iscrizione.id.corsoId = :corsoId GROUP BY p.iscrizione.id.allievoId")

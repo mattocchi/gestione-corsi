@@ -27,6 +27,7 @@ import it.attocchi.service.AllievoService;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.DocumentiService.Pdf;
 import it.attocchi.service.ElencoDocumentiService;
+import it.attocchi.service.ElencoDocumentiService.DocumentoAttestazione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoFamiglia;
 import it.attocchi.service.ElencoDocumentiService.DocumentoIscrizione;
 import it.attocchi.service.ElencoDocumentiService.DocumentoRiepilogo;
@@ -71,6 +72,9 @@ public class DocumentiView extends VerticalLayout {
     private final Button confermeATutti = new Button("Invia conferme di iscrizione a tutti", VaadinIcon.ENVELOPES.create());
     private final Grid<DocumentoIscrizione> gridIscrizioni = new Grid<>();
     private final Grid<DocumentoRiepilogo> gridRiepiloghi = new Grid<>();
+    private final Grid<DocumentoAttestazione> gridAttestazioni = new Grid<>();
+    private List<DocumentoAttestazione> attestazioni = List.of();
+    private GridListDataView<DocumentoAttestazione> righeAttestazioni;
     private List<DocumentoIscrizione> iscrizioni = List.of();
     private List<DocumentoRiepilogo> riepiloghi = List.of();
     private GridListDataView<DocumentoIscrizione> righeIscrizioni;
@@ -84,7 +88,8 @@ public class DocumentiView extends VerticalLayout {
         this.username = securityService.getUsername().orElse("");
         addClassNames("size-full");
         tipo = new SegmentedControl<>("Tipo di documento", List.of(TipoDocumento.values()), TipoDocumento::getPlurale,
-            t -> t == TipoDocumento.RIEPILOGO ? "Riepiloghi annuali dei pagamenti" : t.getTitolo(), null);
+            t -> t == TipoDocumento.RIEPILOGO ? "Riepiloghi annuali dei pagamenti"
+                : t == TipoDocumento.ATTESTAZIONE ? "Attestazioni delle spese per anno solare" : t.getTitolo(), null);
         if (!securityService.hasRole("ADMIN") && !securityService.hasRole("SEGRETERIA")) {
             if (!securityService.hasRole("GENITORE") && !allievoService.gestisceDaSe(username)) {
                 // Allievo con genitore (la voce di menu è nascosta, qui solo dall'indirizzo)
@@ -125,9 +130,11 @@ public class DocumentiView extends VerticalLayout {
 
         creaGrigliaIscrizioni();
         creaGrigliaRiepiloghi();
-        add(tipo, filtri, gridIscrizioni, gridRiepiloghi);
+        creaGrigliaAttestazioni();
+        add(tipo, filtri, gridIscrizioni, gridRiepiloghi, gridAttestazioni);
         gridIscrizioni.addClassNames("grow");
         gridRiepiloghi.addClassNames("grow");
+        gridAttestazioni.addClassNames("grow");
         aggiorna();
     }
 
@@ -175,6 +182,45 @@ public class DocumentiView extends VerticalLayout {
             .applica();
     }
 
+    private void creaGrigliaAttestazioni() {
+        gridAttestazioni.addColumn(a -> a.allievo().getNomeCompleto()).setHeader("Allievo")
+            .setComparator(a -> a.allievo().getNomeCompleto());
+        gridAttestazioni.addColumn(DocumentiView::chiPaga).setHeader("Spese di");
+        gridAttestazioni.addColumn(DocumentoAttestazione::anno).setHeader("Anno").setAutoWidth(true).setFlexGrow(0);
+        gridAttestazioni.addColumn(a -> Formati.euro(a.totale())).setHeader("Pagato nell'anno")
+            .setComparator(DocumentoAttestazione::totale).setAutoWidth(true).setFlexGrow(0);
+        gridAttestazioni.addColumn(a -> destinatario(a.destinatario())).setHeader("Destinatario");
+        gridAttestazioni.addColumn(a -> ultimoInvio(a.ultimoInvio())).setHeader("Ultimo invio").setAutoWidth(true);
+        ViewSupport.configureActionsColumn(gridAttestazioni.addComponentColumn(this::azioniAttestazione));
+        gridAttestazioni.setEmptyStateText("Nessuna attestazione: compaiono con i pagamenti");
+        CardMobile.per(gridAttestazioni)
+            .titolo(a -> a.allievo().getNomeCompleto())
+            .sottotitolo(a -> "Anno " + a.anno())
+            .campo("Spese di", DocumentiView::chiPaga)
+            .campo("Pagato nell'anno", a -> Formati.euro(a.totale()))
+            .campo("Destinatario", a -> destinatario(a.destinatario()))
+            .campo("Ultimo invio", a -> ultimoInvio(a.ultimoInvio()))
+            .azioni(this::azioniAttestazione)
+            .applica();
+    }
+
+    /** Chi sostiene le spese: il genitore, o l'allievo adulto. */
+    private static String chiPaga(DocumentoAttestazione attestazione) {
+        return attestazione.allievo().getGenitore() != null ? attestazione.allievo().getGenitore().getNomeCompleto()
+            : "Allievo adulto";
+    }
+
+    private HorizontalLayout azioniAttestazione(DocumentoAttestazione attestazione) {
+        Long allievoId = attestazione.allievo().getId();
+        int anno = attestazione.anno();
+        Button invia = ViewSupport.iconButton(VaadinIcon.ENVELOPE, "Invia per email",
+            e -> InvioEmailDialog.apriAttestazione(attestazione.allievo(), anno, this::aggiorna));
+        HorizontalLayout azioni = ViewSupport.actions(invia);
+        azioni.addComponentAsFirst(pulsantePdf(VaadinIcon.FILE_TEXT_O, TipoDocumento.ATTESTAZIONE.getTitolo(), null,
+            () -> documentiService.attestazionePer(allievoId, anno, username)));
+        return azioni;
+    }
+
     /**
      * Documenti del genitore (dei figli e della famiglia) o dell'allievo senza genitore: solo PDF, filtro per anno
      * se ce n'è più di uno.
@@ -204,7 +250,8 @@ public class DocumentiView extends VerticalLayout {
         filtroAnno.setItems(anni);
         filtroAnno.addValueChangeListener(e -> righe.setFilter(d -> e.getValue() == null || e.getValue().equals(d.anno())));
         filtroAnno.setVisible(anni.size() > 1);
-        Span nota = new Span("Conferme di iscrizione, ricevute dei pagamenti e riepiloghi annuali, da vedere o scaricare in PDF.");
+        Span nota = new Span("Conferme di iscrizione, ricevute dei pagamenti, riepiloghi annuali e attestazioni delle "
+            + "spese per anno solare, da vedere o scaricare in PDF.");
         nota.addClassNames(Stili.TESTO_SECONDARIO);
         add(nota, filtroAnno, grid);
         grid.addClassNames("grow");
@@ -217,6 +264,10 @@ public class DocumentiView extends VerticalLayout {
             Long corsoId = documento.iscrizione().getCorso().getId();
             Long allievoId = documento.iscrizione().getAllievo().getId();
             pdf = () -> documentiService.documentoPer(tipoDocumento, corsoId, allievoId, username);
+        } else if (documento.tipo() == TipoDocumento.ATTESTAZIONE) {
+            Long allievoId = documento.allievo().getId();
+            int anno = Integer.parseInt(documento.anno());
+            pdf = () -> documentiService.attestazionePer(allievoId, anno, username);
         } else {
             String anno = documento.anno();
             Long genitoreId = documento.genitore() != null ? documento.genitore().getId() : null;
@@ -236,7 +287,8 @@ public class DocumentiView extends VerticalLayout {
     }
 
     private static String corso(DocumentoFamiglia documento) {
-        return documento.iscrizione() != null ? documento.iscrizione().getCorso().getNome() : "Tutti i corsi dell'anno";
+        return documento.iscrizione() != null ? documento.iscrizione().getCorso().getNome()
+            : documento.tipo() == TipoDocumento.ATTESTAZIONE ? "Pagamenti dell'anno solare" : "Tutti i corsi dell'anno";
     }
 
     /** PDF (anteprima o scarico) e invio; con i dati mancanti i pulsanti mostrano solo l'avviso. */
@@ -310,11 +362,17 @@ public class DocumentiView extends VerticalLayout {
     /** Ricarica l'elenco del tipo scelto mantenendo filtri e ricerca. */
     private void aggiorna() {
         boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
-        gridIscrizioni.setVisible(!perRiepilogo);
+        boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
+        gridIscrizioni.setVisible(!perRiepilogo && !perAttestazione);
         gridRiepiloghi.setVisible(perRiepilogo);
-        filtroCorso.setVisible(!perRiepilogo);
+        gridAttestazioni.setVisible(perAttestazione);
+        filtroCorso.setVisible(!perRiepilogo && !perAttestazione);
         Stream<String> anni;
-        if (perRiepilogo) {
+        if (perAttestazione) {
+            attestazioni = elencoDocumentiService.attestazioni(username);
+            righeAttestazioni = gridAttestazioni.setItems(attestazioni);
+            anni = attestazioni.stream().map(a -> String.valueOf(a.anno()));
+        } else if (perRiepilogo) {
             riepiloghi = elencoDocumentiService.riepiloghi(username);
             righeRiepiloghi = gridRiepiloghi.setItems(riepiloghi);
             anni = riepiloghi.stream().map(DocumentoRiepilogo::anno);
@@ -355,9 +413,17 @@ public class DocumentiView extends VerticalLayout {
     private void applicaFiltri() {
         String anno = filtroAnno.getValue();
         boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
+        boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
         Corso corso = filtroCorso.getValue();
         confermeATutti.setVisible(tipo.getValue() == TipoDocumento.CONFERMA_ISCRIZIONE && corso != null);
-        if (perRiepilogo && righeRiepiloghi != null) {
+        if (perAttestazione) {
+            if (righeAttestazioni != null) {
+                SerializablePredicate<DocumentoAttestazione> dellAnno = a -> anno == null || anno.equals(String.valueOf(a.anno()));
+                righeAttestazioni.setFilter(a -> dellAnno.test(a) && ricerca.corrisponde(RicercaRapida.testo(
+                    a.allievo().getNomeCompleto(), chiPaga(a), destinatario(a.destinatario()))));
+                ricerca.mostraConteggio(righeAttestazioni.getItemCount(), (int) attestazioni.stream().filter(dellAnno).count());
+            }
+        } else if (perRiepilogo && righeRiepiloghi != null) {
             SerializablePredicate<DocumentoRiepilogo> dellAnno = r -> anno == null || anno.equals(r.anno());
             righeRiepiloghi.setFilter(r -> dellAnno.test(r) && ricerca.corrisponde(RicercaRapida.testo(
                 r.intestatario(), String.join(" ", r.allievi()), destinatario(r.destinatario()))));

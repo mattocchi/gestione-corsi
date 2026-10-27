@@ -18,6 +18,7 @@ import it.attocchi.service.EmailService.Destinatario;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -58,6 +59,11 @@ public class ElencoDocumentiService {
         public String intestatario() {
             return genitore != null ? genitore.getNomeCompleto() : allievo.getNomeCompleto();
         }
+    }
+
+    /** Attestazione delle spese di un allievo in un anno solare per lo staff, con il totale pagato nell'anno. */
+    public record DocumentoAttestazione(Allievo allievo, int anno, BigDecimal totale, Optional<Destinatario> destinatario,
+                                        InvioEmail ultimoInvio) {
     }
 
     /**
@@ -151,6 +157,32 @@ public class ElencoDocumentiService {
     }
 
     /**
+     * Attestazioni delle spese: una per allievo e anno solare con almeno un pagamento, per anno (dal più recente) e
+     * allievo. Solo admin e segreteria.
+     */
+    public List<DocumentoAttestazione> attestazioni(String username) {
+        verificaStaff(username);
+        Map<Long, Allievo> allievi = new HashMap<>();
+        allievoRepository.findAll().forEach(a -> allievi.put(a.getId(), a));
+        Map<String, InvioEmail> ultimi = new HashMap<>();
+        for (InvioEmail invio : invioEmailRepository.findByTipoAndEsitoNotOrderByDataOraDesc(TipoDocumento.ATTESTAZIONE, Esito.ERRORE)) {
+            ultimi.putIfAbsent(invio.getAllievoId() + "/" + invio.getAnno(), invio);
+        }
+        List<DocumentoAttestazione> attestazioni = new ArrayList<>();
+        for (Object[] riga : pagamentoRepository.totaliPerAllievoEAnno()) {
+            Allievo allievo = allievi.get((Long) riga[0]);
+            int anno = ((Number) riga[1]).intValue();
+            Genitore genitore = allievo.getGenitore();
+            attestazioni.add(new DocumentoAttestazione(allievo, anno, (BigDecimal) riga[2],
+                EmailService.destinatarioRiepilogoDi(genitore, genitore == null ? allievo : null),
+                ultimi.get(allievo.getId() + "/" + anno)));
+        }
+        attestazioni.sort(Comparator.comparing(DocumentoAttestazione::anno, Comparator.reverseOrder())
+            .thenComparing(d -> d.allievo().getNomeCompleto(), String.CASE_INSENSITIVE_ORDER));
+        return attestazioni;
+    }
+
+    /**
      * Documenti dell'utente: per il genitore quelli dei figli e i riepiloghi della famiglia, per l'allievo senza
      * genitore i propri (chi ha un genitore non ne ha: sono del genitore). Conferma di ogni iscrizione, ricevuta se ci
      * sono pagamenti, riepilogo per ogni anno dei corsi; anche dei corsi non più attivi. Per anno (dal più recente),
@@ -163,6 +195,17 @@ public class ElencoDocumentiService {
             iscrizioneRepository.findByGenitoreUsernameWithCorsoAllievo(username), genitore, null, conPagamenti));
         allievoRepository.findByUserUsername(username).filter(a -> a.getGenitore() == null).ifPresent(allievo -> aggiungi(documenti,
             iscrizioneRepository.findByAllievoIdWithCorso(allievo.getId()), null, allievo, conPagamenti));
+        // Attestazioni delle spese per anno solare: dei figli, o dell'allievo adulto
+        Map<Long, Allievo> propri = new HashMap<>();
+        documenti.stream().filter(d -> d.iscrizione() != null).map(d -> d.iscrizione().getAllievo())
+            .forEach(a -> propri.putIfAbsent(a.getId(), a));
+        for (Object[] riga : pagamentoRepository.totaliPerAllievoEAnno()) {
+            Allievo allievo = propri.get((Long) riga[0]);
+            if (allievo != null) {
+                documenti.add(new DocumentoFamiglia(TipoDocumento.ATTESTAZIONE, null, null, allievo,
+                    String.valueOf(((Number) riga[1]).intValue()), null));
+            }
+        }
         documenti.sort(Comparator.comparing(DocumentoFamiglia::anno, PER_ANNO)
             .thenComparing(d -> d.iscrizione() != null)
             .thenComparing(d -> d.iscrizione() != null ? d.iscrizione().getCorso().getNome() : "", String.CASE_INSENSITIVE_ORDER)

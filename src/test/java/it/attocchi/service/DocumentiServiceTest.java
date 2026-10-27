@@ -342,6 +342,51 @@ class DocumentiServiceTest {
     }
 
     @Test
+    void attestazione_pagamentiDellAnnoSolareDiTuttiICorsi() throws IOException {
+        // genitore3: Allievo Chitarra1 al Corso di Chitarra; due rate in anni solari diversi
+        PagamentoService.RigaPagamento chitarra = pagamentoService.righePagamentiDeiFigli("genitore3").stream()
+            .filter(r -> r.corso().getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Long corsoId = chitarra.corso().getId();
+        Long allievoId = chitarra.allievo().getId();
+        Pagamento dicembre = rata(LocalDate.of(2024, 12, 15), "150");
+        Pagamento gennaio = rata(LocalDate.of(2025, 1, 20), "250");
+        pagamentoService.salva(corsoId, allievoId, dicembre);
+        pagamentoService.salva(corsoId, allievoId, gennaio);
+        try {
+            PagamentoService.Attestazione attestazione = pagamentoService.attestazione(allievoId, 2025);
+            assertEquals(1, attestazione.pagamenti().size());
+            assertEquals(0, new BigDecimal("250").compareTo(attestazione.totale()));
+            assertEquals("genitore3", attestazione.genitore().getUser().getUsername());
+            assertEquals(List.of(2025, 2024), pagamentoService.anniDiPagamentoPerAllievo().get(allievoId));
+
+            DocumentiService.Pdf pdf = documentiService.attestazionePer(allievoId, 2025, "genitore3");
+            assertEquals("attestazione-spese-2025-allievo-chitarra1.pdf", pdf.nomeFile());
+            String testo = testo(pdf.contenuto());
+            assertTrue(testo.contains("Attestazione delle spese 2025"), testo);
+            assertTrue(testo.contains("Allievo Chitarra1"), testo);
+            assertTrue(testo.contains("Genitore3 Cognome3"), testo);
+            assertTrue(testo.contains("20/01/2025"), testo);
+            assertFalse(testo.contains("15/12/2024"), testo);
+            assertTrue(testo.contains("250,00 €"), testo);
+
+            // Admin e segreteria ogni allievo, il genitore solo i figli
+            documentiService.attestazionePer(allievoId, 2025, "segreteria");
+            assertThrows(IllegalArgumentException.class, () -> documentiService.attestazionePer(allievoId, 2025, "genitore1"));
+            assertThrows(IllegalArgumentException.class, () -> documentiService.attestazionePer(allievoId, 2025, "insegnante1"));
+        } finally {
+            pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
+        }
+    }
+
+    private static Pagamento rata(LocalDate data, String importo) {
+        Pagamento rata = new Pagamento();
+        rata.setData(data);
+        rata.setImporto(new BigDecimal(importo));
+        rata.setMetodo(MetodoPagamento.BONIFICO);
+        return rata;
+    }
+
+    @Test
     void conferma_conIGiorniDelPartecipante() {
         PagamentoService.RigaPagamento chitarra = pagamentoService.righePagamentiDeiFigli("genitore3").stream()
             .filter(r -> r.corso().getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();

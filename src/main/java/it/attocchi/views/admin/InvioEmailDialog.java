@@ -75,6 +75,17 @@ public final class InvioEmailDialog {
             () -> emailService.inviaRiepilogo(genitoreId, allievoId, anno, username), dopoInvio);
     }
 
+    /** Invio dell'attestazione delle spese dell'allievo nell'anno solare (al genitore o all'allievo adulto). */
+    public static void apriAttestazione(Allievo allievo, int anno, Runnable dopoInvio) {
+        EmailService emailService = emailService();
+        String username = username();
+        Long allievoId = allievo.getId();
+        apriInvio(emailService, TipoDocumento.ATTESTAZIONE, TipoDocumento.ATTESTAZIONE.getTitolo() + " – " + allievo.getNomeCompleto(),
+            "Pagamenti dell'anno " + anno, emailService.destinatarioAttestazione(allievoId, anno), null,
+            () -> emailService.anteprimaAttestazione(allievoId, anno, username),
+            () -> emailService.inviaAttestazione(allievoId, anno, username), dopoInvio);
+    }
+
     /** Dialog comune: documento, destinatario o motivo per cui non si può inviare, anteprima e invio. */
     private static void apriInvio(EmailService emailService, TipoDocumento tipo, String titolo, String descrizione,
                                   Optional<Destinatario> destinatario, String impedimento,

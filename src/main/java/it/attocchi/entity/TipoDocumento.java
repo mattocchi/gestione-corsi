@@ -8,7 +8,9 @@ public enum TipoDocumento {
     CONFERMA_ISCRIZIONE("Conferma di iscrizione", "Conferma", "Conferme", "conferma"),
     RICEVUTA("Ricevuta di pagamento", "Ricevuta", "Ricevute", "ricevuta"),
     /** Riepilogo annuale dei pagamenti della famiglia o dell'allievo adulto (PDF {@code documenti/riepilogo-famiglia}). */
-    RIEPILOGO("Riepilogo pagamenti", "Riepilogo", "Riepiloghi", "riepilogo");
+    RIEPILOGO("Riepilogo pagamenti", "Riepilogo", "Riepiloghi", "riepilogo"),
+    /** Spese di un allievo in un anno solare, di tutti i corsi (PDF {@code documenti/attestazione}). */
+    ATTESTAZIONE("Attestazione delle spese", "Attestazione", "Attestazioni", "attestazione");
 
     private final String titolo;
     private final String breve;
@@ -38,8 +40,8 @@ public enum TipoDocumento {
         return template;
     }
 
-    /** Documento di una singola iscrizione (conferma o ricevuta), non il riepilogo annuale. */
+    /** Documento di una singola iscrizione (conferma o ricevuta), non il riepilogo annuale né l'attestazione. */
     public boolean isDellIscrizione() {
-        return this != RIEPILOGO;
+        return this == CONFERMA_ISCRIZIONE || this == RICEVUTA;
     }
 }

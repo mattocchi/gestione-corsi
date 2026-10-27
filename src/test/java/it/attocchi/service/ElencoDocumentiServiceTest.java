@@ -135,6 +135,37 @@ class ElencoDocumentiServiceTest {
         assertTrue(elencoDocumentiService.documentiDi("segreteria").isEmpty());
     }
 
+    @Test
+    void attestazioni_unaPerAllievoEAnnoSolareConUltimoInvio() {
+        Corso canto = canto();
+        Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Pagamento rata = new Pagamento();
+        rata.setData(LocalDate.of(2025, 3, 10));
+        rata.setImporto(new BigDecimal("120"));
+        rata.setMetodo(MetodoPagamento.BONIFICO);
+        pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        try {
+            ElencoDocumentiService.DocumentoAttestazione attestazione = elencoDocumentiService.attestazioni("segreteria").stream()
+                .filter(a -> a.allievo().getId().equals(allievo.getId())).findFirst().orElseThrow();
+            assertEquals(2025, attestazione.anno());
+            assertEquals(0, new BigDecimal("120").compareTo(attestazione.totale()));
+            assertEquals("genitore3@example.com", attestazione.destinatario().orElseThrow().email());
+            assertNull(attestazione.ultimoInvio());
+
+            emailService.inviaAttestazione(allievo.getId(), 2025, "segreteria");
+            assertNotNull(elencoDocumentiService.attestazioni("segreteria").stream()
+                .filter(a -> a.allievo().getId().equals(allievo.getId())).findFirst().orElseThrow().ultimoInvio());
+            assertThrows(IllegalStateException.class, () -> emailService.inviaAttestazione(allievo.getId(), 2023, "segreteria"));
+            assertThrows(IllegalStateException.class, () -> elencoDocumentiService.attestazioni("insegnante1"));
+
+            // Il genitore la trova tra i suoi documenti
+            assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().anyMatch(d -> d.tipo() == TipoDocumento.ATTESTAZIONE
+                && "2025".equals(d.anno()) && d.allievo().getId().equals(allievo.getId())));
+        } finally {
+            pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
+        }
+    }
+
     private static DocumentoIscrizione conferma(List<DocumentoIscrizione> documenti, Allievo allievo) {
         return documenti.stream().filter(d -> d.iscrizione().getAllievo().getId().equals(allievo.getId())).findFirst().orElseThrow();
     }
