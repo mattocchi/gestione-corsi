@@ -84,6 +84,7 @@ Sarebbe utile per il mese oggetto di rimborso vedere un effettivo riepilogo dell
 
 * [ ] Aggiungere oltre ai corsi anche in tipo servizi, di default é Corso ma esiste anche il tipo servizio. Ha tutte le caratteristiche del corso é solo un tipo diverso. Un esempio é il servizio Pulizia che viene svolto tre giorni a settimana il mart merc e ven dalle 6 alle 8.
   _Chiarimento 2026-10-27: campo "Tipo" del corso, Corso (default) o Servizio, con tutte le funzioni del corso; badge e filtro in Gestione Corsi, badge "Servizio" ovunque compare il corso; chi svolge un servizio è un Insegnante, mostrato come "Incaricato"._
+  _Chiarimento 2026-10-27: per i servizi ogni lezione vale la sua durata una volta, senza contare gli iscritti (costo = ore × tariffa dell'incaricato); i corsi restano allievi × durata._
 
 * [ ] Sarebbe opportuno aggiungere anche il luogo dove viene svolto il corso. Ogni corso ha un luogo predefinito ma ogni lezione può essere specificato in modo puntuale se differisce dal luogo predefinito. Ad esempio un corso può essere svolto in aula1, aula2 o palestra o all'esterno. I luogo devono poter essere gestito da admin.
 Gli insegnanti possono specificare sulla lezione quale é il luogo effettivo se differisce da quelli opzionali per il corso. Quindi ogni corso ha dei luoghi abilitati ad essere usati.
