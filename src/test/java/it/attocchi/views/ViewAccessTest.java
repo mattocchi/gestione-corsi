@@ -93,6 +93,7 @@ import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
 import it.attocchi.views.admin.EmailDiTestDialog;
 import it.attocchi.views.admin.EmailInviateView;
+import it.attocchi.views.admin.GrigliaAperture;
 import it.attocchi.views.admin.GrigliaInvii;
 import it.attocchi.views.admin.RimborsiDialog;
 import it.attocchi.views.admin.RimborsiView;
@@ -2782,7 +2783,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             find(QuotaPagamentiDialog.class).single().close();
 
             navigate(HomeView.class);
-            assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Email inviate")));
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Cronologia documenti")));
             navigate(EmailInviateView.class);
             var registro = test((Grid<InvioEmail>) find(GrigliaInvii.class).single());
             assertEquals(7, registro.size());
@@ -2838,6 +2839,52 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(dialog.isOpened());
         // Il test non finisce nel registro degli invii
         assertTrue(emailService.tuttiGliInvii().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    @SuppressWarnings("unchecked")
+    void admin_vedeEdEliminaIDocumentiAperti() {
+        cronologiaDocumentiService.registra("genitore3", TipoDocumento.RICEVUTA, AperturaDocumento.Modalita.SCARICO,
+            "Allievo Canto3", "Corso di Canto", "2024/2025", "ricevuta.pdf");
+        cronologiaDocumentiService.registra("genitore1", TipoDocumento.RIEPILOGO, AperturaDocumento.Modalita.ANTEPRIMA,
+            "Tutti i figli", "Tutti i corsi dell'anno", "2024/2025", "riepilogo.pdf");
+        try {
+            navigate(EmailInviateView.class);
+            find(com.vaadin.flow.component.tabs.TabSheet.class).single().setSelectedIndex(1);
+            var aperture = test((Grid<AperturaDocumento>) find(GrigliaAperture.class).single());
+            assertEquals(2, aperture.size());
+            SegmentedControl<Optional<TipoDocumento>> tipo = find(SegmentedControl.class).single();
+            test(tipo.getPulsante(Optional.of(TipoDocumento.RICEVUTA))).click();
+            assertEquals(1, aperture.size());
+            assertTrue(aperture.getCellText(0, 1).contains("(genitore3)"));
+            assertEquals("Scaricato", ((Badge) aperture.getCellComponent(0, 6)).getText());
+
+            test(pulsante(aperture.getCellComponent(0, 7), "Elimina")).click();
+            test(find(Button.class).withText("Elimina").single()).click();
+            assertEquals(0, aperture.size());
+            assertEquals(1, cronologiaDocumentiService.tutte().size());
+        } finally {
+            aperturaDocumentoRepository.deleteAll();
+        }
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_vedeIDocumentiApertiSenzaEliminarli() {
+        AperturaDocumento apertura = cronologiaDocumentiService.registra("genitore3", TipoDocumento.CONFERMA_ISCRIZIONE,
+            AperturaDocumento.Modalita.ANTEPRIMA, "Allievo Canto3", "Corso di Canto", "2024/2025", "conferma.pdf");
+        try {
+            navigate(EmailInviateView.class);
+            find(com.vaadin.flow.component.tabs.TabSheet.class).single().setSelectedIndex(1);
+            var aperture = test((Grid<AperturaDocumento>) find(GrigliaAperture.class).single());
+            assertEquals(1, aperture.size());
+            assertFalse(find(GrigliaAperture.class).single().getColumns().get(7).isVisible());
+            assertThrows(IllegalStateException.class, () -> cronologiaDocumentiService.elimina(apertura.getId(), "segreteria"));
+        } finally {
+            aperturaDocumentoRepository.deleteAll();
+        }
     }
 
     @Test
