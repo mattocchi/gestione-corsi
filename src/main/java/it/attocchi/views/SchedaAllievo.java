@@ -27,6 +27,7 @@ public class SchedaAllievo extends VerticalLayout {
     private final Div riferimento = new Div();
     private final Details datiPropri = new Details("Contatti e indirizzo propri dell'allievo (facoltativi)");
     private final VerticalLayout sezioneContatti = new VerticalLayout();
+    private final VerticalLayout sezioneIntestazione = new VerticalLayout();
 
     /**
      * @param sceltaGenitore campo per scegliere il genitore (staff), oppure {@code null}
@@ -47,15 +48,23 @@ public class SchedaAllievo extends VerticalLayout {
         riferimento.addClassNames("flex flex-col gap-1 p-3 rounded-(--vaadin-radius-m)"
             + " border border-solid border-(--vaadin-border-color-secondary) w-full box-border");
         sezioneContatti.addClassNames("p-0 gap-2");
-        add(modalita, sezioneContatti);
+        sezioneIntestazione.addClassNames("p-0 gap-2");
+        sezioneIntestazione.setVisible(false);
+        add(modalita, sezioneContatti, sezioneIntestazione);
         if (conAccesso) {
             add(ViewSupport.sezione("Accesso all'app"), new FormLayout(utente.getAccesso()));
         }
         addClassNames("p-0");
     }
 
+    /** Aggiunge la sezione dell'intestazione dei documenti fiscali, mostrata solo per l'allievo adulto. */
+    public void conIntestazione(IntestazioneFields<Allievo> intestazione) {
+        sezioneIntestazione.add(intestazione.getSezione());
+    }
+
     /** Mostra la scheda con il genitore indicato, o come allievo adulto se {@code null}. */
     public void mostraGenitore(Genitore genitore) {
+        sezioneIntestazione.setVisible(genitore == null && sezioneIntestazione.getComponentCount() > 0);
         sezioneContatti.removeAll();
         riferimento.removeAll();
         datiPropri.removeAll();

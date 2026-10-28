@@ -37,8 +37,8 @@ diversi si usano quelli dell'utente — [F-2026-10-28/INTESTATARIO.1]
 |---|---|---|---|---|---|
 | 1 | Dati e attestazione: `Genitore.intestazioneNome/Cognome`, `Allievo.intestazioneNome/Cognome/CodiceFiscale`, intestatario dell'attestazione con i ripieghi, dati mancanti "codice fiscale dell'intestatario" | entity, `PagamentoService`, `DocumentiService`, test | `./mvnw test` | [x] | — |
 | 2 | Genitore: sezione "Intestazione dei documenti fiscali" (codice fiscale spostato lì) nel Profilo e nel dialog di Genitori | `views/IntestazioneFields`, `AnagraficaFields`, `ProfiloView`, `GenitoriView`, `GenitoreService`, test | `./mvnw test` | [x] | — |
-| 3 | Allievo adulto: stessa sezione modificabile nel Profilo e nella scheda di Gestione Allievi; CLAUDE.md | `ProfiloView`, `SchedaAllievo`, `AllieviView`, `AllievoService`, test, `CLAUDE.md` | `./mvnw test` | [ ] | F-2026-10-28/INTESTATARIO.1 |
-| 4 | Registro | piano | — | [ ] | — |
+| 3 | Allievo adulto: stessa sezione modificabile nel Profilo e nella scheda di Gestione Allievi; CLAUDE.md | `ProfiloView`, `SchedaAllievo`, `AllieviView`, `AllievoService`, test, `CLAUDE.md` | `./mvnw test` | [x] | F-2026-10-28/INTESTATARIO.1 |
+| 4 | Registro | piano | — | [x] | — |
 
 ## Fuori ambito
 
@@ -48,3 +48,11 @@ diversi si usano quelli dell'utente — [F-2026-10-28/INTESTATARIO.1]
 
 ## Registro
 
+- Passo 1: `IntestazioneDocumenti` (Genitore, Allievo), intestatario dell'attestazione con i ripieghi sui dati
+  dell'utente; dati mancanti "codice fiscale dell'intestatario". Test `DocumentiServiceTest.attestazione_intestataAChiIndicaIlGenitore`.
+- Passo 2: `IntestazioneFields`; il codice fiscale del genitore è solo nella nuova sezione (Profilo e Genitori).
+- Passo 3: allievo adulto: sezione modificabile nel Profilo (resto in sola lettura) e in Gestione Allievi senza
+  genitore. Test `ViewAccessTest` (profilo del genitore e dell'allievo adulto).
+- `./mvnw test`: 338 test, tutti verdi. Non verificato nel browser (sezione a 390px).
+- Produzione: nuove colonne `intestazione_nome`, `intestazione_cognome` (genitori, allievi) e
+  `intestazione_codice_fiscale` (allievi) create da `ddl-auto=update`; i codici fiscali dei genitori restano dove sono.

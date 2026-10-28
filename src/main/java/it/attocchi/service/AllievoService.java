@@ -2,6 +2,7 @@ package it.attocchi.service;
 
 import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Allievo;
+import it.attocchi.entity.IntestazioneDocumenti;
 import it.attocchi.entity.User;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.AllievoRepository;
@@ -89,6 +90,19 @@ public class AllievoService {
         }
         userService.aggiornaContatti(allievo.getUser().getUsername(), datiUtente);
         Anagrafica.copia(dati, allievo);
+        return allievo;
+    }
+
+    /**
+     * L'allievo adulto aggiorna l'intestazione della propria attestazione delle spese (unico dato che modifica da sé);
+     * rifiutato all'allievo con genitore.
+     */
+    @Transactional
+    public Allievo aggiornaIntestazione(String username, IntestazioneDocumenti dati) {
+        Allievo allievo = allievoRepository.findByUserUsername(username)
+            .filter(a -> a.getGenitore() == null)
+            .orElseThrow(() -> new IllegalArgumentException("Solo l'allievo adulto imposta l'intestazione dei propri documenti"));
+        IntestazioneDocumenti.copia(dati, allievo);
         return allievo;
     }
 

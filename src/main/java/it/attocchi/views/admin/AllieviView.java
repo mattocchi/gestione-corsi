@@ -2,6 +2,7 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.Component;
 import it.attocchi.views.SchedaAllievo;
+import it.attocchi.views.IntestazioneFields;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.DetachEvent;
@@ -226,6 +227,7 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
         HorizontalLayout sceltaGenitore = new HorizontalLayout(genitore, nuovoGenitore);
         sceltaGenitore.addClassNames("w-full items-baseline gap-2");
         AnagraficaFields<Allievo> anagrafica = new AnagraficaFields<>(binder, true);
+        IntestazioneFields<Allievo> intestazione = new IntestazioneFields<>(binder, user, IntestazioneFields.AIUTO_ALLIEVO);
         binder.readBean(allievo);
 
         // Link alla scheda del genitore già collegato (non a quello appena scelto nel campo)
@@ -239,6 +241,7 @@ public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
         }
         // Con genitore i contatti di riferimento sono i suoi; allievo adulto: contatti e indirizzo propri
         SchedaAllievo content = new SchedaAllievo(utente, anagrafica, campoGenitore, true);
+        content.conIntestazione(intestazione);
         content.mostraGenitore(genitore.getValue());
         genitore.addValueChangeListener(e -> content.mostraGenitore(e.getValue()));
 

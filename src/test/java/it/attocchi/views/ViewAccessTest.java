@@ -4945,6 +4945,39 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(com.vaadin.flow.component.details.Details.class).single().getSummaryText().contains("facoltativi"));
         assertFalse(find(Button.class).withText("Salva").exists());
         assertFalse(find(Button.class).withText("Cambia password").exists());
+        // L'intestazione dei documenti fiscali è del genitore
+        assertFalse(find(TextField.class).withLabel("Nome dell'intestatario").exists());
+    }
+
+    @Test
+    @WithUserDetails("allievo_canto1")
+    void allievoAdulto_impostaLIntestazioneDeiDocumentiFiscali() {
+        Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
+        Genitore genitore = allievo.getGenitore();
+        allievo.setGenitore(null);
+        allievoService.save(allievo);
+        try {
+            navigate(ProfiloView.class);
+            // Il resto resta in sola lettura; il proprio codice fiscale è quello dell'allievo
+            assertTrue(find(TextField.class).withLabel("Codice fiscale").single().isReadOnly());
+            TextField cognome = find(TextField.class).withLabel("Cognome dell'intestatario").single();
+            assertFalse(cognome.isReadOnly());
+            test(cognome).setValue("Bianchi");
+            test(find(TextField.class).withLabel("Codice fiscale dell'intestatario").single()).setValue("BNCNNA80A41H501R");
+            test(find(Button.class).withText("Salva").single()).click();
+
+            Allievo salvato = allievoService.findByUsername("allievo_canto1").orElseThrow();
+            assertEquals("Bianchi", salvato.getIntestazioneCognome());
+            assertEquals("BNCNNA80A41H501R", salvato.getCodiceFiscaleIntestatario());
+            assertEquals(allievo.getUser().getNome() + " Bianchi", salvato.getNomeIntestatario());
+            assertEquals(allievo.getCodiceFiscale(), salvato.getCodiceFiscale());
+        } finally {
+            Allievo ripristino = allievoService.findByUsername("allievo_canto1").orElseThrow();
+            ripristino.setGenitore(genitore);
+            ripristino.setIntestazioneCognome(null);
+            ripristino.setIntestazioneCodiceFiscale(null);
+            allievoService.save(ripristino);
+        }
     }
 
     @Test

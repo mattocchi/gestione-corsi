@@ -61,7 +61,7 @@ public class ProfiloView extends VerticalLayout {
         } else if (genitore.isPresent()) {
             profiloGenitore(genitore.get(), genitoreService);
         } else if (allievo.isPresent()) {
-            profiloAllievo(allievo.get());
+            profiloAllievo(allievo.get(), allievoService);
         } else {
             add(new Span("Nessuna scheda anagrafica collegata a questo utente."));
         }
@@ -147,8 +147,11 @@ public class ProfiloView extends VerticalLayout {
         add(salva);
     }
 
-    /** Profilo dell'allievo in sola lettura; se non ha un indirizzo proprio si mostra quello del genitore. */
-    private void profiloAllievo(Allievo allievo) {
+    /**
+     * Profilo dell'allievo in sola lettura; se non ha un indirizzo proprio si mostra quello del genitore. L'allievo
+     * adulto modifica solo l'intestazione dei documenti fiscali.
+     */
+    private void profiloAllievo(Allievo allievo, AllievoService allievoService) {
         UtenteFields utente = new UtenteFields(allievo.getUser(), userService);
         utente.setReadOnly(true);
         Binder<Allievo> binder = new Binder<>(Allievo.class);
@@ -163,6 +166,26 @@ public class ProfiloView extends VerticalLayout {
         SchedaAllievo scheda = new SchedaAllievo(utente, anagrafica, null, true);
         scheda.mostraGenitore(allievo.getGenitore());
         add(avviso, scheda);
+        if (allievo.getGenitore() == null) {
+            Binder<Allievo> binderIntestazione = new Binder<>(Allievo.class);
+            IntestazioneFields<Allievo> intestazione = new IntestazioneFields<>(binderIntestazione, allievo.getUser(),
+                IntestazioneFields.AIUTO_ALLIEVO);
+            binderIntestazione.readBean(allievo);
+            Button salva = new Button("Salva", e -> {
+                if (!binderIntestazione.writeBeanIfValid(allievo)) {
+                    return;
+                }
+                try {
+                    allievoService.aggiornaIntestazione(username, allievo);
+                    Notification.show("Intestazione salvata");
+                } catch (RuntimeException ex) {
+                    Notification.show("Errore nel salvataggio: " + ex.getMessage());
+                }
+            });
+            salva.addThemeVariants(ButtonVariant.PRIMARY);
+            add(intestazione.getSezione());
+            add(salva);
+        }
     }
 
     /** Nuova password con conferma. */
