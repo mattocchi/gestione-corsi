@@ -12,9 +12,11 @@ import it.attocchi.entity.Genitore;
 import it.attocchi.entity.User;
 
 /**
- * Scheda dell'allievo in due modalità secondo il genitore (Gestione Allievi, I Miei Figli, profilo dell'allievo):
+ * Scheda dell'allievo (Gestione Allievi, I Miei Figli, profilo dell'allievo): "Allievo" con i dati base (nome,
+ * cognome, nascita), genitore e contatti, "Dati per i documenti" (codice fiscale e, per l'adulto, l'eventuale
+ * intestatario dell'attestazione), accesso. Due modalità secondo il genitore:
  * <ul>
- *     <li>con genitore, i dati dell'allievo (nome, nascita, codice fiscale) in evidenza, contatti e indirizzo del
+ *     <li>con genitore, contatti e indirizzo del
  *     genitore come riferimento in sola lettura e quelli propri dell'allievo in una sezione facoltativa chiusa;</li>
  *     <li>allievo adulto (senza genitore), contatti e indirizzo propri in evidenza: documenti ed email vanno a lui.</li>
  * </ul>
@@ -27,7 +29,7 @@ public class SchedaAllievo extends VerticalLayout {
     private final Div riferimento = new Div();
     private final Details datiPropri = new Details("Contatti e indirizzo propri dell'allievo (facoltativi)");
     private final VerticalLayout sezioneContatti = new VerticalLayout();
-    private final VerticalLayout sezioneIntestazione = new VerticalLayout();
+    private final Div intestazione = new Div();
 
     /**
      * @param sceltaGenitore campo per scegliere il genitore (staff), oppure {@code null}
@@ -36,7 +38,7 @@ public class SchedaAllievo extends VerticalLayout {
     public SchedaAllievo(UtenteFields utente, AnagraficaFields<Allievo> anagrafica, Component sceltaGenitore,
                          boolean conAccesso) {
         FormLayout allievo = new FormLayout(utente.getNomeECognome());
-        allievo.add(anagrafica.getDatiPersonali());
+        allievo.add(anagrafica.getNascita());
         contatti = new FormLayout(utente.getContatti());
         contatti.add(anagrafica.getIndirizzo());
 
@@ -48,23 +50,27 @@ public class SchedaAllievo extends VerticalLayout {
         riferimento.addClassNames("flex flex-col gap-1 p-3 rounded-(--vaadin-radius-m)"
             + " border border-solid border-(--vaadin-border-color-secondary) w-full box-border");
         sezioneContatti.addClassNames("p-0 gap-2");
-        sezioneIntestazione.addClassNames("p-0 gap-2");
-        sezioneIntestazione.setVisible(false);
-        add(modalita, sezioneContatti, sezioneIntestazione);
+        intestazione.addClassNames("w-full");
+        intestazione.setVisible(false);
+        add(modalita, sezioneContatti, ViewSupport.sezione("Dati per i documenti"),
+            new FormLayout(anagrafica.getCodiceFiscale()), intestazione);
         if (conAccesso) {
             add(ViewSupport.sezione("Accesso all'app"), new FormLayout(utente.getAccesso()));
         }
         addClassNames("p-0");
     }
 
-    /** Aggiunge la sezione dell'intestazione dei documenti fiscali, mostrata solo per l'allievo adulto. */
-    public void conIntestazione(IntestazioneFields<Allievo> intestazione) {
-        sezioneIntestazione.add(intestazione.getSezione());
+    /**
+     * Aggiunge ai dati per i documenti il riquadro dell'intestatario dell'attestazione, mostrato solo per l'allievo
+     * adulto; chiamarlo dopo {@code readBean}.
+     */
+    public void conIntestazione(IntestazioneFields<Allievo> campi) {
+        intestazione.add(campi.getRiquadro());
     }
 
     /** Mostra la scheda con il genitore indicato, o come allievo adulto se {@code null}. */
     public void mostraGenitore(Genitore genitore) {
-        sezioneIntestazione.setVisible(genitore == null && sezioneIntestazione.getComponentCount() > 0);
+        intestazione.setVisible(genitore == null && intestazione.getChildren().findAny().isPresent());
         sezioneContatti.removeAll();
         riferimento.removeAll();
         datiPropri.removeAll();

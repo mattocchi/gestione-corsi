@@ -1,8 +1,10 @@
 package it.attocchi.views;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import it.attocchi.entity.CodiceFiscale;
@@ -55,6 +57,21 @@ public class IntestazioneFields<T extends IntestazioneDocumenti> {
         nota.addClassNames(Stili.TESTO_SECONDARIO);
         return new Component[] {ViewSupport.sezione("Intestazione dei documenti fiscali"), nota,
             new FormLayout(nome, cognome, codiceFiscale)};
+    }
+
+    /**
+     * I campi in un riquadro chiuso "Intesta l'attestazione a un'altra persona" (allievo adulto, che di solito se la
+     * intesta da sé), aperto se già compilato: chiamarlo dopo {@code readBean}.
+     */
+    public Details getRiquadro() {
+        Span nota = new Span("Solo se l'attestazione delle spese per la detrazione va intestata a chi le detrae al "
+            + "posto dell'allievo (es. un familiare). I campi vuoti usano i dati dell'allievo.");
+        nota.addClassNames(Stili.TESTO_SECONDARIO);
+        Details riquadro = new Details("Intesta l'attestazione a un'altra persona",
+            new VerticalLayout(nota, new FormLayout(nome, cognome, codiceFiscale)));
+        riquadro.setOpened(!nome.isEmpty() || !cognome.isEmpty() || !codiceFiscale.isEmpty());
+        riquadro.addClassNames("w-full");
+        return riquadro;
     }
 
     /** Testo ripulito dagli spazi, {@code null} se vuoto. */

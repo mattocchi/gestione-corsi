@@ -1218,12 +1218,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Dialog dialog = find(Dialog.class).single();
         // Senza genitore: contatti e indirizzo propri in evidenza
         assertTrue(find(H3.class).from(dialog).withText("Contatti e indirizzo").exists());
-        assertFalse(find(com.vaadin.flow.component.details.Details.class).from(dialog).exists());
+        // Dati per i documenti: il codice fiscale e, per l'adulto, l'intestatario dell'attestazione in un riquadro chiuso
+        assertTrue(find(H3.class).from(dialog).withText("Dati per i documenti").exists());
+        var intestatario = find(com.vaadin.flow.component.details.Details.class).from(dialog).single();
+        assertEquals("Intesta l'attestazione a un'altra persona", intestatario.getSummaryText());
+        assertFalse(intestatario.isOpened());
 
         test(find(ComboBox.class).withLabel("Genitore").single()).selectItem("Genitore1 Cognome1");
         assertTrue(find(H3.class).from(dialog).withText("Contatti e indirizzo del genitore").exists());
         assertTrue(find(Span.class).from(dialog).withText("Indirizzo: Via Roma 1, 00184 Roma (RM)").exists());
-        var propri = find(com.vaadin.flow.component.details.Details.class).from(dialog).single();
+        assertFalse(intestatario.getParent().orElseThrow().isVisible());
+        var propri = find(com.vaadin.flow.component.details.Details.class).from(dialog).all().stream()
+            .filter(d -> d.getSummaryText().contains("facoltativi")).findFirst().orElseThrow();
         assertFalse(propri.isOpened());
         assertTrue(find(TextField.class).from(propri).withLabel("Email").exists());
     }
@@ -4945,8 +4951,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(com.vaadin.flow.component.details.Details.class).single().getSummaryText().contains("facoltativi"));
         assertFalse(find(Button.class).withText("Salva").exists());
         assertFalse(find(Button.class).withText("Cambia password").exists());
-        // L'intestazione dei documenti fiscali è del genitore
-        assertFalse(find(TextField.class).withLabel("Nome dell'intestatario").exists());
+        // Codice fiscale nei dati per i documenti; l'intestatario dell'attestazione è del genitore
+        assertTrue(find(H3.class).withText("Dati per i documenti").exists());
+        assertFalse(find(TextField.class).withLabel("Nome dell'intestatario").all().stream().anyMatch(Component::isVisible));
     }
 
     @Test
@@ -4960,6 +4967,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(ProfiloView.class);
             // Il resto resta in sola lettura; il proprio codice fiscale è quello dell'allievo
             assertTrue(find(TextField.class).withLabel("Codice fiscale").single().isReadOnly());
+            assertTrue(find(H3.class).withText("Dati per i documenti").exists());
+            var riquadro = find(com.vaadin.flow.component.details.Details.class).all().stream()
+                .filter(d -> d.getSummaryText().equals("Intesta l'attestazione a un'altra persona")).findFirst().orElseThrow();
+            assertFalse(riquadro.isOpened());
+            riquadro.setOpened(true);
             TextField cognome = find(TextField.class).withLabel("Cognome dell'intestatario").single();
             assertFalse(cognome.isReadOnly());
             test(cognome).setValue("Bianchi");

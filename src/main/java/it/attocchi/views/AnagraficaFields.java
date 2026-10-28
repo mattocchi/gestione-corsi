@@ -88,6 +88,16 @@ public class AnagraficaFields<T extends Anagrafica> {
             : new Component[] {dataNascita, luogoNascita};
     }
 
+    /** Data e luogo di nascita. */
+    public Component[] getNascita() {
+        return new Component[] {dataNascita, luogoNascita};
+    }
+
+    /** Il campo del codice fiscale (con {@code conCodiceFiscale}). */
+    public Component getCodiceFiscale() {
+        return codiceFiscale;
+    }
+
     /** Via, CAP, comune e provincia. */
     public Component[] getIndirizzo() {
         return new Component[] {via, cap, comune, provincia};

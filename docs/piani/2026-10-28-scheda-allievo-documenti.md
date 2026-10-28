@@ -25,7 +25,7 @@ documenti, utili per gli allievi adulti — [F-2026-10-28/INTESTATARIO.2]
 
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
-| 1 | `SchedaAllievo` con le nuove sezioni, riquadro dell'intestatario (`IntestazioneFields.getRiquadro`), Profilo dell'allievo adulto; test e CLAUDE.md | `SchedaAllievo`, `AnagraficaFields`, `IntestazioneFields`, `ProfiloView`, `ViewAccessTest`, `CLAUDE.md` | `./mvnw test` | [ ] | F-2026-10-28/INTESTATARIO.2 |
+| 1 | `SchedaAllievo` con le nuove sezioni, riquadro dell'intestatario (`IntestazioneFields.getRiquadro`), Profilo dell'allievo adulto; test e CLAUDE.md | `SchedaAllievo`, `AnagraficaFields`, `IntestazioneFields`, `ProfiloView`, `ViewAccessTest`, `CLAUDE.md` | `./mvnw test` | [x] | F-2026-10-28/INTESTATARIO.2 |
 | 2 | Registro | piano | — | [ ] | — |
 
 ## Fuori ambito

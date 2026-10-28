@@ -160,17 +160,22 @@ public class ProfiloView extends VerticalLayout {
         binder.setReadOnly(true);
 
         Span avviso = new Span("Per modificare i dati rivolgiti alla segreteria"
-            + (allievo.getGenitore() != null ? " o al genitore." : "."));
+            + (allievo.getGenitore() != null ? " o al genitore."
+            : "; puoi cambiare da te solo a chi intestare l'attestazione delle spese, in \"Dati per i documenti\"."));
         avviso.addClassNames(Stili.TESTO_SECONDARIO);
         // Stessa scheda di Gestione Allievi, in sola lettura e con lo username
         SchedaAllievo scheda = new SchedaAllievo(utente, anagrafica, null, true);
-        scheda.mostraGenitore(allievo.getGenitore());
-        add(avviso, scheda);
+        // L'allievo adulto modifica solo l'intestatario dell'attestazione (riquadro nei dati per i documenti)
+        Binder<Allievo> binderIntestazione = new Binder<>(Allievo.class);
         if (allievo.getGenitore() == null) {
-            Binder<Allievo> binderIntestazione = new Binder<>(Allievo.class);
             IntestazioneFields<Allievo> intestazione = new IntestazioneFields<>(binderIntestazione, allievo.getUser(),
                 IntestazioneFields.AIUTO_ALLIEVO);
             binderIntestazione.readBean(allievo);
+            scheda.conIntestazione(intestazione);
+        }
+        scheda.mostraGenitore(allievo.getGenitore());
+        add(avviso, scheda);
+        if (allievo.getGenitore() == null) {
             Button salva = new Button("Salva", e -> {
                 if (!binderIntestazione.writeBeanIfValid(allievo)) {
                     return;
@@ -183,7 +188,6 @@ public class ProfiloView extends VerticalLayout {
                 }
             });
             salva.addThemeVariants(ButtonVariant.PRIMARY);
-            add(intestazione.getSezione());
             add(salva);
         }
     }
