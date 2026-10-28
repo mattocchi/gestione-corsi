@@ -483,3 +483,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] nella sezione documenti, lascia solo per admin e segreteria la possibiita di scaricare PDF, mentre lascia per allievi, genitori, insegnanti la possibilita di anteprima o invio via email, questo permette un invio piu formale del pdf che non sia un semplice download. _(completata 2026-10-27)_
   _Chiarimento 2026-10-27: genitori, allievi adulti e insegnanti hanno nel menu del documento "Anteprima in una nuova scheda" e "Invia alla mia email" (solo all'email del proprio profilo, non modificabile; senza email l'invio è bloccato con un avviso); "Scarica PDF" resta solo ad admin e segreteria. Il visualizzatore PDF del browser permette comunque di salvare l'anteprima: accettato. Ogni invio va in "Email inviate" (inviato da = l'utente) e in "Documenti aperti" come "Inviato per email"; anche anteprime e invii degli insegnanti (lettere di incarico) entrano nella cronologia._
+
+## FUNZIONALITA del 28-10-2026
+
+### INTESTATARIO DOCUMENTI
+
+* [ ] vorrei evolvere i dati necessari per la prepdisposizione dei documenti da quelli dell'utente. in particolare, l'utente è corretto che abbia nome, cognome email di riferimento, poi per l'intestazione del documento di rendiconto spese ad esempio vorrei che l'utente potesse inserire un nome e cognome e codice fiscale che non sono necessariamente i suoi per produrre il documento. ad esempio io sono registrato ma necessito del documento di attestazione spese nell'anno solare intestato a mia moglie (per le detrazioni). Nel profilo utente vorrei gestire queste informazioni in modo chiaro, se non è disponibile un nome e cognome diversi uso quelli dell'utente, il codice fiscale invece serve a quello scopo quindi deve essere esplicito che serve a quello.
