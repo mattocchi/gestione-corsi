@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "genitori")
-public class Genitore implements Anagrafica {
+public class Genitore implements Anagrafica, IntestazioneDocumenti {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +18,14 @@ public class Genitore implements Anagrafica {
     @JoinColumn(name = "user_id")
     private User user;
 
+    /** Serve solo come codice fiscale dell'intestatario dell'attestazione delle spese ({@link IntestazioneDocumenti}). */
     private String codiceFiscale;
+
+    /** Nome dell'intestatario dell'attestazione, se diverso da quello dell'utente. */
+    private String intestazioneNome;
+
+    /** Cognome dell'intestatario dell'attestazione, se diverso da quello dell'utente. */
+    private String intestazioneCognome;
 
     private LocalDate dataNascita;
 
@@ -57,6 +64,35 @@ public class Genitore implements Anagrafica {
 
     public void setCodiceFiscale(String codiceFiscale) {
         this.codiceFiscale = codiceFiscale;
+    }
+
+    public String getIntestazioneNome() {
+        return intestazioneNome;
+    }
+
+    public void setIntestazioneNome(String intestazioneNome) {
+        this.intestazioneNome = intestazioneNome;
+    }
+
+    public String getIntestazioneCognome() {
+        return intestazioneCognome;
+    }
+
+    public void setIntestazioneCognome(String intestazioneCognome) {
+        this.intestazioneCognome = intestazioneCognome;
+    }
+
+    /** Lo stesso codice fiscale del genitore: per il genitore serve solo a intestare l'attestazione. */
+    public String getIntestazioneCodiceFiscale() {
+        return codiceFiscale;
+    }
+
+    public void setIntestazioneCodiceFiscale(String codiceFiscale) {
+        this.codiceFiscale = codiceFiscale;
+    }
+
+    public String getCodiceFiscaleIntestatario() {
+        return codiceFiscale;
     }
 
     public LocalDate getDataNascita() {

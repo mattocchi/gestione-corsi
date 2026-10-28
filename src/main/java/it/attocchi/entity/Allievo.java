@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "allievi")
-public class Allievo implements Anagrafica {
+public class Allievo implements Anagrafica, IntestazioneDocumenti {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +27,13 @@ public class Allievo implements Anagrafica {
     private LocalDate dataNascita;
 
     private String luogoNascita;
+
+    /** Intestatario dell'attestazione dell'allievo adulto, se diverso da lui ({@link IntestazioneDocumenti}). */
+    private String intestazioneNome;
+
+    private String intestazioneCognome;
+
+    private String intestazioneCodiceFiscale;
 
     @Embedded
     private Indirizzo indirizzo = new Indirizzo();
@@ -78,6 +85,35 @@ public class Allievo implements Anagrafica {
 
     public void setDataNascita(LocalDate dataNascita) {
         this.dataNascita = dataNascita;
+    }
+
+    public String getIntestazioneNome() {
+        return intestazioneNome;
+    }
+
+    public void setIntestazioneNome(String intestazioneNome) {
+        this.intestazioneNome = intestazioneNome;
+    }
+
+    public String getIntestazioneCognome() {
+        return intestazioneCognome;
+    }
+
+    public void setIntestazioneCognome(String intestazioneCognome) {
+        this.intestazioneCognome = intestazioneCognome;
+    }
+
+    public String getIntestazioneCodiceFiscale() {
+        return intestazioneCodiceFiscale;
+    }
+
+    public void setIntestazioneCodiceFiscale(String intestazioneCodiceFiscale) {
+        this.intestazioneCodiceFiscale = intestazioneCodiceFiscale;
+    }
+
+    /** Quello indicato per l'intestatario, altrimenti il codice fiscale dell'allievo. */
+    public String getCodiceFiscaleIntestatario() {
+        return intestazioneCodiceFiscale != null && !intestazioneCodiceFiscale.isBlank() ? intestazioneCodiceFiscale : codiceFiscale;
     }
 
     public String getLuogoNascita() {

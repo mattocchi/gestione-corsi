@@ -398,6 +398,37 @@ class DocumentiServiceTest {
         }
     }
 
+    @Test
+    void attestazione_intestataAChiIndicaIlGenitore() throws IOException {
+        // genitore3 detrae tramite il coniuge: nome, cognome e codice fiscale dell'intestazione; indirizzo del genitore
+        PagamentoService.RigaPagamento chitarra = pagamentoService.righePagamentiDeiFigli("genitore3").stream()
+            .filter(r -> r.corso().getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        Long corsoId = chitarra.corso().getId();
+        Long allievoId = chitarra.allievo().getId();
+        pagamentoService.salva(corsoId, allievoId, rata(LocalDate.of(2025, 1, 20), "250"));
+        var genitore = genitoreService.findByUsername("genitore3").orElseThrow();
+        String codiceFiscale = genitore.getCodiceFiscale();
+        try {
+            genitore.setIntestazioneNome("Anna");
+            genitore.setIntestazioneCodiceFiscale("BNCNNA80A41H501X");
+            genitoreService.save(genitore);
+            String testo = testo(documentiService.attestazionePer(allievoId, 2025, "genitore3").contenuto());
+            // Il cognome non indicato resta quello dell'utente
+            assertTrue(testo.contains("Anna Cognome3"), testo);
+            assertTrue(testo.contains("BNCNNA80A41H501X"), testo);
+            assertFalse(testo.contains("Genitore3 Cognome3"), testo);
+
+            genitore.setIntestazioneCodiceFiscale(null);
+            genitoreService.save(genitore);
+            assertEquals(List.of("codice fiscale dell'intestatario"), pagamentoService.attestazione(allievoId, 2025).datiMancanti());
+        } finally {
+            genitore.setIntestazioneNome(null);
+            genitore.setCodiceFiscale(codiceFiscale);
+            genitoreService.save(genitore);
+            pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
+        }
+    }
+
     private static Pagamento rata(LocalDate data, String importo) {
         Pagamento rata = new Pagamento();
         rata.setData(data);

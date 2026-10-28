@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.Genitore;
+import it.attocchi.entity.IntestazioneDocumenti;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
@@ -388,8 +389,16 @@ public class PagamentoService {
         }
 
         /**
+         * Intestatario ("Spett."): il genitore che sostiene le spese, o l'allievo adulto, con nome, cognome e codice
+         * fiscale dell'intestazione dei documenti se indicati ({@link IntestazioneDocumenti}).
+         */
+        public IntestazioneDocumenti intestatario() {
+            return genitore() != null ? genitore() : allievo;
+        }
+
+        /**
          * Dati del fac-simile che mancano (vuota se completi): luogo e data di nascita, codice fiscale e residenza
-         * dell'allievo (propria o del genitore), codice fiscale e indirizzo di chi sostiene le spese.
+         * dell'allievo (propria o del genitore), codice fiscale dell'intestatario e indirizzo del genitore.
          */
         public List<String> datiMancanti() {
             List<String> mancanti = new ArrayList<>();
@@ -407,8 +416,8 @@ public class PagamentoService {
             }
             Genitore genitore = genitore();
             if (genitore != null) {
-                if (vuoto(genitore.getCodiceFiscale())) {
-                    mancanti.add("codice fiscale del genitore");
+                if (vuoto(genitore.getCodiceFiscaleIntestatario())) {
+                    mancanti.add("codice fiscale dell'intestatario");
                 }
                 if (!completo(genitore.getIndirizzo())) {
                     mancanti.add("indirizzo del genitore");

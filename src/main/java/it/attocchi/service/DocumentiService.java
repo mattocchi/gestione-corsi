@@ -427,12 +427,13 @@ public class DocumentiService {
         datiAllievo.put("via", testo(residenza.getVia()));
         datiAllievo.put("cap", testo(residenza.getCap()));
         modello.put("allievo", datiAllievo);
-        // Intestatario (Spett.): il genitore che sostiene le spese, o l'allievo adulto
+        // Intestatario (Spett.): il genitore che sostiene le spese, o l'allievo adulto, con nome, cognome e codice
+        // fiscale dell'intestazione dei documenti (es. il coniuge che detrae); l'indirizzo resta del genitore
         Genitore genitore = attestazione.genitore();
         Map<String, String> intestatario = new HashMap<>();
-        intestatario.put("nome", genitore != null ? genitore.getNomeCompleto() : allievo.getNomeCompleto());
+        intestatario.put("nome", attestazione.intestatario().getNomeIntestatario());
         intestatario.put("indirizzo", testo((genitore != null ? genitore.getIndirizzo() : residenza).getFormattato()));
-        intestatario.put("codiceFiscale", testo(genitore != null ? genitore.getCodiceFiscale() : allievo.getCodiceFiscale()));
+        intestatario.put("codiceFiscale", testo(attestazione.intestatario().getCodiceFiscaleIntestatario()));
         modello.put("intestatario", intestatario);
         modello.put("corsi", attestazione.pagamenti().stream().map(p -> p.getIscrizione().getCorso().getNome())
             .distinct().collect(Collectors.joining(", ")));

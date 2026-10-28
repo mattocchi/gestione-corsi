@@ -35,7 +35,7 @@ diversi si usano quelli dell'utente — [F-2026-10-28/INTESTATARIO.1]
 
 | Passo | Cosa | File | Verifica | Stato | Richiesta |
 |---|---|---|---|---|---|
-| 1 | Dati e attestazione: `Genitore.intestazioneNome/Cognome`, `Allievo.intestazioneNome/Cognome/CodiceFiscale`, intestatario dell'attestazione con i ripieghi, dati mancanti "codice fiscale dell'intestatario" | entity, `PagamentoService`, `DocumentiService`, test | `./mvnw test` | [ ] | — |
+| 1 | Dati e attestazione: `Genitore.intestazioneNome/Cognome`, `Allievo.intestazioneNome/Cognome/CodiceFiscale`, intestatario dell'attestazione con i ripieghi, dati mancanti "codice fiscale dell'intestatario" | entity, `PagamentoService`, `DocumentiService`, test | `./mvnw test` | [x] | — |
 | 2 | Genitore: sezione "Intestazione dei documenti fiscali" (codice fiscale spostato lì) nel Profilo e nel dialog di Genitori | `views/IntestazioneFields`, `AnagraficaFields`, `ProfiloView`, `GenitoriView`, `GenitoreService`, test | `./mvnw test` | [ ] | — |
 | 3 | Allievo adulto: stessa sezione modificabile nel Profilo e nella scheda di Gestione Allievi; CLAUDE.md | `ProfiloView`, `SchedaAllievo`, `AllieviView`, `AllievoService`, test, `CLAUDE.md` | `./mvnw test` | [ ] | F-2026-10-28/INTESTATARIO.1 |
 | 4 | Registro | piano | — | [ ] | — |
