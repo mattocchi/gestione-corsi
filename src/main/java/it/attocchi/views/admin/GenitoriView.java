@@ -26,6 +26,7 @@ import it.attocchi.service.AllievoService;
 import it.attocchi.service.GenitoreService;
 import it.attocchi.service.UserService;
 import it.attocchi.views.AnagraficaFields;
+import it.attocchi.views.IntestazioneFields;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
@@ -147,7 +148,8 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
         User user = nuovo ? new User() : genitore.getUser();
         UtenteFields utente = new UtenteFields(user, userService, true);
         Binder<Genitore> binder = new Binder<>(Genitore.class);
-        AnagraficaFields<Genitore> anagrafica = new AnagraficaFields<>(binder, false);
+        AnagraficaFields<Genitore> anagrafica = new AnagraficaFields<>(binder, false, false);
+        IntestazioneFields<Genitore> intestazione = new IntestazioneFields<>(binder, user, IntestazioneFields.AIUTO_GENITORE);
         binder.readBean(genitore);
 
         // Figli: anche allievi di un altro genitore, che al salvataggio passano a questo
@@ -176,6 +178,7 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
             ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
             ViewSupport.sezione("Figli"), figli, collegamenti,
             ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
+        content.add(intestazione.getSezione());
         content.addClassNames("p-0");
 
         Button saveButton = new Button("Salva", e -> {

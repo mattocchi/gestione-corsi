@@ -4828,15 +4828,35 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("genitore3")
     void genitore_aggiornaIlProprioProfilo() {
+        String codiceFiscale = genitoreService.findByUsername("genitore3").orElseThrow().getCodiceFiscale();
         navigate(ProfiloView.class);
         assertTrue(find(TextField.class).withLabel("Username").single().isReadOnly());
         test(find(TextField.class).withLabel("Luogo di nascita").single()).setValue("Firenze");
+        // Il codice fiscale del genitore è solo quello dell'intestazione dei documenti fiscali
+        assertFalse(find(TextField.class).withLabel("Codice fiscale").exists());
+        assertTrue(find(H3.class).withText("Intestazione dei documenti fiscali").exists());
+        TextField nome = find(TextField.class).withLabel("Nome dell'intestatario").single();
+        assertEquals("Genitore3", nome.getPlaceholder());
+        TextField codice = find(TextField.class).withLabel("Codice fiscale dell'intestatario").single();
+        assertEquals(codiceFiscale, codice.getValue());
+        test(nome).setValue(" Anna ");
+        test(codice).setValue("bncnna80a41h501r");
         test(find(Button.class).withText("Salva").single()).click();
 
         Genitore genitore = genitoreService.findByUsername("genitore3").orElseThrow();
-        assertEquals("Firenze", genitore.getLuogoNascita());
-        assertTrue(genitore.getUser().getRoles().contains("GENITORE"));
-        assertTrue(find(Button.class).withText("Cambia password").exists());
+        try {
+            assertEquals("Firenze", genitore.getLuogoNascita());
+            assertEquals("Anna", genitore.getIntestazioneNome());
+            assertNull(genitore.getIntestazioneCognome());
+            assertEquals("BNCNNA80A41H501R", genitore.getCodiceFiscale());
+            assertEquals("Anna Cognome3", genitore.getNomeIntestatario());
+            assertTrue(genitore.getUser().getRoles().contains("GENITORE"));
+            assertTrue(find(Button.class).withText("Cambia password").exists());
+        } finally {
+            genitore.setIntestazioneNome(null);
+            genitore.setCodiceFiscale(codiceFiscale);
+            genitoreService.save(genitore);
+        }
     }
 
     @Test

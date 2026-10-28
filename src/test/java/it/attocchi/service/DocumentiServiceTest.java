@@ -410,12 +410,12 @@ class DocumentiServiceTest {
         String codiceFiscale = genitore.getCodiceFiscale();
         try {
             genitore.setIntestazioneNome("Anna");
-            genitore.setIntestazioneCodiceFiscale("BNCNNA80A41H501X");
+            genitore.setIntestazioneCodiceFiscale("BNCNNA80A41H501R");
             genitoreService.save(genitore);
             String testo = testo(documentiService.attestazionePer(allievoId, 2025, "genitore3").contenuto());
             // Il cognome non indicato resta quello dell'utente
             assertTrue(testo.contains("Anna Cognome3"), testo);
-            assertTrue(testo.contains("BNCNNA80A41H501X"), testo);
+            assertTrue(testo.contains("BNCNNA80A41H501R"), testo);
             assertFalse(testo.contains("Genitore3 Cognome3"), testo);
 
             genitore.setIntestazioneCodiceFiscale(null);

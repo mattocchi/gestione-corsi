@@ -3,6 +3,7 @@ package it.attocchi.service;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Anagrafica;
 import it.attocchi.entity.Genitore;
+import it.attocchi.entity.IntestazioneDocumenti;
 import it.attocchi.entity.User;
 import it.attocchi.repository.AllievoRepository;
 import it.attocchi.repository.GenitoreRepository;
@@ -139,6 +140,7 @@ public class GenitoreService {
             .orElseThrow(() -> new IllegalArgumentException("Nessun genitore per l'utente " + username));
         userService.aggiornaContatti(username, datiUtente);
         Anagrafica.copia(dati, genitore);
+        IntestazioneDocumenti.copia(dati, genitore);
         return genitore;
     }
 }

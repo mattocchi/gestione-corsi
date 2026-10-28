@@ -23,6 +23,7 @@ public class AnagraficaFields<T extends Anagrafica> {
     private final TextField cap = new TextField("CAP");
     private final TextField comune = new TextField("Comune");
     private final TextField provincia = new TextField("Provincia");
+    private final boolean conCodiceFiscale;
 
     /**
      * Tutti i campi sono facoltativi; il codice fiscale, se inserito, deve essere valido.
@@ -31,6 +32,15 @@ public class AnagraficaFields<T extends Anagrafica> {
      *                     (allievi): lo dice il testo di aiuto dei due campi
      */
     public AnagraficaFields(Binder<T> binder, boolean perDocumenti) {
+        this(binder, perDocumenti, true);
+    }
+
+    /**
+     * Come {@link #AnagraficaFields(Binder, boolean)}; senza {@code conCodiceFiscale} il codice fiscale non c'è (il
+     * genitore lo ha nell'intestazione dei documenti fiscali, {@link IntestazioneFields}).
+     */
+    public AnagraficaFields(Binder<T> binder, boolean perDocumenti, boolean conCodiceFiscale) {
+        this.conCodiceFiscale = conCodiceFiscale;
         codiceFiscale.setMaxLength(16);
         dataNascita.setMax(LocalDate.now());
         via.setPlaceholder("via e numero civico");
@@ -43,9 +53,11 @@ public class AnagraficaFields<T extends Anagrafica> {
             codiceFiscale.setHelperText("Necessario per le ricevute");
             dataNascita.setHelperText("Necessaria per conferme e ricevute");
         }
-        binder.forField(codiceFiscale).withConverter(CodiceFiscale::normalizza, v -> v != null ? v : "")
-            .withValidator(v -> v == null || CodiceFiscale.isValido(v), "Codice fiscale non valido")
-            .bind(Anagrafica::getCodiceFiscale, Anagrafica::setCodiceFiscale);
+        if (conCodiceFiscale) {
+            binder.forField(codiceFiscale).withConverter(CodiceFiscale::normalizza, v -> v != null ? v : "")
+                .withValidator(v -> v == null || CodiceFiscale.isValido(v), "Codice fiscale non valido")
+                .bind(Anagrafica::getCodiceFiscale, Anagrafica::setCodiceFiscale);
+        }
 
         binder.forField(dataNascita).withValidator(d -> d == null || !d.isAfter(LocalDate.now()), "La data di nascita non può essere futura")
             .bind(Anagrafica::getDataNascita, Anagrafica::setDataNascita);
@@ -66,12 +78,14 @@ public class AnagraficaFields<T extends Anagrafica> {
     }
 
     public Component[] getComponents() {
-        return new Component[] {codiceFiscale, dataNascita, luogoNascita, via, cap, comune, provincia};
+        return conCodiceFiscale ? new Component[] {codiceFiscale, dataNascita, luogoNascita, via, cap, comune, provincia}
+            : new Component[] {dataNascita, luogoNascita, via, cap, comune, provincia};
     }
 
-    /** Codice fiscale, data e luogo di nascita. */
+    /** Codice fiscale (se c'è), data e luogo di nascita. */
     public Component[] getDatiPersonali() {
-        return new Component[] {codiceFiscale, dataNascita, luogoNascita};
+        return conCodiceFiscale ? new Component[] {codiceFiscale, dataNascita, luogoNascita}
+            : new Component[] {dataNascita, luogoNascita};
     }
 
     /** Via, CAP, comune e provincia. */

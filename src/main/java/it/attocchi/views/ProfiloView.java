@@ -123,7 +123,8 @@ public class ProfiloView extends VerticalLayout {
         User user = genitore.getUser();
         UtenteFields utente = new UtenteFields(user, userService);
         Binder<Genitore> binder = new Binder<>(Genitore.class);
-        AnagraficaFields<Genitore> anagrafica = new AnagraficaFields<>(binder, false);
+        AnagraficaFields<Genitore> anagrafica = new AnagraficaFields<>(binder, false, false);
+        IntestazioneFields<Genitore> intestazione = new IntestazioneFields<>(binder, user, IntestazioneFields.AIUTO_GENITORE);
         binder.readBean(genitore);
 
         Button salva = new Button("Salva", e -> {
@@ -141,8 +142,9 @@ public class ProfiloView extends VerticalLayout {
         salva.addThemeVariants(ButtonVariant.PRIMARY);
 
         add(ViewSupport.sezione("Utente e contatti"), new FormLayout(utente.getComponents()),
-            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()),
-            salva);
+            ViewSupport.sezione("Dati anagrafici"), new FormLayout(anagrafica.getComponents()));
+        add(intestazione.getSezione());
+        add(salva);
     }
 
     /** Profilo dell'allievo in sola lettura; se non ha un indirizzo proprio si mostra quello del genitore. */
