@@ -2659,7 +2659,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals("Tutti i figli", documenti.getCellText(0, 1));
         assertEquals("Conferma di iscrizione", documenti.getCellText(1, 0));
         assertEquals("Allievo Canto3", documenti.getCellText(1, 1));
-        assertFalse(find(Tabs.class).exists());
+        assertFalse(find(Schede.class).exists());
         assertFalse(find(Button.class).all().stream()
             .anyMatch(b -> "Invia per email".equals(b.getElement().getAttribute("aria-label"))));
         // Un solo anno: niente filtro
@@ -2710,7 +2710,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Documenti")));
         navigate(DocumentiView.class);
         assertTrue(find(H3.class).withText("Lettere di incarico").exists());
-        assertFalse(find(Tabs.class).exists());
+        assertFalse(find(Schede.class).exists());
     }
 
     @SuppressWarnings("unchecked")
@@ -3499,10 +3499,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     /** Sceglie la scheda del tipo di documento in Documenti (admin e segreteria). */
+    @SuppressWarnings("unchecked")
     private void scegliTipo(TipoDocumento tipoDocumento) {
-        Tabs tipo = find(Tabs.class).single();
-        tipo.setSelectedTab(tipo.getChildren().map(Tab.class::cast)
-            .filter(t -> t.getLabel().equals(tipoDocumento.getPlurale())).findFirst().orElseThrow());
+        ((Schede<TipoDocumento>) find(Schede.class).single()).setValue(tipoDocumento);
     }
 
     /** Esegue il download del link come farebbe il browser (risposta su un buffer). */
