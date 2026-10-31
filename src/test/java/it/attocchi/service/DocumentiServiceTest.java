@@ -45,6 +45,9 @@ class DocumentiServiceTest {
     @Autowired
     private AllievoService allievoService;
 
+    @Autowired
+    private PubblicazioneDocumentiService pubblicazioneDocumentiService;
+
     @Test
     void ricevuta_htmlEPdfConIPagamenti() throws IOException {
         Iscrizione iscrizione = iscrizione();
@@ -368,6 +371,11 @@ class DocumentiServiceTest {
             assertEquals("genitore3", attestazione.genitore().getUser().getUsername());
             assertEquals(List.of(2025, 2024), pagamentoService.anniDiPagamentoPerAllievo().get(allievoId));
 
+            // Finché lo staff non pubblica il 2025 il genitore non la vede; lo staff sì
+            assertThrows(IllegalArgumentException.class, () -> documentiService.attestazionePer(allievoId, 2025, "genitore3"));
+            documentiService.attestazionePer(allievoId, 2025, "segreteria");
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, true, LocalDate.now(), "admin");
+
             DocumentiService.Pdf pdf = documentiService.attestazionePer(allievoId, 2025, "genitore3");
             assertEquals("attestazione-spese-2025-allievo-chitarra1.pdf", pdf.nomeFile());
             String testo = testo(pdf.contenuto());
@@ -394,6 +402,7 @@ class DocumentiServiceTest {
             assertThrows(IllegalArgumentException.class, () -> documentiService.attestazionePer(allievoId, 2025, "genitore1"));
             assertThrows(IllegalArgumentException.class, () -> documentiService.attestazionePer(allievoId, 2025, "insegnante1"));
         } finally {
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, false, LocalDate.now(), "admin");
             pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
         }
     }
@@ -406,6 +415,7 @@ class DocumentiServiceTest {
         Long corsoId = chitarra.corso().getId();
         Long allievoId = chitarra.allievo().getId();
         pagamentoService.salva(corsoId, allievoId, rata(LocalDate.of(2025, 1, 20), "250"));
+        pubblicazioneDocumentiService.pubblicaAttestazioni(2025, true, LocalDate.now(), "admin");
         var genitore = genitoreService.findByUsername("genitore3").orElseThrow();
         String codiceFiscale = genitore.getCodiceFiscale();
         try {
@@ -425,8 +435,28 @@ class DocumentiServiceTest {
             genitore.setIntestazioneNome(null);
             genitore.setCodiceFiscale(codiceFiscale);
             genitoreService.save(genitore);
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, false, LocalDate.now(), "admin");
             pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
         }
+    }
+
+    @Test
+    void tipoNonPubblicato_soloLoStaffVedeIlDocumento() {
+        it.attocchi.entity.Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
+        Long cantoId = iscrizione().getCorso().getId();
+        Long genitoreId = genitoreService.findByUsername("genitore3").orElseThrow().getId();
+        try {
+            pubblicazioneDocumentiService.imposta(TipoDocumento.CONFERMA_ISCRIZIONE, false, "admin");
+            pubblicazioneDocumentiService.imposta(TipoDocumento.RIEPILOGO, false, "admin");
+            assertThrows(IllegalArgumentException.class, () -> documentiService.confermaPer(cantoId, allievo.getId(), "genitore3"));
+            assertThrows(IllegalArgumentException.class, () -> documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "genitore3"));
+            assertNotNull(documentiService.confermaPer(cantoId, allievo.getId(), "segreteria"));
+            assertNotNull(documentiService.riepilogoFamigliaPer(genitoreId, "2024/2025", "segreteria"));
+        } finally {
+            pubblicazioneDocumentiService.imposta(TipoDocumento.CONFERMA_ISCRIZIONE, true, "admin");
+            pubblicazioneDocumentiService.imposta(TipoDocumento.RIEPILOGO, true, "admin");
+        }
+        assertNotNull(documentiService.confermaPer(cantoId, allievo.getId(), "genitore3"));
     }
 
     private static Pagamento rata(LocalDate data, String importo) {

@@ -35,6 +35,9 @@ class ElencoDocumentiServiceTest {
     private ElencoDocumentiService elencoDocumentiService;
 
     @Autowired
+    private PubblicazioneDocumentiService pubblicazioneDocumentiService;
+
+    @Autowired
     private EmailService emailService;
 
     @Autowired
@@ -172,10 +175,17 @@ class ElencoDocumentiServiceTest {
                 allievoService.save(allievo);
             }
 
-            // Il genitore la trova tra i suoi documenti
+            // Il genitore la trova tra i suoi documenti solo dopo la pubblicazione del 2025
+            assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().noneMatch(d -> d.tipo() == TipoDocumento.ATTESTAZIONE));
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, true, LocalDate.now(), "admin");
             assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().anyMatch(d -> d.tipo() == TipoDocumento.ATTESTAZIONE
                 && "2025".equals(d.anno()) && d.allievo().getId().equals(allievo.getId())));
+            // Un tipo spento sparisce dall'elenco delle famiglie
+            pubblicazioneDocumentiService.imposta(TipoDocumento.CONFERMA_ISCRIZIONE, false, "admin");
+            assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().noneMatch(d -> d.tipo() == TipoDocumento.CONFERMA_ISCRIZIONE));
         } finally {
+            pubblicazioneDocumentiService.imposta(TipoDocumento.CONFERMA_ISCRIZIONE, true, "admin");
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, false, LocalDate.now(), "admin");
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
     }

@@ -74,12 +74,15 @@ public class DocumentiService {
     private final UserRepository userRepository;
     private final LetteraIncaricoService letteraIncaricoService;
     private final RiepilogoCorsiService riepilogoCorsiService;
+    private final PubblicazioneDocumentiService pubblicazioneDocumentiService;
     /** Indirizzo dell'app ({@code app.url}) per il link in fondo alle email ({@code email/piede.ftlh}). */
     private final String appUrl;
 
     public DocumentiService(PagamentoService pagamentoService, AssociazioneProperties associazione,
                             UserRepository userRepository, LetteraIncaricoService letteraIncaricoService,
-                            RecuperoPasswordProperties applicazione, RiepilogoCorsiService riepilogoCorsiService) {
+                            RecuperoPasswordProperties applicazione, RiepilogoCorsiService riepilogoCorsiService,
+                            PubblicazioneDocumentiService pubblicazioneDocumentiService) {
+        this.pubblicazioneDocumentiService = pubblicazioneDocumentiService;
         this.appUrl = applicazione.url();
         this.riepilogoCorsiService = riepilogoCorsiService;
         this.letteraIncaricoService = letteraIncaricoService;
@@ -159,11 +162,17 @@ public class DocumentiService {
             throw new IllegalArgumentException(tipo.getBreve() + " non trovata");
         }
         // Il corso in preparazione (non pubblicato) lo vede solo lo staff
+        // Il corso in preparazione e il tipo non pubblicato li vede solo lo staff
         if (!puoVedere(iscrizione.getAllievo(), username)
-                || (!iscrizione.getCorso().isPubblicato() && !staff(username))) {
+                || ((!iscrizione.getCorso().isPubblicato() || !pubblicazioneDocumentiService.visibile(tipo)) && !staff(username))) {
             throw new IllegalArgumentException(tipo.getBreve() + " non trovata");
         }
         return new Pdf(nomeFile(tipo, iscrizione), documentoPdf(tipo, corsoId, allievoId));
+    }
+
+    /** Riepilogo annuale: lo staff sempre, le famiglie se il tipo è pubblicato. */
+    private boolean riepilogoVisibile(String username) {
+        return staff(username) || pubblicazioneDocumentiService.visibile(TipoDocumento.RIEPILOGO);
     }
 
     /** Come per il genitore; un allievo senza genitore (adulto) vede i propri documenti. */
@@ -203,7 +212,7 @@ public class DocumentiService {
         } catch (RuntimeException ex) {
             throw new IllegalArgumentException("Riepilogo non trovato");
         }
-        if (!puoVedere(riepilogo.genitore(), username)) {
+        if (!puoVedere(riepilogo.genitore(), username) || !riepilogoVisibile(username)) {
             throw new IllegalArgumentException("Riepilogo non trovato");
         }
         return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
@@ -220,7 +229,7 @@ public class DocumentiService {
         } catch (RuntimeException ex) {
             throw new IllegalArgumentException("Riepilogo non trovato");
         }
-        if (!puoVedere(riepilogo.allievo(), username)) {
+        if (!puoVedere(riepilogo.allievo(), username) || !riepilogoVisibile(username)) {
             throw new IllegalArgumentException("Riepilogo non trovato");
         }
         return new Pdf(nomeFile(riepilogo), pdf(riepilogoFamigliaHtml(riepilogo)));
@@ -530,7 +539,9 @@ public class DocumentiService {
         } catch (RuntimeException ex) {
             throw new IllegalArgumentException("Attestazione non trovata");
         }
-        if (!puoVedere(attestazione.allievo(), username)) {
+        // Alle famiglie solo gli anni finiti e pubblicati dallo staff
+        if (!puoVedere(attestazione.allievo(), username)
+                || (!staff(username) && !pubblicazioneDocumentiService.attestazioneDisponibile(anno, LocalDate.now()))) {
             throw new IllegalArgumentException("Attestazione non trovata");
         }
         String mancanti = avvisoDatiMancanti(attestazione);

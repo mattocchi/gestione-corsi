@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -84,9 +85,13 @@ public class ElencoDocumentiService {
     private final AllievoRepository allievoRepository;
     private final UserRepository userRepository;
 
+    private final PubblicazioneDocumentiService pubblicazioneDocumentiService;
+
     public ElencoDocumentiService(IscrizioneRepository iscrizioneRepository, PagamentoRepository pagamentoRepository,
                                   InvioEmailRepository invioEmailRepository, GenitoreRepository genitoreRepository,
-                                  AllievoRepository allievoRepository, UserRepository userRepository) {
+                                  AllievoRepository allievoRepository, UserRepository userRepository,
+                                  PubblicazioneDocumentiService pubblicazioneDocumentiService) {
+        this.pubblicazioneDocumentiService = pubblicazioneDocumentiService;
         this.iscrizioneRepository = iscrizioneRepository;
         this.pagamentoRepository = pagamentoRepository;
         this.invioEmailRepository = invioEmailRepository;
@@ -201,14 +206,18 @@ public class ElencoDocumentiService {
         Map<Long, Allievo> propri = new HashMap<>();
         documenti.stream().filter(d -> d.iscrizione() != null).map(d -> d.iscrizione().getAllievo())
             .forEach(a -> propri.putIfAbsent(a.getId(), a));
+        LocalDate oggi = LocalDate.now();
         for (Object[] riga : pagamentoRepository.totaliPerAllievoEAnno()) {
             Allievo allievo = propri.get((Long) riga[0]);
-            if (allievo != null) {
-                int anno = ((Number) riga[1]).intValue();
+            int anno = ((Number) riga[1]).intValue();
+            // Solo gli anni già finiti e pubblicati dallo staff
+            if (allievo != null && pubblicazioneDocumentiService.attestazioneDisponibile(anno, oggi)) {
                 documenti.add(new DocumentoFamiglia(TipoDocumento.ATTESTAZIONE, null, null, allievo, String.valueOf(anno),
                     DocumentiService.avvisoDatiMancanti(new PagamentoService.Attestazione(allievo, anno, List.of()))));
             }
         }
+        // Solo i tipi che lo staff ha reso visibili alle famiglie
+        documenti.removeIf(d -> !pubblicazioneDocumentiService.visibile(d.tipo()));
         documenti.sort(Comparator.comparing(DocumentoFamiglia::anno, PER_ANNO)
             .thenComparing(d -> d.iscrizione() != null)
             .thenComparing(d -> d.iscrizione() != null ? d.iscrizione().getCorso().getNome() : "", String.CASE_INSENSITIVE_ORDER)
