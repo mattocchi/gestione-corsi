@@ -18,7 +18,7 @@ Guida per i **genitori**.
 
 ## Documenti
 
-**[Documenti](documenti)**: conferme di iscrizione, ricevute, riepiloghi annuali e attestazioni delle spese per la detrazione. Puoi vederli in anteprima o inviarli alla tua email.
+**[Documenti](documenti)**: conferme di iscrizione, ricevute, riepiloghi annuali e attestazioni delle spese per la detrazione. Puoi vederli in anteprima o inviarli alla tua email. Compaiono quando la segreteria li pubblica: le conferme appena il corso è pubblicato, l'attestazione di un anno dall'anno successivo.
 
 ## Il mio profilo
 

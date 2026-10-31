@@ -50,6 +50,8 @@ Guida per **admin e segreteria**. Le voci seguono i gruppi del menu; quelle segn
 
 ## Impostazioni e profilo
 
-**[Impostazioni](impostazioni)**: anni scolastici, luoghi e festività, in tre schede. Dopo aver cambiato le festività, l'app propone di aggiornare le lezioni dei corsi.
+**[Impostazioni](impostazioni)**: anni scolastici, luoghi, festività e documenti, in quattro schede.
+- Dopo aver cambiato le festività, l'app propone di aggiornare le lezioni dei corsi.
+- *Documenti*: scegli quali documenti vedono genitori e allievi adulti (conferme, ricevute, riepiloghi, attestazioni). Pubblica le attestazioni di un anno dal 1° gennaio successivo, dopo aver controllato i pagamenti. Tu vedi e invii sempre tutto; se invii un documento non pubblico, l'app te lo segnala.
 
 **[Il mio profilo](profilo)**: i tuoi contatti e la password.
