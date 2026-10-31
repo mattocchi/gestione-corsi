@@ -50,7 +50,7 @@ motivazione, su ogni iscritto l'attivazione sì/no, e l'opzione esplicitata nell
 | 4 | Conferma e ricevuta: righe delle opzioni negli importi | `DocumentiService`, `importi.ftlh` | test sul PDF | [x] |
 | 5 | Famiglie: opzioni attive nei prezzi del corso e nel dettaglio pagamenti | `PrezziCorso`, `PagamentiAllievoDialog` | test browserless | [x] |
 | 6 | Dati demo, Guida e CLAUDE.md | `DatiDemo`, `guida/staff.md`, `CLAUDE.md`, test | `./mvnw test` | [x] |
-| 7 | Registro | questo file | — | [ ] |
+| 7 | Registro | questo file | — | [x] |
 
 ## Fuori ambito
 
@@ -58,3 +58,10 @@ motivazione, su ogni iscritto l'attivazione sì/no, e l'opzione esplicitata nell
 - Importo bloccato al momento dell'attivazione (vale sempre quello del corso).
 
 ## Registro
+
+- 2026-10-31: `./mvnw test` 365 test, 0 errori (nuovi: `OpzioniCorsoTest`, opzioni nel dialog del corso, in
+  Partecipanti e nei prezzi dell'allievo; la conferma col caso più lungo — sconto e due opzioni — resta su una pagina,
+  controllata anche a vista sul PDF). Non provato nel browser (dialog del corso e Partecipanti a 390 px).
+- Produzione: le tabelle `corso_opzioni` e `iscrizione_opzioni` le crea `ddl-auto=update`; nessuno script SQL, i
+  dati esistenti non cambiano (nessuna opzione = quota come prima).
+- Gli invii già fatti restano com'erano: cambiando l'importo di un'opzione cambiano solo i documenti generati dopo.
