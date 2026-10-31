@@ -23,10 +23,14 @@ con l'eventuale nota, o che prende il prezzo di base.
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Colonna "Quota" nella scheda Iscritti | `PartecipantiCorso`, test | `./mvnw test` | [x] |
-| 2 | Guida, CLAUDE.md e Registro | `guida/staff.md`, `CLAUDE.md`, questo file | test della Guida | [ ] |
+| 2 | Guida, CLAUDE.md e Registro | `guida/staff.md`, `CLAUDE.md`, questo file | test della Guida | [x] |
 
 ## Fuori ambito
 
 - Modifica della quota direttamente nella cella.
 
 ## Registro
+
+- 2026-10-31: `./mvnw test` 367 test, 0 errori (verificate nella colonna la quota di listino, la personalizzata con
+  nota e badge "-150,00 €" e il dettaglio "Corso 600,00 € + opzioni 30,00 €"). Non provato nel browser.
+- Nessun cambiamento ai dati.
