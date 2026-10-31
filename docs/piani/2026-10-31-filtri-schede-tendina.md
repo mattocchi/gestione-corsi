@@ -35,7 +35,7 @@ documenti, Gestione Corsi e Calendario, come il tipo di documento in Documenti.
 | 5 | Riepilogo Iscritti: stato dei corsi a schede | `RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 6 | Cronologia documenti: tipo a tendina | `EmailInviateView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 7 | Calendario: Mese / Settimana tipo a schede | `CalendarioView`, test | `./mvnw test` | [x] |
-| 8 | CLAUDE.md: quando schede, tendina o pulsanti affiancati | `CLAUDE.md` | — | [ ] |
+| 8 | CLAUDE.md: quando schede, tendina o pulsanti affiancati | `CLAUDE.md` | — | [x] |
 | 9 | Registro | questo piano | — | [ ] |
 
 ## Fuori ambito
