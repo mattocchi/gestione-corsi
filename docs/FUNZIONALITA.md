@@ -492,3 +492,9 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
   _Chiarimento 2026-10-28: il codice fiscale del genitore esce da "Dati anagrafici" e va in una sezione "Intestazione dei documenti fiscali", insieme a nome e cognome dell'intestatario, facoltativi (se vuoti si usano quelli dell'utente); l'utente esiste anche senza codice fiscale. Indirizzo: quello del genitore. Vale solo per l'attestazione delle spese. La impostano il genitore e l'allievo adulto dal Profilo, admin e segreteria nella scheda del genitore o dell'allievo._
 * [x] riorganizza i dati coerentemente anche nella scheda dell'allievo tra dati base e dati per intestazione dei documenti, utili in tutti i casi di allievi adulti _(completata 2026-10-28)_
   _Chiarimento 2026-10-28: scheda dell'allievo uguale per tutti (Gestione Allievi, I Miei Figli, Profilo): "Allievo" con nome, cognome, data e luogo di nascita; poi genitore e contatti; poi "Dati per i documenti" con il codice fiscale dell'allievo e, solo per l'adulto, i dati dell'intestatario chiusi in un riquadro "Intesta l'attestazione a un'altra persona" da aprire quando serve (aperto se già compilato)._
+
+## FUNZIONALITA del 31-10-2026
+
+### STAMPA RIEPILOGO CORSI
+
+* [ ] nella dashboard di admin e segreteria c'e' un'ottimo riepilogo dei corsi attivi con gli iscritti, puoi preparare una stampa che ricalca la stessa struttura e chiarezza? con stampa intendo sempre la stessa possibilità di vedere anteprima, scaricare pdf, o inviare email. disponibile solo ad admin e segreteria
