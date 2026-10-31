@@ -39,7 +39,7 @@ admin e segreteria, con la stessa struttura e chiarezza; solo per admin e segret
 | 2 | Email: `email/riepilogo-corsi.ftlh`, `EmailService.inviaRiepilogoCorsiAMe` registrato in `InvioEmail` | `EmailService`, templates, `EmailServiceTest` | `./mvnw test` | [x] |
 | 3 | Documenti: tipo "Riepilogo corsi" con descrizione, PDF (anteprima/scarica), "Invia alla mia email", ultimo invio | `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 4 | CLAUDE.md: documentazione della stampa | `CLAUDE.md` | — | [x] |
-| 5 | Registro | questo piano | — | [ ] |
+| 5 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -47,3 +47,13 @@ admin e segreteria, con la stessa struttura e chiarezza; solo per admin e segret
 - Invio ad altri indirizzi.
 
 ## Registro
+
+- Passi 1-4 completati, un commit per passo; `./mvnw test`: 342 test, 0 errori.
+- Nuovi test: `DocumentiServiceTest.riepilogoCorsi_…` (sezioni, iscritti, pagine numerate, solo staff),
+  `EmailServiceTest.riepilogoCorsi_…` (invio all'email del profilo, registrato, solo staff),
+  `ViewAccessTest.segreteria_documenti_riepilogoCorsi…` (nessun filtro, link PDF, invio e ultimo invio).
+- PDF controllato a vista sui dati di sviluppo, anche con un corso a gruppi (gruppi con nome, senza nome e
+  "Senza gruppo"): una sezione o un corso che sta in una pagina non si spezza; intestazione delle tabelle ripetuta.
+- Nessuna migrazione: `invii_email.tipo` è VARCHAR(32) e "RIEPILOGO_CORSI" ci sta.
+- Aperto: il selettore del tipo in Documenti ha ora 6 opzioni; su smartphone le etichette più lunghe si accorciano
+  (succedeva già con "Lettere di incarico"). Non verificato nel browser.
