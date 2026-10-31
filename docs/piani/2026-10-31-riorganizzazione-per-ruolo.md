@@ -53,7 +53,7 @@ application per chi la usa, ruolo per ruolo.
 | 4.2 | Home: card cliccabili verso le pagine (filtri da indirizzo dove servono) | `HomeView`, viste di destinazione, test | `./mvnw test` | [x] |
 | 5.1 | Guida: pagina per ruolo con i testi, voce in fondo al menu | `GuidaView`, risorse, test | `./mvnw test` | [x] |
 | 6.1 | CLAUDE.md: menu, nomi, profilo, impostazioni, guida, home | `CLAUDE.md` | — | [x] |
-| 6.2 | Registro | questo piano | — | [ ] |
+| 6.2 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -61,3 +61,15 @@ application per chi la usa, ruolo per ruolo.
 - Cambi di indirizzo delle pagine, di permessi o di dati.
 
 ## Registro
+
+- Branch `riorganizzazione-per-ruolo`, un commit per passo; `./mvnw test`: 356 test, 0 errori (nuovi `MenuAppTest` e
+  in `ViewAccessTest` menu a gruppi, profilo staff, Impostazioni dai vecchi indirizzi, card cliccabili, guida).
+- Scostamento dal piano: Impostazioni è una voce senza titolo in fondo ai gruppi dello staff, non un gruppo
+  richiudibile (sarebbe stato un gruppo "Impostazioni" con la sola voce "Impostazioni").
+- Home: senza gruppi nei corsi attivi i riquadri e la tabella dei gruppi non compaiono più (prima erano a zero).
+- La card "Corsi assegnati" dell'insegnante apre I miei allievi (corso per corso); le altre sue card Le mie lezioni
+  sulla scheda dello stato.
+- `Markdown` (Guida) è un componente nuovo per l'app, come `Select`: il bundle di produzione va rigenerato
+  (`build.sh` lo fa).
+- Non verificato nel browser: aspetto del menu a gruppi (desktop e 390px), resa della guida, card cliccabili.
+- Il branch non è unito a `develop` né pushato.
