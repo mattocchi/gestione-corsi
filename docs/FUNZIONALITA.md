@@ -501,6 +501,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 * [x] nella dashboard di admin e segreteria c'e' un'ottimo riepilogo dei corsi attivi con gli iscritti, puoi preparare una stampa che ricalca la stessa struttura e chiarezza? con stampa intendo sempre la stessa possibilità di vedere anteprima, scaricare pdf, o inviare email. disponibile solo ad admin e segreteria _(completata 2026-10-31)_
   _Chiarimento 2026-10-31: la stampa riporta le tre sezioni della dashboard (riepilogo generale, pagamenti dei corsi attivi con costo insegnanti, margine e ore donate, gruppi) e per ogni corso attivo l'elenco degli iscritti per gruppo con orario e stato del pagamento. Si apre da Documenti con il nuovo tipo "Riepilogo corsi" (anteprima, scarica PDF); l'email va solo all'indirizzo del proprio profilo ed è registrata in Cronologia documenti._
 * [ ] nella stampa appena creata, togli la parte iniziale delle card
+  _Chiarimento 2026-10-31: si toglie solo la prima sezione "Riepilogo generale" con i suoi riquadri; restano riquadri e tabelle di Pagamenti e Gruppi e gli iscritti._
 
 ### DOCUMENTI
 
