@@ -310,6 +310,11 @@ public class ElencoLezioni extends VerticalLayout {
     }
 
     /** Apre le presenze indicate dai parametri dell'indirizzo ({@code ?lezione=ID&gruppo=…}), se ci sono. */
+    /** Con {@code ?stato=…} ({@link ViewSupport#stato(Enum)}) mostra la scheda di quello stato. */
+    public void mostraStato(QueryParameters parametri) {
+        ViewSupport.stato(FiltroLezioni.class, parametri).ifPresent(filtro::setValue);
+    }
+
     public void apriPresenze(QueryParameters parametri) {
         parametri.getSingleParameter(PARAMETRO_LEZIONE).flatMap(ElencoLezioni::idLezione)
             .ifPresent(id -> apriPresenze(id, parametri.getSingleParameter(PARAMETRO_GRUPPO).orElse(null)));

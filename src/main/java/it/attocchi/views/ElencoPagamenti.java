@@ -10,6 +10,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.function.SerializableSupplier;
@@ -123,6 +124,11 @@ public class ElencoPagamenti extends VerticalLayout {
         add(filtroPagamento, filtri, totali, grid);
         grid.addClassNames("grow");
         aggiorna();
+    }
+
+    /** Con {@code ?stato=…} ({@link ViewSupport#stato(Enum)}) mostra la scheda di quello stato del pagamento. */
+    public void mostraStato(QueryParameters parametri) {
+        ViewSupport.stato(FiltroPagamento.class, parametri).ifPresent(filtroPagamento::setValue);
     }
 
     /** {@code larghezza}: classe Tailwind di larghezza, scritta per intero dal chiamante (es. {@code "w-56"}). */

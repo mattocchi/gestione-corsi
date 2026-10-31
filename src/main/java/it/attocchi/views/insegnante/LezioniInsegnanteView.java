@@ -48,6 +48,7 @@ public class LezioniInsegnanteView extends VerticalLayout implements BeforeEnter
      */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
+        elenco.mostraStato(event.getLocation().getQueryParameters());
         elenco.apriPresenze(event.getLocation().getQueryParameters());
     }
 }

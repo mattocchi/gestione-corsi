@@ -644,6 +644,51 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     /** Riquadri della dashboard come "etichetta: valore", nell'ordine di visualizzazione. */
+    /** Clic sulla card della Home con il titolo indicato. */
+    private void clicCard(String titolo) {
+        Card card = find(Card.class).all().stream()
+            .filter(c -> c.getAriaLabel().filter(a -> a.startsWith(titolo + ":")).isPresent()).findFirst().orElseThrow();
+        assertEquals("link", card.getElement().getAttribute("role"));
+        ComponentUtil.fireEvent(card, new ClickEvent<>(card));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_cardDellaHomeApronoLePagine() {
+        navigate(HomeView.class);
+        clicCard("Senza pagamenti");
+        assertInstanceOf(GestionePagamentiView.class, getCurrentView());
+        assertEquals(ElencoPagamenti.FiltroPagamento.DA_PAGARE, ((Schede<ElencoPagamenti.FiltroPagamento>) find(Schede.class).single()).getValue());
+        navigate(HomeView.class);
+        clicCard("Genitori");
+        assertInstanceOf(GenitoriView.class, getCurrentView());
+        navigate(HomeView.class);
+        clicCard("Iscritti ai corsi attivi");
+        assertInstanceOf(RiepilogoIscrittiView.class, getCurrentView());
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    @SuppressWarnings("unchecked")
+    void insegnante_cardDelleLezioniApronoLaSchedaDelloStato() {
+        navigate(HomeView.class);
+        clicCard("Lezioni fatte");
+        assertInstanceOf(LezioniInsegnanteView.class, getCurrentView());
+        assertEquals(FiltroLezioni.COMPLETATE, ((Schede<FiltroLezioni>) find(Schede.class).single()).getValue());
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_cardDeiPagamentiApronoIPagamentiDeiFigli() {
+        navigate(HomeView.class);
+        clicCard("Da pagare");
+        assertInstanceOf(PagamentiFigliView.class, getCurrentView());
+        navigate(HomeView.class);
+        clicCard("Corsi dei figli");
+        assertInstanceOf(FigliView.class, getCurrentView());
+    }
+
     private List<String> indicatori() {
         return find(Card.class).all().stream().map(Card::getAriaLabel).map(o -> o.orElse("")).toList();
     }

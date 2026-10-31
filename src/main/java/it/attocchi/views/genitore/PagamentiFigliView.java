@@ -8,6 +8,8 @@ import it.attocchi.security.SecurityService;
 import it.attocchi.service.PagamentoService;
 import it.attocchi.views.ElencoPagamenti;
 import it.attocchi.views.MainLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.List;
@@ -20,14 +22,22 @@ import java.util.List;
 @PageTitle("Pagamenti")
 @Menu(title = "Pagamenti", order = 41, icon = "vaadin:euro")
 @RolesAllowed("GENITORE")
-public class PagamentiFigliView extends VerticalLayout {
+public class PagamentiFigliView extends VerticalLayout implements BeforeEnterObserver {
+
+    private final ElencoPagamenti elenco;
 
     public PagamentiFigliView(PagamentoService pagamentoService, SecurityService securityService) {
         addClassNames("size-full");
         String username = securityService.getUsername().orElse(null);
-        ElencoPagamenti elenco = new ElencoPagamenti(pagamentoService,
+        elenco = new ElencoPagamenti(pagamentoService,
             () -> username != null ? pagamentoService.righePagamentiDeiFigli(username) : List.of(), false);
         add(elenco);
         elenco.addClassNames("grow");
+    }
+
+    /** Con {@code ?stato=da-pagare} (dalla Home) apre la scheda di quello stato del pagamento. */
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        elenco.mostraStato(event.getLocation().getQueryParameters());
     }
 }

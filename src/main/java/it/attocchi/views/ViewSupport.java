@@ -5,6 +5,7 @@ import com.vaadin.flow.component.ItemLabelGenerator;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -19,7 +20,9 @@ import com.vaadin.flow.signals.Signal;
 import it.attocchi.entity.AnnoScolastico;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Locale;
 
 /**
@@ -29,6 +32,21 @@ import java.util.Locale;
  * della finestra viene letta da {@code Page.windowSizeSignal()}.
  */
 public final class ViewSupport {
+
+    /** Parametro {@value} dell'indirizzo che apre una lista sulla scheda di uno stato, es. {@code ?stato=da-pagare}. */
+    public static final String PARAMETRO_STATO = "stato";
+
+    /** Indirizzo con lo stato indicato: {@code DA_PAGARE} → {@code ?stato=da-pagare}. */
+    public static QueryParameters stato(Enum<?> valore) {
+        return QueryParameters.of(PARAMETRO_STATO, valore.name().toLowerCase(Locale.ROOT).replace('_', '-'));
+    }
+
+    /** Stato letto dall'indirizzo ({@link #stato(Enum)}); vuoto se assente o sconosciuto. */
+    public static <E extends Enum<E>> Optional<E> stato(Class<E> tipo, QueryParameters parametri) {
+        return parametri.getSingleParameter(PARAMETRO_STATO)
+            .flatMap(valore -> Arrays.stream(tipo.getEnumConstants())
+                .filter(e -> e.name().equalsIgnoreCase(valore.replace('-', '_'))).findFirst());
+    }
 
     /** Sotto questa larghezza (px) le view usano il layout per smartphone. */
     public static final int MOBILE_BREAKPOINT = 640;

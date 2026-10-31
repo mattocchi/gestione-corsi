@@ -2,6 +2,24 @@ package it.attocchi.views;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.router.QueryParameters;
+import it.attocchi.views.ElencoLezioni.FiltroLezioni;
+import it.attocchi.views.ElencoPagamenti.FiltroPagamento;
+import it.attocchi.views.admin.AllieviView;
+import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.GenitoriView;
+import it.attocchi.views.admin.GestionePagamentiView;
+import it.attocchi.views.admin.InsegnantiView;
+import it.attocchi.views.admin.RiepilogoIscrittiView;
+import it.attocchi.views.admin.RimborsiView;
+import it.attocchi.views.allievo.MieiCorsiView;
+import it.attocchi.views.allievo.MieiPagamentiView;
+import it.attocchi.views.genitore.FigliView;
+import it.attocchi.views.genitore.PagamentiFigliView;
+import it.attocchi.views.insegnante.LezioniInsegnanteView;
+import it.attocchi.views.insegnante.MieiAllieviView;
+import it.attocchi.views.insegnante.MieiRimborsiView;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.badge.Badge;
@@ -91,14 +109,15 @@ public class HomeView extends VerticalLayout {
             // Sezioni come i gruppi del menu dello staff: Corsi e lezioni, Persone, Economia
             RiepilogoGenerale riepilogo = dashboardService.riepilogoGenerale();
             add(corsiELezioni(riepilogo, dashboardService.riepilogoGruppi()));
-            List<Card> persone = new ArrayList<>(List.of(indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi())));
+            List<Card> persone = new ArrayList<>(List.of(collega(indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi()),
+                AllieviView.class)));
             // Età degli allievi dei corsi attivi (solo di chi ha la data di nascita)
             dashboardService.etaAllievi(LocalDate.now()).ifPresent(eta -> persone.addAll(List.of(
-                indicatore(VaadinIcon.CHART, "Età media", eta.media()),
-                indicatore(VaadinIcon.CHILD, "Più giovane", eta.minima()),
-                indicatore(VaadinIcon.USER, "Più anziano", eta.massima()))));
-            persone.add(indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()));
-            persone.add(indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti()));
+                collega(indicatore(VaadinIcon.CHART, "Età media", eta.media()), AllieviView.class),
+                collega(indicatore(VaadinIcon.CHILD, "Più giovane", eta.minima()), AllieviView.class),
+                collega(indicatore(VaadinIcon.USER, "Più anziano", eta.massima()), AllieviView.class))));
+            persone.add(collega(indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()), GenitoriView.class));
+            persone.add(collega(indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti()), InsegnantiView.class));
             add(sezione("Persone", persone.toArray(Card[]::new)));
             add(pagamenti(pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso(),
                 bilancioService.oreDonateTotali()));
@@ -106,13 +125,17 @@ public class HomeView extends VerticalLayout {
         if (securityService.hasRole("INSEGNANTE")) {
             RiepilogoInsegnante riepilogo = dashboardService.riepilogoInsegnante(username);
             List<Card> corsi = new ArrayList<>(List.of(
-                indicatore(VaadinIcon.MUSIC, "Corsi assegnati", riepilogo.corsi()),
-                indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
-                indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare()),
-                indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate())));
+                collega(indicatore(VaadinIcon.MUSIC, "Corsi assegnati", riepilogo.corsi()), MieiAllieviView.class),
+                collega(indicatore(VaadinIcon.CHECK, "Lezioni fatte", riepilogo.lezioniFatte()),
+                    LezioniInsegnanteView.class, ViewSupport.stato(FiltroLezioni.COMPLETATE)),
+                collega(indicatore(VaadinIcon.CLOCK, "Lezioni da fare", riepilogo.lezioniDaFare()),
+                    LezioniInsegnanteView.class, ViewSupport.stato(FiltroLezioni.DA_FARE)),
+                collega(indicatore(VaadinIcon.BAN, "Lezioni non effettuate", riepilogo.lezioniNonEffettuate()),
+                    LezioniInsegnanteView.class, ViewSupport.stato(FiltroLezioni.NON_EFFETTUATE))));
             // Insegnante senza tariffa oraria: le ore di lezione che sta donando sui corsi attivi (previste, di cui svolte)
-            bilancioService.oreDonate(username).ifPresent(ore -> corsi.add(indicatore(VaadinIcon.HEART, "Ore donate",
-                Formati.durata(ore.minutiPrevisti()), "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte")));
+            bilancioService.oreDonate(username).ifPresent(ore -> corsi.add(collega(indicatore(VaadinIcon.HEART, "Ore donate",
+                Formati.durata(ore.minutiPrevisti()), "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte"),
+                MieiRimborsiView.class)));
             Div sezione = sezione("I miei corsi", corsi.toArray(Card[]::new));
             // I gruppi dei suoi corsi, solo se ce ne sono
             List<RigaGruppo> gruppi = dashboardService.gruppiDellInsegnante(username);
@@ -123,16 +146,17 @@ public class HomeView extends VerticalLayout {
         }
         if (securityService.hasRole("ALLIEVO")) {
             List<Card> corsi = new ArrayList<>();
-            corsi.add(indicatore(VaadinIcon.BOOK, "Corsi a cui sono iscritto", dashboardService.corsiAllievo(username)));
+            corsi.add(collega(indicatore(VaadinIcon.BOOK, "Corsi a cui sono iscritto", dashboardService.corsiAllievo(username)),
+                MieiCorsiView.class));
             // Allievo adulto (senza genitore): i suoi pagamenti, come per il genitore
-            pagamentoService.situazionePropria(username).ifPresent(situazione -> corsi.addAll(pagamentiCard(situazione)));
+            pagamentoService.situazionePropria(username).ifPresent(situazione -> corsi.addAll(pagamentiCard(situazione, MieiPagamentiView.class)));
             add(sezione("I miei corsi", corsi.toArray(Card[]::new)));
         }
         if (securityService.hasRole("GENITORE")) {
             List<Card> figli = new ArrayList<>();
-            figli.add(indicatore(VaadinIcon.BOOK, "Corsi dei figli", dashboardService.corsiDeiFigli(username)));
+            figli.add(collega(indicatore(VaadinIcon.BOOK, "Corsi dei figli", dashboardService.corsiDeiFigli(username)), FigliView.class));
             // Pagamenti di tutti i figli sui corsi attivi
-            pagamentoService.situazioneDeiFigli(username).ifPresent(situazione -> figli.addAll(pagamentiCard(situazione)));
+            pagamentoService.situazioneDeiFigli(username).ifPresent(situazione -> figli.addAll(pagamentiCard(situazione, PagamentiFigliView.class)));
             add(sezione("I miei figli", figli.toArray(Card[]::new)));
         }
     }
@@ -162,21 +186,24 @@ public class HomeView extends VerticalLayout {
         String esclusi = senzaTariffa == 0 ? null
             : senzaTariffa + (senzaTariffa == 1 ? " corso senza tariffa escluso" : " corsi senza tariffa esclusi");
         List<Card> riquadri = new ArrayList<>(List.of(
-            indicatore(VaadinIcon.CHECK, "Saldati", totale.saldati()),
-            indicatore(VaadinIcon.HOURGLASS, "Pagamento parziale", totale.parziali()),
-            indicatore(VaadinIcon.CLOCK, "Senza pagamenti", totale.senzaPagamenti()),
-            indicatore(VaadinIcon.EURO, "Incassato", Formati.euro(totale.incassato()),
-                totale.percentualeIncassata() + "% del totale"),
-            indicatore(VaadinIcon.WALLET, "Da incassare", Formati.euro(totale.daIncassare()),
-                totale.percentualeDaIncassare() + "% del totale"),
-            indicatore(VaadinIcon.USER_STAR, "Costo insegnanti previsto", Formati.euro(costoTotale),
-                esclusi != null ? esclusi : "lezioni programmate"),
-            indicatore(VaadinIcon.SCALE, "Margine previsto", Formati.euro(margineTotale),
-                esclusi != null ? esclusi : "quote − costo insegnanti")));
+            collega(indicatore(VaadinIcon.CHECK, "Saldati", totale.saldati()),
+                GestionePagamentiView.class, ViewSupport.stato(FiltroPagamento.SALDATO)),
+            collega(indicatore(VaadinIcon.HOURGLASS, "Pagamento parziale", totale.parziali()),
+                GestionePagamentiView.class, ViewSupport.stato(FiltroPagamento.PARZIALE)),
+            collega(indicatore(VaadinIcon.CLOCK, "Senza pagamenti", totale.senzaPagamenti()),
+                GestionePagamentiView.class, ViewSupport.stato(FiltroPagamento.DA_PAGARE)),
+            collega(indicatore(VaadinIcon.EURO, "Incassato", Formati.euro(totale.incassato()),
+                totale.percentualeIncassata() + "% del totale"), GestionePagamentiView.class),
+            collega(indicatore(VaadinIcon.WALLET, "Da incassare", Formati.euro(totale.daIncassare()),
+                totale.percentualeDaIncassare() + "% del totale"), GestionePagamentiView.class),
+            collega(indicatore(VaadinIcon.USER_STAR, "Costo insegnanti previsto", Formati.euro(costoTotale),
+                esclusi != null ? esclusi : "lezioni programmate"), RimborsiView.class),
+            collega(indicatore(VaadinIcon.SCALE, "Margine previsto", Formati.euro(margineTotale),
+                esclusi != null ? esclusi : "quote − costo insegnanti"), RimborsiView.class)));
         // Insegnanti senza tariffa: il totale delle ore che donano (previste, di cui svolte)
-        oreDonate.ifPresent(ore -> riquadri.add(indicatore(VaadinIcon.HEART, "Ore donate", Formati.durata(ore.minutiPrevisti()),
-            "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte · " + ore.insegnanti()
-                + (ore.insegnanti() == 1 ? " insegnante" : " insegnanti"))));
+        oreDonate.ifPresent(ore -> riquadri.add(collega(indicatore(VaadinIcon.HEART, "Ore donate",
+            Formati.durata(ore.minutiPrevisti()), "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte · "
+                + ore.insegnanti() + (ore.insegnanti() == 1 ? " insegnante" : " insegnanti")), RimborsiView.class)));
         Div sezione = sezione("Economia", riquadri.toArray(Card[]::new));
 
         Grid<RiepilogoPagamenti> grid = new Grid<>(RiepilogoPagamenti.class, false);
@@ -242,33 +269,53 @@ public class HomeView extends VerticalLayout {
         if (badges.getComponentCount() > 0) {
             card.setHeaderSuffix(badges);
         }
-        card.addClassNames("cursor-pointer");
-        card.getElement().setAttribute("role", "button");
-        card.getElement().setAttribute("tabindex", "0");
         card.setAriaLabel(lezione.getCorso().getNome() + ": " + quando + ", " + numero);
-        ComponentUtil.addListener(card, ClickEvent.class, (ComponentEventListener) e -> apri.run());
-        card.getElement().addEventListener("keydown", e -> apri.run()).setFilter("event.key === 'Enter'");
+        cliccabile(card, "button", apri);
         return card;
     }
 
-    /** Card "Pagato" e "Da pagare" (genitore per i figli, allievo adulto per sé). */
-    private static List<Card> pagamentiCard(PagamentoService.Situazione situazione) {
+    /** La card apre la pagina indicata (clic o Invio da tastiera). */
+    private static Card collega(Card card, Class<? extends Component> pagina) {
+        return collega(card, pagina, QueryParameters.empty());
+    }
+
+    /** Come {@link #collega(Card, Class)}, con i parametri dell'indirizzo (es. la scheda di uno stato). */
+    private static Card collega(Card card, Class<? extends Component> pagina, QueryParameters parametri) {
+        cliccabile(card, "link", () -> UI.getCurrent().navigate(pagina, parametri));
+        return card;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void cliccabile(Card card, String ruolo, SerializableRunnable azione) {
+        card.addClassNames("cursor-pointer");
+        card.getElement().setAttribute("role", ruolo);
+        card.getElement().setAttribute("tabindex", "0");
+        ComponentUtil.addListener(card, ClickEvent.class, (ComponentEventListener) e -> azione.run());
+        card.getElement().addEventListener("keydown", e -> azione.run()).setFilter("event.key === 'Enter'");
+    }
+
+    /** Card "Pagato" e "Da pagare" (genitore per i figli, allievo adulto per sé), che aprono i suoi pagamenti. */
+    private static List<Card> pagamentiCard(PagamentoService.Situazione situazione, Class<? extends Component> pagamenti) {
         return List.of(
-            indicatore(VaadinIcon.CHECK, "Pagato", Formati.euro(situazione.pagato()), situazione.percentualePagata() + "% della quota"),
-            indicatore(VaadinIcon.WALLET, "Da pagare", Formati.euro(situazione.residuo()),
-                situazione.residuo().signum() == 0 ? "tutto saldato" : "su " + Formati.euro(situazione.quota()) + " di quota"));
+            collega(indicatore(VaadinIcon.CHECK, "Pagato", Formati.euro(situazione.pagato()),
+                situazione.percentualePagata() + "% della quota"), pagamenti),
+            collega(indicatore(VaadinIcon.WALLET, "Da pagare", Formati.euro(situazione.residuo()),
+                situazione.residuo().signum() == 0 ? "tutto saldato" : "su " + Formati.euro(situazione.quota()) + " di quota"),
+                pagamenti));
     }
 
     /** Corsi e lezioni: corsi e iscritti, poi i gruppi dei corsi attivi con una riga per gruppo (se ce ne sono). */
     private static Div corsiELezioni(RiepilogoGenerale riepilogo, RiepilogoGruppi gruppi) {
         List<Card> riquadri = new ArrayList<>(List.of(
-            indicatore(VaadinIcon.MUSIC, "Corsi", riepilogo.corsi()),
-            indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti())));
+            collega(indicatore(VaadinIcon.MUSIC, "Corsi", riepilogo.corsi()), CorsiView.class),
+            collega(indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti()),
+                RiepilogoIscrittiView.class)));
         if (gruppi.gruppi() > 0) {
             riquadri.addAll(List.of(
-                indicatore(VaadinIcon.MUSIC, "Corsi con gruppi", gruppi.corsiConGruppi()),
-                indicatore(VaadinIcon.GROUP, "Gruppi", gruppi.gruppi()),
-                indicatore(VaadinIcon.USER, "Allievi senza gruppo", gruppi.allieviSenzaGruppo())));
+                collega(indicatore(VaadinIcon.MUSIC, "Corsi con gruppi", gruppi.corsiConGruppi()), RiepilogoIscrittiView.class),
+                collega(indicatore(VaadinIcon.GROUP, "Gruppi", gruppi.gruppi()), RiepilogoIscrittiView.class),
+                collega(indicatore(VaadinIcon.USER, "Allievi senza gruppo", gruppi.allieviSenzaGruppo()),
+                    RiepilogoIscrittiView.class)));
         }
         Div sezione = sezione("Corsi e lezioni", riquadri.toArray(Card[]::new));
         if (gruppi.gruppi() > 0) {
