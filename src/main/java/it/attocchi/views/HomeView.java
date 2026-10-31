@@ -88,22 +88,20 @@ public class HomeView extends VerticalLayout {
         }
 
         if (securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")) {
+            // Sezioni come i gruppi del menu dello staff: Corsi e lezioni, Persone, Economia
             RiepilogoGenerale riepilogo = dashboardService.riepilogoGenerale();
-            List<Card> generale = new ArrayList<>(List.of(
-                indicatore(VaadinIcon.MUSIC, "Corsi", riepilogo.corsi()),
-                indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi()),
-                indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti())));
+            add(corsiELezioni(riepilogo, dashboardService.riepilogoGruppi()));
+            List<Card> persone = new ArrayList<>(List.of(indicatore(VaadinIcon.ACADEMY_CAP, "Allievi", riepilogo.allievi())));
             // Età degli allievi dei corsi attivi (solo di chi ha la data di nascita)
-            dashboardService.etaAllievi(LocalDate.now()).ifPresent(eta -> generale.addAll(List.of(
+            dashboardService.etaAllievi(LocalDate.now()).ifPresent(eta -> persone.addAll(List.of(
                 indicatore(VaadinIcon.CHART, "Età media", eta.media()),
                 indicatore(VaadinIcon.CHILD, "Più giovane", eta.minima()),
                 indicatore(VaadinIcon.USER, "Più anziano", eta.massima()))));
-            generale.add(indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()));
-            generale.add(indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti()));
-            add(sezione("Riepilogo generale", generale.toArray(Card[]::new)));
+            persone.add(indicatore(VaadinIcon.FAMILY, "Genitori", riepilogo.genitori()));
+            persone.add(indicatore(VaadinIcon.USER_STAR, "Insegnanti", riepilogo.insegnanti()));
+            add(sezione("Persone", persone.toArray(Card[]::new)));
             add(pagamenti(pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso(),
                 bilancioService.oreDonateTotali()));
-            add(gruppi(dashboardService.riepilogoGruppi()));
         }
         if (securityService.hasRole("INSEGNANTE")) {
             RiepilogoInsegnante riepilogo = dashboardService.riepilogoInsegnante(username);
@@ -140,7 +138,7 @@ public class HomeView extends VerticalLayout {
     }
 
     /**
-     * Pagamenti dei corsi attivi: riquadri con i totali e una riga per corso (l'ultimo elemento è il totale), con il
+     * Economia, cioè i pagamenti dei corsi attivi: riquadri con i totali e una riga per corso (l'ultimo elemento è il totale), con il
      * costo previsto degli insegnanti ({@code costi} per id del corso, assente se nessuno ha la tariffa oraria) e il
      * margine = quote dovute − costo; con insegnanti senza tariffa anche il totale delle loro ore donate.
      */
@@ -179,7 +177,7 @@ public class HomeView extends VerticalLayout {
         oreDonate.ifPresent(ore -> riquadri.add(indicatore(VaadinIcon.HEART, "Ore donate", Formati.durata(ore.minutiPrevisti()),
             "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte · " + ore.insegnanti()
                 + (ore.insegnanti() == 1 ? " insegnante" : " insegnanti"))));
-        Div sezione = sezione("Pagamenti dei corsi attivi", riquadri.toArray(Card[]::new));
+        Div sezione = sezione("Economia", riquadri.toArray(Card[]::new));
 
         Grid<RiepilogoPagamenti> grid = new Grid<>(RiepilogoPagamenti.class, false);
         grid.addColumn(RiepilogoPagamenti::corso).setHeader("Corso");
@@ -261,13 +259,21 @@ public class HomeView extends VerticalLayout {
                 situazione.residuo().signum() == 0 ? "tutto saldato" : "su " + Formati.euro(situazione.quota()) + " di quota"));
     }
 
-    /** Gruppi dei corsi attivi: riquadri con i conteggi e una riga per gruppo. */
-    private static Div gruppi(RiepilogoGruppi riepilogo) {
-        Div sezione = sezione("Gruppi dei corsi attivi",
-            indicatore(VaadinIcon.MUSIC, "Corsi con gruppi", riepilogo.corsiConGruppi()),
-            indicatore(VaadinIcon.GROUP, "Gruppi", riepilogo.gruppi()),
-            indicatore(VaadinIcon.USER, "Allievi senza gruppo", riepilogo.allieviSenzaGruppo()));
-        sezione.add(tabellaGruppi(riepilogo.righe()));
+    /** Corsi e lezioni: corsi e iscritti, poi i gruppi dei corsi attivi con una riga per gruppo (se ce ne sono). */
+    private static Div corsiELezioni(RiepilogoGenerale riepilogo, RiepilogoGruppi gruppi) {
+        List<Card> riquadri = new ArrayList<>(List.of(
+            indicatore(VaadinIcon.MUSIC, "Corsi", riepilogo.corsi()),
+            indicatore(VaadinIcon.CLIPBOARD_USER, "Iscritti ai corsi attivi", riepilogo.iscritti())));
+        if (gruppi.gruppi() > 0) {
+            riquadri.addAll(List.of(
+                indicatore(VaadinIcon.MUSIC, "Corsi con gruppi", gruppi.corsiConGruppi()),
+                indicatore(VaadinIcon.GROUP, "Gruppi", gruppi.gruppi()),
+                indicatore(VaadinIcon.USER, "Allievi senza gruppo", gruppi.allieviSenzaGruppo())));
+        }
+        Div sezione = sezione("Corsi e lezioni", riquadri.toArray(Card[]::new));
+        if (gruppi.gruppi() > 0) {
+            sezione.add(tabellaGruppi(gruppi.righe()));
+        }
         return sezione;
     }
 

@@ -356,7 +356,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         var eta = dashboardService.etaAllievi(LocalDate.now()).orElseThrow();
-        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Iscritti ai corsi attivi: 13", "Età media: " + eta.media(),
+        assertEquals(List.of("Corsi: 2", "Iscritti ai corsi attivi: 13", "Allievi: 13", "Età media: " + eta.media(),
             "Più giovane: " + eta.minima(), "Più anziano: " + eta.massima(), "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 8));
     }
 
@@ -370,7 +370,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             navigate(HomeView.class);
-            assertEquals(List.of("Allievi: 13", "Iscritti ai corsi attivi: 14"), indicatori().subList(1, 3));
+            assertEquals(List.of("Iscritti ai corsi attivi: 14", "Allievi: 13"), indicatori().subList(1, 3));
 
             // Chitarra non attivo: restano le 7 iscrizioni di Canto
             Corso inattivo = corsoService.findById(chitarra.getId());
@@ -378,7 +378,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             corsoService.save(inattivo);
             navigate(CorsiView.class);
             navigate(HomeView.class);
-            assertEquals("Iscritti ai corsi attivi: 7", indicatori().get(2));
+            assertEquals("Iscritti ai corsi attivi: 7", indicatori().get(1));
         } finally {
             Corso attivo = corsoService.findById(chitarra.getId());
             attivo.setAttivo(true);
@@ -393,7 +393,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         var eta = dashboardService.etaAllievi(LocalDate.now()).orElseThrow();
-        assertEquals(List.of("Corsi: 2", "Allievi: 13", "Iscritti ai corsi attivi: 13", "Età media: " + eta.media(),
+        assertEquals(List.of("Corsi: 2", "Iscritti ai corsi attivi: 13", "Allievi: 13", "Età media: " + eta.media(),
             "Più giovane: " + eta.minima(), "Più anziano: " + eta.massima(), "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 8));
     }
 
@@ -450,9 +450,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         navigate(CorsiView.class);
         navigate(HomeView.class);
-        assertEquals(List.of("Corsi con gruppi: 0", "Gruppi: 0", "Allievi senza gruppo: 0"), indicatori().subList(15, 18));
-        var vuota = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
-        assertEquals(0, vuota.size());
+        // Senza gruppi né riquadri né tabella dei gruppi (l'unica tabella è quella dei pagamenti)
+        assertTrue(indicatori().stream().noneMatch(i -> i.startsWith("Corsi con gruppi")));
+        assertEquals(1, find(Grid.class).all().size());
 
         GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(),
             new GruppoCorso(null, "Principianti", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
@@ -462,8 +462,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(CorsiView.class);
             navigate(HomeView.class);
             // Chitarra ha 6 iscritti: 1 nel gruppo del sabato, 5 senza gruppo
-            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(15, 18));
-            var gruppi = test((Grid<RigaGruppo>) find(Grid.class).all().getLast());
+            // In "Corsi e lezioni", dopo corsi e iscritti; la tabella dei gruppi viene prima di quella dei pagamenti
+            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(2, 5));
+            var gruppi = test((Grid<RigaGruppo>) find(Grid.class).all().getFirst());
             assertEquals(2, gruppi.size());
             assertEquals("Corso di Chitarra", gruppi.getCellText(0, 0));
             assertEquals("Martedì 17:00", gruppi.getCellText(0, 1));
