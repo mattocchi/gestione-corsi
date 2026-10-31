@@ -40,10 +40,12 @@ class DashboardServiceTest {
     @Test
     void etaAllievi_deiCorsiAttiviConLaDataDiNascita() {
         // Canto: nati il 15/3 dal 2008 al 2014; Chitarra: il 20/5 dal 2009 al 2014. Al 24/10/2026: 18..12 e 17..12
+        // (192 anni in tutto); dati demo: 9 allievi da 7 (Sara Ferri) a 46 anni (Stefano Rizzi), 164 anni in tutto
         LocalDate oggi = LocalDate.of(2026, 10, 24);
-        assertEquals(new DashboardService.EtaAllievi(15, 12, 18, 13), dashboardService.etaAllievi(oggi).orElseThrow());
-        // Il giorno prima del compleanno non è ancora compiuto: il più anziano ha 17 anni il 14/3/2026
-        assertEquals(17, dashboardService.etaAllievi(LocalDate.of(2026, 3, 14)).orElseThrow().massima());
+        assertEquals(new DashboardService.EtaAllievi(16, 7, 46, 22), dashboardService.etaAllievi(oggi).orElseThrow());
+        // Il giorno prima del compleanno non è ancora compiuto: Stefano Rizzi (2/12/1979) ha 46 anni il 1/12/2026
+        assertEquals(46, dashboardService.etaAllievi(LocalDate.of(2026, 12, 1)).orElseThrow().massima());
+        assertEquals(47, dashboardService.etaAllievi(LocalDate.of(2026, 12, 2)).orElseThrow().massima());
 
         // Chi non ha la data di nascita non conta
         Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
@@ -52,8 +54,8 @@ class DashboardServiceTest {
         allievoService.save(allievo);
         try {
             DashboardService.EtaAllievi eta = dashboardService.etaAllievi(oggi).orElseThrow();
-            assertEquals(12, eta.allievi());
-            assertEquals(17, eta.massima());
+            assertEquals(21, eta.allievi());
+            assertEquals(7, eta.minima());
         } finally {
             allievo.setDataNascita(nascita);
             allievoService.save(allievo);

@@ -62,9 +62,11 @@ class ElencoDocumentiServiceTest {
         Corso canto = canto();
         Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
         List<DocumentoIscrizione> conferme = elencoDocumentiService.documentiIscrizioni(TipoDocumento.CONFERMA_ISCRIZIONE, "segreteria");
-        assertEquals(13, conferme.size());
-        // Per corso (Canto prima di Chitarra) e nell'ordine dei partecipanti (Canto5 alle 17:00 per primo)
-        assertEquals("Allievo Canto5", conferme.getFirst().iscrizione().getAllievo().getNomeCompleto());
+        // 13 iscrizioni di prova e 16 dei dati demo
+        assertEquals(29, conferme.size());
+        // Per corso e nell'ordine dei partecipanti (Canto5 alle 17:00 per primo)
+        assertEquals("Allievo Canto5", conferme.stream().filter(c -> c.iscrizione().getCorso().equals(canto)).findFirst()
+            .orElseThrow().iscrizione().getAllievo().getNomeCompleto());
         DocumentoIscrizione canto3 = conferma(conferme, allievo);
         assertEquals("genitore3@example.com", canto3.destinatario().orElseThrow().email());
         assertNull(canto3.datiMancanti());
@@ -176,6 +178,7 @@ class ElencoDocumentiServiceTest {
             }
 
             // Il genitore la trova tra i suoi documenti solo dopo la pubblicazione del 2025
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, false, LocalDate.now(), "admin");
             assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().noneMatch(d -> d.tipo() == TipoDocumento.ATTESTAZIONE));
             pubblicazioneDocumentiService.pubblicaAttestazioni(2025, true, LocalDate.now(), "admin");
             assertTrue(elencoDocumentiService.documentiDi("genitore3").stream().anyMatch(d -> d.tipo() == TipoDocumento.ATTESTAZIONE

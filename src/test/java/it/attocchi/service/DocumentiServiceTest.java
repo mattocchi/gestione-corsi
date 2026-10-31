@@ -371,7 +371,8 @@ class DocumentiServiceTest {
             assertEquals("genitore3", attestazione.genitore().getUser().getUsername());
             assertEquals(List.of(2025, 2024), pagamentoService.anniDiPagamentoPerAllievo().get(allievoId));
 
-            // Finché lo staff non pubblica il 2025 il genitore non la vede; lo staff sì
+            // Finché lo staff non pubblica il 2025 il genitore non la vede; lo staff sì (i dati demo lo pubblicano all'avvio)
+            pubblicazioneDocumentiService.pubblicaAttestazioni(2025, false, LocalDate.now(), "admin");
             assertThrows(IllegalArgumentException.class, () -> documentiService.attestazionePer(allievoId, 2025, "genitore3"));
             documentiService.attestazionePer(allievoId, 2025, "segreteria");
             pubblicazioneDocumentiService.pubblicaAttestazioni(2025, true, LocalDate.now(), "admin");

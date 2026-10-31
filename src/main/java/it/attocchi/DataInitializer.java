@@ -36,11 +36,14 @@ public class DataInitializer implements CommandLineRunner {
     private final CorsoRepository corsoRepository;
     private final IscrizioneRepository iscrizioneRepository;
     private final LuogoRepository luogoRepository;
+    private final DatiDemo datiDemo;
 
     public DataInitializer(UserService userService, InsegnanteRepository insegnanteRepository,
                           AllievoRepository allievoRepository, GenitoreRepository genitoreRepository,
                           CorsoService corsoService, CorsoRepository corsoRepository,
-                          IscrizioneRepository iscrizioneRepository, LuogoRepository luogoRepository) {
+                          IscrizioneRepository iscrizioneRepository, LuogoRepository luogoRepository,
+                          DatiDemo datiDemo) {
+        this.datiDemo = datiDemo;
         this.luogoRepository = luogoRepository;
         this.userService = userService;
         this.insegnanteRepository = insegnanteRepository;
@@ -232,6 +235,9 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Generazione lezioni per corso di Chitarra...");
             corsoService.generaLezioni(corsoChitarra);
 
+            log.info("Dati demo dell'anno scolastico in corso...");
+            datiDemo.crea(aula1, aula2, palestra, LocalDate.now());
+
             log.info("""
                 Dati di test inizializzati:
                   ADMIN:    admin/admin
@@ -239,7 +245,13 @@ public class DataInitializer implements CommandLineRunner {
                   INSEGNANTI:  insegnante1/insegnante1 (Canto), insegnante2/insegnante2 (Chitarra)
                   GENITORI: genitore1..9 / genitore1..9
                   ALLIEVI: allievo_canto1..7 / allievo1..7, allievo_chitarra1..6 / allievo8..13
-                  CORSI:    Canto (giovedì), Chitarra (martedì e sabato), 30 lezioni da 40 min""");
+                  CORSI:    Canto (giovedì), Chitarra (martedì e sabato), 30 lezioni da 40 min
+                DATI DEMO 2026/2027 (password = username):
+                  INSEGNANTI: giulia.conti, elena.marchi, andrea.galli, paolo.neri
+                  GENITORI: laura.ferri, davide.russo, chiara.colombo, simone.greco, anna.fontana
+                  ALLIEVI ADULTI: francesca.moretti, stefano.rizzi
+                  CORSI:    Pianoforte e Propedeutica con gruppi, Batteria, Pulizia sede (servizio),
+                            Ukulele (non pubblicato), Pianoforte 2025/2026 (archiviato)""");
         }
     }
 

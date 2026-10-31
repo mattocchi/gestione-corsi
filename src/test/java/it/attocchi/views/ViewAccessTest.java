@@ -361,9 +361,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void admin_dashboardConTotali() {
         navigate(HomeView.class);
 
+        // Dati di prova (Canto e Chitarra) e demo (6 corsi, uno archiviato, con gruppi in Pianoforte e Propedeutica)
         var eta = dashboardService.etaAllievi(LocalDate.now()).orElseThrow();
-        assertEquals(List.of("Corsi: 2", "Iscritti ai corsi attivi: 13", "Allievi: 13", "Età media: " + eta.media(),
-            "Più giovane: " + eta.minima(), "Più anziano: " + eta.massima(), "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 8));
+        assertEquals(List.of("Corsi: 8", "Iscritti ai corsi attivi: 26", "Corsi con gruppi: 2", "Gruppi: 4",
+            "Allievi senza gruppo: 1", "Allievi: 22", "Età media: " + eta.media(), "Più giovane: " + eta.minima(),
+            "Più anziano: " + eta.massima(), "Genitori: 14", "Insegnanti: 6"), indicatori().subList(0, 11));
     }
 
     @Test
@@ -371,20 +373,21 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_dashboardContaGliIscrittiDeiCorsiAttivi() {
         Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
         Allievo allievo = allievoService.findByUsername("allievo_canto1").orElseThrow();
-        // Un allievo di Canto si iscrive anche a Chitarra: gli allievi restano 13, le iscrizioni diventano 14
+        // Un allievo di Canto si iscrive anche a Chitarra: gli allievi restano 22, le iscrizioni da 26 diventano 27
         corsoService.iscrivi(chitarra.getId(), allievo.getId());
         try {
             navigate(CorsiView.class);
             navigate(HomeView.class);
-            assertEquals(List.of("Iscritti ai corsi attivi: 14", "Allievi: 13"), indicatori().subList(1, 3));
+            assertEquals("Iscritti ai corsi attivi: 27", indicatore("Iscritti ai corsi attivi"));
+            assertEquals("Allievi: 22", indicatore("Allievi:"));
 
-            // Chitarra non attivo: restano le 7 iscrizioni di Canto
+            // Chitarra non attivo: tolte le sue 7 iscrizioni
             Corso inattivo = corsoService.findById(chitarra.getId());
             inattivo.setAttivo(false);
             corsoService.save(inattivo);
             navigate(CorsiView.class);
             navigate(HomeView.class);
-            assertEquals("Iscritti ai corsi attivi: 7", indicatori().get(1));
+            assertEquals("Iscritti ai corsi attivi: 20", indicatore("Iscritti ai corsi attivi"));
         } finally {
             Corso attivo = corsoService.findById(chitarra.getId());
             attivo.setAttivo(true);
@@ -398,9 +401,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_dashboardConTotali() {
         navigate(HomeView.class);
 
+        // Dati di prova (Canto e Chitarra) e demo (6 corsi, uno archiviato, con gruppi in Pianoforte e Propedeutica)
         var eta = dashboardService.etaAllievi(LocalDate.now()).orElseThrow();
-        assertEquals(List.of("Corsi: 2", "Iscritti ai corsi attivi: 13", "Allievi: 13", "Età media: " + eta.media(),
-            "Più giovane: " + eta.minima(), "Più anziano: " + eta.massima(), "Genitori: 9", "Insegnanti: 2"), indicatori().subList(0, 8));
+        assertEquals(List.of("Corsi: 8", "Iscritti ai corsi attivi: 26", "Corsi con gruppi: 2", "Gruppi: 4",
+            "Allievi senza gruppo: 1", "Allievi: 22", "Età media: " + eta.media(), "Più giovane: " + eta.minima(),
+            "Più anziano: " + eta.massima(), "Genitori: 14", "Insegnanti: 6"), indicatori().subList(0, 11));
     }
 
     @Test
@@ -417,32 +422,41 @@ class ViewAccessTest extends SpringBrowserlessTest {
             // La Home è già aperta: si ricostruisce navigando altrove e tornando
             navigate(CorsiView.class);
             navigate(HomeView.class);
-            // 13 partecipanti da 600 € nei due corsi attivi, una rata da 200 €
-            assertEquals(List.of("Saldati: 0", "Pagamento parziale: 1", "Senza pagamenti: 12",
-                    "Incassato: 200,00 € (3% del totale)", "Da incassare: 7.600,00 € (97% del totale)"),
-                indicatori().subList(8, 13));
+            // 13 partecipanti da 600 € nei due corsi di prova con una rata da 200 €, più i 13 dei dati demo dei corsi
+            // attivi: saldati Marta, Alice, Sara e Stefano (Pulizia), parziali Luca, Tommaso e Francesca
+            int saldati = indicatori().indexOf("Saldati: 4");
+            assertEquals(List.of("Saldati: 4", "Pagamento parziale: 4", "Senza pagamenti: 18",
+                    "Incassato: 2.457,50 € (19% del totale)", "Da incassare: 10.305,00 € (81% del totale)"),
+                indicatori().subList(saldati, saldati + 5));
 
-            var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).all().getFirst());
-            assertEquals(2, grid.size());
-            assertEquals("Corso di Canto", grid.getCellText(0, 0));
+            var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).all().getLast());
+            assertEquals(7, grid.size());
+            // Per nome del corso: Batteria, Corso di Canto, Corso di Chitarra, …
+            int rigaCanto = 1;
+            assertEquals("Corso di Canto", grid.getCellText(rigaCanto, 0));
             // Indici delle colonne visibili su desktop (la colonna card mobile è nascosta)
-            assertEquals("1", grid.getCellText(0, 2));
-            assertEquals("6", grid.getCellText(0, 3));
-            assertEquals("200,00 € (5%)", grid.getCellText(0, 4));
-            assertEquals("Corso di Chitarra", grid.getCellText(1, 0));
-            assertEquals("3.600,00 € (100%)", grid.getCellText(1, 5));
+            assertEquals("1", grid.getCellText(rigaCanto, 2));
+            assertEquals("6", grid.getCellText(rigaCanto, 3));
+            assertEquals("200,00 € (5%)", grid.getCellText(rigaCanto, 4));
+            assertEquals("Corso di Chitarra", grid.getCellText(2, 0));
+            assertEquals("3.600,00 € (100%)", grid.getCellText(2, 5));
 
             // Costo previsto degli insegnanti e margine: Canto 7 × 600 € = 4.200 € di quote, 3.500 € di costo
             var costi = bilancioService.costiPrevistiPerCorso();
             assertEquals(0, new BigDecimal("3500").compareTo(costi.get(canto.getId())));
-            assertEquals("3.500,00 €", grid.getCellText(0, 6));
-            Component margine = grid.getCellComponent(0, 7);
+            assertEquals("3.500,00 €", grid.getCellText(rigaCanto, 6));
+            Component margine = grid.getCellComponent(rigaCanto, 7);
             assertEquals("700,00 €", ((Span) margine.getChildren().findFirst().orElseThrow()).getText());
             assertEquals("Attivo", ((Badge) margine.getChildren().skip(1).findFirst().orElseThrow()).getText());
-            BigDecimal costoTotale = costi.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-            assertEquals(List.of("Costo insegnanti previsto: " + Formati.euro(costoTotale) + " (lezioni programmate)",
-                    "Margine previsto: " + Formati.euro(new BigDecimal("7800").subtract(costoTotale)) + " (quote − costo insegnanti)"),
-                indicatori().subList(13, 15));
+            // Solo i corsi attivi con una tariffa: escluso Pulizia sede, il cui incaricato non ne ha
+            List<RiepilogoPagamenti> conCosto = pagamentoService.riepilogoCorsiAttivi().stream()
+                .filter(r -> costi.containsKey(r.corsoId())).toList();
+            assertEquals(6, conCosto.size());
+            BigDecimal costoTotale = conCosto.stream().map(r -> costi.get(r.corsoId())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal quoteConCosto = conCosto.stream().map(RiepilogoPagamenti::quota).reduce(BigDecimal.ZERO, BigDecimal::add);
+            assertEquals(List.of("Costo insegnanti previsto: " + Formati.euro(costoTotale) + " (1 corso senza tariffa escluso)",
+                    "Margine previsto: " + Formati.euro(quoteConCosto.subtract(costoTotale)) + " (1 corso senza tariffa escluso)"),
+                indicatori().subList(saldati + 5, saldati + 7));
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }
@@ -456,9 +470,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         navigate(CorsiView.class);
         navigate(HomeView.class);
-        // Senza gruppi né riquadri né tabella dei gruppi (l'unica tabella è quella dei pagamenti)
-        assertTrue(indicatori().stream().noneMatch(i -> i.startsWith("Corsi con gruppi")));
-        assertEquals(1, find(Grid.class).all().size());
+        // Dati demo: Pianoforte (2 gruppi e un'allieva senza) e Propedeutica (2 gruppi); tabella dei gruppi e dei pagamenti
+        assertEquals(List.of("Corsi con gruppi: 2", "Gruppi: 4", "Allievi senza gruppo: 1"), indicatori().subList(2, 5));
+        assertEquals(2, find(Grid.class).all().size());
 
         GruppoCorso sabato = corsoService.salvaGruppo(chitarra.getId(),
             new GruppoCorso(null, "Principianti", DayOfWeek.SATURDAY, LocalTime.of(10, 0)));
@@ -469,9 +483,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(HomeView.class);
             // Chitarra ha 6 iscritti: 1 nel gruppo del sabato, 5 senza gruppo
             // In "Corsi e lezioni", dopo corsi e iscritti; la tabella dei gruppi viene prima di quella dei pagamenti
-            assertEquals(List.of("Corsi con gruppi: 1", "Gruppi: 2", "Allievi senza gruppo: 5"), indicatori().subList(2, 5));
+            assertEquals(List.of("Corsi con gruppi: 3", "Gruppi: 6", "Allievi senza gruppo: 6"), indicatori().subList(2, 5));
             var gruppi = test((Grid<RigaGruppo>) find(Grid.class).all().getFirst());
-            assertEquals(2, gruppi.size());
+            // Per corso: Chitarra prima di Pianoforte e Propedeutica
+            assertEquals(6, gruppi.size());
             assertEquals("Corso di Chitarra", gruppi.getCellText(0, 0));
             assertEquals("Martedì 17:00", gruppi.getCellText(0, 1));
             assertEquals("0", gruppi.getCellText(0, 2));
@@ -771,13 +786,19 @@ class ViewAccessTest extends SpringBrowserlessTest {
         return find(Card.class).all().stream().map(Card::getAriaLabel).map(o -> o.orElse("")).toList();
     }
 
+    /** Il riquadro della dashboard che inizia con {@code inizio}. */
+    private String indicatore(String inizio) {
+        return indicatori().stream().filter(i -> i.startsWith(inizio)).findFirst().orElseThrow(() -> new AssertionError(inizio));
+    }
+
     @Test
     @WithUserDetails("admin")
     void admin_corsi_grigliaEDialogModifica() {
         navigate(CorsiView.class);
 
         var grid = test(find(Grid.class).single());
-        assertEquals(2, grid.size());
+        // Canto e Chitarra più i 5 corsi attivi dei dati demo
+        assertEquals(7, grid.size());
         for (int row = 0; row < grid.size(); row++) {
             for (int col = 0; col < 6; col++) {
                 grid.getCellText(row, col);
@@ -871,7 +892,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             var grid = test((Grid<Corso>) find(Grid.class).single());
-            assertEquals(3, grid.size());
+            // Con i 5 corsi attivi dei dati demo (tra cui il servizio Pulizia sede)
+            assertEquals(8, grid.size());
             int riga = riga(grid, "Pulizia");
             assertTrue(find(Badge.class).from(grid.getCellComponent(riga, 0)).all().stream()
                 .anyMatch(b -> "Servizio".equals(b.getText())));
@@ -879,23 +901,24 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             Select<CorsiView.FiltroTipo> filtro = find(Select.class).single();
             filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
-            assertEquals(1, grid.size());
-            filtro.setValue(CorsiView.FiltroTipo.CORSI);
             assertEquals(2, grid.size());
+            filtro.setValue(CorsiView.FiltroTipo.CORSI);
+            assertEquals(6, grid.size());
 
             // Un corso nuovo nasce non pubblicato: badge e filtro
             filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
-            assertTrue(find(Badge.class).from(grid.getCellComponent(0, 0)).all().stream()
+            assertTrue(find(Badge.class).from(grid.getCellComponent(riga(grid, "Pulizia"), 0)).all().stream()
                 .anyMatch(b -> "Non pubblicato".equals(b.getText())));
             filtro.setValue(CorsiView.FiltroTipo.TUTTI);
             test(find(Checkbox.class).withLabel("Solo non pubblicati").single()).click();
-            assertEquals(1, grid.size());
+            // Con Ukulele dei dati demo
+            assertEquals(2, grid.size());
             test(find(Checkbox.class).withLabel("Solo non pubblicati").single()).click();
             filtro.setValue(CorsiView.FiltroTipo.CORSI);
 
             // Nel dialog del servizio chi lo svolge è l'"Incaricato"
             filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
-            test(pulsante(grid.getCellComponent(0, AZIONI_CORSO), "Modifica")).click();
+            test(pulsante(grid.getCellComponent(riga(grid, "Pulizia"), AZIONI_CORSO), "Modifica")).click();
             assertTrue(find(ComboBox.class).all().stream().anyMatch(c -> "Incaricato".equals(c.getLabel())));
         } finally {
             corsoService.delete(corsoService.findById(pulizia.getId()));
@@ -1014,6 +1037,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(RiepilogoIscrittiView.class);
             var riepilogo = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
                 (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
+            // Si apre sull'anno in corso (dati demo): i corsi di prova sono del 2024/2025
+            test(find(ComboBox.class).withPlaceholder("Tutti gli anni").single()).selectItem("2024/2025");
             // Canto (1 + 7 iscritti) senza gruppi; Chitarra: corso, 2 gruppi e 6 iscritti
             assertEquals(17, riepilogo.size());
             int corso = IntStream.range(0, riepilogo.size())
@@ -1162,13 +1187,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
         ((CheckboxGroup<DayOfWeek>) find(CheckboxGroup.class).single()).setValue(Set.of(DayOfWeek.MONDAY));
         test(find(Button.class).withText("Salva").single()).click();
         assertTrue(find(ComboBox.class).withLabel("Insegnante").single().isInvalid());
-        assertEquals(2, corsi.size());
+        assertEquals(7, corsi.size());
 
         test(find(ComboBox.class).withLabel("Insegnante").single()).selectItem("Marco Rossi");
         test(find(Button.class).withText("Salva").single()).click();
         Corso nuovo = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Batteria")).findFirst().orElseThrow();
         try {
-            assertEquals(3, corsi.size());
+            assertEquals(8, corsi.size());
             assertEquals("Marco Rossi", nuovo.getInsegnante().getNomeCompleto());
             assertEquals(LocalDate.of(2026, 11, 2), nuovo.getDataInizio());
         } finally {
@@ -1235,7 +1260,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         // Senza data di inizio il corso non viene salvato
         test(find(Button.class).withText("Salva").single()).click();
         assertTrue(find(DatePicker.class).withLabel("Data Inizio").single().isInvalid());
-        assertEquals(2, corsi.size());
+        assertEquals(7, corsi.size());
 
         test(find(DatePicker.class).withLabel("Data Inizio").single()).setValue(LocalDate.of(2027, 1, 11));
         test(find(Button.class).withText("Salva").single()).click();
@@ -1282,8 +1307,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(AllieviView.class);
             var allievi = test((Grid<Allievo>) find(Grid.class).single());
             ComboBox<AllieviView.FiltroCorso> filtro = find(ComboBox.class).withPlaceholder("Tutti i corsi").single();
-            assertEquals(14, allievi.size());
-            assertEquals(List.of("Senza corsi", "Corso di Canto (2024/2025)", "Corso di Chitarra (2024/2025)"),
+            // 13 di prova, 9 dei dati demo e Zeno
+            assertEquals(23, allievi.size());
+            // Prima i corsi attivi, poi quelli archiviati (il Pianoforte 2025/2026 dei dati demo)
+            assertEquals(List.of("Senza corsi", "Batteria (2026/2027)", "Corso di Canto (2024/2025)", "Corso di Chitarra (2024/2025)",
+                    "Pianoforte (2026/2027)", "Propedeutica musicale (2026/2027)", "Pulizia sede (2026/2027)", "Ukulele (2026/2027)",
+                    "Pianoforte (2025/2026)"),
                 filtro.getListDataView().getItems().map(f -> filtro.getItemLabelGenerator().apply(f)).toList());
 
             test(filtro).selectItem("Corso di Chitarra (2024/2025)");
@@ -1300,7 +1329,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Zeno Senzacorsi", allievi.getRow(0).getNomeCompleto());
 
             filtro.clear();
-            assertEquals(14, allievi.size());
+            assertEquals(23, allievi.size());
         } finally {
             allievoService.delete(allievoService.findById(senzaCorsi.getId()));
         }
@@ -1523,7 +1552,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Salva").single()).click();
         Allievo nuovo = allievoService.findByUsername("allievo_nuovo").orElseThrow();
         try {
-            assertEquals(14, allievi.size());
+            assertEquals(23, allievi.size());
             assertEquals("Genitore1 Cognome1", nuovo.getGenitore().getNomeCompleto());
             assertEquals("GLLLCU12A01H501L", nuovo.getCodiceFiscale());
             assertTrue(nuovo.getUser().getRoles().contains("ALLIEVO"));
@@ -1650,15 +1679,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             // default: solo i corsi attivi
             assertEquals(CorsiView.FiltroStato.ATTIVI, stato.getValue());
-            assertEquals(1, corsi.size());
-            assertEquals("Corso di Canto", corsi.getRow(0).getNome());
+            // Canto e i 5 corsi attivi dei dati demo
+            assertEquals(6, corsi.size());
+            assertTrue(IntStream.range(0, corsi.size()).noneMatch(r -> corsi.getRow(r).getNome().equals("Corso di Chitarra")));
 
             stato.setValue(CorsiView.FiltroStato.NON_ATTIVI);
-            assertEquals(1, corsi.size());
-            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 10)).getText());
+            // Chitarra e il Pianoforte 2025/2026 archiviato dei dati demo
+            assertEquals(2, corsi.size());
+            assertEquals("Non attivo", ((Badge) corsi.getCellComponent(riga(corsi, "Corso di Chitarra"), 10)).getText());
 
             stato.setValue(CorsiView.FiltroStato.TUTTI);
-            assertEquals(2, corsi.size());
+            assertEquals(8, corsi.size());
 
             ComboBox<String> anno = find(ComboBox.class).withPlaceholder("Tutti gli anni").single();
             test(anno).selectItem("2024/2025");
@@ -1921,7 +1952,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Allievo allievo = allievoService.findByUsername("allievo_canto3").orElseThrow();
         navigate(GestionePagamentiView.class);
         var righe = test((Grid<RigaPagamento>) find(Grid.class).single());
-        assertEquals(pagamentoService.righePagamenti().size(), righe.size());
+        // All'apertura i corsi attivi: non il Pianoforte archiviato dei dati demo
+        assertEquals(pagamentoService.righePagamenti().stream().filter(r -> r.corso().isAttivo()).count(), righe.size());
         assertTrue(find(Span.class).withText(righe.size() + " partecipanti").exists());
         try {
             // Filtro per corso: solo il Corso di Canto, con i totali delle righe filtrate
@@ -2028,7 +2060,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             var grid = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
                 (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
 
-            // Corsi attivi dell'anno più recente, aperti: Canto (7 iscritti) e Chitarra (6)
+            // All'apertura i corsi attivi dell'anno in corso (dati demo, 23 righe); nel 2024/2025 Canto (7 iscritti) e Chitarra (6)
+            assertEquals(23, grid.size());
+            test(find(ComboBox.class).withPlaceholder("Tutti gli anni").single()).selectItem("2024/2025");
             assertEquals(15, grid.size());
             assertTrue(grid.getRow(0).isCorso());
             assertTrue(grid.isExpanded(0));
@@ -2382,16 +2416,19 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_vedeIlTotaleDelleOreDonate() {
         navigate(CorsiView.class);
         navigate(HomeView.class);
-        // Tutti gli insegnanti hanno la tariffa: nessun riquadro
-        assertFalse(oreDonate().isPresent());
+        // Dati demo: Elena Marchi e Paolo Neri non hanno la tariffa
+        assertTrue(oreDonate().orElseThrow().getElement().getAttribute("aria-label").endsWith(" · 2 insegnanti)"));
         Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
         insegnante.setTariffaOraria(null);
         insegnanteService.save(insegnante);
         try {
             navigate(CorsiView.class);
             navigate(HomeView.class);
-            // Il solo insegnante senza tariffa: le 140 ore previste di Canto
-            assertEquals("Ore donate: 140 h (di cui 0 h già svolte · 1 insegnante)",
+            // Si aggiunge insegnante1 con le 140 ore previste di Canto
+            var totali = bilancioService.oreDonateTotali().orElseThrow();
+            assertEquals(3, totali.insegnanti());
+            assertEquals("Ore donate: " + Formati.durata(totali.minutiPrevisti()) + " (di cui "
+                    + Formati.durata(totali.minutiSvolti()) + " già svolte · 3 insegnanti)",
                 oreDonate().orElseThrow().getElement().getAttribute("aria-label"));
         } finally {
             Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
@@ -2662,8 +2699,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(DocumentiView.class);
         try {
             var documenti = test((Grid<DocumentoIscrizione>) find(Grid.class).single());
-            // Conferme di iscrizione dell'anno più recente: tutti i 13 iscritti di Canto e Chitarra
-            assertEquals("2024/2025", this.<String>filtro("Filtra per anno scolastico").getValue());
+            // Si apre sull'anno in corso (dati demo); nel 2024/2025 tutti i 13 iscritti di Canto e Chitarra
+            assertEquals("2026/2027", this.<String>filtro("Filtra per anno scolastico").getValue());
+            annoDeiCorsiDiProva();
+            int inviiPrima = emailService.tuttiGliInvii().size();
             assertEquals(13, documenti.size());
             assertFalse(find(Button.class).withText("Invia conferme di iscrizione a tutti").exists());
 
@@ -2678,9 +2717,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             Dialog anteprima = find(Dialog.class).all().stream()
                 .filter(d -> "Anteprima – Conferma di iscrizione".equals(d.getHeaderTitle())).findFirst().orElseThrow();
             anteprima.close();
-            assertTrue(emailService.tuttiGliInvii().isEmpty());
+            assertEquals(inviiPrima, emailService.tuttiGliInvii().size());
             test(find(Button.class).withText("Invia conferma").single()).click();
-            assertEquals(1, emailService.tuttiGliInvii().size());
+            assertEquals(inviiPrima + 1, emailService.tuttiGliInvii().size());
             // L'elenco si aggiorna con l'ultimo invio (simulato: SMTP non configurato nei test)
             assertTrue(documenti.getCellText(0, 4).endsWith("(simulato)"), documenti.getCellText(0, 4));
 
@@ -2706,6 +2745,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         rata.setImporto(new BigDecimal("90"));
         rata.setMetodo(MetodoPagamento.BONIFICO);
         pagamentoService.salva(canto.getId(), allievo.getId(), rata);
+        // I dati demo pubblicano il 2025 all'avvio
+        pubblicazioneDocumentiService.pubblicaAttestazioni(2025, false, LocalDate.now(), "admin");
         try {
             navigate(DocumentiView.class);
             scegliTipo(TipoDocumento.ATTESTAZIONE);
@@ -2732,6 +2773,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void admin_documenti_riepiloghiConInvio() {
         navigate(DocumentiView.class);
         scegliTipo(TipoDocumento.RIEPILOGO);
+        annoDeiCorsiDiProva();
         try {
             var riepiloghi = test((Grid<DocumentoRiepilogo>) find(Grid.class).single());
             test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("chitarra1");
@@ -2845,6 +2887,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_emetteUnaLetteraDiIncarico() {
         navigate(DocumentiView.class);
         scegliTipo(TipoDocumento.LETTERA_INCARICO);
+        annoDeiCorsiDiProva();
         test(find(Button.class).withText("Nuova lettera di incarico").single()).click();
         test((ComboBox<Corso>) find(ComboBox.class).withLabel("Corso o servizio").single()).selectItem("Corso di Canto (2024/2025)");
         // Un solo insegnante: scelto da sé, con la sua tariffa e i giorni del corso proposti
@@ -2877,6 +2920,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
             .filter(c -> c.getAriaLabel().filter(ariaLabel::equals).isPresent()).findFirst().orElseThrow();
     }
 
+    /** Documenti si apre sull'anno in corso (dati demo): sceglie l'anno dei corsi di prova Canto e Chitarra. */
+    private void annoDeiCorsiDiProva() {
+        test(this.<String>filtro("Filtra per anno scolastico")).selectItem("2024/2025");
+    }
+
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
@@ -2888,6 +2936,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertThrows(AssertionError.class,
             () -> pulsante(righe.getCellComponent(rigaDi(righe, allievo), "azioni"), "Email: conferma o ricevuta"));
         navigate(DocumentiView.class);
+        annoDeiCorsiDiProva();
         try {
             // Senza pagamenti l'allievo non è tra le ricevute
             scegliTipo(TipoDocumento.RICEVUTA);
@@ -2935,7 +2984,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertFalse(find(Button.class).withText("Invia conferme di iscrizione a tutti").exists());
         find(Dialog.class).single().close();
         navigate(DocumentiView.class);
+        annoDeiCorsiDiProva();
         test(this.<Corso>filtro("Filtra per corso")).selectItem("Corso di Canto");
+        int inviiPrima = emailService.tuttiGliInvii().size();
         try {
             test(find(Button.class).withText("Invia conferme di iscrizione a tutti").single()).click();
             // Chi la riceve, con l'anteprima sul primo (Canto5, prima per orario)
@@ -2944,7 +2995,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Anteprima della conferma per Allievo Canto5",
                 find(Button.class).withText("Anteprima").single().getTooltip().getText());
             test(find(Button.class).withText("Invia 7 conferme di iscrizione").single()).click();
-            assertEquals(7, emailService.tuttiGliInvii().size());
+            assertEquals(inviiPrima + 7, emailService.tuttiGliInvii().size());
         } finally {
             invioEmailRepository.deleteAll();
         }
@@ -3183,11 +3234,16 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(AllieviView.class);
 
         var grid = test(find(Grid.class).single());
-        assertEquals(13, grid.size());
+        // 13 di prova e 9 dei dati demo
+        assertEquals(22, grid.size());
         for (int row = 0; row < grid.size(); row++) {
+            Allievo allievo = (Allievo) grid.getRow(row);
+            if (!allievo.getUser().getUsername().startsWith("allievo_")) {
+                // Dati demo: corsi e indirizzi diversi
+                continue;
+            }
             assertEquals("1", grid.getCellText(row, 6));
             // Data di nascita gg/mm/aaaa ed età in anni compiuti
-            Allievo allievo = (Allievo) grid.getRow(row);
             assertEquals(Formati.dataNumerica(allievo.getDataNascita()), grid.getCellText(row, 2));
             assertEquals(String.valueOf(java.time.Period.between(allievo.getDataNascita(), LocalDate.now()).getYears()),
                 grid.getCellText(row, 3));
@@ -3208,7 +3264,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(UtentiView.class);
             var utenti = test((Grid<User>) find(Grid.class).single());
-            assertEquals(26, utenti.size());
+            // 26 di prova e 18 dei dati demo
+            assertEquals(44, utenti.size());
             // Ultimo accesso: data e ora, "Mai" per chi non è mai entrato
             int riga = IntStream.range(0, utenti.size()).filter(r -> utenti.getRow(r).getUsername().equals("segreteria"))
                 .findFirst().orElseThrow();
@@ -3240,12 +3297,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_vedeCorsiEAllieviSenzaElimina() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
-        assertEquals(2, corsi.size());
+        assertEquals(7, corsi.size());
         assertAzioni(corsi.getCellComponent(0, AZIONI_CORSO), "Modifica", "Partecipanti", "Aggiorna lezioni", "Duplica");
 
         navigate(AllieviView.class);
         var allievi = test(find(Grid.class).single());
-        assertEquals(13, allievi.size());
+        assertEquals(22, allievi.size());
         assertAzioni(allievi.getCellComponent(0, 7), "Modifica", "Invita ad accedere");
     }
 
@@ -3291,8 +3348,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(InsegnantiView.class);
 
         var grid = test(find(Grid.class).single());
-        assertEquals(2, grid.size());
+        // insegnante1, insegnante2 e 4 dei dati demo
+        assertEquals(6, grid.size());
         for (int row = 0; row < grid.size(); row++) {
+            if (!((Insegnante) grid.getRow(row)).getUser().getUsername().startsWith("insegnante")) {
+                continue;
+            }
             // Forfait annuo non impostato nei dati di prova
             assertEquals("", grid.getCellText(row, 4));
             assertEquals("1", grid.getCellText(row, 5));
@@ -3334,7 +3395,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(0, new BigDecimal("27.50").compareTo(insegnante.getTariffaOraria()));
             assertEquals(0, new BigDecimal("300").compareTo(insegnante.getRimborsoForfettario()));
             assertTrue(insegnante.getUser().getRoles().contains("INSEGNANTE"));
-            assertEquals(3, test(find(Grid.class).single()).size());
+            assertEquals(7, test(find(Grid.class).single()).size());
         } finally {
             insegnanteService.findByUsername("insegnante_test").ifPresent(i -> {
                 insegnanteRepository.delete(i);
@@ -3350,7 +3411,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(GenitoriView.class);
 
         var grid = test((Grid<Genitore>) find(Grid.class).single());
-        assertEquals(9, grid.size());
+        // 9 di prova e 5 dei dati demo
+        assertEquals(14, grid.size());
         int genitore3 = -1;
         for (int row = 0; row < grid.size(); row++) {
             grid.getCellText(row, 3);
@@ -3565,6 +3627,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         navigate(DocumentiView.class);
         scegliTipo(TipoDocumento.RIEPILOGO);
+        annoDeiCorsiDiProva();
         var riepiloghi = test((Grid<DocumentoRiepilogo>) find(Grid.class).single());
         String genitore3 = genitoreService.findByUsername("genitore3").orElseThrow().getNomeCompleto();
         test(find(TextField.class).withPlaceholder("Cerca").single()).setValue(genitore3);
@@ -3628,6 +3691,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         Long insegnanteId = insegnanteService.findByUsername("insegnante1").orElseThrow().getId();
         LetteraIncarico lettera = letteraIncaricoService.salva(letteraIncaricoService.proposta(insegnanteId, canto.getId()), "segreteria");
+        // Senza i documenti aperti dei dati demo
+        aperturaDocumentoRepository.deleteAll();
         try {
             navigate(DocumentiView.class);
             var lettere = test((Grid<LetteraIncarico>) find(Grid.class).single());
@@ -3698,17 +3763,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_ricercaRapidaInAllieviGenitoriEInsegnanti() {
         navigate(AllieviView.class);
         var allievi = test((Grid<Allievo>) find(Grid.class).single());
-        assertEquals(13, allievi.size());
+        assertEquals(22, allievi.size());
         // Nel genitore collegato: i due figli di genitore3
         cerca("cognome3 GENITORE3");
         assertEquals(2, allievi.size());
-        assertTrue(find(Span.class).withText("2 di 13").exists());
+        assertTrue(find(Span.class).withText("2 di 22").exists());
         // Nel codice fiscale e nei corsi
         cerca("chitarra1 chitarra");
         assertEquals(1, allievi.size());
         assertEquals("Allievo Chitarra1", allievi.getRow(0).getNomeCompleto());
         cerca("");
-        assertEquals(13, allievi.size());
+        assertEquals(22, allievi.size());
 
         navigate(GenitoriView.class);
         var genitori = test((Grid<Genitore>) find(Grid.class).single());
@@ -3876,7 +3941,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             navigate(GenitoriView.class);
             var genitori = test((Grid<Genitore>) find(Grid.class).single());
-            assertEquals(10, genitori.size());
+            assertEquals(15, genitori.size());
             cerca("lia ruolo");
             assertEquals(1, genitori.size());
         } finally {
@@ -3893,16 +3958,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_ricercaRapidaInCorsiERiepilogoIscritti() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
-        assertEquals(2, corsi.size());
+        assertEquals(7, corsi.size());
         // Negli insegnanti del corso
         cerca("rossi");
         assertEquals(1, corsi.size());
         assertEquals("Corso di Chitarra", corsi.getRow(0).getNome());
-        assertTrue(find(Span.class).withText("1 di 2").exists());
+        assertTrue(find(Span.class).withText("1 di 7").exists());
 
         navigate(RiepilogoIscrittiView.class);
         var riepilogo = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
             (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
+        // I corsi di prova sono del 2024/2025
+        test(find(ComboBox.class).withPlaceholder("Tutti gli anni").single()).selectItem("2024/2025");
         // Un iscritto: solo il suo corso con lui
         cerca("canto3");
         assertEquals(2, riepilogo.size());
@@ -4142,7 +4209,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertFalse(find(Button.class).withText("Oggi").exists());
         List<String> orari = find(Span.class).all().stream().map(Span::getText)
             .filter(t -> t.matches("\\d\\d:\\d\\d–\\d\\d:\\d\\d")).toList();
-        assertEquals(List.of("18:00–18:40", "17:00–17:40", "18:00–18:40", "18:00–18:40", "17:00–17:40", "18:00–18:40"), orari);
+        // 12 voci (Canto, Chitarra e i corsi dei dati demo), nella griglia e nell'elenco mobile
+        assertEquals(24, orari.size());
+        assertTrue(orari.containsAll(List.of("18:00–18:40", "17:00–17:40", "10:00–10:50", "11:00–11:50")), orari.toString());
         assertEquals(2 * 2, find(Span.class).withText("Corso di Chitarra").all().size());
         assertTrue(find(H3.class).withText("giovedì").exists());
         assertTrue(find(Button.class).all().stream().noneMatch(b -> b.getText().contains("Corso di")));
@@ -4564,7 +4633,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Lezioni")));
         navigate(LezioniView.class);
         var grid = test((Grid<Lezione>) find(Grid.class).single());
-        assertEquals(60, grid.size());
+        // Le lezioni da fare di tutti i corsi attivi (quelle dei dati demo dipendono dalla data di oggi)
+        assertEquals(lezioneService.findDeiCorsiAttivi().stream().filter(Lezione::isDaFare).count(), grid.size());
         ComboBox<Corso> filtroCorso = filtro("Filtra per corso");
         test(filtroCorso).selectItem("Corso di Canto");
         assertEquals(30, grid.size());
@@ -4606,6 +4676,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void admin_aggiungeEdEliminaUnaLezione() {
         navigate(LezioniView.class);
         var grid = test((Grid<Lezione>) find(Grid.class).single());
+        int daFare = grid.size();
         test(find(Button.class).withText("Nuova lezione").single()).click();
         // Più corsi: la scelta del corso è obbligatoria
         test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
@@ -4614,7 +4685,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(corso.isInvalid());
         test(corso).selectItem("Corso di Chitarra");
         test(find(Button.class).withText("Salva").single()).click();
-        assertEquals(61, grid.size());
+        assertEquals(daFare + 1, grid.size());
 
         int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).isAggiunta()).findFirst().orElseThrow();
         Lezione aggiunta = grid.getRow(riga);
@@ -4622,7 +4693,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Elimina").single()).click();
         test(find(Button.class).withText("Elimina").all().getLast()).click();
         assertNull(lezioneService.findById(aggiunta.getId()));
-        assertEquals(60, grid.size());
+        assertEquals(daFare, grid.size());
     }
 
     @Test

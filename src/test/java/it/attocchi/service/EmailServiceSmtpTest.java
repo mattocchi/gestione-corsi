@@ -94,6 +94,7 @@ class EmailServiceSmtpTest {
     @Test
     void test_templateConAllegatoOSoloTesto() throws Exception {
         when(mailSender.createMimeMessage()).thenAnswer(i -> new MimeMessage(Session.getInstance(new Properties())));
+        long registrati = invioEmailRepository.count();
 
         EmailService.EsitoTest esito = emailService.inviaTest("prova@example.org", TipoDocumento.CONFERMA_ISCRIZIONE, "admin");
         assertEquals(Esito.INVIATA, esito.esito());
@@ -111,7 +112,8 @@ class EmailServiceSmtpTest {
         verify(mailSender).send(inviato.capture());
         inviato.getValue().saveChanges();
         assertEquals(1, ((Multipart) inviato.getValue().getContent()).getCount());
-        assertTrue(invioEmailRepository.findAll().isEmpty());
+        // Le email di test non si registrano
+        assertEquals(registrati, invioEmailRepository.count());
     }
 
     @Test

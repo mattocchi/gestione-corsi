@@ -128,7 +128,11 @@ class CalendarioServiceTest {
         // Chitarra martedì e sabato alle 18:00, Canto giovedì alle 17:00, lezioni da 40 minuti
         List<VoceSettimana> admin = calendarioService.settimanaTipo("admin", null);
         assertEquals(List.of("TUESDAY Corso di Chitarra 18:00-18:40", "THURSDAY Corso di Canto 17:00-17:40",
-            "SATURDAY Corso di Chitarra 18:00-18:40"), admin.stream().map(CalendarioServiceTest::testo).toList());
+            "SATURDAY Corso di Chitarra 18:00-18:40"), admin.stream().filter(CalendarioServiceTest::diProva)
+            .map(CalendarioServiceTest::testo).toList());
+        // Dati demo: Propedeutica con due gruppi il sabato, uno per orario
+        assertEquals(List.of("SATURDAY Propedeutica musicale 10:00-10:50 Piccoli", "SATURDAY Propedeutica musicale 11:00-11:50 Grandi"),
+            admin.stream().filter(v -> v.corso().getNome().equals("Propedeutica musicale")).map(CalendarioServiceTest::testo).toList());
         Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
         assertEquals(2, calendarioService.settimanaTipo("segreteria", chitarra.getId()).size());
         // L'insegnante i suoi corsi
@@ -158,6 +162,11 @@ class CalendarioServiceTest {
                 corsoService.impostaOrario(chitarra.getId(), allievoService.findByUsername(username).orElseThrow().getId(), null);
             }
         }
+    }
+
+    /** Voce dei corsi di prova (Canto e Chitarra), non dei dati demo. */
+    private static boolean diProva(VoceSettimana voce) {
+        return voce.corso().getNome().startsWith("Corso di");
     }
 
     private static String testo(VoceSettimana voce) {

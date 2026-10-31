@@ -55,7 +55,9 @@ class BilancioServiceTest {
     void oreDonate_soloSenzaTariffaSvolteEPreviste() {
         // Con la tariffa niente ore donate
         assertTrue(bilancioService.oreDonate("insegnante1").isEmpty());
-        assertTrue(bilancioService.oreDonateTotali().isEmpty());
+        // Nei dati demo gli insegnanti senza tariffa sono già due
+        BilancioService.OreDonateTotali prima0 = bilancioService.oreDonateTotali().orElseThrow();
+        assertEquals(2, prima0.insegnanti());
         Insegnante insegnante = insegnanteService.findByUsername("insegnante1").orElseThrow();
         Long cantoId = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow().getId();
         Lezione prima = lezioneService.findByCorso(cantoId).getFirst();
@@ -67,8 +69,9 @@ class BilancioServiceTest {
             assertEquals(new BilancioService.OreDonate(0, 30 * 7 * 40), bilancioService.oreDonate("insegnante1").orElseThrow());
             lezioneService.completa(prima.getId(), "insegnante1");
             assertEquals(new BilancioService.OreDonate(7 * 40, 30 * 7 * 40), bilancioService.oreDonate("insegnante1").orElseThrow());
-            // Il totale per admin e segreteria: il solo insegnante senza tariffa
-            assertEquals(new BilancioService.OreDonateTotali(7 * 40, 30 * 7 * 40, 1), bilancioService.oreDonateTotali().orElseThrow());
+            // Il totale per admin e segreteria: si aggiunge l'insegnante senza tariffa
+            assertEquals(new BilancioService.OreDonateTotali(prima0.minutiSvolti() + 7 * 40,
+                prima0.minutiPrevisti() + 30 * 7 * 40, 3), bilancioService.oreDonateTotali().orElseThrow());
         } finally {
             Insegnante ripristino = insegnanteService.findByUsername("insegnante1").orElseThrow();
             ripristino.setRimborsoForfettario(null);

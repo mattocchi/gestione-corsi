@@ -75,9 +75,11 @@ class PagamentoServiceTest {
         var righe = pagamentoService.righePagamenti();
         long iscrizioni = corsoService.findAll().stream().mapToLong(c -> c.getAllievi().size()).sum();
         assertEquals(iscrizioni, righe.size());
-        assertEquals("Corso di Canto", righe.getFirst().corso().getNome());
+        // Per nome del corso: Batteria (dati demo) per prima
+        assertEquals("Batteria", righe.getFirst().corso().getNome());
 
-        String genitore = righe.getFirst().genitore().getUser().getUsername();
+        String genitore = righe.stream().filter(r -> r.corso().getNome().equals("Corso di Canto")).findFirst().orElseThrow()
+            .genitore().getUser().getUsername();
         var figli = pagamentoService.righePagamentiDeiFigli(genitore);
         assertFalse(figli.isEmpty());
         assertTrue(figli.stream().allMatch(r -> r.genitore().getUser().getUsername().equals(genitore)));
@@ -113,8 +115,10 @@ class PagamentoServiceTest {
         pagamentoService.salva(canto.getId(), allievo, rata);
         try {
             var corsi = pagamentoService.iscrittiPerCorso();
-            assertEquals(java.util.List.of("Corso di Canto", "Corso di Chitarra"), corsi.stream().map(c -> c.corso().getNome()).toList());
-            var iscrittiCanto = corsi.getFirst();
+            // Per nome, con i corsi dei dati demo (anche il Pianoforte archiviato)
+            assertEquals(java.util.List.of("Batteria", "Corso di Canto", "Corso di Chitarra", "Pianoforte", "Pianoforte",
+                "Propedeutica musicale", "Pulizia sede", "Ukulele"), corsi.stream().map(c -> c.corso().getNome()).toList());
+            var iscrittiCanto = corsi.get(1);
             assertEquals(7, iscrittiCanto.iscritti().size());
             assertEquals(0, new BigDecimal("4200").compareTo(iscrittiCanto.quota()));
             assertEquals(0, new BigDecimal("600").compareTo(iscrittiCanto.pagato()));
