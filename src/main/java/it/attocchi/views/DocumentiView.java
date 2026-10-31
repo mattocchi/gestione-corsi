@@ -12,6 +12,8 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -51,6 +53,7 @@ import jakarta.annotation.security.RolesAllowed;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -81,7 +84,9 @@ public class DocumentiView extends VerticalLayout {
     private final LetteraIncaricoService letteraIncaricoService;
     private final String username;
 
-    private final SegmentedControl<TipoDocumento> tipo;
+    /** Tipo di documento (admin e segreteria): una scheda per tipo, che su smartphone scorrono di lato. */
+    private final Tabs tipo = new Tabs();
+    private final Map<Tab, TipoDocumento> schede = new LinkedHashMap<>();
     private final ComboBox<String> filtroAnno = new ComboBox<>();
     private final ComboBox<Corso> filtroCorso = new ComboBox<>();
     private final RicercaRapida ricerca = new RicercaRapida();
@@ -120,9 +125,6 @@ public class DocumentiView extends VerticalLayout {
         this.documentiService = documentiService;
         this.username = securityService.getUsername().orElse("");
         addClassNames("size-full");
-        tipo = new SegmentedControl<>("Tipo di documento", List.of(TipoDocumento.values()), TipoDocumento::getPlurale,
-            t -> t == TipoDocumento.RIEPILOGO ? "Riepiloghi annuali dei pagamenti"
-                : t == TipoDocumento.ATTESTAZIONE ? "Attestazioni delle spese per anno solare" : t.getTitolo(), null);
         if (!securityService.hasRole("ADMIN") && !securityService.hasRole("SEGRETERIA")) {
             boolean famiglia = securityService.hasRole("GENITORE") || allievoService.gestisceDaSe(username);
             if (securityService.hasRole("INSEGNANTE")) {
@@ -141,9 +143,16 @@ public class DocumentiView extends VerticalLayout {
             creaElencoFamiglia();
             return;
         }
-        tipo.setValue(TipoDocumento.CONFERMA_ISCRIZIONE);
-        tipo.addClassNames("max-w-3xl");
-        tipo.addValueChangeListener(e -> aggiorna());
+        for (TipoDocumento t : TipoDocumento.values()) {
+            Tab scheda = new Tab(t.getPlurale());
+            scheda.setTooltipText(t == TipoDocumento.RIEPILOGO ? "Riepiloghi annuali dei pagamenti"
+                : t == TipoDocumento.ATTESTAZIONE ? "Attestazioni delle spese per anno solare" : t.getTitolo());
+            schede.put(scheda, t);
+            tipo.add(scheda);
+        }
+        tipo.getElement().setAttribute("aria-label", "Tipo di documento");
+        tipo.addClassNames("w-full");
+        tipo.addSelectedChangeListener(e -> aggiorna());
 
         filtroAnno.setPlaceholder("Tutti gli anni");
         filtroAnno.setAriaLabel("Filtra per anno scolastico");
@@ -580,9 +589,13 @@ public class DocumentiView extends VerticalLayout {
         return anno != null ? " " + anno : "";
     }
 
+    private TipoDocumento tipoScelto() {
+        return schede.getOrDefault(tipo.getSelectedTab(), TipoDocumento.CONFERMA_ISCRIZIONE);
+    }
+
     /** Ricarica l'elenco del tipo scelto mantenendo filtri e ricerca. */
     private void aggiorna() {
-        boolean perRiepilogoCorsi = tipo.getValue() == TipoDocumento.RIEPILOGO_CORSI;
+        boolean perRiepilogoCorsi = tipoScelto() == TipoDocumento.RIEPILOGO_CORSI;
         riepilogoCorsi.setVisible(perRiepilogoCorsi);
         filtri.setVisible(!perRiepilogoCorsi);
         if (perRiepilogoCorsi) {
@@ -593,9 +606,9 @@ public class DocumentiView extends VerticalLayout {
             aggiornaUltimoRiepilogoCorsi();
             return;
         }
-        boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
-        boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
-        boolean perLettera = tipo.getValue() == TipoDocumento.LETTERA_INCARICO;
+        boolean perRiepilogo = tipoScelto() == TipoDocumento.RIEPILOGO;
+        boolean perAttestazione = tipoScelto() == TipoDocumento.ATTESTAZIONE;
+        boolean perLettera = tipoScelto() == TipoDocumento.LETTERA_INCARICO;
         gridIscrizioni.setVisible(!perRiepilogo && !perAttestazione && !perLettera);
         gridRiepiloghi.setVisible(perRiepilogo);
         gridAttestazioni.setVisible(perAttestazione);
@@ -616,7 +629,7 @@ public class DocumentiView extends VerticalLayout {
             righeRiepiloghi = gridRiepiloghi.setItems(riepiloghi);
             anni = riepiloghi.stream().map(DocumentoRiepilogo::anno);
         } else {
-            iscrizioni = elencoDocumentiService.documentiIscrizioni(tipo.getValue(), username);
+            iscrizioni = elencoDocumentiService.documentiIscrizioni(tipoScelto(), username);
             righeIscrizioni = gridIscrizioni.setItems(iscrizioni);
             anni = iscrizioni.stream().map(d -> d.iscrizione().getCorso().getAnnoScolastico());
         }
@@ -657,11 +670,11 @@ public class DocumentiView extends VerticalLayout {
     /** Anno, corso e ricerca; "N di M" sulle righe dell'anno e del corso scelti. */
     private void applicaFiltri() {
         String anno = filtroAnno.getValue();
-        boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
-        boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
-        boolean perLettera = tipo.getValue() == TipoDocumento.LETTERA_INCARICO;
+        boolean perRiepilogo = tipoScelto() == TipoDocumento.RIEPILOGO;
+        boolean perAttestazione = tipoScelto() == TipoDocumento.ATTESTAZIONE;
+        boolean perLettera = tipoScelto() == TipoDocumento.LETTERA_INCARICO;
         Corso corso = filtroCorso.getValue();
-        confermeATutti.setVisible(tipo.getValue() == TipoDocumento.CONFERMA_ISCRIZIONE && corso != null);
+        confermeATutti.setVisible(tipoScelto() == TipoDocumento.CONFERMA_ISCRIZIONE && corso != null);
         if (perLettera) {
             if (righeLettere != null) {
                 SerializablePredicate<LetteraIncarico> dellAnno = l -> anno == null || anno.equals(l.getAnnoScolastico());

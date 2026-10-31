@@ -2578,8 +2578,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         pagamentoService.salva(canto.getId(), allievo.getId(), rata);
         try {
             navigate(DocumentiView.class);
-            SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
-            test(tipo.getPulsante(TipoDocumento.ATTESTAZIONE)).click();
+            scegliTipo(TipoDocumento.ATTESTAZIONE);
             var attestazioni = test((Grid<ElencoDocumentiService.DocumentoAttestazione>) find(Grid.class).single());
             test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("canto3");
             assertEquals(1, attestazioni.size());
@@ -2598,8 +2597,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void admin_documenti_riepiloghiConInvio() {
         navigate(DocumentiView.class);
-        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
-        test(tipo.getPulsante(TipoDocumento.RIEPILOGO)).click();
+        scegliTipo(TipoDocumento.RIEPILOGO);
         try {
             var riepiloghi = test((Grid<DocumentoRiepilogo>) find(Grid.class).single());
             test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("chitarra1");
@@ -2625,8 +2623,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_documenti_riepilogoCorsiConPdfEInvioAMe() throws IOException {
         navigate(DocumentiView.class);
-        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
-        test(tipo.getPulsante(TipoDocumento.RIEPILOGO_CORSI)).click();
+        scegliTipo(TipoDocumento.RIEPILOGO_CORSI);
         try {
             // Nessun elenco né filtri: un solo documento con PDF (anteprima e scarico) e invio alla propria email
             assertFalse(find(Grid.class).exists());
@@ -2643,7 +2640,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("segreteria", invio.getInviatoDa());
             assertTrue(find(Span.class).all().stream().anyMatch(s -> s.getText().startsWith("Ultimo invio: ")));
             // Tornando a un altro tipo i filtri ricompaiono
-            test(tipo.getPulsante(TipoDocumento.CONFERMA_ISCRIZIONE)).click();
+            scegliTipo(TipoDocumento.CONFERMA_ISCRIZIONE);
             assertTrue(find(TextField.class).withPlaceholder("Cerca").exists());
         } finally {
             invioEmailRepository.deleteAll();
@@ -2662,7 +2659,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertEquals("Tutti i figli", documenti.getCellText(0, 1));
         assertEquals("Conferma di iscrizione", documenti.getCellText(1, 0));
         assertEquals("Allievo Canto3", documenti.getCellText(1, 1));
-        assertFalse(find(SegmentedControl.class).exists());
+        assertFalse(find(Tabs.class).exists());
         assertFalse(find(Button.class).all().stream()
             .anyMatch(b -> "Invia per email".equals(b.getElement().getAttribute("aria-label"))));
         // Un solo anno: niente filtro
@@ -2689,8 +2686,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_emetteUnaLetteraDiIncarico() {
         navigate(DocumentiView.class);
-        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
-        test(tipo.getPulsante(TipoDocumento.LETTERA_INCARICO)).click();
+        scegliTipo(TipoDocumento.LETTERA_INCARICO);
         test(find(Button.class).withText("Nuova lettera di incarico").single()).click();
         test((ComboBox<Corso>) find(ComboBox.class).withLabel("Corso o servizio").single()).selectItem("Corso di Canto (2024/2025)");
         // Un solo insegnante: scelto da sé, con la sua tariffa e i giorni del corso proposti
@@ -2714,7 +2710,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Documenti")));
         navigate(DocumentiView.class);
         assertTrue(find(H3.class).withText("Lettere di incarico").exists());
-        assertFalse(find(SegmentedControl.class).exists());
+        assertFalse(find(Tabs.class).exists());
     }
 
     @SuppressWarnings("unchecked")
@@ -2736,12 +2732,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(DocumentiView.class);
         try {
             // Senza pagamenti l'allievo non è tra le ricevute
-            SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
-            test(tipo.getPulsante(TipoDocumento.RICEVUTA)).click();
+            scegliTipo(TipoDocumento.RICEVUTA);
             test(find(TextField.class).withPlaceholder("Cerca").single()).setValue("canto3");
             var ricevute = test((Grid<DocumentoIscrizione>) find(Grid.class).single());
             assertEquals(0, ricevute.size());
-            test(tipo.getPulsante(TipoDocumento.CONFERMA_ISCRIZIONE)).click();
+            scegliTipo(TipoDocumento.CONFERMA_ISCRIZIONE);
             var conferme = test((Grid<DocumentoIscrizione>) find(Grid.class).single());
             test(pulsante(conferme.getCellComponent(0, 6), "Invia per email")).click();
             // Destinatario: il genitore
@@ -3410,8 +3405,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         assertThrows(AssertionError.class, () -> pulsante(genitori.getCellComponent(0, 5), "Riepilogo famiglia"));
 
         navigate(DocumentiView.class);
-        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
-        test(tipo.getPulsante(TipoDocumento.RIEPILOGO)).click();
+        scegliTipo(TipoDocumento.RIEPILOGO);
         var riepiloghi = test((Grid<DocumentoRiepilogo>) find(Grid.class).single());
         String genitore3 = genitoreService.findByUsername("genitore3").orElseThrow().getNomeCompleto();
         test(find(TextField.class).withPlaceholder("Cerca").single()).setValue(genitore3);
@@ -3502,6 +3496,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
         ComponentUtil.fireEvent(invia, new ClickEvent<>(invia));
         assertTrue(find(Paragraph.class).all().stream().anyMatch(p -> p.getText().contains(email)));
         test(find(Button.class).withText("Invia").single()).click();
+    }
+
+    /** Sceglie la scheda del tipo di documento in Documenti (admin e segreteria). */
+    private void scegliTipo(TipoDocumento tipoDocumento) {
+        Tabs tipo = find(Tabs.class).single();
+        tipo.setSelectedTab(tipo.getChildren().map(Tab.class::cast)
+            .filter(t -> t.getLabel().equals(tipoDocumento.getPlurale())).findFirst().orElseThrow());
     }
 
     /** Esegue il download del link come farebbe il browser (risposta su un buffer). */
