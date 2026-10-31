@@ -2,6 +2,7 @@ package it.attocchi.views.admin;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -15,6 +16,7 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.entity.Allievo;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PagamentoService;
@@ -40,7 +42,8 @@ import java.util.stream.Collectors;
  * e l'elenco si riordina; la notifica compare solo in caso di errore. Sopra l'elenco i gruppi del corso (giorno e
  * orario): ogni partecipante può appartenere a uno e frequenta solo quel giorno, senza gruppo tutti i giorni.
  * Eliminare un gruppo è solo per l'admin. Per un corso non attivo partecipanti, orari e gruppi sono in sola lettura
- * (tranne che per l'admin).
+ * (tranne che per l'admin). Se il corso ha opzioni aggiuntive (es. il kit) la colonna "Opzioni" ha una casella per
+ * ognuna, salvata subito: l'importo si somma alla quota del partecipante (anche nei corsi non attivi, come le quote).
  */
 public class PartecipantiDialog extends Dialog {
 
@@ -53,9 +56,11 @@ public class PartecipantiDialog extends Dialog {
     private final Div gruppiDelCorso = new Div();
     private final boolean puoEliminareGruppi;
     private final Grid.Column<Iscrizione> colonnaGruppo;
+    private final Grid.Column<Iscrizione> colonnaOpzioni;
     private final CardMobile<Iscrizione> card;
     private Map<Long, Situazione> situazioni = Map.of();
     private List<GruppoCorso> gruppi = List.of();
+    private List<OpzioneCorso> opzioni = List.of();
 
     /** @param puoEliminareGruppi {@code true} per l'admin, che può eliminare i gruppi */
     public PartecipantiDialog(CorsoService corsoService, AllievoService allievoService,
@@ -91,6 +96,9 @@ public class PartecipantiDialog extends Dialog {
         grid.addColumn(iscrizione -> iscrizione.getAllievo().getNomeCompleto()).setHeader("Partecipante");
         // Solo se il corso ha dei gruppi
         colonnaGruppo = grid.addComponentColumn(this::createGruppo).setHeader("Gruppo").setWidth("12rem").setFlexGrow(0);
+        // Solo se il corso ha opzioni aggiuntive
+        colonnaOpzioni = grid.addComponentColumn(this::createOpzioni).setKey("opzioni").setHeader("Opzioni")
+            .setAutoWidth(true).setFlexGrow(0);
         grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = CorsoService.puoModificare(corso);
@@ -105,6 +113,7 @@ public class PartecipantiDialog extends Dialog {
             .stato(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .campo("Orario", this::createOrario)
             .campo("Gruppo", iscrizione -> gruppi.isEmpty() ? null : createGruppo(iscrizione))
+            .campo("Opzioni", iscrizione -> opzioni.isEmpty() ? null : createOpzioni(iscrizione))
             .azioni(iscrizione -> createAzioni(iscrizione, modificabile));
         card.applica();
         grid.setAllRowsVisible(true);
@@ -184,6 +193,31 @@ public class PartecipantiDialog extends Dialog {
             aggiorna();
         });
         return gruppo;
+    }
+
+    /** Una casella per opzione aggiuntiva del corso ("Kit +30,00 €"), salvata subito. */
+    private Div createOpzioni(Iscrizione iscrizione) {
+        String nome = iscrizione.getAllievo().getNomeCompleto();
+        Div caselle = new Div();
+        caselle.addClassNames("flex flex-col");
+        for (OpzioneCorso opzione : opzioni) {
+            Checkbox casella = new Checkbox(opzione.getDescrizione() + " +" + Formati.euro(opzione.getImporto()),
+                iscrizione.getOpzioni().contains(opzione));
+            casella.setAriaLabel(opzione.getDescrizione() + " per " + nome);
+            casella.addValueChangeListener(e -> {
+                if (!e.isFromClient()) {
+                    return;
+                }
+                try {
+                    corsoService.impostaOpzione(corso.getId(), iscrizione.getAllievo().getId(), opzione.getId(), e.getValue());
+                } catch (RuntimeException ex) {
+                    Notification.show("Errore nel salvataggio dell'opzione di " + nome + ": " + ex.getMessage());
+                }
+                aggiorna();
+            });
+            caselle.add(casella);
+        }
+        return caselle;
     }
 
     /** Sezione dei gruppi: uno per riga con il numero di allievi, modifica ed eliminazione; "Nuovo gruppo". */
@@ -296,6 +330,8 @@ public class PartecipantiDialog extends Dialog {
         List<Iscrizione> partecipanti = corsoService.findPartecipanti(corso.getId());
         gruppi = corsoService.gruppi(corso.getId());
         card.setVisibileSuDesktop(colonnaGruppo, !gruppi.isEmpty());
+        opzioni = corsoService.opzioni(corso.getId());
+        card.setVisibileSuDesktop(colonnaOpzioni, !opzioni.isEmpty());
         mostraGruppi(partecipanti);
         grid.setItems(partecipanti);
         Set<Long> iscritti = partecipanti.stream().map(i -> i.getAllievo().getId()).collect(Collectors.toSet());

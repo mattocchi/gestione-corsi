@@ -1135,6 +1135,43 @@ class ViewAccessTest extends SpringBrowserlessTest {
             .filter(i -> i.getAllievo().equals(allievo)).findFirst().orElseThrow();
     }
 
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_attivaLeOpzioniAggiuntiveInPartecipanti() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Long allievoId = allievoService.findByUsername("allievo_canto3").orElseThrow().getId();
+        // Senza opzioni la colonna non c'è
+        PartecipantiDialog dialog = apriPartecipanti("Corso di Canto");
+        assertTrue(((Grid<Iscrizione>) find(Grid.class).from(dialog).single()).getColumns().stream()
+            .filter(c -> "Opzioni".equals(c.getHeaderText())).noneMatch(Grid.Column::isVisible));
+        dialog.close();
+        corsoService.salva(canto, List.of(new OpzioneCorso(null, "Kit", new BigDecimal("30"))));
+        try {
+            dialog = apriPartecipanti("Corso di Canto");
+            var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
+            Checkbox kit = casellaKit(partecipanti, allievoId);
+            assertEquals("Kit +30,00 €", kit.getLabel());
+            assertEquals("Kit per Allievo Canto3", kit.getAriaLabel().orElseThrow());
+            assertFalse(kit.getValue());
+            test(kit).click();
+            assertEquals(0, new BigDecimal("630").compareTo(pagamentoService.situazione(canto.getId(), allievoId).quota()));
+            kit = casellaKit(partecipanti, allievoId);
+            assertTrue(kit.getValue());
+            test(kit).click();
+            assertEquals(0, new BigDecimal("600").compareTo(pagamentoService.situazione(canto.getId(), allievoId).quota()));
+        } finally {
+            corsoService.opzioni(canto.getId()).forEach(o -> corsoService.impostaOpzione(canto.getId(), allievoId, o.getId(), false));
+            opzioneCorsoRepository.deleteAll(opzioneCorsoRepository.findByCorsoIdOrderById(canto.getId()));
+        }
+    }
+
+    private static Checkbox casellaKit(GridTester<Grid<Iscrizione>, Iscrizione> partecipanti, Long allievoId) {
+        int riga = IntStream.range(0, partecipanti.size())
+            .filter(r -> partecipanti.getRow(r).getAllievo().getId().equals(allievoId)).findFirst().orElseThrow();
+        return (Checkbox) partecipanti.getCellComponent(riga, "opzioni").getChildren().findFirst().orElseThrow();
+    }
+
     @SuppressWarnings("unchecked")
     private PartecipantiDialog apriPartecipanti(String corso) {
         navigate(CorsiView.class);
