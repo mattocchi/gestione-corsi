@@ -10,7 +10,8 @@ Guida per **admin e segreteria**. Le voci seguono i gruppi del menu; quelle segn
 
 **[Corsi](corsi)**: crea e modifica corsi e servizi.
 - *Nuovo corso*: giorni, orario, durata, numero di lezioni o data di fine, insegnanti, luogo. Un corso nuovo nasce **non pubblicato**: le famiglie lo vedono solo quando spunti "Pubblicato".
-- *Partecipanti* (icona persone): iscrivi gli allievi, imposta orari e gruppi. Scrivi un nome nuovo per creare un allievo al volo.
+- *Opzioni aggiuntive* (nel corso): importi una tantum come il kit (+30 €), con descrizione; si sommano alla quota solo di chi li attiva. Togliere un'opzione già salvata è solo per l'admin, e solo se nessuno l'ha attiva.
+- *Partecipanti* (icona persone): iscrivi gli allievi, imposta orari e gruppi e spunta le opzioni aggiuntive di ognuno. Scrivi un nome nuovo per creare un allievo al volo.
 - *Aggiorna lezioni*: crea o aggiorna il calendario delle lezioni, saltando le festività.
 - *Duplica*: prepara il corso dell'anno successivo.
 

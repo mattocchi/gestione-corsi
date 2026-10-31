@@ -49,7 +49,7 @@ motivazione, su ogni iscritto l'attivazione sì/no, e l'opzione esplicitata nell
 | 3 | Partecipanti: colonna "Opzioni" con le caselle | `PartecipantiDialog` | test browserless | [x] |
 | 4 | Conferma e ricevuta: righe delle opzioni negli importi | `DocumentiService`, `importi.ftlh` | test sul PDF | [x] |
 | 5 | Famiglie: opzioni attive nei prezzi del corso e nel dettaglio pagamenti | `PrezziCorso`, `PagamentiAllievoDialog` | test browserless | [x] |
-| 6 | Dati demo, Guida e CLAUDE.md | `DatiDemo`, `guida/staff.md`, `CLAUDE.md`, test | `./mvnw test` | [ ] |
+| 6 | Dati demo, Guida e CLAUDE.md | `DatiDemo`, `guida/staff.md`, `CLAUDE.md`, test | `./mvnw test` | [x] |
 | 7 | Registro | questo file | — | [ ] |
 
 ## Fuori ambito

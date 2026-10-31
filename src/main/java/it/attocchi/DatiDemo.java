@@ -31,7 +31,8 @@ import java.util.Set;
 /**
  * Dati demo dell'anno scolastico in corso (2026/2027) e del precedente, creati da {@link DataInitializer} attraverso
  * i servizi: famiglie con più figli e allievi adulti, corsi con gruppi, lezioni passate svolte (con assenze, una non
- * effettuata e il recupero), pagamenti in tutti gli stati, quote personalizzate, un servizio, un corso non pubblicato,
+ * effettuata e il recupero), pagamenti in tutti gli stati, quote personalizzate, il kit come opzione aggiuntiva di
+ * Propedeutica, un servizio, un corso non pubblicato,
  * un corso archiviato con i bonifici per le attestazioni, rimborsi, una lettera di incarico, invii e documenti aperti.
  * Persone e corsi sono nuovi: i dati di prova su cui si basano i test restano come sono.
  */
@@ -129,12 +130,17 @@ class DatiDemo {
             LocalDate.of(2026, 9, 19), Set.of(DayOfWeek.SATURDAY), LocalTime.of(10, 0), 50, 25, null,
             "380.00", elena, palestra);
         propedeutica.setInsegnantiFacoltativi(new ArrayList<>(List.of(giulia)));
-        propedeutica = corsoService.save(propedeutica);
+        // Opzione aggiuntiva: il kit, solo per chi lo prende
+        propedeutica = corsoService.salva(propedeutica,
+            List.of(new OpzioneCorso(null, "Kit strumentario", new BigDecimal("30.00"))));
         iscrivi(propedeutica, sara, matteo, tommaso);
         GruppoCorso piccoli = gruppo(propedeutica, "Piccoli", DayOfWeek.SATURDAY, LocalTime.of(10, 0));
         GruppoCorso grandi = gruppo(propedeutica, "Grandi", DayOfWeek.SATURDAY, LocalTime.of(11, 0));
         assegna(propedeutica, piccoli, sara, matteo);
         assegna(propedeutica, grandi, tommaso);
+        Long kit = corsoService.opzioni(propedeutica.getId()).getFirst().getId();
+        corsoService.impostaOpzione(propedeutica.getId(), sara.getId(), kit, true);
+        corsoService.impostaOpzione(propedeutica.getId(), tommaso.getId(), kit, true);
         corsoService.generaLezioni(propedeutica);
 
         // Batteria: ogni 2 settimane, fino a una data invece di un numero di lezioni

@@ -427,10 +427,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
             navigate(CorsiView.class);
             navigate(HomeView.class);
             // 13 partecipanti da 600 € nei due corsi di prova con una rata da 200 €, più i 13 dei dati demo dei corsi
-            // attivi: saldati Marta, Alice, Sara e Stefano (Pulizia), parziali Luca, Tommaso e Francesca
-            int saldati = indicatori().indexOf("Saldati: 4");
-            assertEquals(List.of("Saldati: 4", "Pagamento parziale: 4", "Senza pagamenti: 18",
-                    "Incassato: 2.457,50 € (19% del totale)", "Da incassare: 10.305,00 € (81% del totale)"),
+            // attivi: saldati Marta, Alice e Stefano (Pulizia), parziali Luca, Tommaso, Francesca e Sara (che ha pagato il
+            // corso ma non il kit da 30 €, come Tommaso)
+            int saldati = indicatori().indexOf("Saldati: 3");
+            assertEquals(List.of("Saldati: 3", "Pagamento parziale: 5", "Senza pagamenti: 18",
+                    "Incassato: 2.457,50 € (19% del totale)", "Da incassare: 10.365,00 € (81% del totale)"),
                 indicatori().subList(saldati, saldati + 5));
 
             var grid = test((Grid<RiepilogoPagamenti>) find(Grid.class).all().getLast());

@@ -14,7 +14,7 @@ Guida per i **genitori**.
 
 ## Pagamenti
 
-**[Pagamenti](pagamenti-figli)**: quota, pagato e residuo per figlio e corso, divisi per stato (Da pagare, Parziale, Saldato). Il pulsante *Pagamenti* apre il dettaglio delle rate.
+**[Pagamenti](pagamenti-figli)**: quota (comprese le opzioni aggiuntive scelte, come il kit), pagato e residuo per figlio e corso, divisi per stato (Da pagare, Parziale, Saldato). Il pulsante *Pagamenti* apre il dettaglio delle rate.
 
 ## Documenti
 
