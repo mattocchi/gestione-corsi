@@ -2621,6 +2621,36 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_documenti_riepilogoCorsiConPdfEInvioAMe() throws IOException {
+        navigate(DocumentiView.class);
+        SegmentedControl<TipoDocumento> tipo = find(SegmentedControl.class).single();
+        test(tipo.getPulsante(TipoDocumento.RIEPILOGO_CORSI)).click();
+        try {
+            // Nessun elenco né filtri: un solo documento con PDF (anteprima e scarico) e invio alla propria email
+            assertFalse(find(Grid.class).exists());
+            assertFalse(find(TextField.class).withPlaceholder("Cerca").exists());
+            MenuBar pdf = find(MenuBar.class).single();
+            assertLinkPdf(pdf);
+            apriLink(find(com.vaadin.flow.component.html.Anchor.class).from(pdf).all().getFirst());
+            assertTrue(find(Span.class).withText("Mai inviato per email").exists());
+            test(find(Button.class).withText("Invia alla mia email").single()).click();
+            assertTrue(find(Paragraph.class).all().stream().anyMatch(p -> p.getText().contains("segreteria@example.com")));
+            test(find(Button.class).withText("Invia").single()).click();
+            InvioEmail invio = emailService.tuttiGliInvii().getFirst();
+            assertEquals(TipoDocumento.RIEPILOGO_CORSI, invio.getTipo());
+            assertEquals("segreteria", invio.getInviatoDa());
+            assertTrue(find(Span.class).all().stream().anyMatch(s -> s.getText().startsWith("Ultimo invio: ")));
+            // Tornando a un altro tipo i filtri ricompaiono
+            test(tipo.getPulsante(TipoDocumento.CONFERMA_ISCRIZIONE)).click();
+            assertTrue(find(TextField.class).withPlaceholder("Cerca").exists());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
+    }
+
+    @Test
     @WithUserDetails("genitore3")
     @SuppressWarnings("unchecked")
     void genitore_documenti_riepilogoEConfermeDeiFigliSenzaInvii() {

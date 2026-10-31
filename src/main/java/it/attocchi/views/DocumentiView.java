@@ -11,6 +11,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -90,6 +91,10 @@ public class DocumentiView extends VerticalLayout {
     private final Grid<DocumentoAttestazione> gridAttestazioni = new Grid<>();
     private final Grid<LetteraIncarico> gridLettere = new Grid<>();
     private final Button nuovaLettera = new Button("Nuova lettera di incarico", VaadinIcon.PLUS.create());
+    /** Filtri per anno, corso e ricerca: non servono al riepilogo dei corsi, che è uno solo. */
+    private final HorizontalLayout filtri = new HorizontalLayout();
+    private final Div riepilogoCorsi = new Div();
+    private final Span ultimoRiepilogoCorsi = new Span();
     private List<LetteraIncarico> lettere = List.of();
     private GridListDataView<LetteraIncarico> righeLettere;
     private boolean admin;
@@ -137,7 +142,7 @@ public class DocumentiView extends VerticalLayout {
             return;
         }
         tipo.setValue(TipoDocumento.CONFERMA_ISCRIZIONE);
-        tipo.addClassNames("max-w-xl");
+        tipo.addClassNames("max-w-3xl");
         tipo.addValueChangeListener(e -> aggiorna());
 
         filtroAnno.setPlaceholder("Tutti gli anni");
@@ -160,21 +165,47 @@ public class DocumentiView extends VerticalLayout {
                 InvioEmailDialog.inviaConferme(filtroCorso.getValue(), this::aggiorna);
             }
         });
-        HorizontalLayout filtri = new HorizontalLayout(filtroAnno, filtroCorso, ricerca, confermeATutti);
+        filtri.add(filtroAnno, filtroCorso, ricerca, confermeATutti);
         filtri.addClassNames("flex-wrap w-full items-center");
 
         creaGrigliaIscrizioni();
         creaGrigliaRiepiloghi();
         creaGrigliaAttestazioni();
         creaGrigliaLettere();
+        creaRiepilogoCorsi();
         nuovaLettera.addClickListener(e -> LetteraIncaricoDialog.apri(new LetteraIncarico(), username, this::aggiorna));
         filtri.add(nuovaLettera);
-        add(tipo, filtri, gridIscrizioni, gridRiepiloghi, gridAttestazioni, gridLettere);
+        add(tipo, filtri, gridIscrizioni, gridRiepiloghi, gridAttestazioni, gridLettere, riepilogoCorsi);
         gridLettere.addClassNames("grow");
         gridIscrizioni.addClassNames("grow");
         gridRiepiloghi.addClassNames("grow");
         gridAttestazioni.addClassNames("grow");
         aggiorna();
+    }
+
+    /**
+     * Riepilogo dei corsi attivi (solo staff): un solo documento, con le sezioni della dashboard e gli iscritti, da
+     * vedere, scaricare o inviare alla propria email.
+     */
+    private void creaRiepilogoCorsi() {
+        Paragraph descrizione = new Paragraph("Le sezioni della dashboard (riepilogo generale, pagamenti con costo "
+            + "insegnanti e margine, gruppi) e gli iscritti di ogni corso attivo, per gruppo, con orario e stato del "
+            + "pagamento. I dati sono quelli del momento in cui si apre il PDF.");
+        descrizione.addClassNames("m-0", Stili.TESTO_SECONDARIO);
+        MenuBar pdf = MenuPdf.conTesto("PDF", VaadinIcon.FILE_TEXT_O, () -> documentiService.riepilogoCorsiPer(username));
+        Button invia = new Button("Invia alla mia email", VaadinIcon.ENVELOPE.create(),
+            e -> inviaAMe(TipoDocumento.RIEPILOGO_CORSI, () -> emailService.inviaRiepilogoCorsiAMe(username),
+                inviato -> aggiornaUltimoRiepilogoCorsi()));
+        HorizontalLayout azioni = new HorizontalLayout(pdf, invia);
+        azioni.addClassNames("flex-wrap items-center p-0");
+        ultimoRiepilogoCorsi.addClassNames(Stili.TESTO_SECONDARIO);
+        riepilogoCorsi.add(descrizione, azioni, ultimoRiepilogoCorsi);
+        riepilogoCorsi.addClassNames("flex flex-col gap-3 max-w-2xl");
+    }
+
+    private void aggiornaUltimoRiepilogoCorsi() {
+        String ultimo = ultimoInvio(emailService.ultimoInvioRiepilogoCorsi().orElse(null));
+        ultimoRiepilogoCorsi.setText(ultimo.isEmpty() ? "Mai inviato per email" : "Ultimo invio: " + ultimo);
     }
 
     private void creaGrigliaIscrizioni() {
@@ -551,6 +582,17 @@ public class DocumentiView extends VerticalLayout {
 
     /** Ricarica l'elenco del tipo scelto mantenendo filtri e ricerca. */
     private void aggiorna() {
+        boolean perRiepilogoCorsi = tipo.getValue() == TipoDocumento.RIEPILOGO_CORSI;
+        riepilogoCorsi.setVisible(perRiepilogoCorsi);
+        filtri.setVisible(!perRiepilogoCorsi);
+        if (perRiepilogoCorsi) {
+            gridIscrizioni.setVisible(false);
+            gridRiepiloghi.setVisible(false);
+            gridAttestazioni.setVisible(false);
+            gridLettere.setVisible(false);
+            aggiornaUltimoRiepilogoCorsi();
+            return;
+        }
         boolean perRiepilogo = tipo.getValue() == TipoDocumento.RIEPILOGO;
         boolean perAttestazione = tipo.getValue() == TipoDocumento.ATTESTAZIONE;
         boolean perLettera = tipo.getValue() == TipoDocumento.LETTERA_INCARICO;
