@@ -30,7 +30,7 @@ import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
-import it.attocchi.views.SegmentedControl;
+import it.attocchi.views.Schede;
 import it.attocchi.views.StatoPagamentoUI;
 import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
@@ -93,8 +93,8 @@ public class RiepilogoIscrittiView extends VerticalLayout {
 
     private final PagamentoService pagamentoService;
     private final TreeGrid<Voce> grid = new TreeGrid<>();
-    private final SegmentedControl<FiltroStato> filtroCorsi = new SegmentedControl<>("Filtra per stato del corso",
-        List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Corsi: " + f.getEtichetta(), null);
+    private final Schede<FiltroStato> filtroCorsi = new Schede<>("Filtra per stato del corso",
+        List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Corsi: " + f.getEtichetta());
     private final ComboBox<String> filtroAnno;
     private final RicercaRapida ricerca = new RicercaRapida();
     private final List<Voce> corsiMostrati = new ArrayList<>();
@@ -142,10 +142,10 @@ public class RiepilogoIscrittiView extends VerticalLayout {
         Button comprimi = new Button("Comprimi tutti", VaadinIcon.MINUS_SQUARE_O.create(), e -> grid.collapse(corsiMostrati));
         espandi.addThemeVariants(ButtonVariant.TERTIARY);
         comprimi.addThemeVariants(ButtonVariant.TERTIARY);
-        HorizontalLayout filtri = new HorizontalLayout(filtroCorsi, filtroAnno, ricerca, espandi, comprimi);
+        HorizontalLayout filtri = new HorizontalLayout(filtroAnno, ricerca, espandi, comprimi);
         filtri.addClassNames("flex-wrap w-full items-center");
 
-        add(filtri, grid);
+        add(filtroCorsi, filtri, grid);
         grid.addClassNames("grow");
         applicaFiltri();
     }

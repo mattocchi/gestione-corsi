@@ -3012,7 +3012,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     /** Filtro per stato dei corsi (Gestione Corsi, Gestione Pagamenti, Riepilogo Iscritti): schede o tendina. */
     @SuppressWarnings("unchecked")
     private HasValue<?, CorsiView.FiltroStato> filtroStatoCorsi() {
-        return Stream.of(Schede.class, Select.class, SegmentedControl.class).flatMap(tipo -> find(tipo).all().stream())
+        return Stream.of(Schede.class, Select.class).flatMap(tipo -> find(tipo).all().stream())
             .map(c -> (HasValue<?, CorsiView.FiltroStato>) c)
             .filter(c -> c.getValue() instanceof CorsiView.FiltroStato).findFirst().orElseThrow();
     }
