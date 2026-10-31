@@ -12,16 +12,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Luogo;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.LuogoService;
 import it.attocchi.views.CardMobile;
-import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
-import jakarta.annotation.security.RolesAllowed;
 
 import java.util.Set;
 
@@ -29,18 +24,14 @@ import java.util.Set;
  * Luoghi di corsi e lezioni (Aula 1, Palestra, Esterno…): admin e segreteria li aggiungono, rinominano e
  * attivano/disattivano; solo l'admin elimina, e solo i luoghi che nessun corso o lezione usa.
  */
-@Route(value = "luoghi", layout = MainLayout.class)
-@PageTitle("Luoghi")
-@Menu(title = "Luoghi", order = 15.5, icon = "vaadin:map-marker")
-@RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class LuoghiView extends VerticalLayout {
+public class LuoghiScheda extends VerticalLayout {
 
     private final LuogoService luogoService;
     private final boolean puoEliminare;
     private final Grid<Luogo> grid = new Grid<>(Luogo.class, false);
     private Set<Long> usati = Set.of();
 
-    public LuoghiView(LuogoService luogoService, SecurityService securityService) {
+    public LuoghiScheda(LuogoService luogoService, SecurityService securityService) {
         this.luogoService = luogoService;
         this.puoEliminare = securityService.hasRole("ADMIN");
         addClassNames("size-full");

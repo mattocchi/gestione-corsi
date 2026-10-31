@@ -3,6 +3,7 @@ package it.attocchi.views;
 import it.attocchi.entity.LetteraIncarico;
 import it.attocchi.service.ElencoDocumentiService;
 import java.time.YearMonth;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.tabs.Tabs;
 import java.util.stream.Stream;
 import com.vaadin.flow.component.select.Select;
@@ -91,10 +92,7 @@ import it.attocchi.service.BilancioService;
 import it.attocchi.service.RimborsoService;
 import it.attocchi.entity.Rimborso;
 import it.attocchi.service.UserService;
-import it.attocchi.views.admin.AnniScolasticiView;
-import it.attocchi.views.admin.FestivitaView;
 import it.attocchi.views.admin.CorsiView;
-import it.attocchi.views.admin.LuoghiView;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
 import it.attocchi.views.admin.EmailDiTestDialog;
@@ -107,6 +105,7 @@ import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.NuovoAllievoRapidoDialog;
 import it.attocchi.views.admin.RiepilogoIscrittiView;
 import it.attocchi.views.admin.GestionePagamentiView;
+import it.attocchi.views.admin.ImpostazioniView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.InvioEmailDialog;
 import it.attocchi.views.admin.PartecipantiDialog;
@@ -1958,8 +1957,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_aggiungeEDisattivaAnniScolasticiSenzaElimina() {
         navigate(HomeView.class);
-        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Anni scolastici")));
-        navigate(AnniScolasticiView.class);
+        assertTrue(voceDiMenu("Impostazioni"));
+        navigate("anni-scolastici", ImpostazioniView.class);
         var anni = test((Grid<AnnoScolastico>) find(Grid.class).single());
         int quanti = anni.size();
         assertTrue(find(Button.class).all().stream().noneMatch(b -> "Elimina".equals(b.getElement().getAttribute("aria-label"))));
@@ -1996,7 +1995,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void admin_eliminaSoloAnniScolasticiNonUsati() {
         AnnoScolastico nuovo = annoScolasticoService.crea("2051/2052");
-        navigate(AnniScolasticiView.class);
+        navigate("anni-scolastici", ImpostazioniView.class);
         var anni = test((Grid<AnnoScolastico>) find(Grid.class).single());
         int quanti = anni.size();
         for (int row = 0; row < anni.size(); row++) {
@@ -2023,7 +2022,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void segreteria_festivitaNuovaProponeDiAggiornareLeLezioni() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         LocalDate giorno = lezioneService.findByCorso(canto.getId()).get(3).getData();
-        navigate(FestivitaView.class);
+        navigate("festivita", ImpostazioniView.class);
         test(find(Button.class).withText("Nuova Festività").single()).click();
         @SuppressWarnings("rawtypes")
         SegmentedControl<Festivita.Tipo> tipo = find(SegmentedControl.class).single();
@@ -2051,8 +2050,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_aggiungeEDisattivaFestivitaSenzaElimina() {
         navigate(HomeView.class);
-        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Festività")));
-        navigate(FestivitaView.class);
+        assertTrue(voceDiMenu("Impostazioni"));
+        navigate("festivita", ImpostazioniView.class);
         var festivita = test((Grid<Festivita>) find(Grid.class).single());
         int quante = festivita.size();
         assertTrue(find(Button.class).all().stream().noneMatch(b -> "Elimina".equals(b.getElement().getAttribute("aria-label"))));
@@ -2099,7 +2098,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         ponte.setTipo(Festivita.Tipo.DATE);
         ponte.setDataInizio(LocalDate.now().plusYears(4));
         festivitaService.salva(ponte);
-        navigate(FestivitaView.class);
+        navigate("festivita", ImpostazioniView.class);
         var festivita = test((Grid<Festivita>) find(Grid.class).single());
         int quante = festivita.size();
         int riga = IntStream.range(0, quante)
@@ -2346,8 +2345,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_aggiungeLuoghiSenzaElimina() {
         navigate(HomeView.class);
-        assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Luoghi")));
-        navigate(LuoghiView.class);
+        assertTrue(voceDiMenu("Impostazioni"));
+        navigate("luoghi", ImpostazioniView.class);
         var luoghi = test((Grid<Luogo>) find(Grid.class).single());
         int quanti = luoghi.size();
         assertTrue(find(Button.class).all().stream().noneMatch(b -> "Elimina".equals(b.getElement().getAttribute("aria-label"))));
@@ -2685,17 +2684,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Test
     @WithUserDetails("admin")
-    void admin_menuAGruppiConImpostazioniChiuse() {
+    void admin_menuAGruppiEImpostazioniASchede() {
         navigate(HomeView.class);
         List<SideNav> gruppi = find(SideNav.class).all();
-        assertEquals(List.of("Corsi e lezioni", "Persone", "Economia", "Documenti", "Impostazioni"),
+        assertEquals(List.of("Corsi e lezioni", "Persone", "Economia", "Documenti"),
             gruppi.stream().map(SideNav::getLabel).filter(java.util.Objects::nonNull).toList());
-        SideNav impostazioni = gruppi.stream().filter(g -> "Impostazioni".equals(g.getLabel())).findFirst().orElseThrow();
-        assertTrue(impostazioni.isCollapsible());
-        assertFalse(impostazioni.isExpanded());
-        // Arrivando su una sua pagina il gruppo si apre
-        navigate(FestivitaView.class);
-        assertTrue(impostazioni.isExpanded());
+        assertTrue(voceDiMenu("Impostazioni"));
+        assertFalse(voceDiMenu("Festività"));
+        // Il vecchio indirizzo apre Impostazioni sulla scheda giusta
+        navigate("festivita", ImpostazioniView.class);
+        assertEquals("Festività", find(TabSheet.class).single().getSelectedTab().getLabel());
+        navigate(ImpostazioniView.class);
+        assertEquals("Anni scolastici", find(TabSheet.class).single().getSelectedTab().getLabel());
     }
 
     @Test

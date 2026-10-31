@@ -4,7 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.server.menu.MenuEntry;
 import it.attocchi.views.MenuApp.Gruppo;
 import it.attocchi.views.MenuApp.Sezione;
-import it.attocchi.views.admin.AnniScolasticiView;
+import it.attocchi.views.admin.ImpostazioniView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.EmailInviateView;
 import it.attocchi.views.admin.GestionePagamentiView;
@@ -36,10 +36,10 @@ class MenuAppTest {
     }
 
     @Test
-    void staff_gruppiConTitoloEImpostazioniRichiudibili() {
+    void staff_gruppiConTitoloEImpostazioniInFondo() {
         List<Sezione> sezioni = MenuApp.organizza(List.of(HOME, CALENDARIO, voce("Corsi", 10, CorsiView.class),
             voce("Pagamenti", 10.5, GestionePagamentiView.class), voce("Cronologia", 10.8, EmailInviateView.class),
-            voce("Utenti", 12, UtentiView.class), voce("Anni", 15, AnniScolasticiView.class), DOCUMENTI),
+            voce("Utenti", 12, UtentiView.class), voce("Impostazioni", 15, ImpostazioniView.class), DOCUMENTI),
             Set.of("ADMIN"));
         assertEquals(List.of(Gruppo.GENERALE, Gruppo.CORSI, Gruppo.PERSONE, Gruppo.ECONOMIA, Gruppo.DOCUMENTI,
             Gruppo.IMPOSTAZIONI), sezioni.stream().map(Sezione::gruppo).toList());
@@ -47,7 +47,8 @@ class MenuAppTest {
         assertEquals("Corsi e lezioni", sezioni.get(1).titolo());
         // Documenti insieme alla Cronologia, nell'ordine di @Menu
         assertEquals(List.of("Cronologia", "Documenti"), titoli(sezioni.get(4)));
-        assertEquals(true, sezioni.get(5).gruppo().isRichiudibile());
+        assertNull(sezioni.get(5).titolo());
+        assertEquals(List.of("Impostazioni"), titoli(sezioni.get(5)));
     }
 
     @Test

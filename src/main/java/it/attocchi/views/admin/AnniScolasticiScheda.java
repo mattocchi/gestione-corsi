@@ -12,16 +12,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import it.attocchi.entity.AnnoScolastico;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.AnnoScolasticoService;
 import it.attocchi.views.CardMobile;
-import it.attocchi.views.MainLayout;
 import it.attocchi.views.ViewSupport;
-import jakarta.annotation.security.RolesAllowed;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,18 +26,14 @@ import java.util.Set;
  * Elenco degli anni scolastici che si possono scegliere per i corsi: admin e segreteria li aggiungono
  * e li attivano/disattivano; solo l'admin elimina, e solo gli anni che nessun corso usa.
  */
-@Route(value = "anni-scolastici", layout = MainLayout.class)
-@PageTitle("Anni scolastici")
-@Menu(title = "Anni scolastici", order = 15, icon = "vaadin:calendar-o")
-@RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class AnniScolasticiView extends VerticalLayout {
+public class AnniScolasticiScheda extends VerticalLayout {
 
     private final AnnoScolasticoService annoScolasticoService;
     private final boolean puoEliminare;
     private final Grid<AnnoScolastico> grid = new Grid<>(AnnoScolastico.class, false);
     private Set<String> usati = Set.of();
 
-    public AnniScolasticiView(AnnoScolasticoService annoScolasticoService, SecurityService securityService) {
+    public AnniScolasticiScheda(AnnoScolasticoService annoScolasticoService, SecurityService securityService) {
         this.annoScolasticoService = annoScolasticoService;
         this.puoEliminare = securityService.hasRole("ADMIN");
         addClassNames("size-full");

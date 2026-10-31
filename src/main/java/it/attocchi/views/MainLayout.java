@@ -17,8 +17,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.server.VaadinSession;
@@ -31,9 +29,7 @@ import it.attocchi.views.allievo.MieiPagamentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import jakarta.annotation.security.PermitAll;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,7 +39,7 @@ import java.util.stream.Stream;
  * {@link MenuConfiguration} restituisce solo le voci accessibili all'utente corrente.
  */
 @PermitAll
-public class MainLayout extends AppLayout implements BeforeEnterObserver, AfterNavigationObserver {
+public class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     /** Logo dell'associazione (risorsa statica, accessibile anche senza login). */
     public static final String LOGO = "images/logo-mosson.png";
@@ -61,8 +57,6 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver, AfterN
     private final AllievoService allievoService;
     /** Versione e data della build (goal build-info nel pom); assente se l'app non è stata costruita con Maven. */
     private final BuildProperties build;
-    /** Gruppi richiudibili del menu con i percorsi delle loro voci. */
-    private final Map<SideNav, List<String>> richiudibili = new HashMap<>();
 
     public MainLayout(SecurityService securityService, DashboardService dashboardService, AllievoService allievoService,
                       ObjectProvider<BuildProperties> build) {
@@ -171,27 +165,12 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver, AfterN
             if (sezione.titolo() != null) {
                 nav.setLabel(sezione.titolo());
             }
-            if (sezione.gruppo().isRichiudibile()) {
-                nav.setCollapsible(true);
-                nav.setExpanded(false);
-                richiudibili.put(nav, sezione.voci().stream().map(v -> v.path().replaceFirst("^/", "")).toList());
-            }
             sezione.voci().forEach(voce -> nav.addItem(createSideNavItem(voce)));
             menu.add(nav);
         }
         return menu;
     }
 
-    /** Un gruppo richiudibile si apre da sé quando si arriva su una sua pagina (es. da un collegamento). */
-    @Override
-    public void afterNavigation(AfterNavigationEvent event) {
-        String percorso = event.getLocation().getFirstSegment();
-        richiudibili.forEach((nav, percorsi) -> {
-            if (percorsi.contains(percorso)) {
-                nav.setExpanded(true);
-            }
-        });
-    }
 
     private SideNavItem createSideNavItem(MenuEntry entry) {
         SideNavItem item = new SideNavItem(entry.title(), entry.path());

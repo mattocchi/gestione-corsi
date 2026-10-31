@@ -2,15 +2,13 @@ package it.attocchi.views;
 
 import com.vaadin.flow.server.menu.MenuEntry;
 import it.attocchi.views.admin.AllieviView;
-import it.attocchi.views.admin.AnniScolasticiView;
 import it.attocchi.views.admin.CorsiView;
 import it.attocchi.views.admin.EmailInviateView;
-import it.attocchi.views.admin.FestivitaView;
 import it.attocchi.views.admin.GenitoriView;
 import it.attocchi.views.admin.GestionePagamentiView;
+import it.attocchi.views.admin.ImpostazioniView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.LezioniView;
-import it.attocchi.views.admin.LuoghiView;
 import it.attocchi.views.admin.RiepilogoIscrittiView;
 import it.attocchi.views.admin.RimborsiView;
 import it.attocchi.views.admin.UtentiView;
@@ -31,7 +29,7 @@ import java.util.Set;
 
 /**
  * Organizzazione del menu laterale per ruolo: ogni voce ({@code @Menu}, già filtrata per accesso) va in un gruppo.
- * Lo staff ha i gruppi con titolo (Corsi e lezioni, Persone, Economia, Documenti, Impostazioni richiudibile); chi ha
+ * Lo staff ha i gruppi con titolo (Corsi e lezioni, Persone, Economia, Documenti) e poi Impostazioni; chi ha
  * un solo ruolo tra insegnante, genitore e allievo ha una lista semplice; con più ruoli ogni ruolo ha il suo gruppo
  * con titolo. In alto Home e Calendario, in fondo profilo e guida.
  */
@@ -39,32 +37,26 @@ public final class MenuApp {
 
     /** Gruppo del menu, nell'ordine di visualizzazione; {@code titolo} null = senza titolo. */
     public enum Gruppo {
-        GENERALE(null, false),
-        CORSI("Corsi e lezioni", false),
-        PERSONE("Persone", false),
-        ECONOMIA("Economia", false),
-        DOCUMENTI("Documenti", false),
-        IMPOSTAZIONI("Impostazioni", true),
-        INSEGNANTE("Insegnante", false),
-        FAMIGLIA("Famiglia", false),
-        ALLIEVO("Allievo", false),
-        ACCOUNT(null, false);
+        GENERALE(null),
+        CORSI("Corsi e lezioni"),
+        PERSONE("Persone"),
+        ECONOMIA("Economia"),
+        DOCUMENTI("Documenti"),
+        /** Impostazioni dello staff, senza titolo, in fondo ai suoi gruppi. */
+        IMPOSTAZIONI(null),
+        INSEGNANTE("Insegnante"),
+        FAMIGLIA("Famiglia"),
+        ALLIEVO("Allievo"),
+        ACCOUNT(null);
 
         private final String titolo;
-        private final boolean richiudibile;
 
-        Gruppo(String titolo, boolean richiudibile) {
+        Gruppo(String titolo) {
             this.titolo = titolo;
-            this.richiudibile = richiudibile;
         }
 
         public String getTitolo() {
             return titolo;
-        }
-
-        /** Richiudibile e chiuso all'inizio (pagine usate di rado). */
-        public boolean isRichiudibile() {
-            return richiudibile;
         }
     }
 
@@ -90,9 +82,7 @@ public final class MenuApp {
         Map.entry(GestionePagamentiView.class, Gruppo.ECONOMIA),
         Map.entry(RimborsiView.class, Gruppo.ECONOMIA),
         Map.entry(EmailInviateView.class, Gruppo.DOCUMENTI),
-        Map.entry(AnniScolasticiView.class, Gruppo.IMPOSTAZIONI),
-        Map.entry(LuoghiView.class, Gruppo.IMPOSTAZIONI),
-        Map.entry(FestivitaView.class, Gruppo.IMPOSTAZIONI),
+        Map.entry(ImpostazioniView.class, Gruppo.IMPOSTAZIONI),
         Map.entry(LezioniInsegnanteView.class, Gruppo.INSEGNANTE),
         Map.entry(MieiAllieviView.class, Gruppo.INSEGNANTE),
         Map.entry(MieiRimborsiView.class, Gruppo.INSEGNANTE),

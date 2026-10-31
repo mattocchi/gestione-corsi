@@ -33,6 +33,9 @@ application per chi la usa, ruolo per ruolo.
 - Il mio profilo anche per admin e segreteria: nome, cognome, email, telefono e password modificabili, username e ruoli
   in sola lettura; se l'utente ha anche una scheda (insegnante, genitore, allievo) resta il profilo di quella scheda.
 - Impostazioni: Anni scolastici, Luoghi e Festività in una pagina a schede; i vecchi indirizzi aprono la scheda giusta.
+- Tecnica (passo 3.1): con una sola voce "Impostazioni" il gruppo richiudibile omonimo non serve più: la voce sta
+  senza titolo in fondo ai gruppi dello staff; tolto il codice dei gruppi richiudibili (`MainLayout.afterNavigation`).
+  Le tre viste diventano `AnniScolasticiScheda`, `LuoghiScheda`, `FestivitaScheda` (senza `@Route`).
 - Guida: una pagina per ruolo, compatta: per ogni voce del menu a cosa serve e le 2-4 operazioni principali, con il
   collegamento alla pagina; con più ruoli una scheda per ruolo.
 - Home: sezioni nell'ordine e coi nomi dei gruppi del menu; card cliccabili che aprono la pagina collegata (con il
@@ -45,7 +48,7 @@ application per chi la usa, ruolo per ruolo.
 | 1.1 | Menu a gruppi per ruolo: `views/MenuApp` (gruppo di ogni voce, regole per ruolo), `MainLayout` con più `SideNav` | `MainLayout`, `MenuApp`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 1.2 | Nomi brevi e coerenti: `@Menu`, `@PageTitle`, titoli e test | viste, test | `./mvnw test` | [x] |
 | 2.1 | Il mio profilo per admin e segreteria | `ProfiloView`, test | `./mvnw test` | [x] |
-| 3.1 | Impostazioni a schede con Anni scolastici, Luoghi, Festività; vecchi indirizzi come alias | `ImpostazioniView`, viste admin, `MenuApp`, test | `./mvnw test` | [ ] |
+| 3.1 | Impostazioni a schede con Anni scolastici, Luoghi, Festività; vecchi indirizzi come alias | `ImpostazioniView`, viste admin, `MenuApp`, test | `./mvnw test` | [x] |
 | 4.1 | Home: sezioni nell'ordine e coi nomi dei gruppi | `HomeView`, test | `./mvnw test` | [ ] |
 | 4.2 | Home: card cliccabili verso le pagine (filtri da indirizzo dove servono) | `HomeView`, viste di destinazione, test | `./mvnw test` | [ ] |
 | 5.1 | Guida: pagina per ruolo con i testi, voce in fondo al menu | `GuidaView`, risorse, test | `./mvnw test` | [ ] |

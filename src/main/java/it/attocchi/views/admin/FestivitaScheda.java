@@ -17,20 +17,15 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import it.attocchi.entity.Festivita;
 import it.attocchi.entity.Festivita.Tipo;
 import it.attocchi.security.SecurityService;
 import it.attocchi.service.FestivitaService;
 import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
-import it.attocchi.views.MainLayout;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.Stili;
 import it.attocchi.views.ViewSupport;
-import jakarta.annotation.security.RolesAllowed;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -43,33 +38,29 @@ import java.util.stream.IntStream;
  * Festività saltate da "Genera Lezioni": admin e segreteria le aggiungono, modificano e attivano/disattivano;
  * solo l'admin elimina. In elenco dalla più vicina.
  */
-@Route(value = "festivita", layout = MainLayout.class)
-@PageTitle("Festività")
-@Menu(title = "Festività", order = 16, icon = "vaadin:flag-o")
-@RolesAllowed({"ADMIN", "SEGRETERIA"})
-public class FestivitaView extends VerticalLayout {
+public class FestivitaScheda extends VerticalLayout {
 
     private final FestivitaService festivitaService;
     private final boolean puoEliminare;
     private final Grid<Festivita> grid = new Grid<>(Festivita.class, false);
 
-    public FestivitaView(FestivitaService festivitaService, SecurityService securityService) {
+    public FestivitaScheda(FestivitaService festivitaService, SecurityService securityService) {
         this.festivitaService = festivitaService;
         this.puoEliminare = securityService.hasRole("ADMIN");
         addClassNames("size-full");
 
         grid.addColumn(Festivita::getNome).setHeader("Nome").setSortable(true);
-        grid.addColumn(FestivitaView::quando).setHeader("Quando");
-        grid.addColumn(FestivitaView::prossima).setHeader("Prossima")
-            .setComparator(Comparator.comparing(FestivitaView::prossimaData, Comparator.nullsLast(Comparator.naturalOrder())))
+        grid.addColumn(FestivitaScheda::quando).setHeader("Quando");
+        grid.addColumn(FestivitaScheda::prossima).setHeader("Prossima")
+            .setComparator(Comparator.comparing(FestivitaScheda::prossimaData, Comparator.nullsLast(Comparator.naturalOrder())))
             .setWidth("11rem").setFlexGrow(0);
-        grid.addComponentColumn(FestivitaView::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
+        grid.addComponentColumn(FestivitaScheda::createStatoBadge).setHeader("Stato").setWidth("8.5rem").setFlexGrow(0);
         ViewSupport.configureActionsColumn(grid.addComponentColumn(this::createAzioni));
         CardMobile.per(grid)
             .titolo(Festivita::getNome)
-            .stato(FestivitaView::createStatoBadge)
-            .campo("Quando", FestivitaView::quando)
-            .campo("Prossima", FestivitaView::prossima)
+            .stato(FestivitaScheda::createStatoBadge)
+            .campo("Quando", FestivitaScheda::quando)
+            .campo("Prossima", FestivitaScheda::prossima)
             .azioni(this::createAzioni)
             .applica();
 
@@ -238,7 +229,7 @@ public class FestivitaView extends VerticalLayout {
     private static ComboBox<Integer> mese(String etichetta) {
         ComboBox<Integer> mese = new ComboBox<>(etichetta);
         mese.setItems(IntStream.rangeClosed(1, 12).boxed().toList());
-        mese.setItemLabelGenerator(FestivitaView::nomeMese);
+        mese.setItemLabelGenerator(FestivitaScheda::nomeMese);
         mese.setClearButtonVisible(true);
         return mese;
     }
@@ -266,7 +257,7 @@ public class FestivitaView extends VerticalLayout {
 
     private void updateGrid() {
         List<Festivita> elenco = festivitaService.elenco().stream()
-            .sorted(Comparator.comparing(FestivitaView::prossimaData, Comparator.nullsLast(Comparator.naturalOrder())))
+            .sorted(Comparator.comparing(FestivitaScheda::prossimaData, Comparator.nullsLast(Comparator.naturalOrder())))
             .toList();
         grid.setItems(elenco);
     }
