@@ -1599,8 +1599,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             // In Lezioni il filtro offre anche il corso non attivo, con le sue lezioni
             navigate(LezioniView.class);
-            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
-            test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
+            Schede<FiltroLezioni> filtro = find(Schede.class).single();
+            filtro.setValue(FiltroLezioni.TUTTE);
             var lezioni = test(find(Grid.class).single());
             ComboBox<Corso> filtroCorso = find(ComboBox.class).withPlaceholder("Tutti i corsi").single();
             Corso nonAttivo = filtroCorso.getListDataView().getItems()
@@ -1620,8 +1620,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Corso chitarra = disattiva("Corso di Chitarra");
         try {
             apriLezioni();
-            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
-            test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
+            Schede<FiltroLezioni> filtro = find(Schede.class).single();
+            filtro.setValue(FiltroLezioni.TUTTE);
             assertEquals(0, test(find(Grid.class).single()).size());
 
             navigate(HomeView.class);
@@ -4327,8 +4327,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("insegnante assente", salvata.getMotivoNonEffettuata());
             assertEquals(29, grid.size());
 
-            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
-            test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
+            Schede<FiltroLezioni> filtro = find(Schede.class).single();
+            filtro.setValue(FiltroLezioni.NON_EFFETTUATE);
             assertEquals(1, grid.size());
             assertEquals("Non effettuata", ((Badge) grid.getCellComponent(0, 5)).getText());
 
@@ -4355,8 +4355,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             apriLezioni();
             var grid = test((Grid<Lezione>) find(Grid.class).single());
-            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
-            test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
+            Schede<FiltroLezioni> filtro = find(Schede.class).single();
+            filtro.setValue(FiltroLezioni.NON_EFFETTUATE);
             test(pulsante(grid.getCellComponent(0, 6), "Gestisci Presenze")).click();
             test(find(Button.class).withText("Recupera").single()).click();
 
@@ -4368,7 +4368,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
             test(find(Button.class).withText("Salva").single()).click();
 
-            test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
+            filtro.setValue(FiltroLezioni.DA_FARE);
             int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getRecuperoDi() != null).findFirst().orElseThrow();
             Lezione recupero = grid.getRow(riga);
             assertEquals(saltata.getNumeroLezione() + " · Recupero", grid.getCellText(riga, 2));
@@ -4418,8 +4418,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Lezione recupero = null;
         try {
             assertTrue(lezioneService.findById(lezione.getId()).isNonEffettuata());
-            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
-            test(filtro.getPulsante(FiltroLezioni.NON_EFFETTUATE)).click();
+            Schede<FiltroLezioni> filtro = find(Schede.class).single();
+            filtro.setValue(FiltroLezioni.NON_EFFETTUATE);
             test(pulsante(grid.getCellComponent(0, 7), "Gestisci Presenze")).click();
             test(find(Button.class).withText("Recupera").single()).click();
             test(find(DatePicker.class).withLabel("Data").single()).setValue(LocalDate.now());
@@ -4428,7 +4428,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .filter(l -> l.getRecuperoDi() != null).findFirst().orElseThrow();
 
             // La segreteria non elimina le lezioni aggiunte
-            test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
+            filtro.setValue(FiltroLezioni.DA_FARE);
             Long idRecupero = recupero.getId();
             int riga = IntStream.range(0, grid.size()).filter(r -> grid.getRow(r).getId().equals(idRecupero)).findFirst().orElseThrow();
             test(pulsante(grid.getCellComponent(riga, 7), "Gestisci Presenze")).click();
@@ -4676,22 +4676,22 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             apriLezioni();
             var grid = test(find(Grid.class).single());
-            SegmentedControl<FiltroLezioni> filtro = find(SegmentedControl.class).single();
+            Schede<FiltroLezioni> filtro = find(Schede.class).single();
 
             // default: solo le lezioni da fare
             assertEquals(FiltroLezioni.DA_FARE, filtro.getValue());
             assertEquals(29, grid.size());
 
-            test(filtro.getPulsante(FiltroLezioni.COMPLETATE)).click();
+            filtro.setValue(FiltroLezioni.COMPLETATE);
             assertEquals(1, grid.size());
             Badge badge = (Badge) grid.getCellComponent(0, 5);
             assertEquals("Completata", badge.getText());
             assertTrue(badge.getThemeNames().contains(BadgeVariant.SUCCESS.getVariantName()));
 
-            test(filtro.getPulsante(FiltroLezioni.TUTTE)).click();
+            filtro.setValue(FiltroLezioni.TUTTE);
             assertEquals(30, grid.size());
 
-            test(filtro.getPulsante(FiltroLezioni.DA_FARE)).click();
+            filtro.setValue(FiltroLezioni.DA_FARE);
             assertEquals(29, grid.size());
             assertEquals("Da fare", ((Badge) grid.getCellComponent(0, 5)).getText());
         } finally {

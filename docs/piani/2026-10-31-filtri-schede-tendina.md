@@ -29,7 +29,7 @@ documenti, Gestione Corsi e Calendario, come il tipo di documento in Documenti.
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Componente `Schede<T>` (Tabs con valore) e `DocumentiView` che lo usa | `views/Schede`, `DocumentiView`, test | `./mvnw test` | [x] |
-| 2 | Lezioni / Le Mie Lezioni: stato a schede | `ElencoLezioni`, `ViewAccessTest` | `./mvnw test` | [ ] |
+| 2 | Lezioni / Le Mie Lezioni: stato a schede | `ElencoLezioni`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 3 | Gestione Corsi: stato a schede, tipo a tendina | `CorsiView`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 4 | Gestione Pagamenti e Pagamenti del genitore: pagamento a schede, stato del corso a tendina | `ElencoPagamenti`, `ViewAccessTest` | `./mvnw test` | [ ] |
 | 5 | Riepilogo Iscritti: stato dei corsi a schede | `RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test` | [ ] |

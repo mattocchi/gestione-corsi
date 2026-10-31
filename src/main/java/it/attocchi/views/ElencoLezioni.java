@@ -96,8 +96,8 @@ public class ElencoLezioni extends VerticalLayout {
     private CalendarioFestivita festivita;
 
     private final Grid<Lezione> gridLezioni = new Grid<>(Lezione.class, false);
-    private final SegmentedControl<FiltroLezioni> filtro = new SegmentedControl<>("Filtra le lezioni per stato",
-        List.of(FiltroLezioni.values()), FiltroLezioni::getEtichetta, f -> "Mostra lezioni: " + f.getEtichetta(), null);
+    private final Schede<FiltroLezioni> filtro = new Schede<>("Filtra le lezioni per stato",
+        List.of(FiltroLezioni.values()), FiltroLezioni::getEtichetta, f -> "Mostra lezioni: " + f.getEtichetta());
     private GridListDataView<Lezione> lezioni;
 
     /**
@@ -127,11 +127,10 @@ public class ElencoLezioni extends VerticalLayout {
 
         // Di default solo le lezioni ancora da fare
         filtro.setValue(FiltroLezioni.DA_FARE);
-        filtro.addClassNames("max-w-lg");
         filtro.addValueChangeListener(e -> applicaFiltro());
 
         Button nuova = new Button("Nuova lezione", VaadinIcon.PLUS.create(), e -> apriNuovaLezione(null));
-        HorizontalLayout barra = new HorizontalLayout(filtro);
+        HorizontalLayout barra = new HorizontalLayout();
         if (tuttiICorsi) {
             filtroCorso.setPlaceholder("Tutti i corsi");
             filtroCorso.setAriaLabel("Filtra per corso");
@@ -149,7 +148,7 @@ public class ElencoLezioni extends VerticalLayout {
         }
         barra.add(nuova);
         barra.addClassNames("flex-wrap items-center");
-        add(barra, gridLezioni);
+        add(filtro, barra, gridLezioni);
         gridLezioni.addClassNames("grow");
         updateGrid();
     }
