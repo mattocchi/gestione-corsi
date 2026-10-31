@@ -19,6 +19,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.OpzioneCorso;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.entity.Allievo;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.PagamentoService;
@@ -198,8 +199,8 @@ public class PartecipantiCorso extends VerticalLayout {
     }
 
     /**
-     * Quota dovuta (opzioni attive comprese) e, sotto, da dove viene: "Prezzo di listino" o "Personalizzata" con la nota
-     * e la differenza dal listino; con opzioni attive anche il dettaglio corso + opzioni.
+     * Quota dovuta (opzioni attive comprese) e, sotto, da dove viene: "Prezzo di listino", "Pre-iscrizione" o
+     * "Personalizzata" con la nota, e la differenza dal listino; con opzioni attive anche il dettaglio corso + opzioni.
      */
     private Div createQuota(Iscrizione iscrizione) {
         Span importo = new Span(Formati.euro(iscrizione.getQuotaDovuta()));
@@ -209,19 +210,20 @@ public class PartecipantiCorso extends VerticalLayout {
         BigDecimal listino = corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
         Div origine = new Div();
         origine.addClassNames("flex flex-wrap items-center gap-1");
-        if (iscrizione.getQuotaPersonalizzata() == null) {
+        TipoQuota tipo = iscrizione.getTipoQuota();
+        if (tipo == TipoQuota.PIENA) {
             Span testo = new Span("Prezzo di listino");
             testo.addClassNames(Stili.TESTO_SECONDARIO);
             origine.add(testo);
         } else {
-            String nota = iscrizione.getNotaQuota();
-            Span testo = new Span("Personalizzata" + (nota != null && !nota.isBlank() ? " · " + nota : ""));
+            String nota = tipo == TipoQuota.PERSONALIZZATA ? iscrizione.getNotaQuota() : null;
+            Span testo = new Span(tipo.getDescrizione() + (nota != null && !nota.isBlank() ? " · " + nota : ""));
             testo.addClassNames(Stili.TESTO_SECONDARIO);
             origine.add(testo);
-            int confronto = iscrizione.getQuotaPersonalizzata().compareTo(listino);
+            int confronto = iscrizione.getQuotaCorso().compareTo(listino);
             if (confronto != 0) {
                 Badge differenza = new Badge((confronto < 0 ? "-" : "+")
-                    + Formati.euro(listino.subtract(iscrizione.getQuotaPersonalizzata()).abs()));
+                    + Formati.euro(listino.subtract(iscrizione.getQuotaCorso()).abs()));
                 differenza.addThemeVariants(confronto < 0 ? BadgeVariant.SUCCESS : BadgeVariant.WARNING);
                 origine.add(differenza);
             }

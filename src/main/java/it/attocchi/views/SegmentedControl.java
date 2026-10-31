@@ -57,6 +57,15 @@ public class SegmentedControl<T> extends AbstractCompositeField<Div, SegmentedCo
         setPresentationValue(null);
     }
 
+    /** Attiva o disattiva una singola opzione; {@code motivo} (o {@code null}) diventa il tooltip quando è disattivata. */
+    public void setOpzioneAttiva(T opzione, boolean attiva, String motivo) {
+        Button pulsante = pulsanti.get(opzione);
+        pulsante.setEnabled(attiva);
+        if (!attiva && motivo != null) {
+            pulsante.setTooltipText(motivo);
+        }
+    }
+
     /** Pulsante associato a un'opzione (usato nei test). */
     Button getPulsante(T opzione) {
         return pulsanti.get(opzione);

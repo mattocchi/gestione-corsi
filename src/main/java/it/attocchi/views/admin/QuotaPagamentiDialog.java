@@ -21,6 +21,7 @@ import it.attocchi.entity.Corso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.entity.Allievo;
 import it.attocchi.service.EmailService;
 import it.attocchi.service.PagamentoService;
@@ -67,12 +68,23 @@ public class QuotaPagamentiDialog extends Dialog {
             + (corso.getPrezzoPreiscrizione() != null ? " · pre-iscrizione " + Formati.euro(corso.getPrezzoPreiscrizione()) : ""));
         corsoInfo.addClassNames(Stili.TESTO_SECONDARIO);
 
+        // Quota piena o pre-iscrizione del corso con un tocco, oppure personalizzata con importo e motivo
+        BigDecimal preiscrizione = corso.getPrezzoPreiscrizione();
+        SegmentedControl<TipoQuota> tipo = new SegmentedControl<>("Quota applicata", List.of(TipoQuota.values()),
+            TipoQuota::getDescrizione, t -> switch (t) {
+                case PIENA -> "Quota piena: " + Formati.euro(corso.getCostoTotale());
+                case PREISCRIZIONE -> "Pre-iscrizione" + (preiscrizione != null ? ": " + Formati.euro(preiscrizione) : "");
+                case PERSONALIZZATA -> "Quota personalizzata, con il motivo";
+            }, null);
+        tipo.setOpzioneAttiva(TipoQuota.PREISCRIZIONE, preiscrizione != null || iscrizione.getTipoQuota() == TipoQuota.PREISCRIZIONE,
+            "Il corso non ha un prezzo di pre-iscrizione");
+        tipo.setValue(iscrizione.getTipoQuota());
+
         BigDecimalField quota = new BigDecimalField("Quota personalizzata");
         quota.setLocale(Locale.ITALY);
         quota.setPrefixComponent(new Span("€"));
-        quota.setPlaceholder("quota piena");
         quota.setClearButtonVisible(true);
-        quota.setHelperText("Vuota = quota piena del corso");
+        quota.setHelperText("Quota del corso per questo allievo; vuota = quota piena");
         quota.setValue(iscrizione.getQuotaPersonalizzata());
 
         // Motivo: suggerisce quelli già usati (prima i più frequenti), se ne può scrivere uno nuovo
@@ -95,15 +107,46 @@ public class QuotaPagamentiDialog extends Dialog {
             }
             motivo.setValue(nuovo.isEmpty() ? null : nuovo);
         });
-        motivo.setEnabled(iscrizione.getQuotaPersonalizzata() != null);
-
-        quota.addValueChangeListener(e -> {
-            motivo.setEnabled(e.getValue() != null);
-            salvaQuota(e.getValue(), motivo.getValue());
-        });
-        motivo.addValueChangeListener(e -> salvaQuota(quota.getValue(), e.getValue()));
 
         FormLayout quotaForm = new FormLayout(quota, motivo);
+        quotaForm.setVisible(tipo.getValue() == TipoQuota.PERSONALIZZATA);
+        tipo.addValueChangeListener(e -> {
+            if (!e.isFromClient() || e.getValue() == null) {
+                return;
+            }
+            quotaForm.setVisible(e.getValue() == TipoQuota.PERSONALIZZATA);
+            if (e.getValue() == TipoQuota.PERSONALIZZATA) {
+                // Si salva quando c'è l'importo
+                if (quota.getValue() != null) {
+                    salvaQuota(quota.getValue(), motivo.getValue());
+                } else {
+                    quota.focus();
+                }
+                return;
+            }
+            try {
+                pagamentoService.impostaTipoQuota(corso.getId(), allievo.getId(), e.getValue());
+                aggiornaRiepilogo();
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio della quota: " + ex.getMessage());
+            }
+        });
+        quota.addValueChangeListener(e -> {
+            if (!quotaForm.isVisible()) {
+                return;
+            }
+            if (e.getValue() == null) {
+                // Svuotata: torna la quota piena
+                tipo.setValue(TipoQuota.PIENA);
+                quotaForm.setVisible(false);
+            }
+            salvaQuota(e.getValue(), motivo.getValue());
+        });
+        motivo.addValueChangeListener(e -> {
+            if (quotaForm.isVisible() && quota.getValue() != null) {
+                salvaQuota(quota.getValue(), e.getValue());
+            }
+        });
 
         Button aggiungi = new Button("Aggiungi pagamento", VaadinIcon.PLUS.create(),
             e -> apriPagamento(pagamentoService, corso.getId(), allievo.getId(), new Pagamento(), this::aggiorna));
@@ -112,7 +155,7 @@ public class QuotaPagamentiDialog extends Dialog {
         aggiorna();
 
         invii.setAllRowsVisible(true);
-        VerticalLayout content = new VerticalLayout(corsoInfo, ViewSupport.sezione("Quota"), quotaForm, riepilogo,
+        VerticalLayout content = new VerticalLayout(corsoInfo, ViewSupport.sezione("Quota"), tipo, quotaForm, riepilogo,
             ViewSupport.sezione("Pagamenti"), aggiungi, grid, ViewSupport.sezione("Email inviate"), invii);
         content.addClassNames("p-0");
         add(content);

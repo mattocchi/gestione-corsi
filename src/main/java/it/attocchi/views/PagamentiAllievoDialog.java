@@ -6,6 +6,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.service.PagamentoService.Situazione;
 
@@ -30,9 +31,11 @@ public class PagamentiAllievoDialog extends Dialog {
         riepilogo.addClassNames(Stili.RIEPILOGO_PAGAMENTI);
 
         VerticalLayout content = new VerticalLayout(riepilogo);
-        if (iscrizione.getQuotaPersonalizzata() != null) {
-            Span quota = new Span("Quota personalizzata (quota piena " + Formati.euro(iscrizione.getCorso().getCostoTotale()) + ")"
-                + (iscrizione.getNotaQuota() != null ? ": " + iscrizione.getNotaQuota() : ""));
+        if (iscrizione.getTipoQuota() != TipoQuota.PIENA) {
+            Span quota = new Span((iscrizione.getTipoQuota() == TipoQuota.PREISCRIZIONE ? "Quota di pre-iscrizione"
+                : "Quota personalizzata") + " (quota piena " + Formati.euro(iscrizione.getCorso().getCostoTotale()) + ")"
+                + (iscrizione.getTipoQuota() == TipoQuota.PERSONALIZZATA && iscrizione.getNotaQuota() != null
+                    ? ": " + iscrizione.getNotaQuota() : ""));
             quota.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(quota);
         }

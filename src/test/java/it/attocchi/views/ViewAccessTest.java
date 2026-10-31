@@ -58,6 +58,7 @@ import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Luogo;
@@ -1994,7 +1995,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(pulsante(partecipanti.getCellComponent(riga, 4), "Quota e pagamenti di Allievo Canto2")).click();
 
         QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+        SegmentedControl<TipoQuota> tipo = tipoQuota(dialog);
+        assertEquals(TipoQuota.PIENA, tipo.getValue());
+        // Il corso non ha il prezzo di pre-iscrizione; importo e motivo solo per la personalizzata
+        assertFalse(tipo.getPulsante(TipoQuota.PREISCRIZIONE).isEnabled());
+        assertFalse(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").exists());
         try {
+            test(tipo.getPulsante(TipoQuota.PERSONALIZZATA)).click();
             new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
                 .setValue(new BigDecimal("450"));
             // Motivo nuovo scritto a mano (valore personalizzato della ComboBox)
@@ -2013,8 +2020,58 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).from(quota).withText("450,00 €").exists());
             assertTrue(find(Span.class).from(quota).withText("Personalizzata · fratelli").exists());
             assertEquals("-150,00 €", find(Badge.class).from(quota).single().getText());
+
+            // Tornata la quota piena: niente importo né motivo
+            test(pulsante(partecipanti.getCellComponent(riga, 4), "Quota e pagamenti di Allievo Canto2")).click();
+            QuotaPagamentiDialog riaperto = find(QuotaPagamentiDialog.class).single();
+            SegmentedControl<TipoQuota> tipoRiaperto = tipoQuota(riaperto);
+            assertEquals(TipoQuota.PERSONALIZZATA, tipoRiaperto.getValue());
+            test(tipoRiaperto.getPulsante(TipoQuota.PIENA)).click();
+            Iscrizione piena = pagamentoService.findIscrizione(corsoId, allievoId);
+            assertEquals(TipoQuota.PIENA, piena.getTipoQuota());
+            assertNull(piena.getQuotaPersonalizzata());
+            assertNull(piena.getNotaQuota());
+            riaperto.close();
+            assertTrue(find(Span.class).from(partecipanti.getCellComponent(riga, "quota")).withText("Prezzo di listino").exists());
         } finally {
             pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+        }
+    }
+
+    /** Scelta "Quota applicata" (piena, pre-iscrizione, personalizzata) del dialog Quota e pagamenti. */
+    @SuppressWarnings("unchecked")
+    private SegmentedControl<TipoQuota> tipoQuota(QuotaPagamentiDialog dialog) {
+        return find(SegmentedControl.class).from(dialog).all().stream()
+            .filter(c -> "Quota applicata".equals(c.getElement().getAttribute("aria-label"))).findFirst().orElseThrow();
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_applicaLaQuotaDiPreiscrizione() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        Long allievoId = allievoService.findByUsername("allievo_canto2").orElseThrow().getId();
+        canto.setPrezzoPreiscrizione(new BigDecimal("510"));
+        corsoService.save(canto);
+        try {
+            var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(apriPartecipanti("Corso di Canto")).single());
+            int riga = IntStream.range(0, partecipanti.size())
+                .filter(r -> partecipanti.getCellText(r, 1).equals("Allievo Canto2")).findFirst().orElseThrow();
+            test(pulsante(partecipanti.getCellComponent(riga, 4), "Quota e pagamenti di Allievo Canto2")).click();
+            QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+            SegmentedControl<TipoQuota> tipo = tipoQuota(dialog);
+            test(tipo.getPulsante(TipoQuota.PREISCRIZIONE)).click();
+            assertEquals(TipoQuota.PREISCRIZIONE, pagamentoService.findIscrizione(canto.getId(), allievoId).getTipoQuota());
+            assertTrue(find(Span.class).from(dialog).withText("Da pagare 510,00 €").exists());
+            dialog.close();
+            Component quota = partecipanti.getCellComponent(riga, "quota");
+            assertTrue(find(Span.class).from(quota).withText("Pre-iscrizione").exists());
+            assertEquals("-90,00 €", find(Badge.class).from(quota).single().getText());
+        } finally {
+            pagamentoService.impostaQuota(canto.getId(), allievoId, null, null);
+            Corso ripristino = corsoService.findById(canto.getId());
+            ripristino.setPrezzoPreiscrizione(null);
+            corsoService.save(ripristino);
         }
     }
 
@@ -2038,11 +2095,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
             new QuotaPagamentiDialog(pagamentoService, canto, allievo).open();
             QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+            // Importo e motivo compaiono scegliendo la quota personalizzata
+            assertFalse(find(ComboBox.class).from(dialog).withLabel("Motivo").exists());
+            SegmentedControl<TipoQuota> tipo = tipoQuota(dialog);
+            test(tipo.getPulsante(TipoQuota.PERSONALIZZATA)).click();
             ComboBox<String> motivo = find(ComboBox.class).from(dialog).withLabel("Motivo").single();
-            assertFalse(motivo.isEnabled());
             new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
                 .setValue(new BigDecimal("400"));
-            assertTrue(motivo.isEnabled());
             assertTrue(motivo.getListDataView().getItems().toList().containsAll(List.of("Fratelli", "Borsa di studio")));
             test(motivo).selectItem("Borsa di studio");
             assertEquals("Borsa di studio", pagamentoService.findIscrizione(canto.getId(), allievo.getId()).getNotaQuota());
@@ -2083,7 +2142,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             test(find(Button.class).from(dialog).withText("Aggiungi pagamento").single()).click();
             BigDecimalField importo = find(BigDecimalField.class).withLabel("Importo").single();
             assertEquals(0, new BigDecimal("600").compareTo(importo.getValue()));
-            SegmentedControl<MetodoPagamento> metodo = find(SegmentedControl.class).single();
+            SegmentedControl<MetodoPagamento> metodo = find(SegmentedControl.class).all().stream()
+                .filter(c -> "Metodo di pagamento".equals(c.getElement().getAttribute("aria-label"))).findFirst().orElseThrow();
             assertEquals(MetodoPagamento.BONIFICO, metodo.getValue());
             new TextFieldTester<>(importo).setValue(new BigDecimal("200"));
             test(metodo.getPulsante(MetodoPagamento.CASSA)).click();
@@ -2157,6 +2217,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             riga = rigaDi(righe, allievo);
             test(pulsante(righe.getCellComponent(riga, "azioni"), "Quota e pagamenti")).click();
             QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
+            test(tipoQuota(dialog).getPulsante(TipoQuota.PERSONALIZZATA)).click();
             new TextFieldTester<>(find(BigDecimalField.class).from(dialog).withLabel("Quota personalizzata").single())
                 .setValue(new BigDecimal("400"));
             test(find(Button.class).from(dialog).withText("Chiudi").single()).click();
