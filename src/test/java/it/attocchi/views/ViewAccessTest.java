@@ -3129,11 +3129,32 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_inviaLeConfermeATuttiGliIscritti() {
-        // Non più da Partecipanti, ma da Documenti scelto il corso
-        navigate(CorsiView.class);
-        var corsi = test((Grid<Corso>) find(Grid.class).single());
-        test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Partecipanti")).click();
-        assertFalse(find(Button.class).withText("Invia conferme di iscrizione a tutti").exists());
+        // Dalla scheda Iscritti della pagina del corso
+        PartecipantiCorso iscritti = apriPartecipanti("Corso di Canto");
+        int inviiIniziali = emailService.tuttiGliInvii().size();
+        try {
+            test(find(Button.class).from(iscritti).withText("Invia conferme di iscrizione a tutti").single()).click();
+            test(find(Button.class).withText("Invia 7 conferme di iscrizione").single()).click();
+            assertEquals(inviiIniziali + 7, emailService.tuttiGliInvii().size());
+        } finally {
+            invioEmailRepository.deleteAll();
+        }
+        // Per un corso non pubblicato il pulsante è disattivato
+        Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
+        chitarra.setPubblicato(false);
+        corsoService.save(chitarra);
+        try {
+            Button disattivato = find(Button.class).from(apriPartecipanti("Corso di Chitarra"))
+                .withText("Invia conferme di iscrizione a tutti").single();
+            assertFalse(disattivato.isEnabled());
+            assertEquals("Corso non pubblicato: le conferme non si inviano alle famiglie", disattivato.getTooltip().getText());
+        } finally {
+            Corso ripristino = corsoService.findById(chitarra.getId());
+            ripristino.setPubblicato(true);
+            corsoService.save(ripristino);
+        }
+
+        // E da Documenti scelto il corso
         navigate(DocumentiView.class);
         annoDeiCorsiDiProva();
         test(this.<Corso>filtro("Filtra per corso")).selectItem("Corso di Canto");

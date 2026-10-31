@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
  * Eliminare un gruppo è solo per l'admin. Per un corso non attivo partecipanti, orari e gruppi sono in sola lettura
  * (tranne che per l'admin). Se il corso ha opzioni aggiuntive (es. il kit) la colonna "Opzioni" ha una casella per
  * ognuna, salvata subito: l'importo si somma alla quota del partecipante (anche nei corsi non attivi, come le quote).
+ * In cima "Invia conferme di iscrizione a tutti" ({@link InvioEmailDialog#inviaConferme}), solo per i corsi pubblicati.
  */
 public class PartecipantiCorso extends VerticalLayout {
 
@@ -54,6 +55,7 @@ public class PartecipantiCorso extends VerticalLayout {
     private final Grid<Iscrizione> grid = new Grid<>(Iscrizione.class, false);
     private final ComboBox<Allievo> nuovoPartecipante = new ComboBox<>();
     private final Div gruppiDelCorso = new Div();
+    private final Button confermeATutti = new Button("Invia conferme di iscrizione a tutti", VaadinIcon.ENVELOPES.create());
     private final boolean puoEliminareGruppi;
     private final Grid.Column<Iscrizione> colonnaGruppo;
     private final Grid.Column<Iscrizione> colonnaOpzioni;
@@ -116,7 +118,9 @@ public class PartecipantiCorso extends VerticalLayout {
         gruppiDelCorso.addClassNames("flex flex-col gap-1 w-full");
         aggiorna();
 
-        add(aggiunta, gruppiDelCorso, grid);
+        // Stesso invio di Documenti: chi riceve e chi è saltato, anteprima, invio
+        confermeATutti.addClickListener(e -> InvioEmailDialog.inviaConferme(corso, this::aggiorna));
+        add(confermeATutti, aggiunta, gruppiDelCorso, grid);
         if (!modificabile) {
             aggiunta.setVisible(false);
             Span avviso = new Span("Corso non attivo: partecipanti e orari non sono modificabili.");
@@ -327,6 +331,10 @@ public class PartecipantiCorso extends VerticalLayout {
         card.setVisibileSuDesktop(colonnaOpzioni, !opzioni.isEmpty());
         mostraGruppi(partecipanti);
         grid.setItems(partecipanti);
+        // Ai corsi non pubblicati non si invia nulla alle famiglie
+        confermeATutti.setEnabled(corso.isPubblicato() && !partecipanti.isEmpty());
+        confermeATutti.setTooltipText(!corso.isPubblicato() ? "Corso non pubblicato: le conferme non si inviano alle famiglie"
+            : partecipanti.isEmpty() ? "Nessun iscritto al corso" : null);
         Set<Long> iscritti = partecipanti.stream().map(i -> i.getAllievo().getId()).collect(Collectors.toSet());
         nuovoPartecipante.setItems(allievoService.findAll().stream()
             .filter(allievo -> !iscritti.contains(allievo.getId()))

@@ -40,7 +40,7 @@ in Documenti.
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Pagina del corso: form dei dati estratto, schede, Iscritti come componente, modifiche non salvate, azioni in testa; Corsi naviga alla pagina | `CorsoView`, `DatiCorsoForm`, `PartecipantiCorso`, `CorsiView`, `OpzioniCorsoFields`, test | `./mvnw test` | [x] |
-| 2 | Invio delle conferme a tutti dalla scheda Iscritti | `PartecipantiCorso`, test | `./mvnw test` | [ ] |
+| 2 | Invio delle conferme a tutti dalla scheda Iscritti | `PartecipantiCorso`, test | `./mvnw test` | [x] |
 | 3 | Guida e CLAUDE.md | `guida/staff.md`, `CLAUDE.md` | test della Guida | [ ] |
 | 4 | Registro | questo file | — | [ ] |
 
