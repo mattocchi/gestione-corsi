@@ -11,8 +11,8 @@ import jakarta.annotation.security.RolesAllowed;
 
 /** Quote e pagamenti di tutti i partecipanti, con filtri (admin e segreteria). */
 @Route(value = "pagamenti", layout = MainLayout.class)
-@PageTitle("Gestione Pagamenti")
-@Menu(title = "Gestione Pagamenti", order = 10.5, icon = "vaadin:euro")
+@PageTitle("Pagamenti")
+@Menu(title = "Pagamenti", order = 10.5, icon = "vaadin:euro")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class GestionePagamentiView extends VerticalLayout {
 

@@ -111,7 +111,7 @@ public class InsegnantiView extends VerticalLayout {
         boolean unicoRuolo = insegnante.getUser() != null && insegnante.getUser().getRoles().equals(Set.of("INSEGNANTE"));
         Dialog conferma = ViewSupport.dialog("Eliminare la scheda insegnante?", "460px");
         conferma.add(new Span(insegnante.getNomeCompleto() + ": si elimina la scheda insegnante, non l'utente, che perde il"
-            + " ruolo INSEGNANTE." + (unicoRuolo ? " L'utente non avrà più ruoli: se serve, eliminalo da Gestione Utenti." : "")));
+            + " ruolo INSEGNANTE." + (unicoRuolo ? " L'utente non avrà più ruoli: se serve, eliminalo da Utenti." : "")));
         Button elimina = new Button("Elimina", e -> {
             try {
                 insegnanteService.elimina(insegnante.getId());

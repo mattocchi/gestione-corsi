@@ -51,8 +51,8 @@ import java.util.List;
 import java.util.Map;
 
 @Route(value = "figli", layout = MainLayout.class)
-@PageTitle("I Miei Figli")
-@Menu(title = "I Miei Figli", order = 40, icon = "vaadin:family")
+@PageTitle("I miei figli")
+@Menu(title = "I miei figli", order = 40, icon = "vaadin:family")
 @RolesAllowed("GENITORE")
 public class FigliView extends VerticalLayout {
 

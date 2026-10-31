@@ -347,8 +347,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(HomeView.class);
 
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
-        assertTrue(voci.containsAll(List.of("Home", "Gestione Corsi", "Gestione Pagamenti", "Gestione Allievi", "Gestione Utenti", "Insegnanti", "Genitori")), voci.toString());
-        assertFalse(voci.contains("Le Mie Lezioni"), voci.toString());
+        assertTrue(voci.containsAll(List.of("Home", "Corsi", "Pagamenti", "Allievi", "Utenti", "Insegnanti", "Genitori")), voci.toString());
+        assertFalse(voci.contains("Le mie lezioni"), voci.toString());
     }
 
     @Test
@@ -1900,7 +1900,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         pagamentoService.salva(canto.getId(), allievo.getId(), rata);
         try {
             navigate(HomeView.class);
-            assertTrue(find(SideNavItem.class).all().stream().anyMatch(i -> "Riepilogo Iscritti".equals(i.getLabel())));
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(i -> "Iscritti".equals(i.getLabel())));
             navigate(RiepilogoIscrittiView.class);
             var grid = new com.vaadin.flow.component.treegrid.TreeGridTester<>(
                 (com.vaadin.flow.component.treegrid.TreeGrid<RiepilogoIscrittiView.Voce>) find(com.vaadin.flow.component.treegrid.TreeGrid.class).single());
@@ -2314,7 +2314,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         // Il suffisso si aggiunge prima della risposta al browser
         navigate(CorsiView.class);
         UI.getCurrent().getInternals().getStateTree().runExecutionsBeforeClientResponse();
-        assertEquals("Gestione Corsi | Area Corsi Mosson", UI.getCurrent().getInternals().getTitle());
+        assertEquals("Corsi | Area Corsi Mosson", UI.getCurrent().getInternals().getTitle());
         navigate(HomeView.class);
         UI.getCurrent().getInternals().getStateTree().runExecutionsBeforeClientResponse();
         assertEquals("Home | Area Corsi Mosson", UI.getCurrent().getInternals().getTitle());
@@ -2846,7 +2846,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             find(QuotaPagamentiDialog.class).single().close();
 
             navigate(HomeView.class);
-            assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Cronologia documenti")));
+            assertTrue(find(SideNavItem.class).all().stream().anyMatch(v -> v.getLabel().equals("Cronologia")));
             navigate(EmailInviateView.class);
             var registro = test((Grid<InvioEmail>) find(GrigliaInvii.class).single());
             assertEquals(7, registro.size());
@@ -3102,7 +3102,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
         List<String> voci = find(SideNavItem.class).all().stream().map(SideNavItem::getLabel).toList();
         assertTrue(voci.contains("Home"), voci.toString());
-        assertFalse(voci.contains("Gestione Utenti"), voci.toString());
+        assertFalse(voci.contains("Utenti"), voci.toString());
         navigate("utenti", RouteNotFoundError.class);
     }
 
@@ -3950,7 +3950,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     /**
-     * Apre "Le Mie Lezioni" ricreandola: per insegnante1 e insegnante2 (un solo corso) la vista è già aperta
+     * Apre "Le mie lezioni" ricreandola: per insegnante1 e insegnante2 (un solo corso) la vista è già aperta
      * all'avvio del test, al posto della Home, con i dati di quel momento.
      */
     private void apriLezioni() {

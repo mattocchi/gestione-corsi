@@ -64,7 +64,7 @@ public class NuovoGenitoreRapidoDialog extends Dialog {
         nome.addValueChangeListener(e -> mostraOmonimi());
         cognome.addValueChangeListener(e -> mostraOmonimi());
 
-        Span nota = new Span("Codice fiscale, indirizzo e accesso si completano poi da Genitori e Gestione Utenti.");
+        Span nota = new Span("Codice fiscale, indirizzo e accesso si completano poi da Genitori e Utenti.");
         nota.addClassNames(Stili.TESTO_SECONDARIO, "block mt-3");
         omonimi.addClassNames("flex flex-col gap-2");
         add(new FormLayout(nome, cognome, email, cellulare), omonimi, nota);

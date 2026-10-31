@@ -111,7 +111,7 @@ public class GenitoriView extends VerticalLayout implements BeforeEnterObserver 
         Dialog conferma = ViewSupport.dialog("Eliminare la scheda genitore?", "460px");
         conferma.add(new Span(genitore.getNomeCompleto() + ": si elimina la scheda genitore, non l'utente, che perde il ruolo"
             + " GENITORE." + (figli > 0 ? " " + figli + (figli == 1 ? " figlio resta" : " figli restano") + " senza genitore." : "")
-            + (unicoRuolo ? " L'utente non avrà più ruoli: se serve, eliminalo da Gestione Utenti." : "")));
+            + (unicoRuolo ? " L'utente non avrà più ruoli: se serve, eliminalo da Utenti." : "")));
         Button elimina = new Button("Elimina", e -> {
             try {
                 genitoreService.elimina(genitore.getId());

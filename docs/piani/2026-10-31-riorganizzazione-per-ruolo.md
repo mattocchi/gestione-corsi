@@ -43,7 +43,7 @@ application per chi la usa, ruolo per ruolo.
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1.1 | Menu a gruppi per ruolo: `views/MenuApp` (gruppo di ogni voce, regole per ruolo), `MainLayout` con più `SideNav` | `MainLayout`, `MenuApp`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 1.2 | Nomi brevi e coerenti: `@Menu`, `@PageTitle`, titoli e test | viste, test | `./mvnw test` | [ ] |
+| 1.2 | Nomi brevi e coerenti: `@Menu`, `@PageTitle`, titoli e test | viste, test | `./mvnw test` | [x] |
 | 2.1 | Il mio profilo per admin e segreteria | `ProfiloView`, test | `./mvnw test` | [ ] |
 | 3.1 | Impostazioni a schede con Anni scolastici, Luoghi, Festività; vecchi indirizzi come alias | `ImpostazioniView`, viste admin, `MenuApp`, test | `./mvnw test` | [ ] |
 | 4.1 | Home: sezioni nell'ordine e coi nomi dei gruppi | `HomeView`, test | `./mvnw test` | [ ] |

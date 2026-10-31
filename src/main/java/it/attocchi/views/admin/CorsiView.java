@@ -63,8 +63,8 @@ import java.util.Locale;
 import java.util.Map;
 
 @Route(value = "corsi", layout = MainLayout.class)
-@PageTitle("Gestione Corsi")
-@Menu(title = "Gestione Corsi", order = 10, icon = "vaadin:music")
+@PageTitle("Corsi")
+@Menu(title = "Corsi", order = 10, icon = "vaadin:music")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class CorsiView extends VerticalLayout {
 

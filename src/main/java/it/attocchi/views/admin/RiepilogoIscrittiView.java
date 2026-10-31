@@ -54,8 +54,8 @@ import java.util.function.Function;
  * il margine previsto (da pagare meno costo).
  */
 @Route(value = "riepilogo-iscritti", layout = MainLayout.class)
-@PageTitle("Riepilogo Iscritti")
-@Menu(title = "Riepilogo Iscritti", order = 10.6, icon = "vaadin:table")
+@PageTitle("Iscritti")
+@Menu(title = "Iscritti", order = 10.6, icon = "vaadin:table")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class RiepilogoIscrittiView extends VerticalLayout {
 

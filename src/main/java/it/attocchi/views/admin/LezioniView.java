@@ -20,7 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Lezioni di tutti i corsi attivi per admin e segreteria, con le stesse funzioni di "Le Mie Lezioni"
+ * Lezioni di tutti i corsi attivi per admin e segreteria, con le stesse funzioni di "Le mie lezioni"
  * (presenze, completamento, non effettuate, nuove lezioni); eliminare le lezioni aggiunte è solo dell'admin. L'admin
  * trova nel filtro anche i corsi non attivi, per gestirne lezioni e presenze.
  */

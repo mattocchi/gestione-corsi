@@ -71,7 +71,7 @@ public class NuovoAllievoRapidoDialog extends Dialog {
         nome.addValueChangeListener(e -> mostraOmonimi());
         cognome.addValueChangeListener(e -> mostraOmonimi());
 
-        Span nota = new Span("Codice fiscale, data di nascita, genitore e accesso si completano poi da Gestione Allievi.");
+        Span nota = new Span("Codice fiscale, data di nascita, genitore e accesso si completano poi da Allievi.");
         nota.addClassNames(Stili.TESTO_SECONDARIO, "block mt-3");
         omonimi.addClassNames("flex flex-col gap-2");
         FormLayout form = new FormLayout(nome, cognome, email, telefono);

@@ -46,8 +46,8 @@ import java.util.List;
 import java.util.Map;
 
 @Route(value = "utenti", layout = MainLayout.class)
-@PageTitle("Gestione Utenti")
-@Menu(title = "Gestione Utenti", order = 12, icon = "vaadin:users")
+@PageTitle("Utenti")
+@Menu(title = "Utenti", order = 12, icon = "vaadin:users")
 @RolesAllowed("ADMIN")
 public class UtentiView extends VerticalLayout {
 

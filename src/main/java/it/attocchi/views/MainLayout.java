@@ -77,7 +77,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver, AfterN
 
     /**
      * Pagina iniziale: alla prima navigazione della sessione (dopo il login) l'insegnante che ha solo quel ruolo
-     * e un solo corso attivo va direttamente a "Le Mie Lezioni" invece della Home. Dopo, la Home resta raggiungibile.
+     * e un solo corso attivo va direttamente a "Le mie lezioni" invece della Home. Dopo, la Home resta raggiungibile.
      */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {

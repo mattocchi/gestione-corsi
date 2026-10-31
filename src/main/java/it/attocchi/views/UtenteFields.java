@@ -36,7 +36,7 @@ public class UtenteFields {
 
         var campoUsername = binder.forField(username).withNullRepresentation("");
         if (this.accessoFacoltativo) {
-            username.setHelperText("Vuoto: nessun accesso all'app (si potrà attivare da Gestione Utenti)");
+            username.setHelperText("Vuoto: nessun accesso all'app (si potrà attivare da Utenti)");
         } else {
             // Anche i soli spazi contano come vuoto: lo username viene salvato senza spazi ai lati
             campoUsername.asRequired("Inserisci lo username")

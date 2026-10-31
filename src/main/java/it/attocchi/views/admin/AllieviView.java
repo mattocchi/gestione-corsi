@@ -52,8 +52,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Route(value = "allievi", layout = MainLayout.class)
-@PageTitle("Gestione Allievi")
-@Menu(title = "Gestione Allievi", order = 11, icon = "vaadin:academy-cap")
+@PageTitle("Allievi")
+@Menu(title = "Allievi", order = 11, icon = "vaadin:academy-cap")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class AllieviView extends VerticalLayout implements BeforeEnterObserver {
 

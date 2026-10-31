@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 @Route(value = "miei-corsi", layout = MainLayout.class)
-@PageTitle("I Miei Corsi")
-@Menu(title = "I Miei Corsi", order = 30, icon = "vaadin:book")
+@PageTitle("I miei corsi")
+@Menu(title = "I miei corsi", order = 30, icon = "vaadin:book")
 @RolesAllowed("ALLIEVO")
 public class MieiCorsiView extends VerticalLayout {
 

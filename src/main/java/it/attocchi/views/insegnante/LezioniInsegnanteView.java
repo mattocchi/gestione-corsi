@@ -21,8 +21,8 @@ import java.util.List;
 
 /** Lezioni dei corsi attivi dell'insegnante (il suo registro). */
 @Route(value = "lezioni-insegnante", layout = MainLayout.class)
-@PageTitle("Le Mie Lezioni")
-@Menu(title = "Le Mie Lezioni", order = 20, icon = "vaadin:calendar")
+@PageTitle("Le mie lezioni")
+@Menu(title = "Le mie lezioni", order = 20, icon = "vaadin:calendar")
 @RolesAllowed("INSEGNANTE")
 public class LezioniInsegnanteView extends VerticalLayout implements BeforeEnterObserver {
 

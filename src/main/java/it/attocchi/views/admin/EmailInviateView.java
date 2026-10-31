@@ -36,8 +36,8 @@ import java.util.Optional;
  * per tipo e testo in comune; per l'admin anche l'email di test ({@link EmailDiTestDialog}).
  */
 @Route(value = "email-inviate", layout = MainLayout.class)
-@PageTitle("Cronologia documenti")
-@Menu(title = "Cronologia documenti", order = 10.8, icon = "vaadin:envelopes")
+@PageTitle("Cronologia")
+@Menu(title = "Cronologia", order = 10.8, icon = "vaadin:envelopes")
 @RolesAllowed({"ADMIN", "SEGRETERIA"})
 public class EmailInviateView extends VerticalLayout {
 

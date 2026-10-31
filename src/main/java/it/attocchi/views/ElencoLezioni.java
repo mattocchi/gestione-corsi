@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 
 /**
  * Lista delle lezioni con filtro per stato, badge sulla data, dialog delle presenze, lezioni non effettuate e
- * nuove lezioni: usata da "Le Mie Lezioni" dell'insegnante e dalla vista "Lezioni" di admin e segreteria.
+ * nuove lezioni: usata da "Le mie lezioni" dell'insegnante e dalla vista "Lezioni" di admin e segreteria.
  */
 public class ElencoLezioni extends VerticalLayout {
 
