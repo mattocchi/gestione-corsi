@@ -39,10 +39,18 @@ la quota piena, indichino la pre-iscrizione come nota della quota e il motivo pe
 | 1 | Dati: `TipoQuota`, quota del corso e motivo da `Iscrizione`, servizio, conversione all'avvio, controllo sul corso | entità, `PagamentoService`, `CorsoService`, `QuotePreiscrizioneIniziali`, `DatiDemo`, test | `./mvnw test` | [x] |
 | 2 | Dialog "Quota e pagamenti" con la scelta a pulsanti; colonna Quota e famiglie col motivo | `QuotaPagamentiDialog`, `PartecipantiCorso`, `PagamentiAllievoDialog`, test | `./mvnw test` | [x] |
 | 3 | Documenti: pre-iscrizione esplicita, verifica dei tre casi su conferma e ricevuta | `DocumentiService`, test | test sul PDF e sull'email | [x] |
-| 4 | Guida, CLAUDE.md e Registro | `guida/staff.md`, `CLAUDE.md`, questo file | test della Guida | [ ] |
+| 4 | Guida, CLAUDE.md e Registro | `guida/staff.md`, `CLAUDE.md`, questo file | test della Guida | [x] |
 
 ## Fuori ambito
 
 - Quote già inviate nei documenti: restano com'erano.
 
 ## Registro
+
+- 2026-10-31: `./mvnw test` 370 test, 0 errori (nuovi: `TipoQuotaTest` su pre-iscrizione che segue il prezzo, prezzo non
+  eliminabile e conversione all'avvio; dialog con le tre scelte; conferma con quota piena senza righe in più,
+  pre-iscrizione e personalizzata con e senza motivo, nel PDF e nell'email). Non provato nel browser.
+- Produzione: la colonna `tipo_quota` la crea `ddl-auto=update`; nessuno script SQL. Al primo avvio le quote
+  personalizzate uguali al prezzo di pre-iscrizione del corso, senza motivo o con motivo "pre-iscrizione", diventano
+  pre-iscrizione (riga nel log con il numero); le altre restano personalizzate.
+- Le quote in pre-iscrizione seguono il prezzo del corso: cambiandolo cambia la quota di quegli iscritti.
