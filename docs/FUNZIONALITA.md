@@ -318,6 +318,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 * [x] Per gli insegnanti vorrei fare una nuova sezione, i miei allievi, in cui si vedono gli allievi dei corsi e cliccando su vedono le informazioni sull'allievo che sono ad esempio le lezioni fatte, quante mancano e l'elenco delle lezioni _(completata 2026-10-23)_
   _Chiarimento 2026-10-23: voce di menu "I miei allievi" solo per gli insegnanti, in sola lettura; una riga per allievo e corso sui corsi attivi dell'insegnante (gruppo, orario, lezioni svolte/previste, mancanti, da fare), con filtro per corso e ricerca; nessun dato personale o contatto; cliccando, un dialog con svolte (lezioni completate, presente o assente), da fare (in calendario), mancanti (previste meno svolte), presenze e assenze, e l'elenco delle lezioni con le note (anche quelle per lo staff); lo stesso dialog, che allievi e genitori già vedono, mostra "Da fare" sulle lezioni non svolte e non le conta tra le presenze._
 
+
 ### DOCUMENTI
 
 * [x] Vorrei togliere tutti i pulsanti in giro per la generazione dei PDF e fare una sezione dedicata "documenti" in cui é possibile generare ed inviare o consultare in anteprima. E nel caso di genitori e allievi é l'area preposta per tutta la documentazione. _(completata 2026-10-23)_
@@ -499,6 +500,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] nella dashboard di admin e segreteria c'e' un'ottimo riepilogo dei corsi attivi con gli iscritti, puoi preparare una stampa che ricalca la stessa struttura e chiarezza? con stampa intendo sempre la stessa possibilità di vedere anteprima, scaricare pdf, o inviare email. disponibile solo ad admin e segreteria _(completata 2026-10-31)_
   _Chiarimento 2026-10-31: la stampa riporta le tre sezioni della dashboard (riepilogo generale, pagamenti dei corsi attivi con costo insegnanti, margine e ore donate, gruppi) e per ogni corso attivo l'elenco degli iscritti per gruppo con orario e stato del pagamento. Si apre da Documenti con il nuovo tipo "Riepilogo corsi" (anteprima, scarica PDF); l'email va solo all'indirizzo del proprio profilo ed è registrata in Cronologia documenti._
+* [ ] nella stampa appena creata, togli la parte iniziale delle card
 
 ### DOCUMENTI
 
