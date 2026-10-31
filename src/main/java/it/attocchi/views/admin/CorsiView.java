@@ -394,16 +394,19 @@ public class CorsiView extends VerticalLayout {
         binder.forField(pubblicato).bind(Corso::isPubblicato, Corso::setPubblicato);
 
         binder.readBean(corso);
+        OpzioniCorsoFields opzioni = new OpzioniCorsoFields(
+            corso.getId() != null ? corsoService.opzioni(corso.getId()) : List.of(), puoEliminare);
 
         formLayout.add(bloccoTipo, nome, insegnante, altriInsegnanti, dataInizio, annoScolastico, numeroLezioni, dataFine, durataLezioni, orarioInizio, costoTotale, prezzoPreiscrizione, attivo, pubblicato, giorniSettimana, bloccoCadenza, luogo, luoghiAbilitati, descrizione);
 
         Button saveButton = new Button("Salva", e -> {
             // Campi obbligatori mancanti: gli errori sono mostrati sui campi
-            if (!binder.writeBeanIfValid(corso)) {
+            boolean opzioniValide = opzioni.valida();
+            if (!binder.writeBeanIfValid(corso) || !opzioniValide) {
                 return;
             }
             try {
-                Corso salvato = corsoService.save(corso);
+                Corso salvato = corsoService.salva(corso, opzioni.getOpzioni());
                 updateGrid();
                 dialog.close();
                 Notification.show("Corso salvato con successo");
@@ -419,7 +422,7 @@ public class CorsiView extends VerticalLayout {
         formLayout.setColspan(bloccoCadenza, 2);
         formLayout.setColspan(descrizione, 2);
 
-        dialog.add(formLayout);
+        dialog.add(formLayout, opzioni);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Annulla"), saveButton);
         dialog.open();
     }

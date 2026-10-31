@@ -58,6 +58,7 @@ import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Genitore;
 import it.attocchi.entity.Insegnante;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.Luogo;
 import it.attocchi.entity.MetodoPagamento;
@@ -256,6 +257,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private InvioEmailRepository invioEmailRepository;
+
+    @Autowired
+    private it.attocchi.repository.OpzioneCorsoRepository opzioneCorsoRepository;
 
     @Autowired
     private RecuperoPasswordRepository recuperoPasswordRepository;
@@ -813,6 +817,34 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(modifica).click();
         CheckboxGroup<?> giorni = find(CheckboxGroup.class).single();
         assertFalse(giorni.getValue().isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    @SuppressWarnings("unchecked")
+    void segreteria_aggiungeLeOpzioniAggiuntiveNelCorso() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        try {
+            navigate(CorsiView.class);
+            var corsi = test((Grid<Corso>) find(Grid.class).single());
+            test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Modifica")).click();
+            test(find(Button.class).withText("Aggiungi opzione").single()).click();
+            // Senza importo non si salva: errore sul campo
+            test(find(TextField.class).withLabel("Descrizione").single()).setValue("Kit");
+            test(find(Button.class).withText("Salva").single()).click();
+            assertTrue(find(BigDecimalField.class).withLabel("Importo").single().isInvalid());
+            assertTrue(corsoService.opzioni(canto.getId()).isEmpty());
+            new TextFieldTester<>(find(BigDecimalField.class).withLabel("Importo").single()).setValue(new BigDecimal("30"));
+            test(find(Button.class).withText("Salva").single()).click();
+            assertEquals(List.of("Kit"), corsoService.opzioni(canto.getId()).stream().map(OpzioneCorso::getDescrizione).toList());
+
+            // Riaperto: l'opzione salvata c'è, la segreteria non la può togliere
+            test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Modifica")).click();
+            assertEquals("Kit", find(TextField.class).withLabel("Descrizione").single().getValue());
+            assertTrue(find(Button.class).all().stream().noneMatch(b -> "Togli Kit".equals(b.getElement().getAttribute("aria-label"))));
+        } finally {
+            opzioneCorsoRepository.deleteAll(opzioneCorsoRepository.findByCorsoIdOrderById(canto.getId()));
+        }
     }
 
     @Test

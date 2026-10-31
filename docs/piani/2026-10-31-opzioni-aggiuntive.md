@@ -45,7 +45,7 @@ motivazione, su ogni iscritto l'attivazione sì/no, e l'opzione esplicitata nell
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Dati e regole: `OpzioneCorso`, `Iscrizione.opzioni`, quota dovuta con le opzioni, `CorsoService` (opzioni del corso, salvataggio con il corso, attivazione, duplica, eliminazione del corso), `Situazione` con le opzioni | entità, repository, `CorsoService`, `PagamentoService`, test | `./mvnw test` | [x] |
-| 2 | Dialog del corso: sezione "Opzioni aggiuntive" | `CorsiView` | test browserless | [ ] |
+| 2 | Dialog del corso: sezione "Opzioni aggiuntive" | `CorsiView` | test browserless | [x] |
 | 3 | Partecipanti: colonna "Opzioni" con le caselle | `PartecipantiDialog` | test browserless | [ ] |
 | 4 | Conferma e ricevuta: righe delle opzioni negli importi | `DocumentiService`, `importi.ftlh` | test sul PDF | [ ] |
 | 5 | Famiglie: opzioni attive nei prezzi del corso e nel dettaglio pagamenti | `PrezziCorso`, `PagamentiAllievoDialog` | test browserless | [ ] |
