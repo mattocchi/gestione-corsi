@@ -12,7 +12,9 @@ public enum TipoDocumento {
     /** Spese di un allievo in un anno solare, di tutti i corsi (PDF {@code documenti/attestazione}). */
     ATTESTAZIONE("Attestazione delle spese", "Attestazione", "Attestazioni", "attestazione"),
     /** Incarico di un insegnante per un corso e anno scolastico ({@code LetteraIncarico}, PDF {@code documenti/lettera-incarico}). */
-    LETTERA_INCARICO("Lettera di incarico", "Lettera di incarico", "Lettere di incarico", "lettera-incarico");
+    LETTERA_INCARICO("Lettera di incarico", "Lettera di incarico", "Lettere di incarico", "lettera-incarico"),
+    /** Riepilogo dei corsi attivi come nella dashboard, con gli iscritti (solo staff, PDF {@code documenti/riepilogo-corsi}). */
+    RIEPILOGO_CORSI("Riepilogo dei corsi attivi", "Riepilogo corsi", "Riepilogo corsi", "riepilogo-corsi");
 
     private final String titolo;
     private final String breve;

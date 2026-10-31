@@ -23,7 +23,10 @@ import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.entity.User;
 import it.attocchi.repository.UserRepository;
+import it.attocchi.service.PagamentoService.IscrittiCorso;
 import it.attocchi.service.PagamentoService.Ricevuta;
+import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
+import it.attocchi.service.RiepilogoCorsiService.RiepilogoCorsi;
 import it.attocchi.service.PagamentoService.Attestazione;
 import it.attocchi.service.PagamentoService.RiepilogoFamiglia;
 import it.attocchi.service.PagamentoService.RigaPagamento;
@@ -70,13 +73,15 @@ public class DocumentiService {
 
     private final UserRepository userRepository;
     private final LetteraIncaricoService letteraIncaricoService;
+    private final RiepilogoCorsiService riepilogoCorsiService;
     /** Indirizzo dell'app ({@code app.url}) per il link in fondo alle email ({@code email/piede.ftlh}). */
     private final String appUrl;
 
     public DocumentiService(PagamentoService pagamentoService, AssociazioneProperties associazione,
                             UserRepository userRepository, LetteraIncaricoService letteraIncaricoService,
-                            RecuperoPasswordProperties applicazione) {
+                            RecuperoPasswordProperties applicazione, RiepilogoCorsiService riepilogoCorsiService) {
         this.appUrl = applicazione.url();
+        this.riepilogoCorsiService = riepilogoCorsiService;
         this.letteraIncaricoService = letteraIncaricoService;
         this.pagamentoService = pagamentoService;
         this.userRepository = userRepository;
@@ -295,6 +300,174 @@ public class DocumentiService {
         String base = (riepilogo.genitore() != null ? "riepilogo-famiglia-" : "riepilogo-pagamenti-") + riepilogo.intestatario()
             + (riepilogo.anno() != null ? "-" + riepilogo.anno() : "");
         return base.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "") + ".pdf";
+    }
+
+    /** Riepilogo dei corsi attivi in PDF, solo per admin e segreteria; altrimenti {@link IllegalArgumentException}. */
+    public Pdf riepilogoCorsiPer(String username) {
+        if (!staff(username)) {
+            throw new IllegalArgumentException("Riepilogo non trovato");
+        }
+        return riepilogoCorsiPdf(riepilogoCorsiService.riepilogo());
+    }
+
+    /** PDF del riepilogo dei corsi, senza controllo dei permessi (allegato dell'email). */
+    public Pdf riepilogoCorsiPdf(RiepilogoCorsi riepilogo) {
+        return new Pdf(nomeFile(riepilogo), pdf(riepilogoCorsiHtml(riepilogo)));
+    }
+
+    /** Nome del file PDF, es. "riepilogo-corsi-attivi-2026-10-31.pdf". */
+    public static String nomeFile(RiepilogoCorsi riepilogo) {
+        return "riepilogo-corsi-attivi-" + riepilogo.data() + ".pdf";
+    }
+
+    /** Corpo HTML dell'email che accompagna il riepilogo dei corsi, con i numeri principali. */
+    public String emailRiepilogoCorsiHtml(RiepilogoCorsi riepilogo, String saluto) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        modello.put("saluto", saluto);
+        modello.put("data", Formati.dataCompleta(riepilogo.data()));
+        RiepilogoPagamenti totale = riepilogo.totale();
+        modello.put("corsi", riepilogo.corsi().size());
+        modello.put("iscritti", riepilogo.generale().iscritti());
+        modello.put("incassato", Formati.euro(totale.incassato()));
+        modello.put("daIncassare", Formati.euro(totale.daIncassare()));
+        return render("email/" + TipoDocumento.RIEPILOGO_CORSI.getTemplate() + ".ftlh", modello);
+    }
+
+    /**
+     * HTML (A4 orizzontale) del riepilogo dei corsi attivi: le sezioni della dashboard di admin e segreteria con le
+     * stesse etichette, poi per ogni corso gli iscritti divisi per gruppo con orario e stato del pagamento.
+     */
+    public String riepilogoCorsiHtml(RiepilogoCorsi riepilogo) {
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("associazione", associazione());
+        if (logo != null) {
+            modello.put("logo", logo);
+        }
+        modello.put("titolo", TipoDocumento.RIEPILOGO_CORSI.getTitolo());
+        modello.put("emessa", Formati.dataCompleta(riepilogo.data()));
+
+        List<Map<String, String>> generale = new ArrayList<>();
+        generale.add(riquadro("Corsi", riepilogo.generale().corsi(), null));
+        generale.add(riquadro("Allievi", riepilogo.generale().allievi(), null));
+        generale.add(riquadro("Iscritti ai corsi attivi", riepilogo.generale().iscritti(), null));
+        riepilogo.eta().ifPresent(eta -> {
+            generale.add(riquadro("Età media", eta.media(), null));
+            generale.add(riquadro("Più giovane", eta.minima(), null));
+            generale.add(riquadro("Più anziano", eta.massima(), null));
+        });
+        generale.add(riquadro("Genitori", riepilogo.generale().genitori(), null));
+        generale.add(riquadro("Insegnanti", riepilogo.generale().insegnanti(), null));
+        modello.put("generale", generale);
+
+        RiepilogoPagamenti totale = riepilogo.totale();
+        long senzaTariffa = riepilogo.corsiSenzaTariffa();
+        String esclusi = senzaTariffa == 0 ? null
+            : senzaTariffa + (senzaTariffa == 1 ? " corso senza tariffa escluso" : " corsi senza tariffa esclusi");
+        List<Map<String, String>> pagamenti = new ArrayList<>(List.of(
+            riquadro("Saldati", totale.saldati(), null),
+            riquadro("Pagamento parziale", totale.parziali(), null),
+            riquadro("Senza pagamenti", totale.senzaPagamenti(), null),
+            riquadro("Incassato", Formati.euro(totale.incassato()), totale.percentualeIncassata() + "% del totale"),
+            riquadro("Da incassare", Formati.euro(totale.daIncassare()), totale.percentualeDaIncassare() + "% del totale"),
+            riquadro("Costo insegnanti previsto", Formati.euro(riepilogo.costoTotale()),
+                esclusi != null ? esclusi : "lezioni programmate"),
+            riquadro("Margine previsto", Formati.euro(riepilogo.margineTotale()),
+                esclusi != null ? esclusi : "quote - costo insegnanti")));
+        riepilogo.oreDonate().ifPresent(ore -> pagamenti.add(riquadro("Ore donate", Formati.durata(ore.minutiPrevisti()),
+            "di cui " + Formati.durata(ore.minutiSvolti()) + " già svolte · " + ore.insegnanti()
+                + (ore.insegnanti() == 1 ? " insegnante" : " insegnanti"))));
+        modello.put("pagamenti", pagamenti);
+        modello.put("pagamentiCorsi", riepilogo.corsi().stream().map(corso -> {
+            Map<String, String> riga = rigaPagamenti(corso);
+            BigDecimal costo = riepilogo.costo(corso.corsoId());
+            BigDecimal margine = riepilogo.margine(corso);
+            riga.put("costo", costo != null ? Formati.euro(costo) : "Senza tariffa");
+            riga.put("margine", margine != null ? Formati.euro(margine) : "");
+            riga.put("esito", margine == null ? "" : margine.signum() >= 0 ? "Attivo" : "Perdita");
+            return riga;
+        }).toList());
+        Map<String, String> rigaTotale = rigaPagamenti(totale);
+        rigaTotale.put("costo", Formati.euro(riepilogo.costoTotale()));
+        rigaTotale.put("margine", Formati.euro(riepilogo.margineTotale()));
+        rigaTotale.put("esito", "");
+        modello.put("pagamentiTotale", rigaTotale);
+
+        modello.put("gruppiRiquadri", List.of(
+            riquadro("Corsi con gruppi", riepilogo.gruppi().corsiConGruppi(), null),
+            riquadro("Gruppi", riepilogo.gruppi().gruppi(), null),
+            riquadro("Allievi senza gruppo", riepilogo.gruppi().allieviSenzaGruppo(), null)));
+        modello.put("gruppi", riepilogo.gruppi().righe().stream().map(r -> Map.of("corso", r.corso(),
+            "gruppo", Formati.gruppo(r.gruppo()), "iscritti", String.valueOf(r.iscritti()))).toList());
+
+        modello.put("corsi", riepilogo.iscritti().stream().map(DocumentiService::corsoConIscritti).toList());
+        return render("documenti/" + TipoDocumento.RIEPILOGO_CORSI.getTemplate() + ".ftlh", modello);
+    }
+
+    private static Map<String, String> riquadro(String etichetta, Object valore, String dettaglio) {
+        return Map.of("etichetta", etichetta, "valore", String.valueOf(valore), "dettaglio", testo(dettaglio));
+    }
+
+    private static Map<String, String> rigaPagamenti(RiepilogoPagamenti corso) {
+        Map<String, String> riga = new HashMap<>();
+        riga.put("corso", testo(corso.corso()));
+        riga.put("saldati", String.valueOf(corso.saldati()));
+        riga.put("parziali", String.valueOf(corso.parziali()));
+        riga.put("senzaPagamenti", String.valueOf(corso.senzaPagamenti()));
+        riga.put("incassato", Formati.euro(corso.incassato()) + " (" + corso.percentualeIncassata() + "%)");
+        riga.put("daIncassare", Formati.euro(corso.daIncassare()) + " (" + corso.percentualeDaIncassare() + "%)");
+        return riga;
+    }
+
+    /** Un corso con i totali e gli iscritti per gruppo (nell'ordine dei gruppi, poi chi non ne ha). */
+    private static Map<String, Object> corsoConIscritti(IscrittiCorso iscritti) {
+        Corso corso = iscritti.corso();
+        Map<String, Object> modello = new HashMap<>();
+        modello.put("nome", corso.getNome());
+        List<String> dettagli = new ArrayList<>();
+        if (corso.getAnnoScolastico() != null) {
+            dettagli.add("Anno scolastico " + corso.getAnnoScolastico());
+        }
+        dettagli.add(Formati.giorniECadenza(corso));
+        dettagli.add((corso.isServizio() ? "Incaricati: " : "Insegnanti: ") + corso.getNomiInsegnanti());
+        modello.put("dettaglio", String.join(" · ", dettagli));
+        int numero = iscritti.iscritti().size();
+        modello.put("numeroIscritti", numero + (numero == 1 ? " iscritto" : " iscritti"));
+        modello.put("totali", Map.of("quota", Formati.euro(iscritti.quota()), "pagato", Formati.euro(iscritti.pagato()),
+            "residuo", Formati.euro(iscritti.residuo()), "saldati", String.valueOf(iscritti.saldati())));
+        // Senza iscritti nessuna sezione (il template scrive "Nessun iscritto")
+        List<Map<String, Object>> sezioni = new ArrayList<>();
+        if (numero > 0 && iscritti.gruppi().isEmpty()) {
+            sezioni.add(sezioneIscritti("", iscritti.iscritti()));
+        } else if (numero > 0) {
+            for (GruppoCorso gruppo : iscritti.gruppi()) {
+                sezioni.add(sezioneIscritti(Formati.gruppo(gruppo), IscrittiCorso.delGruppo(iscritti.iscritti(), gruppo)));
+            }
+            List<RigaPagamento> senzaGruppo = IscrittiCorso.delGruppo(iscritti.iscritti(), null);
+            if (!senzaGruppo.isEmpty()) {
+                sezioni.add(sezioneIscritti("Senza gruppo (tutti i giorni)", senzaGruppo));
+            }
+        }
+        modello.put("sezioni", sezioni);
+        return modello;
+    }
+
+    private static Map<String, Object> sezioneIscritti(String gruppo, List<RigaPagamento> righe) {
+        List<Map<String, String>> iscritti = new ArrayList<>();
+        for (RigaPagamento riga : righe) {
+            Map<String, String> iscritto = new HashMap<>();
+            iscritto.put("numero", String.valueOf(iscritti.size() + 1));
+            iscritto.put("allievo", riga.allievo().getNomeCompleto());
+            iscritto.put("genitore", riga.genitore() != null ? riga.genitore().getNomeCompleto() : "");
+            iscritto.put("orario", Formati.ora(riga.iscrizione().orarioAbituale()));
+            iscritto.put("quota", Formati.euro(riga.situazione().quota()));
+            iscritto.put("pagato", Formati.euro(riga.situazione().pagato()));
+            iscritto.put("residuo", Formati.euro(riga.situazione().residuo()));
+            iscritto.put("stato", riga.situazione().stato().getDescrizione());
+            iscritti.add(iscritto);
+        }
+        return Map.of("gruppo", gruppo, "numeroIscritti", righe.size() + (righe.size() == 1 ? " iscritto" : " iscritti"),
+            "iscritti", iscritti);
     }
 
     /** Lettera di incarico in PDF: admin e segreteria ogni lettera, l'insegnante le proprie; altrimenti {@link IllegalArgumentException}. */

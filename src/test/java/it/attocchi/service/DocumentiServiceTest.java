@@ -458,6 +458,27 @@ class DocumentiServiceTest {
         }
     }
 
+    @Test
+    void riepilogoCorsi_sezioniDellaDashboardEIscrittiSoloPerLoStaff() throws IOException {
+        DocumentiService.Pdf pdf = documentiService.riepilogoCorsiPer("segreteria");
+        assertTrue(pdf.nomeFile().startsWith("riepilogo-corsi-attivi-"), pdf.nomeFile());
+        String testo = testo(pdf.contenuto()).replaceAll("\\s+", " ");
+        assertTrue(testo.contains("Riepilogo dei corsi attivi"), testo);
+        assertTrue(testo.contains("Riepilogo generale"), testo);
+        assertTrue(testo.contains("Pagamenti dei corsi attivi"), testo);
+        assertTrue(testo.contains("Costo insegnanti previsto"), testo);
+        assertTrue(testo.contains("Gruppi dei corsi attivi"), testo);
+        assertTrue(testo.contains("Iscritti dei corsi attivi"), testo);
+        assertTrue(testo.contains("Corso di Canto"), testo);
+        assertTrue(testo.contains("Allievo Canto3"), testo);
+        assertTrue(testo.contains("Totale del corso"), testo);
+        assertTrue(testo.contains("Pagina 1 di"), testo);
+        assertNotNull(documentiService.riepilogoCorsiPer("admin"));
+        for (String altri : List.of("insegnante1", "genitore3", "allievo_canto3", "sconosciuto")) {
+            assertThrows(IllegalArgumentException.class, () -> documentiService.riepilogoCorsiPer(altri), altri);
+        }
+    }
+
     private Iscrizione iscrizione() {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         return corsoService.findPartecipanti(canto.getId()).getFirst();
