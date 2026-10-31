@@ -41,7 +41,7 @@ pubblicato.
 | 1 | Dati e servizio: `PubblicazioneDocumento` (tipo → visibile), `AttestazioniPubblicate` (anni), `PubblicazioneDocumentiService`, valori iniziali all'avvio | entity, repository, service, test | `./mvnw test` | [x] |
 | 2 | Regole applicate alle famiglie: elenco di Documenti, PDF e invio alla propria email | `ElencoDocumentiService`, `DocumentiService`, test | `./mvnw test` | [x] |
 | 3 | Impostazioni › Documenti: interruttori, regole e anni delle attestazioni | `admin/DocumentiScheda`, `ImpostazioniView`, test | `./mvnw test` | [x] |
-| 4 | Avviso nel dialog di invio dello staff per i documenti non pubblici | `InvioEmailDialog`, test | `./mvnw test` | [ ] |
+| 4 | Avviso nel dialog di invio dello staff per i documenti non pubblici | `InvioEmailDialog`, test | `./mvnw test` | [x] |
 | 5 | Guida dello staff e CLAUDE.md | `guida/staff.md`, `CLAUDE.md` | `./mvnw test` | [ ] |
 | 6 | Registro | questo piano | — | [ ] |
 

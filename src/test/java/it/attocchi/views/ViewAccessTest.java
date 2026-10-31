@@ -2717,6 +2717,10 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("90,00 €", attestazioni.getCellText(0, 3));
             test(pulsante(attestazioni.getCellComponent(0, 7), "Invia per email")).click();
             assertTrue(find(Button.class).withText("Anteprima").exists());
+            // Il 2025 non è pubblicato: lo staff può inviare, con l'avviso
+            assertTrue(find(Span.class).all().stream().anyMatch(sp -> sp.getText().startsWith(
+                "Non ancora pubblica per le famiglie: attestazioni del 2025 non pubblicate")));
+            assertTrue(find(Button.class).withText("Invia attestazione").single().isEnabled());
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
         }

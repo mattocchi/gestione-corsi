@@ -21,6 +21,7 @@ import it.attocchi.entity.InvioEmail;
 import it.attocchi.entity.TipoDocumento;
 import it.attocchi.service.DocumentiService;
 import it.attocchi.service.EmailService;
+import it.attocchi.service.PubblicazioneDocumentiService;
 import it.attocchi.service.DocumentiService.Pdf;
 import it.attocchi.service.EmailService.Anteprima;
 import it.attocchi.service.EmailService.Destinatario;
@@ -32,6 +33,7 @@ import it.attocchi.views.ViewSupport;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +57,7 @@ public final class InvioEmailDialog {
         }
         apriInvio(emailService, tipo, tipo.getTitolo() + " – " + allievo.getNomeCompleto(),
             corso.getNome() + (corso.getAnnoScolastico() != null ? " " + corso.getAnnoScolastico() : ""),
-            emailService.destinatario(corso.getId(), allievo.getId()), impedimento,
+            emailService.destinatario(corso.getId(), allievo.getId()), impedimento, nonPubblico(tipo),
             () -> emailService.anteprima(tipo, corso.getId(), allievo.getId(), username),
             () -> emailService.invia(tipo, corso.getId(), allievo.getId(), username), dopoInvio);
     }
@@ -72,7 +74,7 @@ public final class InvioEmailDialog {
         String intestatario = genitore != null ? genitore.getNomeCompleto() : allievo.getNomeCompleto();
         apriInvio(emailService, TipoDocumento.RIEPILOGO, TipoDocumento.RIEPILOGO.getTitolo() + " – " + intestatario,
             anno != null ? "Anno scolastico " + anno : "Corsi senza anno scolastico",
-            emailService.destinatarioRiepilogo(genitoreId, allievoId, anno), null,
+            emailService.destinatarioRiepilogo(genitoreId, allievoId, anno), null, nonPubblico(TipoDocumento.RIEPILOGO),
             () -> emailService.anteprimaRiepilogo(genitoreId, allievoId, anno, username),
             () -> emailService.inviaRiepilogo(genitoreId, allievoId, anno, username), dopoInvio);
     }
@@ -87,6 +89,7 @@ public final class InvioEmailDialog {
             "Versamenti con bonifico dell'anno " + anno + (controllo.inEta() ? ""
                 : ". Fuori età 5-18: la ricevuta ha un testo generico, senza la detrazione per i minori"),
             emailService.destinatarioAttestazione(allievoId, anno), DocumentiService.avvisoDatiMancanti(controllo),
+            attestazioneNonPubblica(anno),
             () -> emailService.anteprimaAttestazione(allievoId, anno, username),
             () -> emailService.inviaAttestazione(allievoId, anno, username), dopoInvio);
     }
@@ -99,14 +102,14 @@ public final class InvioEmailDialog {
         apriInvio(emailService, TipoDocumento.LETTERA_INCARICO, TipoDocumento.LETTERA_INCARICO.getTitolo() + " – "
                 + lettera.getInsegnante().getNomeCompleto(),
             lettera.getCorso().getNome() + (lettera.getAnnoScolastico() != null ? ", anno scolastico " + lettera.getAnnoScolastico() : ""),
-            emailService.destinatarioLettera(letteraId, username), null,
+            emailService.destinatarioLettera(letteraId, username), null, null,
             () -> emailService.anteprimaLettera(letteraId, username),
             () -> emailService.inviaLettera(letteraId, username), dopoInvio);
     }
 
     /** Dialog comune: documento, destinatario o motivo per cui non si può inviare, anteprima e invio. */
     private static void apriInvio(EmailService emailService, TipoDocumento tipo, String titolo, String descrizione,
-                                  Optional<Destinatario> destinatario, String impedimento,
+                                  Optional<Destinatario> destinatario, String impedimento, String nonPubblico,
                                   SerializableSupplier<Anteprima> anteprima, SerializableSupplier<InvioEmail> invio,
                                   Runnable dopoInvio) {
         Dialog dialog = ViewSupport.dialog("Invia: " + titolo, "520px");
@@ -121,6 +124,9 @@ public final class InvioEmailDialog {
             Span avviso = new Span(impedimento + ".");
             avviso.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(avviso);
+        }
+        if (nonPubblico != null) {
+            content.add(avvisoNonPubblico(nonPubblico));
         }
         if (!emailService.invioReale()) {
             Span simulato = new Span("Server email non configurato: l'invio sarà solo simulato e registrato.");
@@ -168,6 +174,7 @@ public final class InvioEmailDialog {
         Span intro = new Span("La conferma di iscrizione sarà inviata per email a " + riceventi.size() + " iscritti su "
             + destinatari.size() + " (al genitore o, se manca, all'allievo)."
             + (emailService.invioReale() ? "" : " Server email non configurato: l'invio sarà solo simulato."));
+        String nonPubblico = nonPubblico(TipoDocumento.CONFERMA_ISCRIZIONE);
         Div elenco = new Div();
         elenco.addClassNames("flex flex-col gap-1");
         for (DestinatarioConferma destinatario : destinatari) {
@@ -183,6 +190,9 @@ public final class InvioEmailDialog {
         }
         VerticalLayout content = new VerticalLayout(intro, elenco);
         content.addClassNames("p-0");
+        if (nonPubblico != null) {
+            content.addComponentAtIndex(1, avvisoNonPubblico(nonPubblico));
+        }
         dialog.add(content);
 
         Button anteprima = riceventi.isEmpty() ? new Button("Anteprima", VaadinIcon.EYE.create())
@@ -249,6 +259,38 @@ public final class InvioEmailDialog {
         dialog.add(content);
         dialog.getFooter().add(ViewSupport.closeButton(dialog, "Chiudi"));
         dialog.open();
+    }
+
+    /**
+     * Avviso per lo staff quando il tipo di documento non è visibile alle famiglie (Impostazioni › Documenti): l'invio
+     * resta possibile, ma la famiglia non lo ritroverà nei suoi Documenti. {@code null} se è pubblico.
+     */
+    private static String nonPubblico(TipoDocumento tipo) {
+        return pubblicazione().visibile(tipo) ? null
+            : "Non ancora pubblico per le famiglie: " + tipo.getPlurale().toLowerCase()
+                + " nascoste in Impostazioni › Documenti. La famiglia riceverà l'email ma non lo troverà nei suoi Documenti.";
+    }
+
+    /** Come {@link #nonPubblico(TipoDocumento)} per le attestazioni di un anno (anno non finito o non pubblicato). */
+    private static String attestazioneNonPubblica(int anno) {
+        if (pubblicazione().attestazioneDisponibile(anno, LocalDate.now())) {
+            return null;
+        }
+        String motivo = anno >= LocalDate.now().getYear() ? "l'anno " + anno + " non è finito"
+            : !pubblicazione().visibile(TipoDocumento.ATTESTAZIONE) ? "attestazioni nascoste in Impostazioni › Documenti"
+            : "attestazioni del " + anno + " non pubblicate in Impostazioni › Documenti";
+        return "Non ancora pubblica per le famiglie: " + motivo
+            + ". La famiglia riceverà l'email ma non la troverà nei suoi Documenti.";
+    }
+
+    private static Span avvisoNonPubblico(String testo) {
+        Span avviso = new Span(VaadinIcon.WARNING.create(), new Span(testo));
+        avviso.addClassNames("flex items-start gap-2 text-(--aura-orange-text)");
+        return avviso;
+    }
+
+    private static PubblicazioneDocumentiService pubblicazione() {
+        return VaadinService.getCurrent().getInstantiator().getOrCreate(PubblicazioneDocumentiService.class);
     }
 
     private static EmailService emailService() {
