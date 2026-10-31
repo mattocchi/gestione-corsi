@@ -56,7 +56,7 @@ public class AnnoScolasticoService {
         return nonAttivi;
     }
 
-    /** Scelte per il dialog del corso: gli anni attivi più quello già assegnato al corso, in ordine. */
+    /** Scelte per la pagina del corso: gli anni attivi più quello già assegnato al corso, in ordine. */
     public List<String> scelteCorso(String valoreAttuale) {
         Set<String> scelte = new TreeSet<>();
         annoScolasticoRepository.findByAttivoTrue().forEach(anno -> scelte.add(anno.getNome()));

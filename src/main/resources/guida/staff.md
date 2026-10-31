@@ -8,10 +8,10 @@ Guida per **admin e segreteria**. Le voci seguono i gruppi del menu; quelle segn
 
 ## Corsi e lezioni
 
-**[Corsi](corsi)**: crea e modifica corsi e servizi.
-- *Nuovo corso*: giorni, orario, durata, numero di lezioni o data di fine, insegnanti, luogo. Un corso nuovo nasce **non pubblicato**: le famiglie lo vedono solo quando spunti "Pubblicato".
-- *Opzioni aggiuntive* (nel corso): importi una tantum come il kit (+30 €), con descrizione; si sommano alla quota solo di chi li attiva. Togliere un'opzione già salvata è solo per l'admin, e solo se nessuno l'ha attiva.
-- *Partecipanti* (icona persone): iscrivi gli allievi, imposta orari e gruppi e spunta le opzioni aggiuntive di ognuno. Scrivi un nome nuovo per creare un allievo al volo.
+**[Corsi](corsi)**: crea e modifica corsi e servizi. Ogni corso ha la sua pagina con due schede: *Modifica* (matita) apre *Dati del corso*, *Partecipanti* (icona persone) apre *Iscritti*. Se esci con dati non salvati, l'app chiede conferma.
+- *Nuovo corso*: giorni, orario, durata, numero di lezioni o data di fine, insegnanti, luogo. Un corso nuovo nasce **non pubblicato**: le famiglie lo vedono solo quando spunti "Pubblicato". La scheda *Iscritti* si attiva dopo il primo salvataggio.
+- *Opzioni aggiuntive* (nei dati del corso): importi una tantum come il kit (+30 €), con descrizione; si sommano alla quota solo di chi li attiva. Togliere un'opzione già salvata è solo per l'admin, e solo se nessuno l'ha attiva.
+- *Iscritti*: iscrivi gli allievi, imposta orari e gruppi e spunta le opzioni aggiuntive di ognuno. Scrivi un nome nuovo per creare un allievo al volo. *Invia conferme di iscrizione a tutti* manda la conferma a ogni iscritto (solo per i corsi pubblicati).
 - *Aggiorna lezioni*: crea o aggiorna il calendario delle lezioni, saltando le festività.
 - *Duplica*: prepara il corso dell'anno successivo.
 
@@ -44,7 +44,7 @@ Guida per **admin e segreteria**. Le voci seguono i gruppi del menu; quelle segn
 **[Documenti](documenti)**: ogni documento si genera, si vede e si invia da qui. Scegli il tipo in alto: Conferme, Ricevute, Riepiloghi, Attestazioni, Lettere di incarico, Riepilogo corsi.
 - *PDF*: anteprima in una nuova scheda o scarica.
 - *Invia per email*: mostra l'anteprima dell'email e la manda alla famiglia (o all'insegnante).
-- Scelto un corso: *Invia conferme di iscrizione a tutti*.
+- Scelto un corso: *Invia conferme di iscrizione a tutti* (anche dalla scheda *Iscritti* del corso).
 - *Riepilogo corsi*: stampa dei corsi attivi con gli iscritti, da inviare alla tua email.
 
 **[Cronologia](email-inviate)**: le email inviate e i documenti aperti dalle famiglie, con filtro per tipo e ricerca.
