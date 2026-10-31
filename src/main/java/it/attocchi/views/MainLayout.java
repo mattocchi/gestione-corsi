@@ -17,6 +17,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.server.VaadinSession;
@@ -29,12 +31,19 @@ import it.attocchi.views.allievo.MieiPagamentiView;
 import it.attocchi.views.insegnante.LezioniInsegnanteView;
 import jakarta.annotation.security.PermitAll;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Layout principale. Il menu è costruito dalle view annotate con {@code @Menu};
  * {@link MenuConfiguration} restituisce solo le voci accessibili all'utente corrente.
  */
 @PermitAll
-public class MainLayout extends AppLayout implements BeforeEnterObserver {
+public class MainLayout extends AppLayout implements BeforeEnterObserver, AfterNavigationObserver {
 
     /** Logo dell'associazione (risorsa statica, accessibile anche senza login). */
     public static final String LOGO = "images/logo-mosson.png";
@@ -52,6 +61,8 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final AllievoService allievoService;
     /** Versione e data della build (goal build-info nel pom); assente se l'app non è stata costruita con Maven. */
     private final BuildProperties build;
+    /** Gruppi richiudibili del menu con i percorsi delle loro voci. */
+    private final Map<SideNav, List<String>> richiudibili = new HashMap<>();
 
     public MainLayout(SecurityService securityService, DashboardService dashboardService, AllievoService allievoService,
                       ObjectProvider<BuildProperties> build) {
@@ -137,21 +148,49 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
             + Formati.dataNumerica(LocalDate.ofInstant(build.getTime(), ZoneId.of("Europe/Rome")));
     }
 
-    private SideNav createSideNav() {
-        SideNav nav = new SideNav();
+    /** Menu a gruppi per ruolo ({@link MenuApp}): un {@link SideNav} per gruppo, con titolo dove serve. */
+    private Div createSideNav() {
         // "Pagamenti" dell'allievo solo per chi li gestisce da sé (allievo senza genitore); "Documenti" a chi ne ha:
         // staff, genitori e allievi senza genitore (non all'allievo con genitore: sono del genitore)
         boolean allievoAdulto = allievoService.gestisceDaSe(securityService.getUsername().orElse(null));
         boolean conDocumenti = allievoAdulto || securityService.hasRole("ADMIN") || securityService.hasRole("SEGRETERIA")
             || securityService.hasRole("GENITORE") || securityService.hasRole("INSEGNANTE");
-        MenuConfiguration.getMenuEntries().stream()
+        List<MenuEntry> voci = MenuConfiguration.getMenuEntries().stream()
             .filter(entry -> {
                 String percorso = entry.path().replaceFirst("^/", "");
                 return (allievoAdulto || !percorso.equals(MieiPagamentiView.PERCORSO))
                     && (conDocumenti || !percorso.equals(DocumentiView.PERCORSO));
             })
-            .forEach(entry -> nav.addItem(createSideNavItem(entry)));
-        return nav;
+            .toList();
+        Set<String> ruoli = Stream.of("ADMIN", "SEGRETERIA", "INSEGNANTE", "GENITORE", "ALLIEVO")
+            .filter(securityService::hasRole).collect(Collectors.toSet());
+        Div menu = new Div();
+        menu.addClassNames("flex flex-col gap-4 py-2");
+        for (MenuApp.Sezione sezione : MenuApp.organizza(voci, ruoli)) {
+            SideNav nav = new SideNav();
+            if (sezione.titolo() != null) {
+                nav.setLabel(sezione.titolo());
+            }
+            if (sezione.gruppo().isRichiudibile()) {
+                nav.setCollapsible(true);
+                nav.setExpanded(false);
+                richiudibili.put(nav, sezione.voci().stream().map(v -> v.path().replaceFirst("^/", "")).toList());
+            }
+            sezione.voci().forEach(voce -> nav.addItem(createSideNavItem(voce)));
+            menu.add(nav);
+        }
+        return menu;
+    }
+
+    /** Un gruppo richiudibile si apre da sé quando si arriva su una sua pagina (es. da un collegamento). */
+    @Override
+    public void afterNavigation(AfterNavigationEvent event) {
+        String percorso = event.getLocation().getFirstSegment();
+        richiudibili.forEach((nav, percorsi) -> {
+            if (percorsi.contains(percorso)) {
+                nav.setExpanded(true);
+            }
+        });
     }
 
     private SideNavItem createSideNavItem(MenuEntry entry) {

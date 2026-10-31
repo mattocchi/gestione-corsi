@@ -35,6 +35,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.shared.Tooltip;
+import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -2680,6 +2681,29 @@ class ViewAccessTest extends SpringBrowserlessTest {
         navigate(DocumentiView.class);
         assertTrue(find(Span.class).withText("I documenti dei tuoi corsi sono nell'area del genitore.").exists());
         assertFalse(find(Grid.class).exists());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    void admin_menuAGruppiConImpostazioniChiuse() {
+        navigate(HomeView.class);
+        List<SideNav> gruppi = find(SideNav.class).all();
+        assertEquals(List.of("Corsi e lezioni", "Persone", "Economia", "Documenti", "Impostazioni"),
+            gruppi.stream().map(SideNav::getLabel).filter(java.util.Objects::nonNull).toList());
+        SideNav impostazioni = gruppi.stream().filter(g -> "Impostazioni".equals(g.getLabel())).findFirst().orElseThrow();
+        assertTrue(impostazioni.isCollapsible());
+        assertFalse(impostazioni.isExpanded());
+        // Arrivando su una sua pagina il gruppo si apre
+        navigate(FestivitaView.class);
+        assertTrue(impostazioni.isExpanded());
+    }
+
+    @Test
+    @WithUserDetails("genitore3")
+    void genitore_menuSempliceSenzaTitoli() {
+        navigate(HomeView.class);
+        assertTrue(find(SideNav.class).all().stream().allMatch(g -> g.getLabel() == null));
+        assertTrue(voceDiMenu("Documenti"));
     }
 
     private boolean voceDiMenu(String titolo) {
