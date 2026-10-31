@@ -38,7 +38,7 @@ admin e segreteria, con la stessa struttura e chiarezza; solo per admin e segret
 | 1 | Dati e PDF: `TipoDocumento.RIEPILOGO_CORSI`, `RiepilogoCorsiService` (sezioni della dashboard + iscritti dei corsi attivi), template `documenti/riepilogo-corsi.ftlh`, `DocumentiService.riepilogoCorsiPer(username)` (solo staff) | entity, service, templates, `DocumentiServiceTest` | `./mvnw test` | [x] |
 | 2 | Email: `email/riepilogo-corsi.ftlh`, `EmailService.inviaRiepilogoCorsiAMe` registrato in `InvioEmail` | `EmailService`, templates, `EmailServiceTest` | `./mvnw test` | [x] |
 | 3 | Documenti: tipo "Riepilogo corsi" con descrizione, PDF (anteprima/scarica), "Invia alla mia email", ultimo invio | `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 4 | CLAUDE.md: documentazione della stampa | `CLAUDE.md` | — | [ ] |
+| 4 | CLAUDE.md: documentazione della stampa | `CLAUDE.md` | — | [x] |
 | 5 | Registro | questo piano | — | [ ] |
 
 ## Fuori ambito
