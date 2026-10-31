@@ -464,7 +464,8 @@ class DocumentiServiceTest {
         assertTrue(pdf.nomeFile().startsWith("riepilogo-corsi-attivi-"), pdf.nomeFile());
         String testo = testo(pdf.contenuto()).replaceAll("\\s+", " ");
         assertTrue(testo.contains("Riepilogo dei corsi attivi"), testo);
-        assertTrue(testo.contains("Riepilogo generale"), testo);
+        assertFalse(testo.contains("Riepilogo generale"), testo);
+        assertFalse(testo.contains("Età media"), testo);
         assertTrue(testo.contains("Pagamenti dei corsi attivi"), testo);
         assertTrue(testo.contains("Costo insegnanti previsto"), testo);
         assertTrue(testo.contains("Gruppi dei corsi attivi"), testo);

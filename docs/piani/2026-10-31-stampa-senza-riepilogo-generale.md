@@ -19,7 +19,7 @@
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Template e modello senza "Riepilogo generale"; `RiepilogoCorsi` senza `eta`; test e CLAUDE.md | template, `DocumentiService`, `RiepilogoCorsiService`, `DocumentiServiceTest`, `CLAUDE.md` | `./mvnw test` | [ ] |
+| 1 | Template e modello senza "Riepilogo generale"; `RiepilogoCorsi` senza `eta`; test e CLAUDE.md | template, `DocumentiService`, `RiepilogoCorsiService`, `DocumentiServiceTest`, `CLAUDE.md` | `./mvnw test` | [x] |
 | 2 | Registro | questo piano | — | [ ] |
 
 ## Fuori ambito

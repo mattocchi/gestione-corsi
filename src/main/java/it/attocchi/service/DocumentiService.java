@@ -340,8 +340,8 @@ public class DocumentiService {
     }
 
     /**
-     * HTML (A4 orizzontale) del riepilogo dei corsi attivi: le sezioni della dashboard di admin e segreteria con le
-     * stesse etichette, poi per ogni corso gli iscritti divisi per gruppo con orario e stato del pagamento.
+     * HTML (A4 orizzontale) del riepilogo dei corsi attivi: le sezioni Pagamenti e Gruppi della dashboard di admin e
+     * segreteria con le stesse etichette (senza il riepilogo generale), poi per ogni corso gli iscritti divisi per gruppo con orario e stato del pagamento.
      */
     public String riepilogoCorsiHtml(RiepilogoCorsi riepilogo) {
         Map<String, Object> modello = new HashMap<>();
@@ -351,19 +351,6 @@ public class DocumentiService {
         }
         modello.put("titolo", TipoDocumento.RIEPILOGO_CORSI.getTitolo());
         modello.put("emessa", Formati.dataCompleta(riepilogo.data()));
-
-        List<Map<String, String>> generale = new ArrayList<>();
-        generale.add(riquadro("Corsi", riepilogo.generale().corsi(), null));
-        generale.add(riquadro("Allievi", riepilogo.generale().allievi(), null));
-        generale.add(riquadro("Iscritti ai corsi attivi", riepilogo.generale().iscritti(), null));
-        riepilogo.eta().ifPresent(eta -> {
-            generale.add(riquadro("Età media", eta.media(), null));
-            generale.add(riquadro("Più giovane", eta.minima(), null));
-            generale.add(riquadro("Più anziano", eta.massima(), null));
-        });
-        generale.add(riquadro("Genitori", riepilogo.generale().genitori(), null));
-        generale.add(riquadro("Insegnanti", riepilogo.generale().insegnanti(), null));
-        modello.put("generale", generale);
 
         RiepilogoPagamenti totale = riepilogo.totale();
         long senzaTariffa = riepilogo.corsiSenzaTariffa();

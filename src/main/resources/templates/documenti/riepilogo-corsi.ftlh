@@ -60,9 +60,6 @@
 <body>
 <@c.intestazione titolo=titolo/>
 
-<h2>Riepilogo generale</h2>
-<@riquadri elenco=generale/>
-
 <h2>Pagamenti dei corsi attivi</h2>
 <@riquadri elenco=pagamenti/>
 <#if pagamentiCorsi?has_content>

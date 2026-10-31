@@ -197,8 +197,8 @@ public class DocumentiView extends VerticalLayout {
      * vedere, scaricare o inviare alla propria email.
      */
     private void creaRiepilogoCorsi() {
-        Paragraph descrizione = new Paragraph("Le sezioni della dashboard (riepilogo generale, pagamenti con costo "
-            + "insegnanti e margine, gruppi) e gli iscritti di ogni corso attivo, per gruppo, con orario e stato del "
+        Paragraph descrizione = new Paragraph("Le sezioni della dashboard su pagamenti (con costo insegnanti e "
+            + "margine) e gruppi, poi gli iscritti di ogni corso attivo, per gruppo, con orario e stato del "
             + "pagamento. I dati sono quelli del momento in cui si apre il PDF.");
         descrizione.addClassNames("m-0", Stili.TESTO_SECONDARIO);
         MenuBar pdf = MenuPdf.conTesto("PDF", VaadinIcon.FILE_TEXT_O, () -> documentiService.riepilogoCorsiPer(username));

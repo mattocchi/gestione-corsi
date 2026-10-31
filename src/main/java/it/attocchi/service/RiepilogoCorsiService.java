@@ -1,7 +1,6 @@
 package it.attocchi.service;
 
 import it.attocchi.service.BilancioService.OreDonateTotali;
-import it.attocchi.service.DashboardService.EtaAllievi;
 import it.attocchi.service.DashboardService.RiepilogoGenerale;
 import it.attocchi.service.DashboardService.RiepilogoGruppi;
 import it.attocchi.service.PagamentoService.IscrittiCorso;
@@ -16,8 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Dati della stampa "Riepilogo dei corsi attivi" (admin e segreteria): le sezioni della dashboard (riepilogo generale,
- * pagamenti con costo insegnanti e margine, gruppi) e gli iscritti di ogni corso attivo.
+ * Dati della stampa "Riepilogo dei corsi attivi" (admin e segreteria): le sezioni della dashboard su pagamenti (con
+ * costo insegnanti e margine) e gruppi, gli iscritti di ogni corso attivo e il riepilogo generale (per l'email).
  */
 @Service
 @Transactional(readOnly = true)
@@ -27,9 +26,8 @@ public class RiepilogoCorsiService {
      * Riepilogo alla data {@code data}. {@code pagamenti} ha una riga per corso attivo e per ultima quella del totale;
      * {@code costi} è il costo previsto degli insegnanti per id del corso (assente senza tariffa).
      */
-    public record RiepilogoCorsi(LocalDate data, RiepilogoGenerale generale, Optional<EtaAllievi> eta,
-                                 List<RiepilogoPagamenti> pagamenti, Map<Long, BigDecimal> costi,
-                                 Optional<OreDonateTotali> oreDonate, RiepilogoGruppi gruppi, List<IscrittiCorso> iscritti) {
+    public record RiepilogoCorsi(LocalDate data, RiepilogoGenerale generale, List<RiepilogoPagamenti> pagamenti,
+                                 Map<Long, BigDecimal> costi, Optional<OreDonateTotali> oreDonate, RiepilogoGruppi gruppi, List<IscrittiCorso> iscritti) {
 
         public List<RiepilogoPagamenti> corsi() {
             return pagamenti.subList(0, pagamenti.size() - 1);
@@ -78,9 +76,8 @@ public class RiepilogoCorsiService {
     /** Riepilogo dei corsi attivi a oggi, con gli stessi conteggi della dashboard. */
     public RiepilogoCorsi riepilogo() {
         LocalDate oggi = LocalDate.now();
-        return new RiepilogoCorsi(oggi, dashboardService.riepilogoGenerale(), dashboardService.etaAllievi(oggi),
-            pagamentoService.riepilogoCorsiAttivi(), bilancioService.costiPrevistiPerCorso(),
-            bilancioService.oreDonateTotali(), dashboardService.riepilogoGruppi(),
+        return new RiepilogoCorsi(oggi, dashboardService.riepilogoGenerale(), pagamentoService.riepilogoCorsiAttivi(),
+            bilancioService.costiPrevistiPerCorso(), bilancioService.oreDonateTotali(), dashboardService.riepilogoGruppi(),
             pagamentoService.iscrittiPerCorso().stream().filter(c -> c.corso().isAttivo()).toList());
     }
 }
