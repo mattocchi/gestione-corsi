@@ -507,3 +507,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] nella sezione documenti puoi cambiare il tipo di selezione grafica del documento che un uternte vuole produrre, che selettore possiamo usare? _(completata 2026-10-31)_
   _Chiarimento 2026-10-31: al posto dei pulsanti affiancati (6 opzioni, etichette accorciate su smartphone) le schede di Vaadin (Tabs) con il nome intero, che su smartphone scorrono di lato; solo il selettore del tipo di Documenti per admin e segreteria._
+
+### FILTRI
+
+* [ ] sistema in tab o dropdown anche i filtri di Lezioni, Gestione Pagamenti, Riepilogo Iscritti, Cronologia Documenti, Gestione Corsi, Calendario
