@@ -22,7 +22,7 @@ con l'eventuale nota, o che prende il prezzo di base.
 
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
-| 1 | Colonna "Quota" nella scheda Iscritti | `PartecipantiCorso`, test | `./mvnw test` | [ ] |
+| 1 | Colonna "Quota" nella scheda Iscritti | `PartecipantiCorso`, test | `./mvnw test` | [x] |
 | 2 | Guida, CLAUDE.md e Registro | `guida/staff.md`, `CLAUDE.md`, questo file | test della Guida | [ ] |
 
 ## Fuori ambito

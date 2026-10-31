@@ -1,5 +1,7 @@
 package it.attocchi.views.admin;
 
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
  * Eliminare un gruppo è solo per l'admin. Per un corso non attivo partecipanti, orari e gruppi sono in sola lettura
  * (tranne che per l'admin). Se il corso ha opzioni aggiuntive (es. il kit) la colonna "Opzioni" ha una casella per
  * ognuna, salvata subito: l'importo si somma alla quota del partecipante (anche nei corsi non attivi, come le quote).
+ * La colonna "Quota" mostra la quota dovuta e se è quella di listino o personalizzata (con la nota).
  * In cima "Invia conferme di iscrizione a tutti" ({@link InvioEmailDialog#inviaConferme}), solo per i corsi pubblicati.
  */
 public class PartecipantiCorso extends VerticalLayout {
@@ -97,6 +100,7 @@ public class PartecipantiCorso extends VerticalLayout {
         // Solo se il corso ha opzioni aggiuntive
         colonnaOpzioni = grid.addComponentColumn(this::createOpzioni).setKey("opzioni").setHeader("Opzioni")
             .setAutoWidth(true).setFlexGrow(0);
+        grid.addComponentColumn(this::createQuota).setKey("quota").setHeader("Quota").setAutoWidth(true).setFlexGrow(0);
         grid.addComponentColumn(iscrizione -> StatoPagamentoUI.badge(situazione(iscrizione)))
             .setHeader("Pagamento").setWidth("9rem").setFlexGrow(0);
         boolean modificabile = CorsoService.puoModificare(corso);
@@ -112,6 +116,7 @@ public class PartecipantiCorso extends VerticalLayout {
             .campo("Orario", this::createOrario)
             .campo("Gruppo", iscrizione -> gruppi.isEmpty() ? null : createGruppo(iscrizione))
             .campo("Opzioni", iscrizione -> opzioni.isEmpty() ? null : createOpzioni(iscrizione))
+            .campo("Quota", this::createQuota)
             .azioni(iscrizione -> createAzioni(iscrizione, modificabile));
         card.applica();
         grid.setAllRowsVisible(true);
@@ -190,6 +195,46 @@ public class PartecipantiCorso extends VerticalLayout {
             aggiorna();
         });
         return gruppo;
+    }
+
+    /**
+     * Quota dovuta (opzioni attive comprese) e, sotto, da dove viene: "Prezzo di listino" o "Personalizzata" con la nota
+     * e la differenza dal listino; con opzioni attive anche il dettaglio corso + opzioni.
+     */
+    private Div createQuota(Iscrizione iscrizione) {
+        Span importo = new Span(Formati.euro(iscrizione.getQuotaDovuta()));
+        importo.addClassNames("font-(--aura-font-weight-medium)");
+        Div quota = new Div(importo);
+        quota.addClassNames("flex flex-col");
+        BigDecimal listino = corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
+        Div origine = new Div();
+        origine.addClassNames("flex flex-wrap items-center gap-1");
+        if (iscrizione.getQuotaPersonalizzata() == null) {
+            Span testo = new Span("Prezzo di listino");
+            testo.addClassNames(Stili.TESTO_SECONDARIO);
+            origine.add(testo);
+        } else {
+            String nota = iscrizione.getNotaQuota();
+            Span testo = new Span("Personalizzata" + (nota != null && !nota.isBlank() ? " · " + nota : ""));
+            testo.addClassNames(Stili.TESTO_SECONDARIO);
+            origine.add(testo);
+            int confronto = iscrizione.getQuotaPersonalizzata().compareTo(listino);
+            if (confronto != 0) {
+                Badge differenza = new Badge((confronto < 0 ? "-" : "+")
+                    + Formati.euro(listino.subtract(iscrizione.getQuotaPersonalizzata()).abs()));
+                differenza.addThemeVariants(confronto < 0 ? BadgeVariant.SUCCESS : BadgeVariant.WARNING);
+                origine.add(differenza);
+            }
+        }
+        quota.add(origine);
+        if (!iscrizione.getOpzioni().isEmpty()) {
+            BigDecimal importoOpzioni = iscrizione.getQuotaDovuta().subtract(iscrizione.getQuotaCorso());
+            Span dettaglio = new Span("Corso " + Formati.euro(iscrizione.getQuotaCorso()) + " + opzioni "
+                + Formati.euro(importoOpzioni));
+            dettaglio.addClassNames(Stili.TESTO_SECONDARIO);
+            quota.add(dettaglio);
+        }
+        return quota;
     }
 
     /** Una casella per opzione aggiuntiva del corso ("Kit +30,00 €"), salvata subito. */

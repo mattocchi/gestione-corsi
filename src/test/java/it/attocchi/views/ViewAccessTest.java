@@ -1158,6 +1158,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertFalse(kit.getValue());
             test(kit).click();
             assertEquals(0, new BigDecimal("630").compareTo(pagamentoService.situazione(canto.getId(), allievoId).quota()));
+            int riga = IntStream.range(0, partecipanti.size())
+                .filter(r -> partecipanti.getRow(r).getAllievo().getId().equals(allievoId)).findFirst().orElseThrow();
+            Component quota = partecipanti.getCellComponent(riga, "quota");
+            assertTrue(find(Span.class).from(quota).withText("630,00 €").exists());
+            assertTrue(find(Span.class).from(quota).withText("Corso 600,00 € + opzioni 30,00 €").exists());
             kit = casellaKit(partecipanti, allievoId);
             assertTrue(kit.getValue());
             test(kit).click();
@@ -1985,7 +1990,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(find(PartecipantiCorso.class).single()).single());
         int riga = IntStream.range(0, partecipanti.size())
             .filter(r -> partecipanti.getCellText(r, 1).equals("Allievo Canto2")).findFirst().orElseThrow();
-        test(pulsante(partecipanti.getCellComponent(riga, 3), "Quota e pagamenti di Allievo Canto2")).click();
+        assertTrue(find(Span.class).from(partecipanti.getCellComponent(riga, "quota")).withText("Prezzo di listino").exists());
+        test(pulsante(partecipanti.getCellComponent(riga, 4), "Quota e pagamenti di Allievo Canto2")).click();
 
         QuotaPagamentiDialog dialog = find(QuotaPagamentiDialog.class).single();
         try {
@@ -2000,6 +2006,13 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(0, new BigDecimal("450").compareTo(iscrizione.getQuotaPersonalizzata()));
             assertEquals("fratelli", iscrizione.getNotaQuota());
             assertTrue(find(Span.class).from(dialog).withText("Da pagare 450,00 €").exists());
+
+            // Chiuso il dialog, la colonna Quota mostra la personalizzata con la nota e lo sconto sul listino
+            dialog.close();
+            Component quota = partecipanti.getCellComponent(riga, "quota");
+            assertTrue(find(Span.class).from(quota).withText("450,00 €").exists());
+            assertTrue(find(Span.class).from(quota).withText("Personalizzata · fratelli").exists());
+            assertEquals("-150,00 €", find(Badge.class).from(quota).single().getText());
         } finally {
             pagamentoService.impostaQuota(corsoId, allievoId, null, null);
         }
@@ -3370,7 +3383,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 riga = row;
             }
         }
-        test(pulsante(partecipanti.getCellComponent(riga, 3), "Rimuovi Allievo Canto1")).click();
+        test(pulsante(partecipanti.getCellComponent(riga, 4), "Rimuovi Allievo Canto1")).click();
         assertEquals(6, partecipanti.size());
         assertTrue(presenzaService.findByCorsoAndAllievo(corso.getId(), allievoId).isEmpty());
     }
