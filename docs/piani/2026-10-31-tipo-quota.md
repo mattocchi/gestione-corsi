@@ -38,7 +38,7 @@ la quota piena, indichino la pre-iscrizione come nota della quota e il motivo pe
 |---|---|---|---|---|
 | 1 | Dati: `TipoQuota`, quota del corso e motivo da `Iscrizione`, servizio, conversione all'avvio, controllo sul corso | entità, `PagamentoService`, `CorsoService`, `QuotePreiscrizioneIniziali`, `DatiDemo`, test | `./mvnw test` | [x] |
 | 2 | Dialog "Quota e pagamenti" con la scelta a pulsanti; colonna Quota e famiglie col motivo | `QuotaPagamentiDialog`, `PartecipantiCorso`, `PagamentiAllievoDialog`, test | `./mvnw test` | [x] |
-| 3 | Documenti: pre-iscrizione esplicita, verifica dei tre casi su conferma e ricevuta | `DocumentiService`, test | test sul PDF e sull'email | [ ] |
+| 3 | Documenti: pre-iscrizione esplicita, verifica dei tre casi su conferma e ricevuta | `DocumentiService`, test | test sul PDF e sull'email | [x] |
 | 4 | Guida, CLAUDE.md e Registro | `guida/staff.md`, `CLAUDE.md`, questo file | test della Guida | [ ] |
 
 ## Fuori ambito

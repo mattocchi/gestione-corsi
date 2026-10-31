@@ -3,6 +3,7 @@ package it.attocchi.service;
 import it.attocchi.config.RecuperoPasswordProperties;
 import java.util.stream.Collectors;
 import java.util.Objects;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.entity.LetteraIncarico;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import freemarker.template.Configuration;
@@ -294,9 +295,9 @@ public class DocumentiService {
         Map<String, String> corsoRiga = new LinkedHashMap<>();
         corsoRiga.put("nome", corso.getNome());
         corsoRiga.put("anno", corso.getAnnoScolastico() != null ? "Anno scolastico " + corso.getAnnoScolastico() : "");
-        corsoRiga.put("nota", iscrizione.getQuotaPersonalizzata() != null
+        corsoRiga.put("nota", iscrizione.getTipoQuota() != TipoQuota.PIENA
             ? "quota piena " + Formati.euro(corso.getCostoTotale())
-                + (iscrizione.getNotaQuota() != null ? ", " + iscrizione.getNotaQuota() : "")
+                + (iscrizione.getMotivoQuota() != null ? ", " + iscrizione.getMotivoQuota() : "")
             : "");
         corsoRiga.put("quota", Formati.euro(riga.situazione().quota()));
         corsoRiga.put("pagato", Formati.euro(riga.situazione().pagato()));
@@ -773,9 +774,9 @@ public class DocumentiService {
     }
 
     /**
-     * Importi della conferma e della ricevuta: quota dovuta, pagato e residuo; con una quota personalizzata diversa
-     * dal listino anche il prezzo di listino, la riga dello sconto (o maggiorazione) con il motivo e la nota che
-     * chiarisce che l'importo dovuto è la quota; con opzioni aggiuntive attive una riga per opzione (e, senza
+     * Importi della conferma e della ricevuta: quota dovuta, pagato e residuo; con la quota piena nient'altro, con la
+     * pre-iscrizione o una quota personalizzata diversa dal listino anche il prezzo di listino e la riga dello sconto
+     * (o maggiorazione) con il motivo ("pre-iscrizione" o quello della quota personalizzata); con opzioni aggiuntive attive una riga per opzione (e, senza
      * variazione, la quota del corso a cui si sommano).
      */
     private static Map<String, Object> importi(Iscrizione iscrizione, Situazione situazione) {
@@ -785,14 +786,13 @@ public class DocumentiService {
         importi.put("pagato", Formati.euro(situazione.pagato()));
         importi.put("residuo", Formati.euro(situazione.residuo()));
         BigDecimal listino = corso.getCostoTotale();
-        BigDecimal differenza = listino != null && iscrizione.getQuotaPersonalizzata() != null
-            ? iscrizione.getQuotaPersonalizzata().subtract(listino) : BigDecimal.ZERO;
+        // Quota piena: nessuna riga in più; pre-iscrizione o personalizzata: differenza dal listino con il motivo
+        BigDecimal differenza = listino != null && iscrizione.getTipoQuota() != TipoQuota.PIENA
+            ? iscrizione.getQuotaCorso().subtract(listino) : BigDecimal.ZERO;
         importi.put("conVariazione", differenza.signum() != 0);
         if (differenza.signum() != 0) {
             boolean sconto = differenza.signum() < 0;
-            String motivo = iscrizione.getNotaQuota() != null ? iscrizione.getNotaQuota()
-                : sconto && corso.getPrezzoPreiscrizione() != null
-                    && iscrizione.getQuotaPersonalizzata().compareTo(corso.getPrezzoPreiscrizione()) == 0 ? "pre-iscrizione" : null;
+            String motivo = iscrizione.getMotivoQuota();
             importi.put("listino", Formati.euro(listino));
             importi.put("etichettaVariazione", (sconto ? "Sconto applicato" : "Maggiorazione applicata")
                 + (motivo != null ? " (" + motivo + ")" : ""));

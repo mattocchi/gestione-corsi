@@ -6,6 +6,7 @@ import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.MetodoPagamento;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.entity.TipoDocumento;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.views.Formati;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -234,14 +235,32 @@ class DocumentiServiceTest {
             assertTrue(email.contains("<s>600,00 €</s>"));
             assertTrue(email.contains("Sconto applicato (fratelli)"));
 
-            // Senza motivo, con la quota uguale al prezzo di pre-iscrizione (510 €)
+            // Personalizzata senza motivo: lo sconto senza nota
+            pagamentoService.impostaQuota(corsoId, allievoId, new BigDecimal("500"), null);
+            String senzaMotivo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId))
+                .replaceAll("\\s+", " ");
+            assertTrue(senzaMotivo.contains("Sconto applicato -100,00 €"), senzaMotivo);
+
+            // Pre-iscrizione (510 €): la nota sulla quota è "pre-iscrizione", nell'email e nel PDF
             it.attocchi.entity.Corso corso = corsoService.findById(corsoId);
             corso.setPrezzoPreiscrizione(new BigDecimal("510.00"));
             corsoService.save(corso);
-            pagamentoService.impostaQuota(corsoId, allievoId, new BigDecimal("510"), null);
+            pagamentoService.impostaTipoQuota(corsoId, allievoId, TipoQuota.PREISCRIZIONE);
             String preiscrizione = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Mario Rossi");
             assertTrue(preiscrizione.contains("Sconto applicato (pre-iscrizione)"), preiscrizione);
             assertTrue(preiscrizione.contains("-90,00 €"));
+            String pdf = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId))
+                .replaceAll("\\s+", " ");
+            assertTrue(pdf.contains("Sconto applicato (pre-iscrizione) -90,00 €"), pdf);
+            assertTrue(pdf.contains("QUOTA DOVUTA 510,00 €"), pdf);
+
+            // Quota piena: nessuna riga in più
+            pagamentoService.impostaTipoQuota(corsoId, allievoId, TipoQuota.PIENA);
+            String piena = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId))
+                .replaceAll("\\s+", " ");
+            assertFalse(piena.contains("Prezzo di listino"), piena);
+            assertFalse(piena.contains("Sconto"), piena);
+            assertTrue(piena.contains("QUOTA DOVUTA 600,00 €"), piena);
         } finally {
             pagamentoService.impostaQuota(corsoId, allievoId, null, null);
             it.attocchi.entity.Corso corso = corsoService.findById(corsoId);
