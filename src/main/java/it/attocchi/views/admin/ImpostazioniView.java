@@ -18,7 +18,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Impostazioni usate di rado (admin e segreteria): anni scolastici, luoghi e festività in una pagina a schede. I
+ * Impostazioni usate di rado (admin e segreteria): anni scolastici, luoghi, festività e pubblicazione dei documenti
+ * per le famiglie in una pagina a schede. I
  * vecchi indirizzi delle tre pagine ({@code anni-scolastici}, {@code luoghi}, {@code festivita}) aprono la scheda giusta.
  */
 @Route(value = ImpostazioniView.PERCORSO, layout = MainLayout.class)
@@ -41,6 +42,7 @@ public class ImpostazioniView extends VerticalLayout implements BeforeEnterObser
         aggiungi("anni-scolastici", "Anni scolastici", AnniScolasticiScheda.class);
         aggiungi("luoghi", "Luoghi", LuoghiScheda.class);
         aggiungi("festivita", "Festività", FestivitaScheda.class);
+        aggiungi("pubblicazione-documenti", "Documenti", DocumentiScheda.class);
         schede.addClassNames("grow w-full");
         add(schede);
     }

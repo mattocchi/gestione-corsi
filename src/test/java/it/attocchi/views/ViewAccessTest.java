@@ -76,6 +76,7 @@ import it.attocchi.service.InsegnanteService;
 import it.attocchi.service.CorsoService;
 import it.attocchi.service.LezioneService;
 import it.attocchi.service.PagamentoService;
+import it.attocchi.service.PubblicazioneDocumentiService;
 import it.attocchi.service.DashboardService.RigaGruppo;
 import it.attocchi.service.PagamentoService.RiepilogoPagamenti;
 import it.attocchi.service.PagamentoService.RigaPagamento;
@@ -201,6 +202,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PubblicazioneDocumentiService pubblicazioneDocumentiService;
 
     @Autowired
     private it.attocchi.repository.UserRepository userRepository;
@@ -675,6 +679,47 @@ class ViewAccessTest extends SpringBrowserlessTest {
     void insegnante_guidaDellInsegnante() {
         navigate(GuidaView.class);
         assertTrue(find(Markdown.class).single().getContent().contains("Le mie lezioni"));
+    }
+
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_impostaIDocumentiVisibiliAlleFamiglie() {
+        navigate(ImpostazioniView.class);
+        find(TabSheet.class).single().setSelectedIndex(3);
+        Checkbox ricevute = find(Checkbox.class).withLabel("Ricevute").single();
+        assertTrue(ricevute.getValue());
+        assertEquals("Quando il corso è pubblicato e c'è almeno un pagamento", ricevute.getHelperText());
+        try {
+            test(ricevute).click();
+            assertFalse(pubblicazioneDocumentiService.visibile(TipoDocumento.RICEVUTA));
+        } finally {
+            pubblicazioneDocumentiService.imposta(TipoDocumento.RICEVUTA, true, "admin");
+        }
+        // L'anno in corso non si può pubblicare
+        int anno = LocalDate.now().getYear();
+        pagamentoService.salva(corsoService.findAll().getFirst().getId(),
+            corsoService.findPartecipanti(corsoService.findAll().getFirst().getId()).getFirst().getAllievo().getId(),
+            bonifico(LocalDate.now()));
+        try {
+            navigate(HomeView.class);
+            navigate(ImpostazioniView.class);
+            find(TabSheet.class).single().setSelectedIndex(3);
+            Checkbox corrente = find(Checkbox.class).withLabel("Attestazioni " + anno).single();
+            assertFalse(corrente.isEnabled());
+            assertEquals("Pubblicabili dal 1° gennaio " + (anno + 1), corrente.getHelperText());
+        } finally {
+            Long corsoId = corsoService.findAll().getFirst().getId();
+            Long allievoId = corsoService.findPartecipanti(corsoId).getFirst().getAllievo().getId();
+            pagamentoService.findPagamenti(corsoId, allievoId).forEach(pagamentoService::elimina);
+        }
+    }
+
+    private static Pagamento bonifico(LocalDate data) {
+        Pagamento rata = new Pagamento();
+        rata.setData(data);
+        rata.setImporto(new BigDecimal("10"));
+        rata.setMetodo(MetodoPagamento.BONIFICO);
+        return rata;
     }
 
     /** Clic sulla card della Home con il titolo indicato. */
