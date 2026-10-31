@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Sezione "Opzioni aggiuntive" del dialog del corso: una riga per opzione (descrizione e importo) e "Aggiungi opzione".
+ * Sezione "Opzioni aggiuntive" dei dati del corso: una riga per opzione (descrizione e importo) e "Aggiungi opzione".
  * Le opzioni si salvano con il corso ({@code CorsoService.salva(corso, opzioni)}); togliere un'opzione già salvata è
  * solo per l'admin (il servizio rifiuta quelle attive per qualche iscritto).
  */
@@ -29,6 +29,8 @@ class OpzioniCorsoFields extends Div {
     private final List<Riga> righe = new ArrayList<>();
     private final Div elenco = new Div();
     private final boolean puoEliminare;
+    /** Righe aggiunte o tolte, o valori cambiati, dopo la costruzione. */
+    private boolean modificato;
 
     /** @param puoEliminare {@code true} per l'admin, che può togliere anche le opzioni già salvate */
     OpzioniCorsoFields(List<OpzioneCorso> opzioni, boolean puoEliminare) {
@@ -41,6 +43,7 @@ class OpzioniCorsoFields extends Div {
         Button aggiungi = new Button("Aggiungi opzione", VaadinIcon.PLUS.create(), e -> aggiungi(null).descrizione().focus());
         aggiungi.addClassNames("self-start");
         opzioni.forEach(this::aggiungi);
+        modificato = false;
         add(titolo, aiuto, elenco, aggiungi);
         addClassNames("flex flex-col gap-1 w-full");
     }
@@ -58,6 +61,8 @@ class OpzioniCorsoFields extends Div {
             descrizione.setValue(opzione.getDescrizione());
             importo.setValue(opzione.getImporto());
         }
+        descrizione.addValueChangeListener(e -> modificato = true);
+        importo.addValueChangeListener(e -> modificato = true);
         Div contenitore = new Div(descrizione, importo);
         contenitore.addClassNames("flex flex-wrap items-baseline gap-2");
         Riga riga = new Riga(opzione, descrizione, importo, contenitore);
@@ -67,13 +72,20 @@ class OpzioniCorsoFields extends Div {
             Button togli = ViewSupport.iconButton(VaadinIcon.TRASH, "Togli " + nome, e -> {
                 righe.remove(riga);
                 elenco.remove(contenitore);
+                modificato = true;
             });
             togli.addThemeVariants(ButtonVariant.ERROR);
             contenitore.add(togli);
         }
         righe.add(riga);
         elenco.add(contenitore);
+        modificato = true;
         return riga;
+    }
+
+    /** Modifiche non ancora salvate: opzioni aggiunte, tolte o cambiate. */
+    boolean hasChanges() {
+        return modificato;
     }
 
     /** Controlla descrizione e importo (maggiore di zero) di ogni riga, mostrando gli errori sui campi. */

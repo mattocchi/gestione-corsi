@@ -97,6 +97,7 @@ import it.attocchi.service.RimborsoService;
 import it.attocchi.entity.Rimborso;
 import it.attocchi.service.UserService;
 import it.attocchi.views.admin.CorsiView;
+import it.attocchi.views.admin.CorsoView;
 import it.attocchi.views.admin.LezioniView;
 import it.attocchi.views.admin.BilancioDialog;
 import it.attocchi.views.admin.EmailDiTestDialog;
@@ -112,7 +113,7 @@ import it.attocchi.views.admin.GestionePagamentiView;
 import it.attocchi.views.admin.ImpostazioniView;
 import it.attocchi.views.admin.InsegnantiView;
 import it.attocchi.views.admin.InvioEmailDialog;
-import it.attocchi.views.admin.PartecipantiDialog;
+import it.attocchi.views.admin.PartecipantiCorso;
 import it.attocchi.views.admin.GruppoDialog;
 import it.attocchi.views.admin.QuotaPagamentiDialog;
 import it.attocchi.views.admin.AllieviView;
@@ -840,7 +841,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(List.of("Kit"), corsoService.opzioni(canto.getId()).stream().map(OpzioneCorso::getDescrizione).toList());
 
             // Riaperto: l'opzione salvata c'è, la segreteria non la può togliere
-            test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Modifica")).click();
+            apriCorso("Corso di Canto");
             assertEquals("Kit", find(TextField.class).withLabel("Descrizione").single().getValue());
             assertTrue(find(Button.class).all().stream().noneMatch(b -> "Togli Kit".equals(b.getElement().getAttribute("aria-label"))));
         } finally {
@@ -870,15 +871,17 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @Test
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    void segreteria_duplicaUnCorsoEApreIlDialog() {
+    void segreteria_duplicaUnCorsoEApreLaSuaPagina() {
         navigate(CorsiView.class);
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Chitarra"), AZIONI_CORSO), "Duplica")).click();
         Corso copia = corsoService.findAll().stream()
             .filter(c -> c.getNome().equals("Corso di Chitarra") && !c.isPubblicato()).findFirst().orElseThrow();
         try {
-            assertEquals("Modifica Corso", find(Dialog.class).single().getHeaderTitle());
+            assertEquals(copia.getNome(), find(CorsoView.class).single().getPageTitle());
             assertFalse(find(Checkbox.class).withLabel("Pubblicato").single().getValue());
+            assertEquals("Corso di Chitarra · " + copia.getAnnoScolastico(),
+                find(com.vaadin.flow.component.html.H2.class).single().getText());
         } finally {
             corsoService.delete(corsoService.findById(copia.getId()));
         }
@@ -962,7 +965,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_inserisceRapidamenteUnNuovoAllievoNelCorso() {
-        PartecipantiDialog dialog = apriPartecipanti("Corso di Canto");
+        PartecipantiCorso dialog = apriPartecipanti("Corso di Canto");
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
         assertEquals(7, righe.size());
 
@@ -1001,7 +1004,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
     void segreteria_inserimentoRapidoProponeLOmonimoEsistente() {
-        PartecipantiDialog dialog = apriPartecipanti("Corso di Canto");
+        PartecipantiCorso dialog = apriPartecipanti("Corso di Canto");
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
         Allievo chitarra1 = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
@@ -1031,7 +1034,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
     @SuppressWarnings("unchecked")
     void segreteria_creaGruppiEAssegnaIPartecipanti() {
         // Senza gruppi la colonna Gruppo non c'è
-        PartecipantiDialog dialog = apriPartecipanti("Corso di Chitarra");
+        PartecipantiCorso dialog = apriPartecipanti("Corso di Chitarra");
         assertFalse(((Grid<Iscrizione>) find(Grid.class).from(dialog).single()).getColumns().get(2).isVisible());
         Allievo allievo = allievoService.findByUsername("allievo_chitarra1").orElseThrow();
         Corso chitarra = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Chitarra")).findFirst().orElseThrow();
@@ -1060,7 +1063,6 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(find(Span.class).from(dialog).withText("Principianti – sab 10:00 · 1 allievo").exists());
 
             // Gestione Corsi mostra il numero di gruppi, vuoto per i corsi senza
-            dialog.close();
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
             assertEquals("1", corsi.getCellText(riga(corsi, "Corso di Chitarra"), 9));
@@ -1107,7 +1109,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         GruppoCorso gruppo = corsoService.salvaGruppo(chitarra.getId(), new GruppoCorso(null, null, DayOfWeek.TUESDAY, LocalTime.of(17, 0)));
         corsoService.assegnaGruppo(chitarra.getId(), allievo.getId(), gruppo.getId());
         try {
-            PartecipantiDialog dialog = apriPartecipanti("Corso di Chitarra");
+            PartecipantiCorso dialog = apriPartecipanti("Corso di Chitarra");
             Button elimina = find(Button.class).from(dialog).all().stream()
                 .filter(b -> "Elimina il gruppo Martedì 17:00".equals(b.getElement().getAttribute("aria-label")))
                 .findFirst().orElseThrow();
@@ -1125,7 +1127,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
 
     /** Scelta del gruppo (terza colonna) del partecipante nella griglia dei partecipanti. */
     @SuppressWarnings("unchecked")
-    private ComboBox<GruppoCorso> gruppoDi(PartecipantiDialog dialog, Allievo allievo) {
+    private ComboBox<GruppoCorso> gruppoDi(PartecipantiCorso dialog, Allievo allievo) {
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
         int riga = IntStream.range(0, righe.size()).filter(r -> righe.getRow(r).getAllievo().equals(allievo)).findFirst().orElseThrow();
         return (ComboBox<GruppoCorso>) righe.getCellComponent(riga, 2);
@@ -1143,10 +1145,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
         Long allievoId = allievoService.findByUsername("allievo_canto3").orElseThrow().getId();
         // Senza opzioni la colonna non c'è
-        PartecipantiDialog dialog = apriPartecipanti("Corso di Canto");
+        PartecipantiCorso dialog = apriPartecipanti("Corso di Canto");
         assertTrue(((Grid<Iscrizione>) find(Grid.class).from(dialog).single()).getColumns().stream()
             .filter(c -> "Opzioni".equals(c.getHeaderText())).noneMatch(Grid.Column::isVisible));
-        dialog.close();
         corsoService.salva(canto, List.of(new OpzioneCorso(null, "Kit", new BigDecimal("30"))));
         try {
             dialog = apriPartecipanti("Corso di Canto");
@@ -1173,16 +1174,87 @@ class ViewAccessTest extends SpringBrowserlessTest {
         return (Checkbox) partecipanti.getCellComponent(riga, "opzioni").getChildren().findFirst().orElseThrow();
     }
 
+    @Test
+    @WithUserDetails("segreteria")
     @SuppressWarnings("unchecked")
-    private PartecipantiDialog apriPartecipanti(String corso) {
+    void segreteria_paginaDelCorso_chiedeConfermaPerLeModificheNonSalvate() {
+        Corso canto = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Canto")).findFirst().orElseThrow();
+        apriCorso("Corso di Canto");
+        Schede<CorsoView.Scheda> schede = find(Schede.class).single();
+        assertEquals(CorsoView.Scheda.DATI, schede.getValue());
+        // Senza modifiche si passa agli iscritti senza domande
+        schede.setValue(CorsoView.Scheda.ISCRITTI);
+        assertTrue(find(PartecipantiCorso.class).exists());
+        schede.setValue(CorsoView.Scheda.DATI);
+
+        test(find(TextField.class).withLabel("Nome").single()).setValue("Canto modificato");
+        schede.setValue(CorsoView.Scheda.ISCRITTI);
+        Dialog conferma = find(Dialog.class).all().stream()
+            .filter(d -> "Modifiche non salvate".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+        // Resta: la scheda torna ai dati con la modifica
+        test(find(Button.class).from(conferma).withText("Resta").single()).click();
+        assertEquals(CorsoView.Scheda.DATI, schede.getValue());
+        assertEquals("Canto modificato", find(TextField.class).withLabel("Nome").single().getValue());
+
+        // Anche uscendo dalla pagina; "Esci senza salvare" non salva
+        test(find(Button.class).withText("Torna ai corsi").single()).click();
+        conferma = find(Dialog.class).all().stream()
+            .filter(d -> "Modifiche non salvate".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+        test(find(Button.class).from(conferma).withText("Esci senza salvare").single()).click();
+        assertTrue(find(CorsiView.class).exists());
+        assertEquals("Corso di Canto", corsoService.findById(canto.getId()).getNome());
+    }
+
+    @Test
+    @WithUserDetails("admin")
+    void admin_paginaDelCorso_nuovoEdEliminazione() {
+        navigate("corsi/nuovo", CorsoView.class);
+        assertEquals("Nuovo corso", find(CorsoView.class).single().getPageTitle());
+        assertFalse(find(Schede.class).single().getScheda(CorsoView.Scheda.ISCRITTI).isEnabled());
+        assertFalse(find(Button.class).withText("Elimina").exists());
+
+        Corso prova = new Corso();
+        prova.setNome("Corso da eliminare");
+        prova.setDataInizio(LocalDate.of(2026, 11, 2));
+        prova.setAnnoScolastico("2026/2027");
+        prova.setNumeroLezioni(5);
+        prova.setDurataLezioneMinuti(30);
+        prova.setInsegnante(insegnanteService.findByUsername("insegnante1").orElseThrow());
+        Long id = corsoService.save(prova).getId();
+        try {
+            navigate("corsi/" + id + "/iscritti", CorsoView.class);
+            assertEquals(CorsoView.Scheda.ISCRITTI, find(Schede.class).single().getValue());
+            test(find(Button.class).withText("Elimina").single()).click();
+            Dialog conferma = find(Dialog.class).all().stream()
+                .filter(d -> "Eliminare il corso?".equals(d.getHeaderTitle())).findFirst().orElseThrow();
+            test(find(Button.class).from(conferma).withText("Elimina").single()).click();
+            assertNull(corsoService.findById(id));
+            assertTrue(find(CorsiView.class).exists());
+        } finally {
+            if (corsoService.findById(id) != null) {
+                corsoService.delete(corsoService.findById(id));
+            }
+        }
+    }
+
+    /** Pagina del corso sulla scheda "Dati del corso", aperta con Modifica da Corsi. */
+    @SuppressWarnings("unchecked")
+    private void apriCorso(String corso) {
+        navigate(CorsiView.class);
+        var grid = test((Grid<Corso>) find(Grid.class).single());
+        test(pulsante(grid.getCellComponent(riga(grid, corso), AZIONI_CORSO), "Modifica")).click();
+    }
+
+    @SuppressWarnings("unchecked")
+    private PartecipantiCorso apriPartecipanti(String corso) {
         navigate(CorsiView.class);
         var grid = test((Grid<Corso>) find(Grid.class).single());
         test(pulsante(grid.getCellComponent(riga(grid, corso), AZIONI_CORSO), "Partecipanti")).click();
-        return find(PartecipantiDialog.class).single();
+        return find(PartecipantiCorso.class).single();
     }
 
     /** Testo non presente tra gli allievi scritto nel campo "Aggiungi un allievo" e confermato (Invio). */
-    private void scriviNuovoPartecipante(PartecipantiDialog dialog, String testo) {
+    private void scriviNuovoPartecipante(PartecipantiCorso dialog, String testo) {
         ComboBox<Allievo> campo = find(ComboBox.class).from(dialog).all().stream()
             .filter(c -> c.getAriaLabel().filter("Allievo da aggiungere"::equals).isPresent()).findFirst().orElseThrow();
         com.vaadin.flow.component.ComponentUtil.fireEvent(campo,
@@ -1200,7 +1272,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Button partecipanti = pulsante(grid.getCellComponent(canto, AZIONI_CORSO), "Partecipanti");
         test(partecipanti).click();
 
-        PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+        PartecipantiCorso dialog = find(PartecipantiCorso.class).single();
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
         assertEquals(List.of("17:00 Allievo Canto5", "17:40 Allievo Canto4", "18:20 Allievo Canto3",
             "19:00 Allievo Canto2", "19:40 Allievo Canto1",
@@ -1215,7 +1287,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         int canto = riga(corsi, "Corso di Canto");
         test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Partecipanti")).click();
-        PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+        PartecipantiCorso dialog = find(PartecipantiCorso.class).single();
         var righe = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
 
         // Canto6 (senza orario, penultimo) alle 16:30: salvato e spostato in cima
@@ -1263,7 +1335,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Salva").single()).click();
         Corso nuovo = corsoService.findAll().stream().filter(c -> c.getNome().equals("Corso di Batteria")).findFirst().orElseThrow();
         try {
-            assertEquals(8, corsi.size());
+            // Salvato resta sulla sua pagina, ora con la scheda Iscritti
+            assertEquals("Corso di Batteria", find(CorsoView.class).single().getPageTitle());
+            assertTrue(find(Schede.class).single().getScheda(CorsoView.Scheda.ISCRITTI).isEnabled());
+            navigate(CorsiView.class);
+            assertEquals(8, test((Grid<Corso>) find(Grid.class).single()).size());
             assertEquals("Marco Rossi", nuovo.getInsegnante().getNomeCompleto());
             assertEquals(LocalDate.of(2026, 11, 2), nuovo.getDataInizio());
         } finally {
@@ -1292,7 +1368,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             altri.setValue(Set.of(marco));
             test(find(Button.class).withText("Salva").single()).click();
             assertEquals("Maria Verdi, Marco Rossi", corsoService.findById(corsoId).getNomiInsegnanti());
-            assertEquals("Maria Verdi, Marco Rossi", corsi.getCellText(riga(corsi, "Corso di Canto"), 2));
+            navigate(CorsiView.class);
+            var aggiornati = test((Grid<Corso>) find(Grid.class).single());
+            assertEquals("Maria Verdi, Marco Rossi", aggiornati.getCellText(riga(aggiornati, "Corso di Canto"), 2));
         } finally {
             Corso ripristino = corsoService.findById(corsoId);
             ripristino.setInsegnantiFacoltativi(java.util.List.of());
@@ -1331,6 +1409,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Salva").single()).click();
         assertTrue(find(DatePicker.class).withLabel("Data Inizio").single().isInvalid());
         assertEquals(7, corsi.size());
+        assertTrue(corsoService.findAll().stream().noneMatch(c -> c.getNome().equals("Corso di Tromba")));
 
         test(find(DatePicker.class).withLabel("Data Inizio").single()).setValue(LocalDate.of(2027, 1, 11));
         test(find(Button.class).withText("Salva").single()).click();
@@ -1339,7 +1418,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(LocalDate.of(2027, 1, 11), nuovo.getDataInizio());
             assertEquals("2026/2027", nuovo.getAnnoScolastico());
             assertTrue(nuovo.isAttivo());
-            assertEquals(Formati.data(LocalDate.of(2027, 1, 11)), corsi.getCellText(riga(corsi, "Corso di Tromba"), 3));
+            navigate(CorsiView.class);
+            var aggiornati = test((Grid<Corso>) find(Grid.class).single());
+            assertEquals(Formati.data(LocalDate.of(2027, 1, 11)), aggiornati.getCellText(riga(aggiornati, "Corso di Tromba"), 3));
         } finally {
             corsoService.delete(nuovo);
         }
@@ -1700,7 +1781,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
         test(find(Button.class).withText("Salva").single()).click();
         try {
             assertEquals(2, corsoService.findById(corsoId).getCadenzaSettimane());
-            assertEquals("gio, ogni 2 settimane", corsi.getCellText(riga(corsi, "Corso di Canto"), 4));
+            navigate(CorsiView.class);
+            var aggiornati = test((Grid<Corso>) find(Grid.class).single());
+            assertEquals("gio, ogni 2 settimane", aggiornati.getCellText(riga(aggiornati, "Corso di Canto"), 4));
         } finally {
             Corso corso = corsoService.findById(corsoId);
             corso.setCadenzaSettimane(1);
@@ -1783,7 +1866,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertFalse(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Aggiorna lezioni").isEnabled());
 
             test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
-            PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+            PartecipantiCorso dialog = find(PartecipantiCorso.class).single();
             assertFalse(find(ComboBox.class).from(dialog).exists());
             assertTrue(find(TimePicker.class).from(dialog).all().stream().allMatch(TimePicker::isReadOnly));
 
@@ -1808,10 +1891,9 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertTrue(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Aggiorna lezioni").isEnabled());
 
             test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
-            PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+            PartecipantiCorso dialog = find(PartecipantiCorso.class).single();
             assertTrue(find(ComboBox.class).from(dialog).exists());
             assertTrue(find(TimePicker.class).from(dialog).all().stream().noneMatch(TimePicker::isReadOnly));
-            dialog.close();
 
             corsoService.iscrivi(chitarra.getId(), allievo);
             corsoService.rimuoviIscrizione(chitarra.getId(), allievo);
@@ -1900,7 +1982,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Long corsoId = corsi.getRow(canto).getId();
         Long allievoId = allievoService.findByUsername("allievo_canto2").orElseThrow().getId();
         test(pulsante(corsi.getCellComponent(canto, AZIONI_CORSO), "Partecipanti")).click();
-        var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(find(PartecipantiDialog.class).single()).single());
+        var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(find(PartecipantiCorso.class).single()).single());
         int riga = IntStream.range(0, partecipanti.size())
             .filter(r -> partecipanti.getCellText(r, 1).equals("Allievo Canto2")).findFirst().orElseThrow();
         test(pulsante(partecipanti.getCellComponent(riga, 3), "Quota e pagamenti di Allievo Canto2")).click();
@@ -3052,7 +3134,6 @@ class ViewAccessTest extends SpringBrowserlessTest {
         var corsi = test((Grid<Corso>) find(Grid.class).single());
         test(pulsante(corsi.getCellComponent(riga(corsi, "Corso di Canto"), AZIONI_CORSO), "Partecipanti")).click();
         assertFalse(find(Button.class).withText("Invia conferme di iscrizione a tutti").exists());
-        find(Dialog.class).single().close();
         navigate(DocumentiView.class);
         annoDeiCorsiDiProva();
         test(this.<Corso>filtro("Filtra per corso")).selectItem("Corso di Canto");
@@ -3247,7 +3328,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         Corso corso = corsi.getRow(chitarra);
         test(pulsante(corsi.getCellComponent(chitarra, AZIONI_CORSO), "Partecipanti")).click();
 
-        PartecipantiDialog dialog = find(PartecipantiDialog.class).single();
+        PartecipantiCorso dialog = find(PartecipantiCorso.class).single();
         var partecipanti = test((Grid<Iscrizione>) find(Grid.class).from(dialog).single());
         assertEquals(6, partecipanti.size());
 

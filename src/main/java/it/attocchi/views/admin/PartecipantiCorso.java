@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Partecipanti di un corso in ordine di orario di inizio lezione (chi non ha ancora un orario
+ * Scheda "Iscritti" della pagina del corso ({@link CorsoView}): partecipanti in ordine di orario di inizio lezione (chi non ha ancora un orario
  * è in fondo), con aggiunta, rimozione e orario modificabile. Le modifiche sono salvate subito
  * e l'elenco si riordina; la notifica compare solo in caso di errore. Sopra l'elenco i gruppi del corso (giorno e
  * orario): ogni partecipante può appartenere a uno e frequenta solo quel giorno, senza gruppo tutti i giorni.
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * (tranne che per l'admin). Se il corso ha opzioni aggiuntive (es. il kit) la colonna "Opzioni" ha una casella per
  * ognuna, salvata subito: l'importo si somma alla quota del partecipante (anche nei corsi non attivi, come le quote).
  */
-public class PartecipantiDialog extends Dialog {
+public class PartecipantiCorso extends VerticalLayout {
 
     private final CorsoService corsoService;
     private final AllievoService allievoService;
@@ -63,17 +63,13 @@ public class PartecipantiDialog extends Dialog {
     private List<OpzioneCorso> opzioni = List.of();
 
     /** @param puoEliminareGruppi {@code true} per l'admin, che può eliminare i gruppi */
-    public PartecipantiDialog(CorsoService corsoService, AllievoService allievoService,
+    public PartecipantiCorso(CorsoService corsoService, AllievoService allievoService,
                               PagamentoService pagamentoService, Corso corso, boolean puoEliminareGruppi) {
         this.corsoService = corsoService;
         this.puoEliminareGruppi = puoEliminareGruppi;
         this.allievoService = allievoService;
         this.pagamentoService = pagamentoService;
         this.corso = corso;
-
-        setHeaderTitle("Partecipanti – " + corso.getNome());
-        setWidth("720px");
-        setMaxWidth("100%");
 
         nuovoPartecipante.setPlaceholder("Aggiungi un allievo");
         nuovoPartecipante.setAriaLabel("Allievo da aggiungere");
@@ -120,17 +116,14 @@ public class PartecipantiDialog extends Dialog {
         gruppiDelCorso.addClassNames("flex flex-col gap-1 w-full");
         aggiorna();
 
-        VerticalLayout content = new VerticalLayout(aggiunta, gruppiDelCorso, grid);
+        add(aggiunta, gruppiDelCorso, grid);
         if (!modificabile) {
             aggiunta.setVisible(false);
             Span avviso = new Span("Corso non attivo: partecipanti e orari non sono modificabili.");
             avviso.addClassNames(Stili.TESTO_SECONDARIO);
-            content.addComponentAsFirst(avviso);
+            addComponentAsFirst(avviso);
         }
-        content.addClassNames("p-0");
-        add(content);
-        // Le conferme di iscrizione si inviano dalla sezione Documenti
-        getFooter().add(ViewSupport.closeButton(this, "Chiudi"));
+        addClassNames("p-0 max-w-4xl");
     }
 
     private HorizontalLayout createAzioni(Iscrizione iscrizione, boolean modificabile) {

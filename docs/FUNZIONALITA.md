@@ -530,7 +530,7 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 ### PAGINE DEL CORSO
 
-* [ ] nella gestione dei corsi, è possibile rendere la modifica del corso e la gestione degli iscritti una pagine dedicata e non un popup?
+* [x] nella gestione dei corsi, è possibile rendere la modifica del corso e la gestione degli iscritti una pagine dedicata e non un popup? _(completata 2026-10-31)_
   _Chiarimento 2026-10-31: una sola pagina del corso con le schede "Dati del corso" e "Iscritti" (Modifica apre la prima, Partecipanti la seconda); anche Nuovo Corso e Duplica la usano. Dopo Salva si resta sulla pagina; uscendo con modifiche non salvate si chiede conferma. In testa "Torna ai corsi", "Aggiorna lezioni", "Duplica" ed "Elimina" (solo admin, con conferma)._
 * [ ] inoltre dalla stessa nuova pagina di gestione degli iscritti avere ilpulsante per inviare le conferme a tutti gli iscritti, come c'e' nella pagina dei documenti "Invia conferme di iscrizioni a tutti"
   _Chiarimento 2026-10-31: stesso dialog di Documenti (che lo mantiene): chi riceve e chi è saltato, anteprima, invio; disattivato con il motivo per un corso non pubblicato o senza iscritti._
