@@ -11,6 +11,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.function.SerializableSupplier;
 import it.attocchi.entity.Allievo;
 import it.attocchi.entity.Corso;
@@ -69,10 +70,9 @@ public class ElencoPagamenti extends VerticalLayout {
 
     private final Grid<RigaPagamento> grid = new Grid<>(RigaPagamento.class, false);
     private final Div totali = new Div();
-    private final SegmentedControl<FiltroStato> filtroCorsi = new SegmentedControl<>("Filtra per stato del corso",
-        List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Corsi: " + f.getEtichetta(), null);
-    private final SegmentedControl<FiltroPagamento> filtroPagamento = new SegmentedControl<>("Filtra per stato del pagamento",
-        List.of(FiltroPagamento.values()), FiltroPagamento::getEtichetta, f -> "Pagamento: " + f.getEtichetta(), null);
+    private final Select<FiltroStato> filtroCorsi = new Select<>();
+    private final Schede<FiltroPagamento> filtroPagamento = new Schede<>("Filtra per stato del pagamento",
+        List.of(FiltroPagamento.values()), FiltroPagamento::getEtichetta, f -> "Pagamento: " + f.getEtichetta());
     private final ComboBox<Corso> filtroCorso = filtro("Tutti i corsi", "Filtra per corso", "w-56");
     private final ComboBox<Allievo> filtroAllievo = filtro("Tutti gli allievi", "Filtra per allievo", "w-52");
     private final ComboBox<Genitore> filtroGenitore = filtro("Tutti i genitori", "Filtra per genitore", "w-52");
@@ -92,7 +92,15 @@ public class ElencoPagamenti extends VerticalLayout {
         addClassNames("size-full p-0");
         configureGrid();
 
-        // Il genitore vede anche i corsi non attivi e non ha filtri per stato
+        // Il genitore vede anche i corsi non attivi e non ha il filtro per stato del corso
+        filtroCorsi.setItems(FiltroStato.values());
+        filtroCorsi.setItemLabelGenerator(f -> switch (f) {
+            case ATTIVI -> "Corsi attivi";
+            case NON_ATTIVI -> "Corsi non attivi";
+            case TUTTI -> "Tutti i corsi";
+        });
+        filtroCorsi.setAriaLabel("Filtra per stato del corso");
+        filtroCorsi.addClassNames("w-44");
         filtroCorsi.setValue(gestione ? FiltroStato.ATTIVI : FiltroStato.TUTTI);
         filtroPagamento.setValue(FiltroPagamento.TUTTI);
         filtroCorsi.addValueChangeListener(e -> applicaFiltri());
@@ -104,7 +112,7 @@ public class ElencoPagamenti extends VerticalLayout {
         HorizontalLayout filtri = new HorizontalLayout();
         filtri.addClassNames("flex-wrap w-full items-center");
         if (gestione) {
-            filtri.add(filtroCorsi, filtroPagamento, filtroCorso, filtroAllievo, filtroGenitore, filtroAnno);
+            filtri.add(filtroCorsi, filtroCorso, filtroAllievo, filtroGenitore, filtroAnno);
         } else {
             filtroAllievo.setPlaceholder("Tutti i figli");
             filtroAllievo.setAriaLabel("Filtra per figlio");
@@ -112,7 +120,7 @@ public class ElencoPagamenti extends VerticalLayout {
         }
         totali.addClassNames(Stili.RIEPILOGO_PAGAMENTI);
 
-        add(filtri, totali, grid);
+        add(filtroPagamento, filtri, totali, grid);
         grid.addClassNames("grow");
         aggiorna();
     }

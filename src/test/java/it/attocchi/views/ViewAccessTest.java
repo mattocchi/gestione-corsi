@@ -1822,12 +1822,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals("Parziale 33%", ((Badge) righe.getCellComponent(riga, "stato")).getText());
 
             // Filtro per stato del pagamento e per genitore
-            SegmentedControl<ElencoPagamenti.FiltroPagamento> filtroPagamento = find(SegmentedControl.class).all().stream()
-                .filter(c -> c.getValue() == ElencoPagamenti.FiltroPagamento.TUTTI).findFirst().orElseThrow();
-            test(filtroPagamento.getPulsante(ElencoPagamenti.FiltroPagamento.PARZIALE)).click();
+            Schede<ElencoPagamenti.FiltroPagamento> filtroPagamento = find(Schede.class).single();
+            filtroPagamento.setValue(ElencoPagamenti.FiltroPagamento.PARZIALE);
             assertEquals(1, righe.size());
             assertEquals(allievo, righe.getRow(0).allievo());
-            test(filtroPagamento.getPulsante(ElencoPagamenti.FiltroPagamento.TUTTI)).click();
+            filtroPagamento.setValue(ElencoPagamenti.FiltroPagamento.TUTTI);
             ComboBox<Genitore> filtroGenitore = filtro("Filtra per genitore");
             test(filtroGenitore).selectItem(righe.getRow(rigaDi(righe, allievo)).genitore().getNomeCompleto());
             assertTrue(IntStream.range(0, righe.size())
@@ -1869,6 +1868,12 @@ class ViewAccessTest extends SpringBrowserlessTest {
             int riga = rigaDi(righe, allievo);
             assertEquals(canto, righe.getRow(riga).corso());
             assertTrue(find(Span.class).withText("Incassato 200,00 €").exists());
+            // Schede per lo stato del pagamento, nessun filtro per stato del corso
+            assertFalse(find(Select.class).exists());
+            Schede<ElencoPagamenti.FiltroPagamento> stato = find(Schede.class).single();
+            stato.setValue(ElencoPagamenti.FiltroPagamento.SALDATO);
+            assertEquals(0, righe.size());
+            stato.setValue(ElencoPagamenti.FiltroPagamento.TUTTI);
             var azioni = righe.getCellComponent(riga, "azioni");
             assertThrows(AssertionError.class, () -> pulsante(azioni, "Aggiungi pagamento"));
             test(pulsante(azioni, "Pagamenti")).click();
