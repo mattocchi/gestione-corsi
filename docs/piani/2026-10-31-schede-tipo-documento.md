@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | 1 | `DocumentiView`: `Tabs` al posto del `SegmentedControl` del tipo; test aggiornati | `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 2 | CLAUDE.md: selettore del tipo in Documenti | `CLAUDE.md` | — | [x] |
-| 3 | Registro | questo piano | — | [ ] |
+| 3 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -31,3 +31,6 @@
   da valutare a parte.
 
 ## Registro
+
+- Passi 1-2 completati; `./mvnw test`: 341 test, 0 errori (helper `ViewAccessTest.scegliTipo`).
+- Non verificato nel browser lo scorrimento delle schede a 390px (comportamento standard di `vaadin-tabs`).
