@@ -304,10 +304,15 @@ public class DocumentiService {
 
     /** Riepilogo dei corsi attivi in PDF, solo per admin e segreteria; altrimenti {@link IllegalArgumentException}. */
     public Pdf riepilogoCorsiPer(String username) {
+        return riepilogoCorsiPdf(riepilogoCorsi(username));
+    }
+
+    /** Dati del riepilogo dei corsi attivi, solo per admin e segreteria; altrimenti {@link IllegalArgumentException}. */
+    public RiepilogoCorsi riepilogoCorsi(String username) {
         if (!staff(username)) {
             throw new IllegalArgumentException("Riepilogo non trovato");
         }
-        return riepilogoCorsiPdf(riepilogoCorsiService.riepilogo());
+        return riepilogoCorsiService.riepilogo();
     }
 
     /** PDF del riepilogo dei corsi, senza controllo dei permessi (allegato dell'email). */

@@ -15,6 +15,8 @@ import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.UserRepository;
 import it.attocchi.service.DocumentiService.Pdf;
+import it.attocchi.service.RiepilogoCorsiService.RiepilogoCorsi;
+import it.attocchi.views.Formati;
 import it.attocchi.service.PagamentoService.RiepilogoFamiglia;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.AddressException;
@@ -584,6 +586,29 @@ public class EmailService {
         invio.setAllievoNome(lettera.getInsegnante().getNomeCompleto());
         invio.setAnno(lettera.getAnnoScolastico());
         return spedisciERegistra(invio, () -> documentiService.emailLetteraHtml(lettera, destinatario.nome()), pdf::contenuto);
+    }
+
+    /**
+     * Invia all'email del profilo di admin o segreteria il riepilogo dei corsi attivi in PDF e registra il tentativo
+     * (corso "Corsi attivi"). Altri utenti {@link IllegalArgumentException}, senza email nel profilo {@link IllegalStateException}.
+     */
+    @Transactional
+    public InvioEmail inviaRiepilogoCorsiAMe(String username) {
+        RiepilogoCorsi riepilogo = documentiService.riepilogoCorsi(username);
+        Pdf pdf = documentiService.riepilogoCorsiPdf(riepilogo);
+        Destinatario destinatario = verificaDestinatarioProprio(username);
+        TipoDocumento tipo = TipoDocumento.RIEPILOGO_CORSI;
+        InvioEmail invio = nuovoInvio(tipo, destinatario, tipo.getTitolo() + " – " + Formati.dataCompleta(riepilogo.data()),
+            pdf, username);
+        invio.setCorsoNome("Corsi attivi");
+        return spedisciERegistra(invio, () -> documentiService.emailRiepilogoCorsiHtml(riepilogo, destinatario.nome()),
+            pdf::contenuto);
+    }
+
+    /** Ultimo invio non in errore del riepilogo dei corsi, di chiunque. */
+    public Optional<InvioEmail> ultimoInvioRiepilogoCorsi() {
+        return invioEmailRepository.findByTipoAndEsitoNotOrderByDataOraDesc(TipoDocumento.RIEPILOGO_CORSI, Esito.ERRORE)
+            .stream().findFirst();
     }
 
     private Destinatario verificaDestinatarioProprio(String username) {

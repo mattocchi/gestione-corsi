@@ -253,6 +253,25 @@ class EmailServiceTest {
     }
 
     @Test
+    void riepilogoCorsi_soloStaffAllaPropriaEmail() {
+        assertTrue(emailService.ultimoInvioRiepilogoCorsi().isEmpty());
+        InvioEmail invio = emailService.inviaRiepilogoCorsiAMe("segreteria");
+        assertEquals(Esito.SIMULATA, invio.getEsito());
+        assertEquals(TipoDocumento.RIEPILOGO_CORSI, invio.getTipo());
+        assertEquals("segreteria@example.com", invio.getDestinatario());
+        assertEquals("segreteria", invio.getInviatoDa());
+        assertEquals("Corsi attivi", invio.getCorsoNome());
+        assertTrue(invio.getOggetto().startsWith("Riepilogo dei corsi attivi – "), invio.getOggetto());
+        assertTrue(invio.getAllegato().startsWith("riepilogo-corsi-attivi-"), invio.getAllegato());
+        assertEquals(invio.getId(), emailService.ultimoInvioRiepilogoCorsi().orElseThrow().getId());
+
+        for (String altri : List.of("insegnante1", "genitore3")) {
+            assertThrows(IllegalArgumentException.class, () -> emailService.inviaRiepilogoCorsiAMe(altri), altri);
+        }
+        assertEquals(1, emailService.tuttiGliInvii().size());
+    }
+
+    @Test
     void test_soloAdminSimulataENonRegistrata() {
         EmailService.EsitoTest esito = emailService.inviaTest(" prova@example.org ", TipoDocumento.RICEVUTA, "admin");
         assertEquals(Esito.SIMULATA, esito.esito());
