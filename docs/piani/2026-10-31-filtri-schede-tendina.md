@@ -36,10 +36,21 @@ documenti, Gestione Corsi e Calendario, come il tipo di documento in Documenti.
 | 6 | Cronologia documenti: tipo a tendina | `EmailInviateView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 7 | Calendario: Mese / Settimana tipo a schede | `CalendarioView`, test | `./mvnw test` | [x] |
 | 8 | CLAUDE.md: quando schede, tendina o pulsanti affiancati | `CLAUDE.md` | — | [x] |
-| 9 | Registro | questo piano | — | [ ] |
+| 9 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
 - Le scelte a pulsanti nei dialog (vedi Decisioni).
 
 ## Registro
+
+- Passi 1-8 completati, un commit per passo; `./mvnw test`: 344 test, 0 errori (nuovo `SchedeTest`; in
+  `ViewAccessTest` gli aiuti `scegliTipo` e `filtroStatoCorsi` lavorano su `Schede` e `Select`).
+- Verificato sulla guida di Vaadin 25.3: `Tabs` serve alla navigazione sul posto tra contenuti; Documenti e Calendario
+  cambiano contenuto, gli stati (lezioni, corsi, pagamenti) filtrano la stessa lista, uso previsto anche dalla guida
+  (esempio Open / Completed / Cancelled). Schede larghe quanto la riga: su schermi stretti scorrono con i pulsanti.
+- Il `Select` corregge un errore trovato dai test: con la voce vuota il generatore delle etichette riceve `null`.
+- Novità per il genitore: in Pagamenti ha ora le schede dello stato del pagamento (decisione del chiarimento).
+- `Select` è un componente nuovo per l'app: il bundle di produzione va rigenerato (`build.sh` cancella già
+  `prod.bundle`; con `./mvnw clean package` cancellarlo a mano).
+- Non verificato nel browser (desktop e 390px).
