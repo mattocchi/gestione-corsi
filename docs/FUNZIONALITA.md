@@ -527,3 +527,8 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 
 * [x] su alcuni corsi ho necessità di aggiungere un una tantum extra. ad esempio corso propedeutica 130 euro in prescrizone o 150 prezzo pieno, ma su alcuni devo attivare "opzione kit +30€" quindi mi servierbbe un campo per inserire un importo aggiuntivo e motivazione nel corso, e poi su ogni iscritto attivare si no l'opzione aggiuntiva. da esplicitare anche in stampa conferma. fare già una soluzione con piu opzioni aggiungibili nel corso non solo un campo unico. _(completata 2026-10-31)_
   _Chiarimento 2026-10-31: nel dialog del corso una sezione "Opzioni aggiuntive" con più righe (descrizione e importo); admin e segreteria le creano e modificano, eliminare solo l'admin e solo se nessun iscritto l'ha attiva. Ogni iscritto le attiva in Partecipanti (una casella per opzione). La quota dovuta è la quota del corso (piena, pre-iscrizione o personalizzata) più le opzioni attive; cambiando l'importo nel corso cambia per tutti. Conferma e ricevuta (email e PDF) mostrano una riga per opzione attiva; genitori e allievi adulti vedono le opzioni attive nei prezzi del corso. "Duplica" copia le opzioni. Nei dati demo Propedeutica ha "Kit strumentario" +30 € per Sara Ferri e Tommaso Russo._
+
+### PAGINE DEL CORSO
+
+* [ ] nella gestione dei corsi, è possibile rendere la modifica del corso e la gestione degli iscritti una pagine dedicata e non un popup?
+* [ ] inoltre dalla stessa nuova pagina di gestione degli iscritti avere ilpulsante per inviare le conferme a tutti gli iscritti, come c'e' nella pagina dei documenti "Invia conferme di iscrizioni a tutti"
