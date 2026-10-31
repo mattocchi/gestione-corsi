@@ -4,6 +4,9 @@ import it.attocchi.entity.LetteraIncarico;
 import it.attocchi.service.ElencoDocumentiService;
 import java.time.YearMonth;
 import com.vaadin.flow.component.tabs.Tabs;
+import java.util.stream.Stream;
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.contextmenu.MenuItem;
@@ -750,8 +753,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
                 .anyMatch(b -> "Servizio".equals(b.getText())));
             assertTrue(find(Badge.class).from(grid.getCellComponent(riga(grid, "Corso di Canto"), 0)).all().isEmpty());
 
-            SegmentedControl<CorsiView.FiltroTipo> filtro = find(SegmentedControl.class).all().stream()
-                .filter(c -> c.getValue() instanceof CorsiView.FiltroTipo).findFirst().orElseThrow();
+            Select<CorsiView.FiltroTipo> filtro = find(Select.class).single();
             filtro.setValue(CorsiView.FiltroTipo.SERVIZI);
             assertEquals(1, grid.size());
             filtro.setValue(CorsiView.FiltroTipo.CORSI);
@@ -1520,18 +1522,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
-            SegmentedControl<CorsiView.FiltroStato> stato = filtroStatoCorsi();
+            HasValue<?, CorsiView.FiltroStato> stato = filtroStatoCorsi();
 
             // default: solo i corsi attivi
             assertEquals(CorsiView.FiltroStato.ATTIVI, stato.getValue());
             assertEquals(1, corsi.size());
             assertEquals("Corso di Canto", corsi.getRow(0).getNome());
 
-            test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            stato.setValue(CorsiView.FiltroStato.NON_ATTIVI);
             assertEquals(1, corsi.size());
             assertEquals("Non attivo", ((Badge) corsi.getCellComponent(0, 10)).getText());
 
-            test(stato.getPulsante(CorsiView.FiltroStato.TUTTI)).click();
+            stato.setValue(CorsiView.FiltroStato.TUTTI);
             assertEquals(2, corsi.size());
 
             ComboBox<String> anno = find(ComboBox.class).withPlaceholder("Tutti gli anni").single();
@@ -1552,8 +1554,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
-            test(filtroStatoCorsi()
-                .getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            filtroStatoCorsi().setValue(CorsiView.FiltroStato.NON_ATTIVI);
             assertFalse(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Aggiorna lezioni").isEnabled());
 
             test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
@@ -1578,7 +1579,7 @@ class ViewAccessTest extends SpringBrowserlessTest {
         try {
             navigate(CorsiView.class);
             var corsi = test((Grid<Corso>) find(Grid.class).single());
-            test(filtroStatoCorsi().getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            filtroStatoCorsi().setValue(CorsiView.FiltroStato.NON_ATTIVI);
             assertTrue(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Aggiorna lezioni").isEnabled());
 
             test(pulsante(corsi.getCellComponent(0, AZIONI_CORSO), "Partecipanti")).click();
@@ -1925,8 +1926,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(8, grid.size());
 
             // Corsi non attivi dell'anno: nessuno
-            SegmentedControl<CorsiView.FiltroStato> stato = filtroStatoCorsi();
-            test(stato.getPulsante(CorsiView.FiltroStato.NON_ATTIVI)).click();
+            HasValue<?, CorsiView.FiltroStato> stato = filtroStatoCorsi();
+            stato.setValue(CorsiView.FiltroStato.NON_ATTIVI);
             assertEquals(0, grid.size());
         } finally {
             pagamentoService.findPagamenti(canto.getId(), allievo.getId()).forEach(pagamentoService::elimina);
@@ -3003,10 +3004,11 @@ class ViewAccessTest extends SpringBrowserlessTest {
         throw new AssertionError("Corso non trovato: " + nome);
     }
 
-    /** Filtro per stato di Gestione Corsi (accanto c'è anche quello per tipo). */
+    /** Filtro per stato dei corsi (Gestione Corsi, Gestione Pagamenti, Riepilogo Iscritti): schede o tendina. */
     @SuppressWarnings("unchecked")
-    private SegmentedControl<CorsiView.FiltroStato> filtroStatoCorsi() {
-        return find(SegmentedControl.class).all().stream()
+    private HasValue<?, CorsiView.FiltroStato> filtroStatoCorsi() {
+        return Stream.of(Schede.class, Select.class, SegmentedControl.class).flatMap(tipo -> find(tipo).all().stream())
+            .map(c -> (HasValue<?, CorsiView.FiltroStato>) c)
             .filter(c -> c.getValue() instanceof CorsiView.FiltroStato).findFirst().orElseThrow();
     }
 

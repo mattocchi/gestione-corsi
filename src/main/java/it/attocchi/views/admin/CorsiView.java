@@ -17,6 +17,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.BigDecimalField;
@@ -45,6 +46,7 @@ import it.attocchi.views.CardMobile;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
 import it.attocchi.views.RicercaRapida;
+import it.attocchi.views.Schede;
 import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.TipoCorsoUI;
 import it.attocchi.views.Stili;
@@ -91,9 +93,9 @@ public class CorsiView extends VerticalLayout {
 
     /** Filtro della griglia per tipo: corsi, servizi o entrambi. */
     public enum FiltroTipo {
-        TUTTI("Tutti", null),
-        CORSI("Corsi", TipoCorso.CORSO),
-        SERVIZI("Servizi", TipoCorso.SERVIZIO);
+        TUTTI("Corsi e servizi", null),
+        CORSI("Solo corsi", TipoCorso.CORSO),
+        SERVIZI("Solo servizi", TipoCorso.SERVIZIO);
 
         private final String etichetta;
         private final TipoCorso tipo;
@@ -122,10 +124,9 @@ public class CorsiView extends VerticalLayout {
     private final boolean puoEliminare;
 
     private final Grid<Corso> grid = new Grid<>(Corso.class, false);
-    private final SegmentedControl<FiltroStato> filtroStato = new SegmentedControl<>("Filtra i corsi per stato",
-        List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Mostra corsi: " + f.getEtichetta(), null);
-    private final SegmentedControl<FiltroTipo> filtroTipo = new SegmentedControl<>("Filtra per tipo",
-        List.of(FiltroTipo.values()), FiltroTipo::getEtichetta, f -> "Mostra: " + f.getEtichetta(), null);
+    private final Schede<FiltroStato> filtroStato = new Schede<>("Filtra i corsi per stato",
+        List.of(FiltroStato.values()), FiltroStato::getEtichetta, f -> "Mostra corsi: " + f.getEtichetta());
+    private final Select<FiltroTipo> filtroTipo = new Select<>();
     private final ComboBox<String> filtroAnno = new ComboBox<>();
     private final Checkbox soloNonPubblicati = new Checkbox("Solo non pubblicati");
     private final RicercaRapida ricerca = new RicercaRapida();
@@ -151,10 +152,12 @@ public class CorsiView extends VerticalLayout {
 
         // Di default solo i corsi attivi, di tutti gli anni
         filtroStato.setValue(FiltroStato.ATTIVI);
-        filtroStato.addClassNames("max-w-[22rem]");
         filtroStato.addValueChangeListener(e -> applicaFiltri());
+        filtroTipo.setItems(FiltroTipo.values());
+        filtroTipo.setItemLabelGenerator(FiltroTipo::getEtichetta);
+        filtroTipo.setAriaLabel("Filtra per tipo");
         filtroTipo.setValue(FiltroTipo.TUTTI);
-        filtroTipo.addClassNames("max-w-[18rem]");
+        filtroTipo.addClassNames("w-44");
         filtroTipo.addValueChangeListener(e -> applicaFiltri());
         filtroAnno.setPlaceholder("Tutti gli anni");
         filtroAnno.setAriaLabel("Filtra per anno scolastico");
@@ -164,9 +167,9 @@ public class CorsiView extends VerticalLayout {
         soloNonPubblicati.addValueChangeListener(e -> applicaFiltri());
         ricerca.addRicercaListener(this::applicaFiltri);
 
-        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroStato, filtroTipo, filtroAnno, soloNonPubblicati, ricerca);
+        HorizontalLayout toolbar = new HorizontalLayout(addButton, filtroTipo, filtroAnno, soloNonPubblicati, ricerca);
         toolbar.addClassNames("flex-wrap w-full items-center");
-        add(toolbar, grid);
+        add(filtroStato, toolbar, grid);
         grid.addClassNames("grow");
 
         updateGrid();
