@@ -42,7 +42,7 @@ in Documenti.
 | 1 | Pagina del corso: form dei dati estratto, schede, Iscritti come componente, modifiche non salvate, azioni in testa; Corsi naviga alla pagina | `CorsoView`, `DatiCorsoForm`, `PartecipantiCorso`, `CorsiView`, `OpzioniCorsoFields`, test | `./mvnw test` | [x] |
 | 2 | Invio delle conferme a tutti dalla scheda Iscritti | `PartecipantiCorso`, test | `./mvnw test` | [x] |
 | 3 | Guida e CLAUDE.md | `guida/staff.md`, `CLAUDE.md` | test della Guida | [x] |
-| 4 | Registro | questo file | — | [ ] |
+| 4 | Registro | questo file | — | [x] |
 
 ## Fuori ambito
 
@@ -50,3 +50,10 @@ in Documenti.
 - "Quota e pagamenti" di un iscritto resta un dialog sopra la pagina.
 
 ## Registro
+
+- 2026-10-31: `./mvnw test` 367 test, 0 errori. I test che aprivano i dialog del corso ora usano la pagina; nuovi test
+  su conferma delle modifiche non salvate (cambio scheda e "Torna ai corsi"), corso nuovo (scheda Iscritti disattivata),
+  eliminazione dalla pagina, invio delle conferme dalla scheda Iscritti e pulsante disattivato per un corso non
+  pubblicato. Non provato nel browser (pagina a 390 px, Indietro del browser tra le schede).
+- Nessun cambiamento ai dati: nessuno script SQL per la produzione. Nessun nuovo componente Vaadin.
+- Il passo 1 è stato corretto (amend, non pushato) per includere il segno di completamento di PAGINE.1.
