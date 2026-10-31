@@ -9,6 +9,7 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -23,12 +24,9 @@ import it.attocchi.service.CronologiaDocumentiService;
 import it.attocchi.service.EmailService;
 import it.attocchi.views.Formati;
 import it.attocchi.views.MainLayout;
-import it.attocchi.views.SegmentedControl;
 import it.attocchi.views.ViewSupport;
 import jakarta.annotation.security.RolesAllowed;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -44,7 +42,7 @@ import java.util.Optional;
 public class EmailInviateView extends VerticalLayout {
 
     private final GrigliaInvii grid = new GrigliaInvii(true);
-    private final SegmentedControl<Optional<TipoDocumento>> filtroTipo;
+    private final Select<TipoDocumento> filtroTipo = new Select<>();
     private final TextField cerca = new TextField();
     private final GridListDataView<InvioEmail> invii;
     private final GrigliaAperture gridAperture;
@@ -57,13 +55,14 @@ public class EmailInviateView extends VerticalLayout {
         this.cronologiaDocumentiService = cronologiaDocumentiService;
         this.username = securityService.getUsername().orElse("");
         addClassNames("size-full");
-        List<Optional<TipoDocumento>> tipi = new java.util.ArrayList<>();
-        tipi.add(Optional.empty());
-        Arrays.stream(TipoDocumento.values()).map(Optional::of).forEach(tipi::add);
-        filtroTipo = new SegmentedControl<>("Filtra per tipo", tipi,
-            t -> t.map(TipoDocumento::getPlurale).orElse("Tutte"),
-            t -> t.map(TipoDocumento::getTitolo).orElse("Tutti i documenti"), null);
-        filtroTipo.setValue(Optional.empty());
+        // Nessuna scelta = tutti i tipi
+        filtroTipo.setItems(TipoDocumento.values());
+        // Chiamato anche per la voce vuota (null)
+        filtroTipo.setItemLabelGenerator(t -> t != null ? t.getPlurale() : "Tutti i documenti");
+        filtroTipo.setEmptySelectionAllowed(true);
+        filtroTipo.setEmptySelectionCaption("Tutti i documenti");
+        filtroTipo.setAriaLabel("Filtra per tipo");
+        filtroTipo.addClassNames("w-56");
         filtroTipo.addValueChangeListener(e -> applicaFiltri());
         cerca.setPlaceholder("Cerca corso, allievo, destinatario o utente");
         cerca.setAriaLabel("Cerca negli invii");
@@ -116,7 +115,7 @@ public class EmailInviateView extends VerticalLayout {
     }
 
     private void applicaFiltri() {
-        Optional<TipoDocumento> tipo = filtroTipo.getValue() != null ? filtroTipo.getValue() : Optional.empty();
+        Optional<TipoDocumento> tipo = Optional.ofNullable(filtroTipo.getValue());
         String testo = cerca.getValue().strip().toLowerCase(Locale.ITALIAN);
         invii.setFilter(i -> (tipo.isEmpty() || tipo.get() == i.getTipo())
             && (testo.isEmpty() || contiene(i.getCorsoNome(), testo) || contiene(i.getAllievoNome(), testo)

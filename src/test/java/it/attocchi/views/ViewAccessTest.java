@@ -2831,8 +2831,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(1, registro.size());
             assertEquals("Allievo Canto3", registro.getCellText(0, 3));
             assertEquals("segreteria", registro.getCellText(0, 5));
-            SegmentedControl<Optional<TipoDocumento>> tipo = find(SegmentedControl.class).single();
-            test(tipo.getPulsante(Optional.of(TipoDocumento.RICEVUTA))).click();
+            Select<TipoDocumento> tipo = find(Select.class).single();
+            tipo.setValue(TipoDocumento.RICEVUTA);
             assertEquals(0, registro.size());
         } finally {
             invioEmailRepository.deleteAll();
@@ -2893,8 +2893,8 @@ class ViewAccessTest extends SpringBrowserlessTest {
             find(com.vaadin.flow.component.tabs.TabSheet.class).single().setSelectedIndex(1);
             var aperture = test((Grid<AperturaDocumento>) find(GrigliaAperture.class).single());
             assertEquals(2, aperture.size());
-            SegmentedControl<Optional<TipoDocumento>> tipo = find(SegmentedControl.class).single();
-            test(tipo.getPulsante(Optional.of(TipoDocumento.RICEVUTA))).click();
+            Select<TipoDocumento> tipo = find(Select.class).single();
+            tipo.setValue(TipoDocumento.RICEVUTA);
             assertEquals(1, aperture.size());
             assertTrue(aperture.getCellText(0, 1).contains("(genitore3)"));
             assertEquals("Scaricato", ((Badge) aperture.getCellComponent(0, 6)).getText());
