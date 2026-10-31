@@ -48,6 +48,9 @@ class DocumentiServiceTest {
     @Autowired
     private PubblicazioneDocumentiService pubblicazioneDocumentiService;
 
+    @Autowired
+    private it.attocchi.repository.OpzioneCorsoRepository opzioneCorsoRepository;
+
     @Test
     void ricevuta_htmlEPdfConIPagamenti() throws IOException {
         Iscrizione iscrizione = iscrizione();
@@ -133,11 +136,15 @@ class DocumentiServiceTest {
 
     @Test
     void conferma_suUnaSolaPaginaAncheConScontoGenitoreEBonifico() throws IOException {
-        // Il caso più lungo: sconto con motivo (listino, sconto e nota), genitore, IBAN, rate e regole
+        // Il caso più lungo: sconto con motivo (listino, sconto e nota), due opzioni aggiuntive, genitore, IBAN, rate e regole
         Iscrizione iscrizione = iscrizione();
         Long corsoId = iscrizione.getCorso().getId();
         Long allievoId = iscrizione.getAllievo().getId();
         pagamentoService.impostaQuota(corsoId, allievoId, new BigDecimal("450"), "fratelli iscritti allo stesso corso");
+        corsoService.salva(corsoService.findById(corsoId), List.of(
+            new it.attocchi.entity.OpzioneCorso(null, "Kit strumentario", new BigDecimal("30")),
+            new it.attocchi.entity.OpzioneCorso(null, "Gita di fine corso", new BigDecimal("15"))));
+        corsoService.opzioni(corsoId).forEach(o -> corsoService.impostaOpzione(corsoId, allievoId, o.getId(), true));
         try {
             byte[] pdf = documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId);
             if (System.getProperty("conferma.pdf") != null) {
@@ -150,8 +157,24 @@ class DocumentiServiceTest {
             assertTrue(testo.contains("Genitore"), testo);
             assertTrue(testo.contains("IT60X0542811101000000123456"), testo);
             assertTrue(testo.contains("Data di nascita " + Formati.dataNumerica(iscrizione.getAllievo().getDataNascita())), testo);
+            // Le opzioni dopo lo sconto, comprese nella quota dovuta: 450 + 30 + 15
+            assertTrue(testo.contains("Opzione: Kit strumentario +30,00 €"), testo);
+            assertTrue(testo.contains("Opzione: Gita di fine corso +15,00 €"), testo);
+            assertTrue(testo.contains("QUOTA DOVUTA 495,00 €"), testo);
+            // Anche nell'email
+            String email = documentiService.emailHtml(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId, "Genitore");
+            assertTrue(email.contains("Opzione: Kit strumentario"), email);
+
+            // Senza sconto la quota del corso, a cui si sommano le opzioni
+            pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+            testo = testo(documentiService.documentoPdf(TipoDocumento.CONFERMA_ISCRIZIONE, corsoId, allievoId));
+            assertTrue(testo.contains("Quota del corso 600,00 €"), testo);
+            assertFalse(testo.contains("Prezzo di listino"), testo);
+            assertTrue(testo.contains("QUOTA DOVUTA 645,00 €"), testo);
         } finally {
             pagamentoService.impostaQuota(corsoId, allievoId, null, null);
+            corsoService.opzioni(corsoId).forEach(o -> corsoService.impostaOpzione(corsoId, allievoId, o.getId(), false));
+            opzioneCorsoRepository.deleteAll(opzioneCorsoRepository.findByCorsoIdOrderById(corsoId));
         }
     }
 

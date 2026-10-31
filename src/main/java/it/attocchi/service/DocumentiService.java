@@ -775,7 +775,8 @@ public class DocumentiService {
     /**
      * Importi della conferma e della ricevuta: quota dovuta, pagato e residuo; con una quota personalizzata diversa
      * dal listino anche il prezzo di listino, la riga dello sconto (o maggiorazione) con il motivo e la nota che
-     * chiarisce che l'importo dovuto è la quota.
+     * chiarisce che l'importo dovuto è la quota; con opzioni aggiuntive attive una riga per opzione (e, senza
+     * variazione, la quota del corso a cui si sommano).
      */
     private static Map<String, Object> importi(Iscrizione iscrizione, Situazione situazione) {
         Corso corso = iscrizione.getCorso();
@@ -798,6 +799,12 @@ public class DocumentiService {
             // Trattino normale: il segno meno tipografico non è nel font del PDF
             importi.put("variazione", (sconto ? "-" : "+") + Formati.euro(differenza.abs()));
         }
+        // Opzioni aggiuntive attive (es. il kit), già comprese nella quota dovuta
+        importi.put("conOpzioni", !situazione.opzioni().isEmpty());
+        importi.put("quotaCorso", Formati.euro(situazione.quotaCorso()));
+        importi.put("opzioni", situazione.opzioni().stream()
+            .map(o -> Map.of("descrizione", o.getDescrizione(), "importo", "+" + Formati.euro(o.getImporto())))
+            .toList());
         return importi;
     }
 
