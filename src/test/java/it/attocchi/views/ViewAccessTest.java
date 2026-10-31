@@ -5175,7 +5175,18 @@ class ViewAccessTest extends SpringBrowserlessTest {
             assertEquals(List.of("600,00 €", "510,00 €"), List.of(corsi.getCellText(0, 7), corsi.getCellText(0, 8)));
             assertEquals(List.of("510,00 €", "Sconto -90,00 €"), corsi.getCellComponent(0, 9).getChildren()
                 .map(c -> c instanceof Badge b ? b.getText() : ((Span) c).getText()).toList());
+
+            // Con un'opzione aggiuntiva attiva: compresa nella quota e mostrata sotto; lo sconto resta sulla quota del corso
+            corsoService.salva(corsoService.findById(canto.getId()), List.of(new OpzioneCorso(null, "Kit", new BigDecimal("30"))));
+            corsoService.impostaOpzione(canto.getId(), allievo.getId(), corsoService.opzioni(canto.getId()).getFirst().getId(), true);
+            navigate(HomeView.class);
+            navigate(MieiCorsiView.class);
+            var aggiornati = test(find(Grid.class).single());
+            assertEquals(List.of("540,00 €", "Sconto -90,00 €", "Kit +30,00 €"), aggiornati.getCellComponent(0, 9).getChildren()
+                .map(c -> c instanceof Badge b ? b.getText() : ((Span) c).getText()).toList());
         } finally {
+            corsoService.opzioni(canto.getId()).forEach(o -> corsoService.impostaOpzione(canto.getId(), allievo.getId(), o.getId(), false));
+            opzioneCorsoRepository.deleteAll(opzioneCorsoRepository.findByCorsoIdOrderById(canto.getId()));
             pagamentoService.impostaQuota(canto.getId(), allievo.getId(), null, null);
             Corso corso = corsoService.findById(canto.getId());
             corso.setPrezzoPreiscrizione(null);

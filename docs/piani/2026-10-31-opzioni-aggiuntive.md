@@ -48,7 +48,7 @@ motivazione, su ogni iscritto l'attivazione sì/no, e l'opzione esplicitata nell
 | 2 | Dialog del corso: sezione "Opzioni aggiuntive" | `CorsiView` | test browserless | [x] |
 | 3 | Partecipanti: colonna "Opzioni" con le caselle | `PartecipantiDialog` | test browserless | [x] |
 | 4 | Conferma e ricevuta: righe delle opzioni negli importi | `DocumentiService`, `importi.ftlh` | test sul PDF | [x] |
-| 5 | Famiglie: opzioni attive nei prezzi del corso e nel dettaglio pagamenti | `PrezziCorso`, `PagamentiAllievoDialog` | test browserless | [ ] |
+| 5 | Famiglie: opzioni attive nei prezzi del corso e nel dettaglio pagamenti | `PrezziCorso`, `PagamentiAllievoDialog` | test browserless | [x] |
 | 6 | Dati demo, Guida e CLAUDE.md | `DatiDemo`, `guida/staff.md`, `CLAUDE.md`, test | `./mvnw test` | [ ] |
 | 7 | Registro | questo file | — | [ ] |
 

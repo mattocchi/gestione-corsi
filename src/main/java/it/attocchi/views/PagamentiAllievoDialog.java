@@ -10,6 +10,7 @@ import it.attocchi.entity.Pagamento;
 import it.attocchi.service.PagamentoService.Situazione;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Dialog in sola lettura con quota, pagato, residuo e rate di un allievo in un corso (vista del genitore).
@@ -34,6 +35,13 @@ public class PagamentiAllievoDialog extends Dialog {
                 + (iscrizione.getNotaQuota() != null ? ": " + iscrizione.getNotaQuota() : ""));
             quota.addClassNames(Stili.TESTO_SECONDARIO);
             content.add(quota);
+        }
+        if (!situazione.opzioni().isEmpty()) {
+            // Opzioni aggiuntive attive, già comprese nella quota
+            Span opzioni = new Span("Comprende le opzioni: " + situazione.opzioni().stream()
+                .map(o -> o.getDescrizione() + " +" + Formati.euro(o.getImporto())).collect(Collectors.joining(", ")));
+            opzioni.addClassNames(Stili.TESTO_SECONDARIO);
+            content.add(opzioni);
         }
 
         Grid<Pagamento> grid = new Grid<>(Pagamento.class, false);

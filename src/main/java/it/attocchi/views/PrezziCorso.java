@@ -8,6 +8,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.function.SerializableFunction;
 import it.attocchi.entity.Corso;
+import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.service.PagamentoService.Situazione;
 
 import java.math.BigDecimal;
@@ -16,8 +17,9 @@ import java.util.Map;
 
 /**
  * Prezzi del corso nelle liste di allievi e genitori: prezzo di listino, prezzo con pre-iscrizione e quota dovuta dal
- * partecipante (l'importo che vale, in evidenza, con un badge se è scontata o maggiorata rispetto al listino), come
- * colonne su desktop e come campi della card su mobile. {@code situazioni} è indicizzata per id del corso.
+ * partecipante (l'importo che vale, in evidenza, con un badge se la quota del corso è scontata o maggiorata rispetto
+ * al listino, e sotto le opzioni aggiuntive attive comprese, es. "Kit strumentario +30,00 €"), come colonne su desktop
+ * e come campi della card su mobile. {@code situazioni} è indicizzata per id del corso.
  */
 public final class PrezziCorso {
 
@@ -29,7 +31,7 @@ public final class PrezziCorso {
         euro(grid, "Prezzo di listino", Corso::getCostoTotale);
         euro(grid, "Pre-iscrizione", Corso::getPrezzoPreiscrizione);
         SerializableFunction<Corso, BigDecimal> dovuta = applicato(situazioni);
-        grid.addComponentColumn(corso -> quotaDovuta(corso, dovuta.apply(corso))).setHeader("Quota dovuta")
+        grid.addComponentColumn(corso -> quotaDovuta(corso, situazioni.get(corso.getId()))).setHeader("Quota dovuta")
             .setComparator(Comparator.comparing(dovuta, Comparator.nullsFirst(Comparator.naturalOrder())))
             .setAutoWidth(true).setFlexGrow(0);
     }
@@ -41,21 +43,33 @@ public final class PrezziCorso {
             .campo("Costo totale", corso -> Formati.euro(corso.getCostoTotale()))
             .campo("Pre-iscrizione", corso -> corso.getPrezzoPreiscrizione() != null
                 ? Formati.euro(corso.getPrezzoPreiscrizione()) : null)
-            .campo("Quota dovuta", corso -> applicato.apply(corso) != null ? quotaDovuta(corso, applicato.apply(corso)) : null);
+            .campo("Quota dovuta", corso -> applicato.apply(corso) != null ? quotaDovuta(corso, situazioni.get(corso.getId())) : null);
     }
 
-    /** Quota dovuta in evidenza, con il badge "Sconto -X €" (o "Maggiorazione +X €") rispetto al listino. */
-    private static Component quotaDovuta(Corso corso, BigDecimal dovuta) {
-        Span importo = new Span(Formati.euro(dovuta));
+    /**
+     * Quota dovuta in evidenza, con il badge "Sconto -X €" (o "Maggiorazione +X €") della quota del corso rispetto al
+     * listino e, su righe a sé, le opzioni aggiuntive attive.
+     */
+    private static Component quotaDovuta(Corso corso, Situazione situazione) {
+        Span importo = new Span(situazione != null ? Formati.euro(situazione.quota()) : "");
         importo.addClassNames("font-(--aura-font-weight-semibold)");
         Div cella = new Div(importo);
         cella.addClassNames("flex flex-wrap items-center gap-1");
+        if (situazione == null) {
+            return cella;
+        }
+        BigDecimal quotaCorso = situazione.quotaCorso();
         BigDecimal listino = corso.getCostoTotale();
-        if (dovuta != null && listino != null && dovuta.compareTo(listino) != 0) {
-            boolean sconto = dovuta.compareTo(listino) < 0;
-            Badge badge = new Badge((sconto ? "Sconto -" : "Maggiorazione +") + Formati.euro(listino.subtract(dovuta).abs()));
+        if (listino != null && quotaCorso.compareTo(listino) != 0) {
+            boolean sconto = quotaCorso.compareTo(listino) < 0;
+            Badge badge = new Badge((sconto ? "Sconto -" : "Maggiorazione +") + Formati.euro(listino.subtract(quotaCorso).abs()));
             badge.addThemeVariants(sconto ? BadgeVariant.SUCCESS : BadgeVariant.WARNING);
             cella.add(badge);
+        }
+        for (OpzioneCorso opzione : situazione.opzioni()) {
+            Span riga = new Span(opzione.getDescrizione() + " +" + Formati.euro(opzione.getImporto()));
+            riga.addClassNames("basis-full " + Stili.TESTO_SECONDARIO);
+            cella.add(riga);
         }
         return cella;
     }
