@@ -511,3 +511,4 @@ Riferimento di ogni voce: `[F-AAAA-MM-GG/AMBITO.n]` (vedi `CLAUDE.md`, *Feature 
 ### FILTRI
 
 * [ ] sistema in tab o dropdown anche i filtri di Lezioni, Gestione Pagamenti, Riepilogo Iscritti, Cronologia Documenti, Gestione Corsi, Calendario
+  _Chiarimento 2026-10-31: il filtro principale di ogni vista diventa a schede (Lezioni: stato; Gestione Corsi e Riepilogo Iscritti: stato dei corsi; Gestione Pagamenti e Pagamenti del genitore: stato del pagamento; Calendario: Mese/Settimana tipo), i filtri secondari a tendina (Gestione Corsi: tipo; Gestione Pagamenti: stato del corso; Cronologia documenti: tipo di documento, sotto le schede esistenti). Le scelte a pulsanti dentro i dialog (metodo di pagamento, cadenza, tipo di corso, festività, giorno del gruppo, insegnanti presenti) restano come sono._
