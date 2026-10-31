@@ -191,7 +191,7 @@ class DatiDemo {
         // Pagamenti dell'anno: saldati, parziali, nessuno, quote personalizzate, bonifico e cassa
         paga(pianoforte, marta, "2026-09-10", "650.00", MetodoPagamento.BONIFICO);
         paga(pianoforte, luca, "2026-09-20", "300.00", MetodoPagamento.BONIFICO);
-        pagamentoService.impostaQuota(pianoforte.getId(), alice.getId(), new BigDecimal("552.50"), "Pre-iscrizione");
+        pagamentoService.impostaTipoQuota(pianoforte.getId(), alice.getId(), TipoQuota.PREISCRIZIONE);
         paga(pianoforte, alice, "2026-06-15", "276.25", MetodoPagamento.BONIFICO);
         paga(pianoforte, alice, "2026-10-15", "276.25", MetodoPagamento.BONIFICO);
         paga(propedeutica, sara, "2026-09-19", "380.00", MetodoPagamento.CASSA);

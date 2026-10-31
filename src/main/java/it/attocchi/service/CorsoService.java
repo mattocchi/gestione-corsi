@@ -8,6 +8,7 @@ import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Lezione;
 import it.attocchi.entity.OpzioneCorso;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
 import it.attocchi.repository.CorsoRepository;
@@ -407,6 +408,13 @@ public class CorsoService {
         if (preiscrizione != null && (preiscrizione.signum() < 0
                 || corso.getCostoTotale() == null || preiscrizione.compareTo(corso.getCostoTotale()) > 0)) {
             throw new IllegalArgumentException("Il prezzo con pre-iscrizione deve essere tra zero e il costo totale");
+        }
+        if (preiscrizione == null && corso.getId() != null) {
+            long inPreiscrizione = iscrizioneRepository.contaPerTipoQuota(corso.getId(), TipoQuota.PREISCRIZIONE);
+            if (inPreiscrizione > 0) {
+                throw new IllegalStateException(inPreiscrizione + " iscritto/i hanno la quota di pre-iscrizione: "
+                    + "cambiala prima in Quota e pagamenti");
+            }
         }
         if (corso.getNumeroLezioni() == null && corso.getDataFine() == null) {
             throw new IllegalArgumentException("Indica il numero di lezioni o la data di fine");

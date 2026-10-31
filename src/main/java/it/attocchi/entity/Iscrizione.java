@@ -58,6 +58,11 @@ public class Iscrizione {
     /** Motivo della quota personalizzata (es. "fratelli"). */
     private String notaQuota;
 
+    /** Quota applicata; {@code null} (iscrizioni precedenti) = dedotta da {@link #quotaPersonalizzata}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_quota", length = 20)
+    private TipoQuota tipoQuota;
+
     /**
      * Gruppo del corso a cui appartiene il partecipante, che frequenta solo il giorno del gruppo; {@code null} =
      * tutti i giorni del corso. Si cambia con {@code CorsoService.assegnaGruppo}, che aggiorna le presenze delle
@@ -198,12 +203,43 @@ public class Iscrizione {
         return opzioni.stream().sorted(OpzioneCorso.ORDINE).toList();
     }
 
-    /** Quota del corso: quella personalizzata se impostata, altrimenti il costo totale del corso (senza opzioni). */
-    public BigDecimal getQuotaCorso() {
-        if (quotaPersonalizzata != null) {
-            return quotaPersonalizzata;
+    /** Quota applicata: piena, pre-iscrizione o personalizzata. */
+    public TipoQuota getTipoQuota() {
+        if (tipoQuota != null) {
+            return tipoQuota;
         }
-        return corso != null && corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
+        return quotaPersonalizzata != null ? TipoQuota.PERSONALIZZATA : TipoQuota.PIENA;
+    }
+
+    /** {@code true} per le iscrizioni precedenti alla scelta del tipo di quota, che lo deducono dalla quota. */
+    public boolean isTipoQuotaDedotto() {
+        return tipoQuota == null;
+    }
+
+    public void setTipoQuota(TipoQuota tipoQuota) {
+        this.tipoQuota = tipoQuota;
+    }
+
+    /**
+     * Quota del corso (senza opzioni): il costo totale, il prezzo di pre-iscrizione del corso (il costo totale se il
+     * corso non lo ha più) o la quota personalizzata.
+     */
+    public BigDecimal getQuotaCorso() {
+        BigDecimal piena = corso != null && corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
+        return switch (getTipoQuota()) {
+            case PIENA -> piena;
+            case PREISCRIZIONE -> corso != null && corso.getPrezzoPreiscrizione() != null ? corso.getPrezzoPreiscrizione() : piena;
+            case PERSONALIZZATA -> quotaPersonalizzata != null ? quotaPersonalizzata : piena;
+        };
+    }
+
+    /** Motivo della quota da mostrare: nessuno per la piena, "pre-iscrizione", o la nota della personalizzata. */
+    public String getMotivoQuota() {
+        return switch (getTipoQuota()) {
+            case PIENA -> null;
+            case PREISCRIZIONE -> "pre-iscrizione";
+            case PERSONALIZZATA -> notaQuota;
+        };
     }
 
     /** Quota da pagare: quota del corso più le opzioni aggiuntive attive. */

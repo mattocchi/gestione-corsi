@@ -12,6 +12,7 @@ import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Pagamento;
+import it.attocchi.entity.TipoQuota;
 import it.attocchi.repository.AllievoRepository;
 import it.attocchi.repository.CorsoRepository;
 import it.attocchi.repository.GenitoreRepository;
@@ -587,15 +588,62 @@ public class PagamentoService {
             .toList();
     }
 
-    /** Imposta (o con {@code null} toglie) la quota personalizzata del partecipante, con la nota sul motivo. */
+    /**
+     * Imposta la quota personalizzata del partecipante, con la nota sul motivo; con {@code null} torna alla quota
+     * piena.
+     */
     @Transactional
     public void impostaQuota(Long corsoId, Long allievoId, BigDecimal quota, String nota) {
         if (quota != null && quota.signum() < 0) {
             throw new IllegalArgumentException("La quota non può essere negativa");
         }
         Iscrizione iscrizione = iscrizione(corsoId, allievoId);
+        iscrizione.setTipoQuota(quota != null ? TipoQuota.PERSONALIZZATA : TipoQuota.PIENA);
         iscrizione.setQuotaPersonalizzata(quota);
         iscrizione.setNotaQuota(quota != null && nota != null && !nota.isBlank() ? nota.trim() : null);
+    }
+
+    /**
+     * Applica la quota piena o quella di pre-iscrizione del corso (che segue il prezzo del corso), togliendo
+     * l'eventuale quota personalizzata; per la personalizzata si usa {@link #impostaQuota}.
+     */
+    @Transactional
+    public void impostaTipoQuota(Long corsoId, Long allievoId, TipoQuota tipo) {
+        if (tipo == TipoQuota.PERSONALIZZATA) {
+            throw new IllegalArgumentException("Per la quota personalizzata indica l'importo");
+        }
+        Iscrizione iscrizione = iscrizione(corsoId, allievoId);
+        if (tipo == TipoQuota.PREISCRIZIONE && iscrizione.getCorso().getPrezzoPreiscrizione() == null) {
+            throw new IllegalStateException("Il corso non ha un prezzo di pre-iscrizione");
+        }
+        iscrizione.setTipoQuota(tipo);
+        iscrizione.setQuotaPersonalizzata(null);
+        iscrizione.setNotaQuota(null);
+    }
+
+    /**
+     * Converte in pre-iscrizione le quote personalizzate (delle iscrizioni senza tipo, precedenti a questa scelta)
+     * uguali al prezzo di pre-iscrizione del corso, senza motivo o con motivo "pre-iscrizione".
+     *
+     * @return iscrizioni convertite
+     */
+    @Transactional
+    public int convertiPreiscrizioni() {
+        int convertite = 0;
+        for (Iscrizione iscrizione : iscrizioneRepository.findAll()) {
+            BigDecimal prezzo = iscrizione.getCorso().getPrezzoPreiscrizione();
+            String nota = iscrizione.getNotaQuota() != null
+                ? iscrizione.getNotaQuota().toLowerCase(Locale.ITALIAN).replaceAll("[^a-z]", "") : "";
+            if (iscrizione.isTipoQuotaDedotto() && iscrizione.getQuotaPersonalizzata() != null && prezzo != null
+                && iscrizione.getQuotaPersonalizzata().compareTo(prezzo) == 0
+                && (nota.isEmpty() || nota.equals("preiscrizione"))) {
+                iscrizione.setTipoQuota(TipoQuota.PREISCRIZIONE);
+                iscrizione.setQuotaPersonalizzata(null);
+                iscrizione.setNotaQuota(null);
+                convertite++;
+            }
+        }
+        return convertite;
     }
 
     /** Aggiunge o modifica una rata del partecipante indicato. */

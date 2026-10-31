@@ -2,6 +2,7 @@ package it.attocchi.repository;
 
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
+import it.attocchi.entity.TipoQuota;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -65,6 +66,10 @@ public interface IscrizioneRepository extends JpaRepository<Iscrizione, Iscrizio
     List<Object[]> contaPerCorso();
 
     /** Motivi delle quote personalizzate con il numero di iscrizioni che li usano. */
+    /** Iscritti al corso con il tipo di quota indicato (salvato). */
+    @Query("SELECT COUNT(i) FROM Iscrizione i WHERE i.corso.id = :corsoId AND i.tipoQuota = :tipo")
+    long contaPerTipoQuota(@Param("corsoId") Long corsoId, @Param("tipo") TipoQuota tipo);
+
     @Query("SELECT i.notaQuota, COUNT(i) FROM Iscrizione i WHERE i.notaQuota IS NOT NULL GROUP BY i.notaQuota")
     List<Object[]> contaMotiviQuota();
 }
