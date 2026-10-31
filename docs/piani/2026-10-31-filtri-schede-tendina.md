@@ -34,7 +34,7 @@ documenti, Gestione Corsi e Calendario, come il tipo di documento in Documenti.
 | 4 | Gestione Pagamenti e Pagamenti del genitore: pagamento a schede, stato del corso a tendina | `ElencoPagamenti`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 5 | Riepilogo Iscritti: stato dei corsi a schede | `RiepilogoIscrittiView`, `ViewAccessTest` | `./mvnw test` | [x] |
 | 6 | Cronologia documenti: tipo a tendina | `EmailInviateView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 7 | Calendario: Mese / Settimana tipo a schede | `CalendarioView`, test | `./mvnw test` | [ ] |
+| 7 | Calendario: Mese / Settimana tipo a schede | `CalendarioView`, test | `./mvnw test` | [x] |
 | 8 | CLAUDE.md: quando schede, tendina o pulsanti affiancati | `CLAUDE.md` | — | [ ] |
 | 9 | Registro | questo piano | — | [ ] |
 

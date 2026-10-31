@@ -65,8 +65,8 @@ public class CalendarioView extends VerticalLayout {
         }
     }
 
-    private final SegmentedControl<Vista> vista = new SegmentedControl<>("Vista del calendario", List.of(Vista.values()),
-        v -> v.etichetta, v -> v.etichetta, null);
+    private final Schede<Vista> vista = new Schede<>("Vista del calendario", List.of(Vista.values()),
+        v -> v.etichetta, null);
     private final Div vistaMese = new Div();
     private final Div vistaSettimana = new Div();
     private final Div settimanaGriglia = new Div();
@@ -92,18 +92,16 @@ public class CalendarioView extends VerticalLayout {
         Button oggi = new Button("Oggi", e -> vaiA(YearMonth.now()));
         titolo.addClassNames("text-(length:--aura-font-size-xl) m-0 min-w-44 first-letter:uppercase");
         vista.setValue(Vista.MESE);
-        // Il SegmentedControl occupa tutta la riga (w-full): qui una larghezza fissa
-        vista.removeClassName("w-full");
-        vista.addClassNames("w-64 max-w-full");
-        // Nella settimana tipo non ci sono mesi da scorrere
+        HorizontalLayout barra = new HorizontalLayout(precedente, titolo, successivo, oggi);
+        // Nella settimana tipo non ci sono mesi da scorrere (resta solo l'eventuale filtro per corso)
         vista.addValueChangeListener(e -> {
             boolean mensile = e.getValue() != Vista.SETTIMANA;
             List.of(precedente, titolo, successivo, oggi).forEach(c -> c.setVisible(mensile));
+            barra.setVisible(mensile || gestione);
             vistaMese.setVisible(mensile);
             vistaSettimana.setVisible(!mensile);
             aggiorna();
         });
-        HorizontalLayout barra = new HorizontalLayout(vista, precedente, titolo, successivo, oggi);
         barra.addClassNames("flex-wrap w-full items-center");
         if (gestione) {
             filtroCorso.setPlaceholder("Tutti i corsi");
@@ -129,7 +127,7 @@ public class CalendarioView extends VerticalLayout {
         vistaSettimana.add(settimanaGriglia, settimanaElenco);
         vistaSettimana.addClassNames("w-full");
         vistaSettimana.setVisible(false);
-        add(barra, vistaMese, vistaSettimana);
+        add(vista, barra, vistaMese, vistaSettimana);
         aggiorna();
     }
 
