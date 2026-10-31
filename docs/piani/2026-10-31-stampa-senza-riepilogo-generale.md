@@ -20,10 +20,13 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | Template e modello senza "Riepilogo generale"; `RiepilogoCorsi` senza `eta`; test e CLAUDE.md | template, `DocumentiService`, `RiepilogoCorsiService`, `DocumentiServiceTest`, `CLAUDE.md` | `./mvnw test` | [x] |
-| 2 | Registro | questo piano | — | [ ] |
+| 2 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
 - La dashboard non cambia.
 
 ## Registro
+
+- Passo 1 completato; `./mvnw test`: 341 test, 0 errori (`DocumentiServiceTest` verifica che "Riepilogo generale" e
+  "Età media" non compaiano più).
