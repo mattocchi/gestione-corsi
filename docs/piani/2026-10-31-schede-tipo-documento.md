@@ -22,7 +22,7 @@
 | Passo | Cosa | File | Verifica | Stato |
 |---|---|---|---|---|
 | 1 | `DocumentiView`: `Tabs` al posto del `SegmentedControl` del tipo; test aggiornati | `DocumentiView`, `ViewAccessTest` | `./mvnw test` | [x] |
-| 2 | CLAUDE.md: selettore del tipo in Documenti | `CLAUDE.md` | — | [ ] |
+| 2 | CLAUDE.md: selettore del tipo in Documenti | `CLAUDE.md` | — | [x] |
 | 3 | Registro | questo piano | — | [ ] |
 
 ## Fuori ambito
