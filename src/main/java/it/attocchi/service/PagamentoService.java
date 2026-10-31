@@ -9,6 +9,7 @@ import it.attocchi.entity.Genitore;
 import it.attocchi.entity.IntestazioneDocumenti;
 import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
+import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Pagamento;
 import it.attocchi.repository.AllievoRepository;
@@ -59,8 +60,25 @@ public class PagamentoService {
         }
     }
 
-    /** Quota dovuta e totale pagato da un partecipante. */
-    public record Situazione(BigDecimal quota, BigDecimal pagato) {
+    /**
+     * Quota dovuta e totale pagato da un partecipante; {@code opzioni} = opzioni aggiuntive attive, già comprese nella
+     * quota.
+     */
+    public record Situazione(BigDecimal quota, BigDecimal pagato, List<OpzioneCorso> opzioni) {
+
+        public Situazione(BigDecimal quota, BigDecimal pagato) {
+            this(quota, pagato, List.of());
+        }
+
+        /** Situazione dell'iscrizione con quanto ha pagato. */
+        public static Situazione di(Iscrizione iscrizione, BigDecimal pagato) {
+            return new Situazione(iscrizione.getQuotaDovuta(), pagato, iscrizione.getOpzioniOrdinate());
+        }
+
+        /** Quota del corso senza le opzioni. */
+        public BigDecimal quotaCorso() {
+            return opzioni.stream().map(OpzioneCorso::getImporto).reduce(quota, BigDecimal::subtract);
+        }
 
         public BigDecimal residuo() {
             return quota.subtract(pagato).max(BigDecimal.ZERO);
@@ -264,7 +282,7 @@ public class PagamentoService {
         BigDecimal pagato = findPagamenti(corsoId, allievoId).stream()
             .map(Pagamento::getImporto)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new Situazione(iscrizione(corsoId, allievoId).getQuotaDovuta(), pagato);
+        return Situazione.di(iscrizione(corsoId, allievoId), pagato);
     }
 
     /** Ricevuta del partecipante: disponibile anche per i corsi non attivi. */
@@ -281,7 +299,7 @@ public class PagamentoService {
         Map<Long, Situazione> situazioni = new HashMap<>();
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoIdWithAllievo(corsoId)) {
             Long allievoId = iscrizione.getAllievo().getId();
-            situazioni.put(allievoId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(allievoId, BigDecimal.ZERO)));
+            situazioni.put(allievoId, Situazione.di(iscrizione, pagato.getOrDefault(allievoId, BigDecimal.ZERO)));
         }
         return situazioni;
     }
@@ -295,7 +313,7 @@ public class PagamentoService {
         Map<Long, Situazione> situazioni = new HashMap<>();
         for (Iscrizione iscrizione : iscrizioneRepository.findByAllievoIdWithCorso(allievoId)) {
             Long corsoId = iscrizione.getCorso().getId();
-            situazioni.put(corsoId, new Situazione(iscrizione.getQuotaDovuta(), pagato.getOrDefault(corsoId, BigDecimal.ZERO)));
+            situazioni.put(corsoId, Situazione.di(iscrizione, pagato.getOrDefault(corsoId, BigDecimal.ZERO)));
         }
         return situazioni;
     }
@@ -311,8 +329,7 @@ public class PagamentoService {
         corsoRepository.findByAttivoTrue().forEach(corso -> perCorso.put(corso, new ArrayList<>()));
         List<Situazione> tutte = new ArrayList<>();
         for (Iscrizione iscrizione : iscrizioneRepository.findByCorsoAttivo()) {
-            Situazione situazione = new Situazione(iscrizione.getQuotaDovuta(),
-                pagato.getOrDefault(iscrizione.getId(), BigDecimal.ZERO));
+            Situazione situazione = Situazione.di(iscrizione, pagato.getOrDefault(iscrizione.getId(), BigDecimal.ZERO));
             perCorso.computeIfAbsent(iscrizione.getCorso(), c -> new ArrayList<>()).add(situazione);
             tutte.add(situazione);
         }
@@ -519,7 +536,7 @@ public class PagamentoService {
             pagato.put(new IscrizioneId((Long) riga[0], (Long) riga[1]), (BigDecimal) riga[2]);
         }
         return iscrizioni.stream()
-            .map(i -> new RigaPagamento(i, new Situazione(i.getQuotaDovuta(), pagato.getOrDefault(i.getId(), BigDecimal.ZERO))))
+            .map(i -> new RigaPagamento(i, Situazione.di(i, pagato.getOrDefault(i.getId(), BigDecimal.ZERO))))
             .toList();
     }
 

@@ -7,6 +7,7 @@ import it.attocchi.entity.GruppoCorso;
 import it.attocchi.entity.Iscrizione;
 import it.attocchi.entity.IscrizioneId;
 import it.attocchi.entity.Lezione;
+import it.attocchi.entity.OpzioneCorso;
 import it.attocchi.entity.Presenza;
 import it.attocchi.entity.Allievo;
 import it.attocchi.repository.CorsoRepository;
@@ -14,6 +15,7 @@ import it.attocchi.repository.GruppoCorsoRepository;
 import it.attocchi.repository.IscrizioneRepository;
 import it.attocchi.repository.LetteraIncaricoRepository;
 import it.attocchi.repository.LezioneRepository;
+import it.attocchi.repository.OpzioneCorsoRepository;
 import it.attocchi.repository.PagamentoRepository;
 import it.attocchi.repository.PresenzaRepository;
 import it.attocchi.repository.AllievoRepository;
@@ -51,12 +53,15 @@ public class CorsoService {
     private final GruppoCorsoRepository gruppoRepository;
     private final NumerazioneLezioni numerazioneLezioni;
     private final LetteraIncaricoRepository letteraIncaricoRepository;
+    private final OpzioneCorsoRepository opzioneRepository;
 
     public CorsoService(CorsoRepository corsoRepository, LezioneRepository lezioneRepository,
                        PresenzaRepository presenzaRepository, IscrizioneRepository iscrizioneRepository,
                        AllievoRepository allievoRepository, PagamentoRepository pagamentoRepository,
                        FestivitaService festivitaService, GruppoCorsoRepository gruppoRepository,
-                       NumerazioneLezioni numerazioneLezioni, LetteraIncaricoRepository letteraIncaricoRepository) {
+                       NumerazioneLezioni numerazioneLezioni, LetteraIncaricoRepository letteraIncaricoRepository,
+                       OpzioneCorsoRepository opzioneRepository) {
+        this.opzioneRepository = opzioneRepository;
         this.letteraIncaricoRepository = letteraIncaricoRepository;
         this.gruppoRepository = gruppoRepository;
         this.numerazioneLezioni = numerazioneLezioni;
@@ -155,6 +160,79 @@ public class CorsoService {
             .filter(Lezione::isDaFare)
             .filter(lezione -> iscrizione.frequenta(lezione.getDataDelCalendario()))
             .forEach(lezione -> presenzaRepository.save(new Presenza(lezione, allievo, Presenza.StatoPresenza.PRESENTE)));
+    }
+
+    /** Opzioni aggiuntive del corso, in ordine di inserimento. */
+    public List<OpzioneCorso> opzioni(Long corsoId) {
+        return opzioneRepository.findByCorsoIdOrderById(corsoId);
+    }
+
+    /**
+     * Salva il corso ({@link #save}) e le sue opzioni aggiuntive come nell'elenco {@code opzioni}: quelle senza id si
+     * aggiungono, le altre si aggiornano (descrizione e importo, che valgono subito per chi le ha attive), quelle non più
+     * nell'elenco si eliminano, solo dall'admin e solo se nessun iscritto le ha attive. Tutto o niente.
+     */
+    @Transactional
+    public Corso salva(Corso corso, List<OpzioneCorso> opzioni) {
+        for (OpzioneCorso opzione : opzioni) {
+            String descrizione = opzione.getDescrizione() != null ? opzione.getDescrizione().strip() : "";
+            if (descrizione.isEmpty()) {
+                throw new IllegalArgumentException("Indica la descrizione di ogni opzione");
+            }
+            if (descrizione.length() > OpzioneCorso.LUNGHEZZA_DESCRIZIONE) {
+                throw new IllegalArgumentException("La descrizione di un'opzione può avere al massimo "
+                    + OpzioneCorso.LUNGHEZZA_DESCRIZIONE + " caratteri");
+            }
+            if (opzione.getImporto() == null || opzione.getImporto().signum() <= 0) {
+                throw new IllegalArgumentException("L'importo dell'opzione \"" + descrizione + "\" deve essere maggiore di zero");
+            }
+            opzione.setDescrizione(descrizione);
+        }
+        Corso salvato = save(corso);
+        Map<Long, OpzioneCorso> esistenti = opzioneRepository.findByCorsoIdOrderById(salvato.getId()).stream()
+            .collect(Collectors.toMap(OpzioneCorso::getId, o -> o));
+        for (OpzioneCorso opzione : opzioni) {
+            if (opzione.getId() == null) {
+                opzioneRepository.save(new OpzioneCorso(salvato, opzione.getDescrizione(), opzione.getImporto()));
+            } else {
+                OpzioneCorso esistente = esistenti.remove(opzione.getId());
+                if (esistente == null) {
+                    throw new IllegalArgumentException("L'opzione non è di questo corso");
+                }
+                esistente.setDescrizione(opzione.getDescrizione());
+                esistente.setImporto(opzione.getImporto());
+            }
+        }
+        for (OpzioneCorso tolta : esistenti.values()) {
+            if (!adminCorrente()) {
+                throw new IllegalStateException("Solo l'admin può eliminare un'opzione del corso");
+            }
+            long iscritti = opzioneRepository.contaIscritti(tolta.getId());
+            if (iscritti > 0) {
+                throw new IllegalStateException("L'opzione \"" + tolta.getDescrizione() + "\" è attiva per " + iscritti
+                    + (iscritti == 1 ? " iscritto" : " iscritti") + ": toglila prima in Partecipanti");
+            }
+            opzioneRepository.delete(tolta);
+        }
+        return salvato;
+    }
+
+    /**
+     * Attiva o toglie un'opzione aggiuntiva del corso al partecipante: la sua quota cambia dell'importo. Possibile anche
+     * nei corsi non attivi, come quote e pagamenti.
+     */
+    @Transactional
+    public void impostaOpzione(Long corsoId, Long allievoId, Long opzioneId, boolean attiva) {
+        Iscrizione iscrizione = iscrizioneRepository.findById(new IscrizioneId(corsoId, allievoId))
+            .orElseThrow(() -> new IllegalArgumentException("L'allievo " + allievoId + " non è iscritto al corso " + corsoId));
+        OpzioneCorso opzione = opzioneRepository.findById(opzioneId)
+            .filter(o -> o.getCorso().getId().equals(corsoId))
+            .orElseThrow(() -> new IllegalArgumentException("L'opzione non è di questo corso"));
+        if (attiva) {
+            iscrizione.getOpzioni().add(opzione);
+        } else {
+            iscrizione.getOpzioni().remove(opzione);
+        }
     }
 
     /** Gruppi del corso, per giorno e orario. */
@@ -376,7 +454,7 @@ public class CorsoService {
 
     /**
      * Copia del corso per l'anno successivo: tipo, nome, descrizione, insegnanti, giorni, cadenza, orario, durata,
-     * numero di lezioni, costi, luoghi e gruppi; anno scolastico successivo, date di inizio e fine spostate di 52
+     * numero di lezioni, costi, luoghi, gruppi e opzioni aggiuntive; anno scolastico successivo, date di inizio e fine spostate di 52
      * settimane (stesso giorno della settimana); attivo e non pubblicato; nessun partecipante, lezione o pagamento.
      */
     @Transactional
@@ -408,6 +486,9 @@ public class CorsoService {
         for (GruppoCorso gruppo : gruppoRepository.findByCorsoId(corsoId)) {
             gruppoRepository.save(new GruppoCorso(salvata, gruppo.getNome(), gruppo.getGiorno(), gruppo.getOrario()));
         }
+        for (OpzioneCorso opzione : opzioneRepository.findByCorsoIdOrderById(corsoId)) {
+            opzioneRepository.save(new OpzioneCorso(salvata, opzione.getDescrizione(), opzione.getImporto()));
+        }
         return salvata;
     }
 
@@ -428,11 +509,16 @@ public class CorsoService {
         if (letteraIncaricoRepository.existsByCorsoId(corso.getId())) {
             throw new IllegalStateException("Il corso ha lettere di incarico: eliminale prima di eliminare il corso");
         }
-        // Prima si staccano le iscrizioni dai gruppi, poi si eliminano i gruppi e il corso (con le iscrizioni)
-        iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId()).forEach(i -> i.setGruppo(null));
+        // Prima si staccano le iscrizioni da gruppi e opzioni, poi si eliminano gruppi, opzioni e il corso (con le iscrizioni)
+        iscrizioneRepository.findByCorsoIdWithAllievo(corso.getId()).forEach(i -> {
+            i.setGruppo(null);
+            i.getOpzioni().clear();
+        });
         iscrizioneRepository.flush();
         gruppoRepository.deleteAll(gruppoRepository.findByCorsoId(corso.getId()));
         gruppoRepository.flush();
+        opzioneRepository.deleteAll(opzioneRepository.findByCorsoIdOrderById(corso.getId()));
+        opzioneRepository.flush();
         corsoRepository.delete(corso);
     }
 

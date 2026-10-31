@@ -288,7 +288,7 @@ public class PartecipantiDialog extends Dialog {
     /** Ricarica i partecipanti e propone come nuovi solo gli allievi non ancora iscritti. */
     private Situazione situazione(Iscrizione iscrizione) {
         return situazioni.getOrDefault(iscrizione.getAllievo().getId(),
-            new Situazione(iscrizione.getQuotaDovuta(), BigDecimal.ZERO));
+            Situazione.di(iscrizione, BigDecimal.ZERO));
     }
 
     private void aggiorna() {

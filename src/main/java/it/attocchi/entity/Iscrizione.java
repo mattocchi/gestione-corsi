@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -64,6 +66,17 @@ public class Iscrizione {
     @ManyToOne
     @JoinColumn(name = "gruppo_id")
     private GruppoCorso gruppo;
+
+    /**
+     * Opzioni aggiuntive del corso attivate dal partecipante (es. il kit): si sommano alla quota. Si cambiano con
+     * {@code CorsoService.impostaOpzione}.
+     */
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "iscrizione_opzioni",
+        joinColumns = {@JoinColumn(name = "corso_id", referencedColumnName = "corso_id"),
+            @JoinColumn(name = "allievo_id", referencedColumnName = "allievo_id")},
+        inverseJoinColumns = @JoinColumn(name = "opzione_id"))
+    private Set<OpzioneCorso> opzioni = new HashSet<>();
 
     /** Data e ora dell'iscrizione, per l'ordine di inserimento; {@code null} per le iscrizioni precedenti. */
     @Column(name = "iscritto_il")
@@ -176,12 +189,26 @@ public class Iscrizione {
         return gruppo != null ? gruppo.getOrario() : null;
     }
 
-    /** Quota da pagare: quella personalizzata se impostata, altrimenti il costo totale del corso. */
-    public BigDecimal getQuotaDovuta() {
+    public Set<OpzioneCorso> getOpzioni() {
+        return opzioni;
+    }
+
+    /** Opzioni attive in ordine di inserimento nel corso. */
+    public List<OpzioneCorso> getOpzioniOrdinate() {
+        return opzioni.stream().sorted(OpzioneCorso.ORDINE).toList();
+    }
+
+    /** Quota del corso: quella personalizzata se impostata, altrimenti il costo totale del corso (senza opzioni). */
+    public BigDecimal getQuotaCorso() {
         if (quotaPersonalizzata != null) {
             return quotaPersonalizzata;
         }
         return corso != null && corso.getCostoTotale() != null ? corso.getCostoTotale() : BigDecimal.ZERO;
+    }
+
+    /** Quota da pagare: quota del corso più le opzioni aggiuntive attive. */
+    public BigDecimal getQuotaDovuta() {
+        return opzioni.stream().map(OpzioneCorso::getImporto).reduce(getQuotaCorso(), BigDecimal::add);
     }
 
     /** Uguaglianza sulla chiave (corso, allievo). */
