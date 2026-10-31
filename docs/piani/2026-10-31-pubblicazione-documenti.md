@@ -43,7 +43,7 @@ pubblicato.
 | 3 | Impostazioni › Documenti: interruttori, regole e anni delle attestazioni | `admin/DocumentiScheda`, `ImpostazioniView`, test | `./mvnw test` | [x] |
 | 4 | Avviso nel dialog di invio dello staff per i documenti non pubblici | `InvioEmailDialog`, test | `./mvnw test` | [x] |
 | 5 | Guida dello staff e CLAUDE.md | `guida/staff.md`, `CLAUDE.md` | `./mvnw test` | [x] |
-| 6 | Registro | questo piano | — | [ ] |
+| 6 | Registro | questo piano | — | [x] |
 
 ## Fuori ambito
 
@@ -51,3 +51,12 @@ pubblicato.
 - Migrazioni SQL: le due tabelle nuove le crea `ddl-auto=update`, i valori iniziali li scrive l'app all'avvio.
 
 ## Registro
+
+- Passi 1-5 completati sul branch `riorganizzazione-per-ruolo`, un commit per passo; `./mvnw test`: 361 test, 0 errori
+  (nuovo `PubblicazioneDocumentiServiceTest`; regole per le famiglie in `DocumentiServiceTest` ed
+  `ElencoDocumentiServiceTest`; scheda Impostazioni › Documenti e avviso di invio in `ViewAccessTest`).
+- Produzione: le tabelle `pubblicazione_documenti` e `attestazioni_pubblicate` le crea `ddl-auto=update`; al primo
+  avvio tutti i tipi risultano visibili e le attestazioni degli anni già finiti con pagamenti pubblicate, quindi le
+  famiglie perdono solo l'attestazione dell'anno in corso. Nessuno script SQL.
+- Il riferimento della richiesta è nel commit del passo 4, ma la spunta in `docs/FUNZIONALITA.md` è nel passo 5.
+- Non verificato nel browser.
