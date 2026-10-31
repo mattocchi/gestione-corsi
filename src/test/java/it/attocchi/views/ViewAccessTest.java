@@ -4738,6 +4738,29 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     @Test
+    @WithUserDetails("segreteria")
+    void segreteria_aggiornaIlProprioProfilo() {
+        navigate(HomeView.class);
+        assertTrue(voceDiMenu("Il mio profilo"));
+        navigate(ProfiloView.class);
+        assertTrue(find(TextField.class).withLabel("Username").single().isReadOnly());
+        TextField ruoli = find(TextField.class).withLabel("Ruoli").single();
+        assertTrue(ruoli.isReadOnly());
+        assertEquals("SEGRETERIA", ruoli.getValue());
+        String telefono = userService.findByUsername("segreteria").getTelefono();
+        try {
+            test(find(TextField.class).withLabel("Telefono").single()).setValue("333 7654321");
+            test(find(Button.class).withText("Salva").single()).click();
+            assertEquals("333 7654321", userService.findByUsername("segreteria").getTelefono());
+            assertTrue(find(Button.class).withText("Cambia password").exists());
+        } finally {
+            User user = userService.findByUsername("segreteria");
+            user.setTelefono(telefono);
+            userService.aggiornaContatti("segreteria", user);
+        }
+    }
+
+    @Test
     @WithUserDetails("insegnante1")
     void insegnante_aggiornaIlProprioProfiloSenzaTariffa() {
         navigate(HomeView.class);

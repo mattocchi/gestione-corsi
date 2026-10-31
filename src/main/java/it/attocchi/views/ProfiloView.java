@@ -33,15 +33,16 @@ import java.util.Optional;
  * <ul>
  *   <li>Insegnante: aggiorna contatti, specializzazione, biografia e dati anagrafici; username e tariffa oraria
  *       sono in sola lettura (li gestiscono admin e segreteria).</li>
- *   <li>Genitore: aggiorna contatti e dati anagrafici (i dati dei figli si modificano da I Miei Figli).</li>
+ *   <li>Genitore: aggiorna contatti e dati anagrafici (i dati dei figli si modificano da I miei figli).</li>
  *   <li>Allievo: sola lettura, con l'indirizzo del genitore se non ne ha uno proprio.</li>
+ *   <li>Admin e segreteria (senza scheda): nome, cognome, email e telefono; username e ruoli in sola lettura.</li>
  * </ul>
- * Insegnante e genitore possono cambiare la password.
+ * Tutti tranne l'allievo senza altri ruoli possono cambiare la password.
  */
 @Route(value = "profilo", layout = MainLayout.class)
 @PageTitle("Il mio profilo")
 @Menu(title = "Il mio profilo", order = 90, icon = "vaadin:user-card")
-@RolesAllowed({"INSEGNANTE", "GENITORE", "ALLIEVO"})
+@RolesAllowed({"ADMIN", "SEGRETERIA", "INSEGNANTE", "GENITORE", "ALLIEVO"})
 public class ProfiloView extends VerticalLayout {
 
     private final UserService userService;
@@ -63,7 +64,8 @@ public class ProfiloView extends VerticalLayout {
         } else if (allievo.isPresent()) {
             profiloAllievo(allievo.get(), allievoService);
         } else {
-            add(new Span("Nessuna scheda anagrafica collegata a questo utente."));
+            // Admin e segreteria (o un utente senza scheda): i soli dati dell'utente
+            profiloUtente(userService.findByUsername(username));
         }
         if (allievo.isEmpty() || insegnante.isPresent() || genitore.isPresent()) {
             add(ViewSupport.sezione("Cambia password"), cambioPassword());
@@ -190,6 +192,29 @@ public class ProfiloView extends VerticalLayout {
             salva.addThemeVariants(ButtonVariant.PRIMARY);
             add(salva);
         }
+    }
+
+    /** Utente senza scheda (admin, segreteria): nome, cognome e contatti modificabili; username e ruoli in sola lettura. */
+    private void profiloUtente(User user) {
+        UtenteFields utente = new UtenteFields(user, userService);
+        TextField ruoli = new TextField("Ruoli");
+        ruoli.setValue(String.join(", ", user.getRoles()));
+        ruoli.setReadOnly(true);
+        Button salva = new Button("Salva", e -> {
+            if (!utente.validate() || !utente.writeBeanIfValid(user)) {
+                return;
+            }
+            try {
+                userService.aggiornaContatti(username, user);
+                Notification.show("Profilo salvato");
+            } catch (RuntimeException ex) {
+                Notification.show("Errore nel salvataggio del profilo: " + ex.getMessage());
+            }
+        });
+        salva.addThemeVariants(ButtonVariant.PRIMARY);
+        FormLayout campi = new FormLayout(utente.getComponents());
+        campi.add(ruoli);
+        add(ViewSupport.sezione("Utente e contatti"), campi, salva);
     }
 
     /** Nuova password con conferma. */
