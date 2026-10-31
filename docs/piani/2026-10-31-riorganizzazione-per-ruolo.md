@@ -51,7 +51,7 @@ application per chi la usa, ruolo per ruolo.
 | 3.1 | Impostazioni a schede con Anni scolastici, Luoghi, Festività; vecchi indirizzi come alias | `ImpostazioniView`, viste admin, `MenuApp`, test | `./mvnw test` | [x] |
 | 4.1 | Home: sezioni nell'ordine e coi nomi dei gruppi | `HomeView`, test | `./mvnw test` | [x] |
 | 4.2 | Home: card cliccabili verso le pagine (filtri da indirizzo dove servono) | `HomeView`, viste di destinazione, test | `./mvnw test` | [x] |
-| 5.1 | Guida: pagina per ruolo con i testi, voce in fondo al menu | `GuidaView`, risorse, test | `./mvnw test` | [ ] |
+| 5.1 | Guida: pagina per ruolo con i testi, voce in fondo al menu | `GuidaView`, risorse, test | `./mvnw test` | [x] |
 | 6.1 | CLAUDE.md: menu, nomi, profilo, impostazioni, guida, home | `CLAUDE.md` | — | [ ] |
 | 6.2 | Registro | questo piano | — | [ ] |
 

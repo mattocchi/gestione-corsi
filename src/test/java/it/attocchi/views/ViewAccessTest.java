@@ -4,6 +4,8 @@ import it.attocchi.entity.LetteraIncarico;
 import it.attocchi.service.ElencoDocumentiService;
 import java.time.YearMonth;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.router.RouteConfiguration;
+import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.component.tabs.Tabs;
 import java.util.stream.Stream;
 import com.vaadin.flow.component.select.Select;
@@ -644,6 +646,37 @@ class ViewAccessTest extends SpringBrowserlessTest {
     }
 
     /** Riquadri della dashboard come "etichetta: valore", nell'ordine di visualizzazione. */
+    @Test
+    @WithUserDetails("segreteria")
+    void segreteria_guidaDelloStaffConCollegamentiValidi() {
+        navigate(HomeView.class);
+        assertTrue(voceDiMenu("Guida"));
+        navigate(GuidaView.class);
+        Markdown guida = find(Markdown.class).single();
+        assertTrue(guida.getContent().contains("admin e segreteria"));
+        assertFalse(find(TabSheet.class).exists());
+        // Ogni collegamento di ogni guida porta a una pagina esistente
+        RouteConfiguration rotte = RouteConfiguration.forApplicationScope();
+        java.util.regex.Pattern link = java.util.regex.Pattern.compile("\\]\\(([^)]*)\\)");
+        int controllati = 0;
+        for (String nome : List.of("staff", "insegnante", "famiglia", "allievo")) {
+            var trovati = link.matcher(GuidaView.testo(nome));
+            while (trovati.find()) {
+                String percorso = trovati.group(1).equals(".") ? "" : trovati.group(1);
+                assertTrue(rotte.getRoute(percorso).isPresent(), nome + ": " + percorso);
+                controllati++;
+            }
+        }
+        assertTrue(controllati > 30, "collegamenti controllati: " + controllati);
+    }
+
+    @Test
+    @WithUserDetails("insegnante1")
+    void insegnante_guidaDellInsegnante() {
+        navigate(GuidaView.class);
+        assertTrue(find(Markdown.class).single().getContent().contains("Le mie lezioni"));
+    }
+
     /** Clic sulla card della Home con il titolo indicato. */
     private void clicCard(String titolo) {
         Card card = find(Card.class).all().stream()

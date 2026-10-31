@@ -90,7 +90,8 @@ public final class MenuApp {
         Map.entry(PagamentiFigliView.class, Gruppo.FAMIGLIA),
         Map.entry(MieiCorsiView.class, Gruppo.ALLIEVO),
         Map.entry(MieiPagamentiView.class, Gruppo.ALLIEVO),
-        Map.entry(ProfiloView.class, Gruppo.ACCOUNT));
+        Map.entry(ProfiloView.class, Gruppo.ACCOUNT),
+        Map.entry(GuidaView.class, Gruppo.ACCOUNT));
 
     private MenuApp() {
     }
